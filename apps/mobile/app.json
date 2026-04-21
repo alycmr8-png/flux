@@ -1,0 +1,45 @@
+{
+  "expo": {
+    "name": "StudyAgent",
+    "slug": "studyagent",
+    "version": "1.0.0",
+    "scheme": "studyagent",
+    "orientation": "portrait",
+    "splash": {
+      "backgroundColor": "#000000"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.studyagent.app",
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "StudyAgent records your lectures to generate cheat sheets.",
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "com.studyagent.app",
+      "permissions": [
+        "RECORD_AUDIO"
+      ]
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#ffffff"
+        }
+      ],
+      "expo-secure-store",
+      "expo-web-browser"
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "6281a831-1d51-4190-9ec8-ae81fc7cba0c"
+      }
+    }
+  }
+}
