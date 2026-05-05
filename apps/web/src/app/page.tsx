@@ -1,6 +1,5 @@
 ﻿import Link from "next/link";
 import Image from "next/image";
-import { SignInButton, SignUpButton } from "@clerk/nextjs";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { Layers } from "lucide-react";
@@ -40,16 +39,12 @@ export default async function LandingPage() {
           what you need to know.
         </p>
         <div className="flex gap-3 mb-4">
-          <SignUpButton>
-            <button className="bg-white text-[#111110] font-medium px-7 py-2.5 rounded-full text-sm hover:bg-[#eee] transition-colors">
-              Get started free
-            </button>
-          </SignUpButton>
-          <SignInButton>
-            <button className="border font-medium px-7 py-2.5 rounded-full text-sm transition-colors" style={{ borderColor: "rgba(255,255,255,0.15)", color: "white" }}>
-              Sign in
-            </button>
-          </SignInButton>
+          <Link href="/sign-up" className="bg-white text-[#111110] font-medium px-7 py-2.5 rounded-full text-sm hover:bg-[#eee] transition-colors">
+            Get started free
+          </Link>
+          <Link href="/sign-in" className="border font-medium px-7 py-2.5 rounded-full text-sm transition-colors" style={{ borderColor: "rgba(255,255,255,0.15)", color: "white" }}>
+            Sign in
+          </Link>
         </div>
         <Link href="/pricing" className="text-xs transition-colors" style={{ color: "rgba(255,255,255,0.3)" }}>
           View pricing â†’
@@ -141,11 +136,9 @@ export default async function LandingPage() {
           Ready to study smarter?
         </h2>
         <p className="text-sm mb-8" style={{ color: "rgba(255,255,255,0.4)" }}>Free to start. No credit card needed.</p>
-        <SignUpButton>
-          <button className="bg-white text-[#111110] font-medium px-8 py-3 rounded-full text-sm hover:bg-[#eee] transition-colors">
-            Get started free
-          </button>
-        </SignUpButton>
+        <Link href="/sign-up" className="bg-white text-[#111110] font-medium px-8 py-3 rounded-full text-sm hover:bg-[#eee] transition-colors">
+          Get started free
+        </Link>
       </div>
 
       <GoogleBanner />

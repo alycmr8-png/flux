@@ -6,6 +6,8 @@ import { generateStudyBook, condenseTranscript, summarizeTranscript, generateFla
 
 const router = Router();
 
+const ytJobs = new Map<string, { status: "processing" | "ready" | "error"; data?: any; title?: string; lectureId?: string; error?: string }>();
+
 function extractVideoId(url: string): string | null {
   const m = url.match(/(?:youtube\.com\/(?:watch\?v=|shorts\/)|youtu\.be\/)([^&?\s/]+)/);
   return m?.[1] ?? null;
@@ -84,6 +86,34 @@ async function getVideoTitle(videoId: string): Promise<string> {
     return "YouTube Video";
   }
 }
+
+router.get("/list", async (req, res) => {
+  const user = (req as any).user;
+  const books = await prisma.cheatSheet.findMany({
+    where: { userId: user.id, title: { startsWith: "Study Book:" } },
+    orderBy: { createdAt: "desc" },
+    include: { lecture: { select: { id: true, courseId: true } } },
+  });
+  res.json({
+    data: books.map(b => ({
+      id: b.id,
+      title: (b.title as string).replace(/^Study Book:\s*/, ""),
+      lectureId: b.lectureId,
+      courseId: (b.lecture as any)?.courseId ?? null,
+      createdAt: b.createdAt,
+      chapters: (b.content as any)?.chapters?.length ?? 0,
+      flashcards: (b.content as any)?.chapters?.reduce(
+        (acc: number, ch: any) => acc + (ch.flashcards?.length ?? 0), 0
+      ) ?? 0,
+    })),
+  });
+});
+
+router.get("/job/:jobId", (req, res) => {
+  const job = ytJobs.get(req.params.jobId);
+  if (!job) return res.status(404).json({ error: "Job not found" });
+  res.json(job);
+});
 
 router.get("/:lectureId", async (req, res) => {
   const user = (req as any).user;
@@ -206,10 +236,11 @@ router.post("/generate-from-course", async (req, res) => {
   });
 
   let dbNotes: any[] = [];
-  if (noteIds?.length) {
-    dbNotes = await prisma.note.findMany({
-      where: { id: { in: noteIds }, userId: user.id, courseId },
-    });
+  if (noteIds === undefined) {
+    // "use all" mode — include every note in the course
+    dbNotes = await prisma.note.findMany({ where: { userId: user.id, courseId } });
+  } else if (noteIds.length) {
+    dbNotes = await prisma.note.findMany({ where: { id: { in: noteIds }, userId: user.id, courseId } });
   }
 
   const inlineNotes = (notes ?? []).filter((n) => n.text?.trim());
@@ -240,15 +271,32 @@ router.post("/generate-from-course", async (req, res) => {
   const deadline = setTimeout(() => {
     if (ytJobs.get(jobId)?.status === "processing")
       ytJobs.set(jobId, { status: "error", error: "Generation timed out — please try again." });
-  }, 8 * 60 * 1000);
+  }, 9 * 60 * 1000);
 
   (async () => {
     try {
       const source = await condenseTranscript(combined, [], bookTitle, user.language ?? "en");
       const book = await generateStudyBook(source, bookTitle, user.language ?? "en");
-      await prisma.cheatSheet.create({
-        data: { lectureId: lectures[0].id, userId: user.id, title: `Study Book: ${bookTitle}`, content: book },
+
+      // Need a lectureId — create a placeholder lecture if none exist for this course
+      let saveLectureId = lectures[0]?.id;
+      if (!saveLectureId) {
+        const placeholder = await prisma.lecture.create({
+          data: { userId: user.id, courseId, title: bookTitle, transcript: combined, status: "ready" },
+        });
+        saveLectureId = placeholder.id;
+      }
+
+      const existingBook = await prisma.cheatSheet.findFirst({
+        where: { userId: user.id, title: `Study Book: ${bookTitle}` },
       });
+      if (existingBook) {
+        await prisma.cheatSheet.update({ where: { id: existingBook.id }, data: { content: book } });
+      } else {
+        await prisma.cheatSheet.create({
+          data: { lectureId: saveLectureId, userId: user.id, title: `Study Book: ${bookTitle}`, content: book },
+        });
+      }
       ytJobs.set(jobId, { status: "ready", data: book, title: bookTitle });
     } catch (e: any) {
       console.error("[generate-from-course] error:", e?.message);
@@ -260,9 +308,6 @@ router.post("/generate-from-course", async (req, res) => {
 
   res.json({ jobId });
 });
-
-// In-memory job store for YouTube processing
-const ytJobs = new Map<string, { status: "processing" | "ready" | "error"; data?: any; title?: string; lectureId?: string; error?: string }>();
 
 router.post("/from-youtube", async (req, res) => {
   const user = (req as any).user;
@@ -339,12 +384,6 @@ router.post("/from-youtube", async (req, res) => {
   })();
 
   res.json({ jobId });
-});
-
-router.get("/job/:jobId", (req, res) => {
-  const job = ytJobs.get(req.params.jobId);
-  if (!job) return res.status(404).json({ error: "Job not found" });
-  res.json(job);
 });
 
 export { router as studyBookRouter };

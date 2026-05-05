@@ -1,16 +1,19 @@
 "use client";
-import { SignUpButton } from "@clerk/nextjs";
+import Link from "next/link";
 import { Check } from "lucide-react";
 import { useState } from "react";
 
 const FEATURES = [
-  "Unlimited processing",
-  "24 hour max audio length",
-  "Proprietary AI model",
-  "Cheat sheets & summaries",
-  "All quiz & study modes",
-  "AI chatbot & study tools",
+  "Unlimited lecture recordings",
+  "AI-generated cheat sheets",
+  "Auto-generated quizzes & flashcards",
+  "Full study books from lectures",
+  "YouTube video to study material",
+  "AI tutor chatbot",
   "Calendar & deadline tracking",
+  "Upload documents & slides",
+  "Multi-language support (5 languages)",
+  "Notes per class",
 ];
 
 const PLANS = [
@@ -123,18 +126,17 @@ export function PricingSection() {
                 </ul>
 
                 {/* CTA */}
-                <SignUpButton>
-                  <button
-                    className="w-full py-3 rounded-xl font-medium text-sm transition-all"
-                    style={{
-                      background: isRecommended ? "white" : "rgba(255,255,255,0.1)",
-                      color: isRecommended ? "#111110" : "white",
-                      border: isRecommended ? "none" : "1px solid rgba(255,255,255,0.12)",
-                    }}
-                  >
-                    Get Started
-                  </button>
-                </SignUpButton>
+                <Link
+                  href="/sign-up"
+                  className="w-full py-3 rounded-xl font-medium text-sm transition-all text-center block"
+                  style={{
+                    background: isRecommended ? "white" : "rgba(255,255,255,0.1)",
+                    color: isRecommended ? "#111110" : "white",
+                    border: isRecommended ? "none" : "1px solid rgba(255,255,255,0.12)",
+                  }}
+                >
+                  Get Started
+                </Link>
               </div>
             );
           })}

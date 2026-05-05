@@ -1,10 +1,10 @@
 {
   "name": "@sano/shared",
   "version": "1.0.0",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
   "scripts": {
-    "build": "tsc"
+    "build": "tsc --noEmit"
   },
   "devDependencies": {
     "typescript": "^5.4.5"

@@ -145,8 +145,22 @@ function CreateClassPage({ onBack, onCreate }: { onBack: () => void; onCreate: (
 function ClassList({ onSelect, onCreate }: { onSelect: (c: any) => void; onCreate: () => void }) {
   const { userId } = useAuth();
   const fetcher = useApiSWRFetcher();
-  const { data, isLoading } = useSWR(userId ? `${BASE}/api/courses` : null, fetcher, { revalidateOnFocus: false });
+  const apiFetch = useApiFetch();
+  const { data, isLoading, mutate } = useSWR(userId ? `${BASE}/api/courses` : null, fetcher, { revalidateOnFocus: false });
   const courses: any[] = data?.data ?? [];
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  async function deleteCourse(id: string) {
+    setDeleting(true);
+    try {
+      await apiFetch(`/api/courses/${id}`, { method: "DELETE" });
+      await mutate();
+    } finally {
+      setDeleting(false);
+      setConfirmDeleteId(null);
+    }
+  }
 
   return (
     <div className="w-full">
@@ -184,17 +198,45 @@ function ClassList({ onSelect, onCreate }: { onSelect: (c: any) => void; onCreat
       ) : (
         <div className="grid grid-cols-3 gap-4">
           {courses.map((c) => (
-            <button
-              key={c.id}
-              onClick={() => onSelect(c)}
-              className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl p-7 text-left hover:border-[rgba(0,0,0,0.1)] hover:bg-white/5 transition-all group"
-            >
-              <div className="w-10 h-10 rounded-xl bg-[#f0ede8] flex items-center justify-center mb-4 group-hover:bg-[#222] transition-colors">
-                <Layers size={16} className="text-[#555] group-hover:text-[#111110] transition-colors" />
-              </div>
-              <div className="text-[#111110] font-medium text-base mb-1">{c.name}</div>
-              <div className="text-[#555] text-xs">{c.code}</div>
-            </button>
+            <div key={c.id} className="relative group/card">
+              {confirmDeleteId === c.id ? (
+                <div className="bg-white border border-red-200 rounded-2xl p-7 flex flex-col gap-3">
+                  <p className="text-sm font-medium text-[#111110]">Delete &ldquo;{c.name}&rdquo;?</p>
+                  <p className="text-xs text-[#666] leading-relaxed">All lectures, notes, and materials in this class will be permanently deleted.</p>
+                  <div className="flex gap-2 mt-1">
+                    <button onClick={() => setConfirmDeleteId(null)} disabled={deleting}
+                      className="flex-1 text-xs py-2 rounded-lg border border-[rgba(0,0,0,0.12)] text-[#555] hover:text-black transition-colors">
+                      Cancel
+                    </button>
+                    <button onClick={() => deleteCourse(c.id)} disabled={deleting}
+                      className="flex-1 text-xs py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors flex items-center justify-center gap-1.5">
+                      {deleting ? <Loader2 size={11} className="animate-spin" /> : <Trash2 size={11} />}
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <button
+                    onClick={() => onSelect(c)}
+                    className="w-full bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl p-7 text-left hover:border-[rgba(0,0,0,0.1)] hover:bg-white/5 transition-all group"
+                  >
+                    <div className="w-10 h-10 rounded-xl bg-[#f0ede8] flex items-center justify-center mb-4 group-hover:bg-[#222] transition-colors">
+                      <Layers size={16} className="text-[#555] group-hover:text-[#111110] transition-colors" />
+                    </div>
+                    <div className="text-[#111110] font-medium text-base mb-1">{c.name}</div>
+                    <div className="text-[#555] text-xs">{c.code}</div>
+                  </button>
+                  <button
+                    onClick={e => { e.stopPropagation(); setConfirmDeleteId(c.id); }}
+                    className="absolute top-3 right-3 w-7 h-7 rounded-lg flex items-center justify-center opacity-0 group-hover/card:opacity-100 transition-opacity hover:bg-red-50"
+                    title="Delete class"
+                  >
+                    <Trash2 size={13} className="text-[#bbb] hover:text-red-500 transition-colors" />
+                  </button>
+                </>
+              )}
+            </div>
           ))}
         </div>
       )}

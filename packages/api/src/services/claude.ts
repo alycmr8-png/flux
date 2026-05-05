@@ -2,7 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 
 let _anthropic: Anthropic | null = null;
 function getClient() {
-  if (!_anthropic) _anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY, timeout: 150000 });
+  if (!_anthropic) _anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY, timeout: 90000 });
   return _anthropic;
 }
 
@@ -17,7 +17,7 @@ async function createWithRetry(params: any, retries = 3): Promise<any> {
       const isRetryable = status >= 500 || status === 429;
       if (isRetryable && i < retries - 1) {
         if (i >= 1 && models[1]) modelIdx = 1;
-        const wait = (i + 1) * 5000;
+        const wait = (i + 1) * 3000;
         await new Promise(r => setTimeout(r, wait));
         continue;
       }
@@ -92,7 +92,7 @@ export async function condenseTranscript(
   title: string,
   language = "en"
 ): Promise<string> {
-  if (transcript.length <= 20000) return transcript;
+  if (transcript.length <= 15000) return transcript;
 
   const CHUNK_SECONDS = 600; // 10 minutes per chunk
   const chunks: { text: string; startSec: number; endSec: number }[] = [];
@@ -219,17 +219,22 @@ Be thorough. Include 4-6 sections, 5-10 key terms, all formulas, 5 exam tips, 5 
 
 export async function generateStudyBook(transcript: string, lectureTitle: string, language = "en") {
   const langName = LANG_NAMES[language] ?? "English";
-  const transcriptInput = transcript.slice(0, 28000);
+  // If still very large after condensing, do a second-pass condensation
+  let transcriptInput = transcript;
+  if (transcriptInput.length > 80000) {
+    transcriptInput = await condenseTranscript(transcriptInput, [], lectureTitle, language);
+  }
+  transcriptInput = transcriptInput.slice(0, 80000);
   const len = transcriptInput.length;
 
   // Scale depth and token budget to actual content length
   const tier: "short" | "medium" | "long" =
-    len < 6000 ? "short" : len < 16000 ? "medium" : "long";
+    len < 8000 ? "short" : len < 30000 ? "medium" : "long";
 
   const depth = {
-    short:  { maxTokens: 4500, chapters: "3",   explanation: "2",   keyPoints: "3-4",  flashcards: "2",   glossary: "6-8"  },
-    medium: { maxTokens: 7000, chapters: "4",   explanation: "2-3", keyPoints: "4-5",  flashcards: "2-3", glossary: "8-10" },
-    long:   { maxTokens: 9000, chapters: "5",   explanation: "3",   keyPoints: "5-6",  flashcards: "3",   glossary: "10-12"},
+    short:  { maxTokens: 7000,  chapters: "3",   explanation: "2",   keyPoints: "3-4",  flashcards: "2",   glossary: "6-8"  },
+    medium: { maxTokens: 10000, chapters: "4-5", explanation: "2-3", keyPoints: "4-5",  flashcards: "2-3", glossary: "8-12" },
+    long:   { maxTokens: 14000, chapters: "6-7", explanation: "3",   keyPoints: "5-6",  flashcards: "3",   glossary: "12-16"},
   }[tier];
 
   const msg = await createWithRetry({
@@ -240,11 +245,9 @@ Your primary goal: if the speaker explains something in depth, YOU explain it in
 Write ALL text in ${langName}.
 Return ONLY valid JSON — no markdown, no commentary.
 
-Schema:
+Schema (output fields in THIS exact order):
 {
   "_type": "studybook",
-  "executiveSummary": string,
-  "tableOfContents": [{ "chapter": number, "title": string, "timestamp": string }],
   "chapters": [{
     "number": number,
     "title": string,
@@ -262,7 +265,9 @@ Schema:
       "explanation": string
     }]
   }],
-  "glossary": [{ "term": string, "definition": string, "highYield": boolean }]
+  "glossary": [{ "term": string, "definition": string, "highYield": boolean }],
+  "tableOfContents": [{ "chapter": number, "title": string, "timestamp": string }],
+  "executiveSummary": string
 }
 
 DEPTH REQUIREMENTS:

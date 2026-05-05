@@ -14,9 +14,12 @@ config.resolver.nodeModulesPaths = [
 ];
 
 // Force Metro to resolve React from the mobile app only (prevents duplicates)
+// Also pin @sano/* to their source directories so Metro doesn't chase broken symlinks
 config.resolver.extraNodeModules = {
   react: path.resolve(projectRoot, "node_modules/react"),
   "react-native": path.resolve(projectRoot, "node_modules/react-native"),
+  "@sano/i18n": path.resolve(workspaceRoot, "packages/i18n"),
+  "@sano/shared": path.resolve(workspaceRoot, "packages/shared"),
 };
 
 // Stub native modules not compiled in the dev build

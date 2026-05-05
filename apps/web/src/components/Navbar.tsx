@@ -1,6 +1,5 @@
 ﻿"use client";
 import Link from "next/link";
-import { SignInButton, SignUpButton } from "@clerk/nextjs";
 import { Layers } from "lucide-react";
 
 export function Navbar() {
@@ -49,23 +48,21 @@ export function Navbar() {
 
         {/* Auth buttons */}
         <div className="flex items-center gap-2">
-          <SignInButton>
-            <button
-              style={{ fontSize: 14, color: "rgba(0,0,0,0.45)", background: "transparent", border: "none", cursor: "pointer", padding: "7px 14px", borderRadius: 999, transition: "color 0.15s" }}
-              onMouseEnter={e => (e.currentTarget.style.color = "#111110")}
-              onMouseLeave={e => (e.currentTarget.style.color = "rgba(0,0,0,0.45)")}
-            >
-              Sign in
-            </button>
-          </SignInButton>
-          <SignUpButton>
-            <button
-              className="font-medium"
-              style={{ fontSize: 13, background: "#111110", color: "white", border: "none", cursor: "pointer", padding: "8px 20px", borderRadius: 999 }}
-            >
-              Get started
-            </button>
-          </SignUpButton>
+          <Link
+            href="/sign-in"
+            style={{ fontSize: 14, color: "rgba(0,0,0,0.45)", textDecoration: "none", padding: "7px 14px", borderRadius: 999, transition: "color 0.15s" }}
+            onMouseEnter={e => (e.currentTarget.style.color = "#111110")}
+            onMouseLeave={e => (e.currentTarget.style.color = "rgba(0,0,0,0.45)")}
+          >
+            Sign in
+          </Link>
+          <Link
+            href="/sign-up"
+            className="font-medium"
+            style={{ fontSize: 13, background: "#111110", color: "white", textDecoration: "none", padding: "8px 20px", borderRadius: 999 }}
+          >
+            Get started
+          </Link>
         </div>
       </div>
     </header>
