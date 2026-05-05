@@ -5,6 +5,9 @@ const root = path.resolve(__dirname, "../..");
 
 const nextConfig: NextConfig = {
   transpilePackages: ["@sano/shared", "@sano/i18n"],
+  // Don't bundle react-i18next server-side — load from node_modules at runtime
+  // to avoid duplicate React instance causing useContext === null crashes
+  serverExternalPackages: ["react-i18next", "i18next"],
   webpack: (config) => {
     config.resolve.alias = {
       ...config.resolve.alias,
