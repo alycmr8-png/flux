@@ -1,6 +1,6 @@
 "use client";
 import { useEffect } from "react";
-import { initI18n, LANGUAGES, type Language } from "@sano/i18n";
+import { initI18n, LANGUAGES, type Language } from "@/lib/i18nConfig";
 
 export function I18nProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {

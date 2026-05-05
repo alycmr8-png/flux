@@ -1,5 +1,5 @@
 "use client";
-import { initI18n } from "@sano/i18n";
+import { initI18n } from "@/lib/i18nConfig";
 
 let initialized = false;
 
