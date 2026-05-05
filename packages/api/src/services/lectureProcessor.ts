@@ -1,8 +1,7 @@
 import fs from "fs";
 import { prisma } from "../lib/prisma";
 import { transcribeAudio } from "./whisper";
-import { generateCheatSheet } from "./claude";
-import { generateQuiz } from "./claude";
+import { condenseTranscript, generateCheatSheet, generateQuiz } from "./claude";
 import { syncToDrive } from "./google";
 import { scheduleSpacedRepetition } from "./spaced-repetition";
 
@@ -13,17 +12,27 @@ export async function processLecture(lectureId: string, userId: string) {
     await prisma.lecture.update({ where: { id: lectureId }, data: { status: "transcribing" } });
 
     let transcript = "";
+    let segments: { start: number; end: number; text: string }[] = [];
+
     if (lecture.audioUrl && fs.existsSync(lecture.audioUrl)) {
-      transcript = await transcribeAudio(lecture.audioUrl);
+      const result = await transcribeAudio(lecture.audioUrl);
+      transcript = result.text;
+      segments = result.segments;
       await prisma.lecture.update({
         where: { id: lectureId },
         data: { transcript, status: "generating" },
       });
     }
 
+    const user = await prisma.user.findUnique({ where: { id: userId }, include: { googleTokens: true } });
+    const language = user?.language ?? "en";
+
+    // Condense long transcripts via Map-Reduce before passing to generate functions
+    const source = await condenseTranscript(transcript, segments, lecture.title, language);
+
     const [cheatSheetContent, quizData] = await Promise.all([
-      generateCheatSheet(transcript, lecture.title),
-      generateQuiz(transcript, lecture.title),
+      generateCheatSheet(source, lecture.title, language),
+      generateQuiz(source, lecture.title, language),
     ]);
 
     const [cheatSheet, quiz] = await Promise.all([
@@ -52,11 +61,6 @@ export async function processLecture(lectureId: string, userId: string) {
         },
       }),
     ]);
-
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      include: { googleTokens: true },
-    });
 
     if (user?.googleTokens) {
       const driveUrl = await syncToDrive(user, cheatSheetContent, lecture.title);

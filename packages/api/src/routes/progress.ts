@@ -6,7 +6,7 @@ export const progressRouter = Router();
 progressRouter.get("/", async (req, res) => {
   const user = (req as any).user;
 
-  const [lectureCount, attempts, sessions] = await Promise.all([
+  const [lectureCount, attempts, sessions, courses] = await Promise.all([
     prisma.lecture.count({ where: { userId: user.id, status: "ready" } }),
     prisma.quizAttempt.findMany({
       where: { userId: user.id },
@@ -16,6 +16,17 @@ progressRouter.get("/", async (req, res) => {
       where: { userId: user.id, completedAt: { not: null } },
       orderBy: { completedAt: "desc" },
       take: 30,
+    }),
+    prisma.course.findMany({
+      where: { userId: user.id },
+      include: {
+        lectures: {
+          where: { userId: user.id },
+          orderBy: { recordedAt: "desc" },
+          select: { id: true, title: true, status: true, recordedAt: true, durationSeconds: true },
+        },
+      },
+      orderBy: { createdAt: "asc" },
     }),
   ]);
 
@@ -40,7 +51,14 @@ progressRouter.get("/", async (req, res) => {
 
   const streak = calculateStreak(sessions.map((s) => s.completedAt!));
 
-  res.json({ data: { lectureCount, avgScore, streak, courseRetention } });
+  const lecturesByClass = courses.map((c) => ({
+    id: c.id,
+    name: c.name,
+    code: c.code,
+    lectures: c.lectures,
+  }));
+
+  res.json({ data: { lectureCount, avgScore, streak, courseRetention, lecturesByClass } });
 });
 
 function calculateStreak(dates: Date[]): number {

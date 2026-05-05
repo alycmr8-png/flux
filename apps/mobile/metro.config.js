@@ -19,4 +19,15 @@ config.resolver.extraNodeModules = {
   "react-native": path.resolve(projectRoot, "node_modules/react-native"),
 };
 
+// Stub native modules not compiled in the dev build
+config.resolver.resolveRequest = (context, moduleName, platform) => {
+  if (moduleName.includes("ExpoCryptoAES") || moduleName.includes("expo-crypto/build/aes")) {
+    return { type: "sourceFile", filePath: path.resolve(projectRoot, "shims/ExpoCryptoAES.js") };
+  }
+  if (moduleName.includes("@react-native-async-storage/async-storage")) {
+    return { type: "sourceFile", filePath: path.resolve(projectRoot, "shims/AsyncStorage.js") };
+  }
+  return context.resolveRequest(context, moduleName, platform);
+};
+
 module.exports = config;

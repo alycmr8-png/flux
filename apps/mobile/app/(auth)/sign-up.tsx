@@ -1,18 +1,26 @@
-import { useSignUp } from "@clerk/clerk-expo";
+import { useSignUp, useSSO } from "@clerk/clerk-expo";
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import {
-  View, Text, TextInput, TouchableOpacity,
-  StyleSheet, KeyboardAvoidingView, Platform,
-} from "react-native";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, Alert } from "react-native";
 
 export default function SignUpScreen() {
   const { signUp, setActive, isLoaded } = useSignUp();
+  const { startSSOFlow } = useSSO();
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [error, setError] = useState("");
+
+  async function handleGoogle() {
+    try {
+      const { createdSessionId, setActive: sa } = await startSSOFlow({ strategy: "oauth_google" });
+      if (createdSessionId) await sa!({ session: createdSessionId });
+      router.replace("/(tabs)");
+    } catch {
+      Alert.alert("Google sign-in unavailable", "Please use email and password below.");
+    }
+  }
 
   async function handleSignUp() {
     if (!isLoaded) return;
@@ -28,29 +36,46 @@ export default function SignUpScreen() {
 
   return (
     <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={s.root}>
-      <Text style={s.title}>StudyAgent</Text>
-      <Text style={s.sub}>Create your account</Text>
+      <Text style={s.title}>Create Account</Text>
+
+      <TouchableOpacity style={s.google} onPress={handleGoogle} activeOpacity={0.85}>
+        <Text style={s.googleTxt}>Continue with Google</Text>
+      </TouchableOpacity>
+
+      <View style={s.divider}>
+        <View style={s.divLine} />
+        <Text style={s.divTxt}>or</Text>
+        <View style={s.divLine} />
+      </View>
+
       {error ? <Text style={s.err}>{error}</Text> : null}
       <TextInput style={s.input} placeholder="Full name" placeholderTextColor="#444" value={name} onChangeText={setName} />
       <TextInput style={s.input} placeholder="Email" placeholderTextColor="#444" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" />
       <TextInput style={s.input} placeholder="Password" placeholderTextColor="#444" value={password} onChangeText={setPassword} secureTextEntry />
-      <TouchableOpacity style={s.btn} onPress={handleSignUp}>
-        <Text style={s.btnTxt}>Create account</Text>
+
+      <TouchableOpacity style={s.btn} onPress={handleSignUp} activeOpacity={0.85}>
+        <Text style={s.btnTxt}>Create Account</Text>
       </TouchableOpacity>
-      <TouchableOpacity onPress={() => router.push("/(auth)/sign-in")}>
-        <Text style={s.link}>Already have an account? Sign in</Text>
+
+      <TouchableOpacity onPress={() => router.back()} style={s.back}>
+        <Text style={s.backTxt}>← Back</Text>
       </TouchableOpacity>
     </KeyboardAvoidingView>
   );
 }
 
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#000", justifyContent: "center", padding: 24 },
-  title: { fontFamily: "serif", fontSize: 40, color: "#fff", textAlign: "center", marginBottom: 6 },
-  sub: { fontFamily: "sans-serif", fontSize: 13, color: "#555", textAlign: "center", marginBottom: 32 },
-  err: { fontFamily: "sans-serif", fontSize: 12, color: "#f55", textAlign: "center", marginBottom: 12 },
-  input: { fontFamily: "sans-serif", borderWidth: 0.5, borderColor: "#222", borderRadius: 12, padding: 14, color: "#fff", fontSize: 14, marginBottom: 12, backgroundColor: "#111" },
-  btn: { backgroundColor: "#fff", borderRadius: 999, padding: 14, alignItems: "center", marginTop: 4 },
-  btnTxt: { fontFamily: "sans-serif-medium", fontSize: 14, color: "#000" },
-  link: { fontFamily: "sans-serif", fontSize: 13, color: "#555", textAlign: "center", marginTop: 20 },
+  root: { flex: 1, backgroundColor: "#000", padding: 24, justifyContent: "center" },
+  title: { fontSize: 32, color: "#fff", fontFamily: "serif", marginBottom: 28 },
+  google: { backgroundColor: "#fff", borderRadius: 14, padding: 16, alignItems: "center", marginBottom: 20 },
+  googleTxt: { fontSize: 15, color: "#000", fontFamily: "sans-serif-medium" },
+  divider: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 20 },
+  divLine: { flex: 1, height: 0.5, backgroundColor: "#222" },
+  divTxt: { fontSize: 12, color: "#444" },
+  err: { fontSize: 12, color: "#f55", marginBottom: 12 },
+  input: { borderWidth: 0.5, borderColor: "#222", borderRadius: 12, padding: 14, color: "#fff", fontSize: 14, marginBottom: 10, backgroundColor: "#111" },
+  btn: { borderWidth: 0.5, borderColor: "#333", borderRadius: 14, padding: 16, alignItems: "center", marginTop: 4 },
+  btnTxt: { fontSize: 15, color: "#fff", fontFamily: "sans-serif-medium" },
+  back: { marginTop: 20, alignItems: "center" },
+  backTxt: { fontSize: 13, color: "#444" },
 });

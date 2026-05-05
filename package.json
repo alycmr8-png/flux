@@ -1,5 +1,5 @@
 {
-  "name": "studyagent",
+  "name": "sano",
   "version": "1.0.0",
   "private": true,
   "workspaces": [
@@ -24,10 +24,8 @@
   "dependencies": {
     "expo-auth-session": "^55.0.14",
     "expo-crypto": "^55.0.14",
-    "expo-web-browser": "^55.0.14"
-  },
-  "overrides": {
-    "react": "19.1.0",
-    "react-dom": "19.1.0"
+    "expo-web-browser": "^55.0.14",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
   }
 }

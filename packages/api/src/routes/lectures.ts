@@ -1,18 +1,36 @@
 import { Router } from "express";
 import multer from "multer";
 import { z } from "zod";
+import path from "path";
+import os from "os";
+import fs from "fs";
 import { prisma } from "../lib/prisma";
 import { processLecture } from "../services/lectureProcessor";
 
 export const lectureRouter = Router();
 
-const upload = multer({ dest: "/tmp/studyagent" });
+const uploadDir = path.join(os.tmpdir(), "sano");
+fs.mkdirSync(uploadDir, { recursive: true });
+
+const storage = multer.diskStorage({
+  destination: uploadDir,
+  filename: (_req, file, cb) => {
+    const ext = path.extname(file.originalname) || (file.mimetype.includes("webm") ? ".webm" : ".m4a");
+    cb(null, `${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`);
+  },
+});
+const upload = multer({ storage });
 
 lectureRouter.get("/", async (req, res) => {
   const user = (req as any).user;
-  const { courseId } = req.query;
+  const { courseId, archived } = req.query;
+  const isArchived = archived === "true";
   const lectures = await prisma.lecture.findMany({
-    where: { userId: user.id, ...(courseId ? { courseId: String(courseId) } : {}) },
+    where: {
+      userId: user.id,
+      archived: isArchived,
+      ...(courseId ? { courseId: String(courseId) } : {}),
+    },
     include: { course: true },
     orderBy: { recordedAt: "desc" },
   });
@@ -67,6 +85,28 @@ lectureRouter.get("/:id/status", async (req, res) => {
   });
   if (!lecture) return res.status(404).json({ error: "Not found" });
   res.json({ data: lecture });
+});
+
+lectureRouter.patch("/:id", async (req, res) => {
+  const user = (req as any).user;
+  const { title } = z.object({ title: z.string().min(1) }).parse(req.body);
+  const lecture = await prisma.lecture.updateMany({
+    where: { id: req.params.id, userId: user.id },
+    data: { title },
+  });
+  res.json({ data: lecture });
+});
+
+lectureRouter.patch("/:id/archive", async (req, res) => {
+  const user = (req as any).user;
+  await prisma.lecture.updateMany({ where: { id: req.params.id, userId: user.id }, data: { archived: true } });
+  res.json({ data: { archived: true } });
+});
+
+lectureRouter.patch("/:id/restore", async (req, res) => {
+  const user = (req as any).user;
+  await prisma.lecture.updateMany({ where: { id: req.params.id, userId: user.id }, data: { archived: false } });
+  res.json({ data: { archived: false } });
 });
 
 lectureRouter.delete("/:id", async (req, res) => {

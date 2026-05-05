@@ -59,6 +59,12 @@ calendarRouter.get("/auth-url", (_req, res) => {
   res.json({ data: { url } });
 });
 
+calendarRouter.get("/status", async (req, res) => {
+  const user = (req as any).user;
+  const token = await prisma.googleToken.findUnique({ where: { userId: user.id } });
+  res.json({ data: { connected: !!token } });
+});
+
 calendarRouter.post("/schedule/:lectureId", async (req, res) => {
   const user = (req as any).user;
   const { examDate } = z.object({ examDate: z.string().optional() }).parse(req.body);

@@ -1,23 +1,24 @@
-{
+﻿{
   "expo": {
-    "name": "StudyAgent",
-    "slug": "studyagent",
+    "entryPoint": "./index.js",
+    "name": "Flux",
+    "slug": "Flux",
     "version": "1.0.0",
-    "scheme": "studyagent",
+    "scheme": "Flux",
     "orientation": "portrait",
     "splash": {
       "backgroundColor": "#000000"
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.studyagent.app",
+      "bundleIdentifier": "com.Flux.app",
       "infoPlist": {
-        "NSMicrophoneUsageDescription": "StudyAgent records your lectures to generate cheat sheets.",
+        "NSMicrophoneUsageDescription": "Flux records your lectures to generate cheat sheets.",
         "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
-      "package": "com.studyagent.app",
+      "package": "com.Flux.app",
       "permissions": [
         "RECORD_AUDIO"
       ]
@@ -43,3 +44,4 @@
     }
   }
 }
+

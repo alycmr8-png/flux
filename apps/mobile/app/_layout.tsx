@@ -1,7 +1,8 @@
 import { ClerkProvider, useAuth } from "@clerk/clerk-expo";
 import { tokenCache } from "../lib/tokenCache";
 import { Slot, useRouter, useSegments } from "expo-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { loadI18n } from "../lib/i18n";
 
 function AuthGate() {
   const { isSignedIn, isLoaded } = useAuth();
@@ -19,6 +20,14 @@ function AuthGate() {
 }
 
 export default function RootLayout() {
+  const [i18nReady, setI18nReady] = useState(false);
+
+  useEffect(() => {
+    loadI18n().finally(() => setI18nReady(true));
+  }, []);
+
+  if (!i18nReady) return null;
+
   return (
     <ClerkProvider
       publishableKey={process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!}

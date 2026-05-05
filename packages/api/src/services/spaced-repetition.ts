@@ -26,7 +26,7 @@ export async function scheduleSpacedRepetition(
     if (exam && scheduledAt > exam) break;
 
     const type = dayOffset <= 3 ? "review" : dayOffset <= 14 ? "quiz" : "cheatsheet";
-    const summary = `StudyAgent: ${type === "review" ? "Review" : type === "quiz" ? "Practice Quiz" : "Cheat Sheet"} — ${lecture.title}`;
+    const summary = `Sano: ${type === "review" ? "Review" : type === "quiz" ? "Practice Quiz" : "Cheat Sheet"} — ${lecture.title}`;
 
     const calendarEventId = await createCalendarEvent(
       user,

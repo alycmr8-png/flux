@@ -9,23 +9,33 @@
   },
   "dependencies": {
     "@clerk/nextjs": "^6.9.2",
-    "@studyagent/shared": "*",
-    "next": "^15.2.3",
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0",
-    "lucide-react": "^0.462.0",
-    "swr": "^2.2.5",
+    "@sano/i18n": "*",
+    "@sano/shared": "*",
+    "@tiptap/extension-mathematics": "^3.22.5",
+    "@tiptap/extension-placeholder": "^3.22.5",
+    "@tiptap/react": "^3.22.5",
+    "@tiptap/starter-kit": "^3.22.5",
     "axios": "^1.7.7",
     "date-fns": "^4.1.0",
-    "react-dropzone": "^14.3.5"
+    "katex": "^0.16.45",
+    "lucide-react": "^0.462.0",
+    "next": "^15.2.3",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
+    "react-dropzone": "^14.3.5",
+    "react-markdown": "^10.1.0",
+    "rehype-katex": "^7.0.1",
+    "remark-math": "^6.0.0",
+    "swr": "^2.2.5"
   },
   "devDependencies": {
+    "@tailwindcss/typography": "^0.5.19",
     "@types/node": "^22.7.5",
     "@types/react": "^19.1.0",
     "@types/react-dom": "^19.1.0",
-    "typescript": "^5.4.5",
-    "tailwindcss": "^3.4.14",
+    "autoprefixer": "^10.4.20",
     "postcss": "^8.4.47",
-    "autoprefixer": "^10.4.20"
+    "tailwindcss": "^3.4.14",
+    "typescript": "^5.4.5"
   }
 }

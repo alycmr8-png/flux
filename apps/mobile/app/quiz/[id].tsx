@@ -2,13 +2,15 @@ import { ScrollView, View, Text, StyleSheet, TouchableOpacity } from "react-nati
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import useSWR from "swr";
-import { api } from "../../lib/api";
-
-const fetcher = (url: string) => api.get(url).then((r) => r.data);
+import { useApi, makeApiFetcher } from "../../lib/api";
+import { useAuth } from "@clerk/clerk-expo";
 
 export default function QuizScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const { userId } = useAuth();
+  const api = useApi();
+  const fetcher = makeApiFetcher(userId);
   const { data } = useSWR(`/api/quizzes/${id}`, fetcher);
   const [answers, setAnswers] = useState<Record<number, number>>({});
   const [submitted, setSubmitted] = useState(false);

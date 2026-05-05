@@ -1,106 +1,136 @@
-import { ScrollView, View, Text, StyleSheet, TouchableOpacity } from "react-native";
+﻿import { ScrollView, View, Text, StyleSheet, TouchableOpacity, StatusBar } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
 import useSWR from "swr";
-import { api } from "../../lib/api";
-
-const fetcher = (url: string) => api.get(url).then((r) => r.data);
+import { makeApiFetcher } from "../../lib/api";
+import { useAuth, useClerk } from "@clerk/clerk-expo";
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { data: progress } = useSWR("/api/progress", fetcher);
+  const insets = useSafeAreaInsets();
+  const { userId } = useAuth();
+  const { signOut } = useClerk();
+  const fetcher = makeApiFetcher(userId);
+  const { data: progress, isLoading } = useSWR("/api/progress", fetcher);
   const { data: lectures } = useSWR("/api/lectures", fetcher);
   const { data: cheatSheets } = useSWR("/api/cheatsheets", fetcher);
 
-  const streak = progress?.data?.streak ?? 0;
-  const recent = lectures?.data?.slice(0, 1)?.[0];
+  const p = progress?.data;
+  const recent = lectures?.data?.[0];
   const notes = cheatSheets?.data?.slice(0, 3) ?? [];
 
-  return (
-    <ScrollView style={s.root} contentContainerStyle={s.content}>
-      <View style={s.topbar}>
-        <Text style={s.brand}>StudyAgent</Text>
-      </View>
+  const STATS = [
+    { val: isLoading ? "â€”" : String(p?.lectureCount ?? 0), lbl: "Lectures" },
+    { val: isLoading ? "â€”" : (p?.avgScore ? `${p.avgScore}%` : "â€”"), lbl: "Avg score" },
+    { val: isLoading ? "â€”" : String(p?.streak ?? 0), lbl: "Day streak" },
+  ];
 
-      <View style={s.streak}>
-        <Text style={s.streakNum}>{streak}</Text>
-        <View>
-          <Text style={s.streakL}>Day streak</Text>
-          <Text style={s.streakS}>Keep it going</Text>
+  const ACTIONS = [
+    { icon: "mic-outline",           label: "Record",    route: "/(tabs)/record"    },
+    { icon: "document-text-outline", label: "Summaries", route: "/(tabs)/summaries" },
+    { icon: "book-outline",          label: "Quizzes",   route: "/(tabs)/quizzes"   },
+    { icon: "calendar-outline",      label: "Schedule",  route: "/(tabs)/calendar"  },
+  ];
+
+  return (
+    <>
+      <StatusBar barStyle="light-content" />
+      <ScrollView style={s.root} contentContainerStyle={[s.content, { paddingTop: insets.top + 16 }]}>
+        <View style={s.header}>
+          <View>
+            <Text style={s.brand}>Flux</Text>
+            <Text style={s.sub}>Your study activity at a glance</Text>
+          </View>
+          <TouchableOpacity onPress={() => signOut()} style={s.logoutBtn} activeOpacity={0.7}>
+            <Ionicons name="log-out-outline" size={20} color="#555" />
+          </TouchableOpacity>
         </View>
-        <View style={s.dots}>
-          {Array.from({ length: 7 }).map((_, i) => (
-            <View key={i} style={[s.dot, i < streak ? s.dotOn : s.dotOff]} />
+
+        {/* Stats */}
+        <View style={s.statsRow}>
+          {STATS.map((st) => (
+            <View key={st.lbl} style={s.statCard}>
+              <Text style={s.statNum}>{st.val}</Text>
+              <Text style={s.statLbl}>{st.lbl}</Text>
+            </View>
           ))}
         </View>
-      </View>
 
-      <Text style={s.sectionLbl}>Latest lecture</Text>
-      {recent ? (
-        <View style={s.card}>
-          <View style={s.badge}><Text style={s.badgeTxt}>{recent.status}</Text></View>
-          <Text style={s.cardTitle}>{recent.title}</Text>
-          <Text style={s.cardMeta}>{recent.course?.name} · Today</Text>
-        </View>
-      ) : (
-        <View style={s.card}><Text style={s.cardMeta}>No lectures yet. Hit Record to start.</Text></View>
-      )}
-
-      <View style={s.actRow}>
-        {[
-          { icon: "⏺", label: "Record", onPress: () => router.push("/(tabs)/record") },
-          { icon: "◦", label: "Cheat Sheet", onPress: () => router.push("/(tabs)/summaries") },
-          { icon: "✦", label: "Quiz", onPress: () => router.push("/(tabs)/quizzes") },
-          { icon: "📅", label: "Schedule", onPress: () => router.push("/(tabs)/calendar") },
-        ].map((a) => (
-          <TouchableOpacity key={a.label} style={s.actBtn} onPress={a.onPress}>
-            <Text style={s.actIcon}>{a.icon}</Text>
-            <Text style={s.actLbl}>{a.label}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      <Text style={s.sectionLbl}>Saved notes</Text>
-      {notes.map((cs: any) => (
-        <View key={cs.id} style={s.rowItem}>
-          <View style={s.rowIcon}><Text>📄</Text></View>
-          <View style={s.rowInfo}>
-            <Text style={s.rowName} numberOfLines={1}>{cs.title}</Text>
-            <Text style={s.rowSub}>{cs.driveUrl ? "Drive synced" : "Local"}</Text>
+        {/* Latest lecture */}
+        <Text style={s.sectionLabel}>Latest lecture</Text>
+        {recent ? (
+          <View style={s.card}>
+            <View style={s.badge}><Text style={s.badgeTxt}>{recent.status}</Text></View>
+            <Text style={s.cardTitle}>{recent.title}</Text>
+            <Text style={s.cardMeta}>{recent.course?.name}</Text>
           </View>
-          <Text style={s.rowRight}>→</Text>
+        ) : (
+          <View style={s.card}>
+            <Text style={s.cardMeta}>No lectures yet. Tap Record below to start.</Text>
+          </View>
+        )}
+
+        {/* Quick actions */}
+        <Text style={s.sectionLabel}>Quick actions</Text>
+        <View style={s.actionsGrid}>
+          {ACTIONS.map((a) => (
+            <TouchableOpacity
+              key={a.label}
+              style={s.actionBtn}
+              onPress={() => router.push(a.route as any)}
+              activeOpacity={0.7}
+            >
+              <Ionicons name={a.icon as any} size={20} color="#555" />
+              <Text style={s.actionLabel}>{a.label}</Text>
+            </TouchableOpacity>
+          ))}
         </View>
-      ))}
-    </ScrollView>
+
+        {/* Saved notes */}
+        {notes.length > 0 && (
+          <>
+            <Text style={s.sectionLabel}>Saved notes</Text>
+            {notes.map((cs: any) => (
+              <View key={cs.id} style={s.noteRow}>
+                <Ionicons name="document-text" size={15} color="#333" />
+                <View style={s.noteInfo}>
+                  <Text style={s.noteName} numberOfLines={1}>{cs.title}</Text>
+                  <Text style={s.noteSub}>{cs.driveUrl ? "Drive synced" : "Local"}</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={13} color="#333" />
+              </View>
+            ))}
+          </>
+        )}
+      </ScrollView>
+    </>
   );
 }
 
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: "#000" },
-  content: { paddingBottom: 32 },
-  topbar: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: 18, paddingTop: 16, paddingBottom: 12 },
-  brand: { fontFamily: "serif", fontSize: 22, color: "#fff" },
-  streak: { marginHorizontal: 12, marginBottom: 16, backgroundColor: "#111", borderRadius: 16, padding: 14, borderWidth: 0.5, borderColor: "#1e1e1e", flexDirection: "row", alignItems: "center", gap: 10 },
-  streakNum: { fontFamily: "serif", fontSize: 32, color: "#fff" },
-  streakL: { fontFamily: "sans-serif-medium", fontSize: 12, color: "#ddd" },
-  streakS: { fontFamily: "sans-serif", fontSize: 10, color: "#444", marginTop: 2 },
-  dots: { flexDirection: "row", gap: 4, marginLeft: "auto" },
-  dot: { width: 8, height: 8, borderRadius: 4 },
-  dotOn: { backgroundColor: "#fff" },
-  dotOff: { backgroundColor: "#1e1e1e" },
-  sectionLbl: { fontSize: 9, color: "#444", textTransform: "uppercase", letterSpacing: 1.5, paddingHorizontal: 18, marginBottom: 8, fontFamily: "sans-serif-medium" },
-  card: { marginHorizontal: 12, marginBottom: 12, backgroundColor: "#111", borderRadius: 16, padding: 14, borderWidth: 0.5, borderColor: "#222" },
+  content: { paddingHorizontal: 16, paddingBottom: 110 },
+  header: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 },
+  brand: { fontSize: 28, color: "#fff", fontStyle: "italic", fontWeight: "300", marginBottom: 4 },
+  sub: { fontSize: 12, color: "#555" },
+  logoutBtn: { padding: 8, marginTop: 4 },
+  statsRow: { flexDirection: "row", gap: 10, marginBottom: 24 },
+  statCard: { flex: 1, backgroundColor: "#111", borderRadius: 18, padding: 14, alignItems: "center", borderWidth: 0.5, borderColor: "#1e1e1e" },
+  statNum: { fontSize: 26, color: "#fff", fontWeight: "200", marginBottom: 2 },
+  statLbl: { fontSize: 9, color: "#555", letterSpacing: 0.5, textAlign: "center" },
+  sectionLabel: { fontSize: 9, color: "#444", textTransform: "uppercase", letterSpacing: 2, marginBottom: 10, fontWeight: "600" },
+  card: { backgroundColor: "#111", borderRadius: 16, padding: 14, borderWidth: 0.5, borderColor: "#1e1e1e", marginBottom: 20 },
   badge: { backgroundColor: "#fff", borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2, alignSelf: "flex-start", marginBottom: 8 },
-  badgeTxt: { fontFamily: "sans-serif-medium", fontSize: 9, color: "#000" },
-  cardTitle: { fontFamily: "sans-serif-medium", fontSize: 13, color: "#fff", marginBottom: 3 },
-  cardMeta: { fontFamily: "sans-serif", fontSize: 10, color: "#555" },
-  actRow: { flexDirection: "row", gap: 8, paddingHorizontal: 12, marginBottom: 16 },
-  actBtn: { flex: 1, backgroundColor: "#111", borderRadius: 12, padding: 10, alignItems: "center", borderWidth: 0.5, borderColor: "#222" },
-  actIcon: { fontSize: 16, marginBottom: 4 },
-  actLbl: { fontFamily: "sans-serif", fontSize: 9, color: "#555" },
-  rowItem: { marginHorizontal: 12, marginBottom: 8, flexDirection: "row", alignItems: "center", gap: 10, backgroundColor: "#111", borderRadius: 12, padding: 10, borderWidth: 0.5, borderColor: "#1e1e1e" },
-  rowIcon: { width: 32, height: 32, borderRadius: 9, backgroundColor: "#1e1e1e", alignItems: "center", justifyContent: "center" },
-  rowInfo: { flex: 1 },
-  rowName: { fontFamily: "sans-serif-medium", fontSize: 11, color: "#ddd" },
-  rowSub: { fontFamily: "sans-serif", fontSize: 9, color: "#444", marginTop: 1 },
-  rowRight: { fontFamily: "sans-serif", fontSize: 12, color: "#555" },
+  badgeTxt: { fontSize: 9, color: "#000", fontWeight: "700", textTransform: "uppercase" },
+  cardTitle: { fontSize: 13, color: "#fff", fontWeight: "500", marginBottom: 3 },
+  cardMeta: { fontSize: 11, color: "#555" },
+  actionsGrid: { flexDirection: "row", gap: 10, marginBottom: 24 },
+  actionBtn: { flex: 1, backgroundColor: "#111", borderRadius: 14, padding: 12, alignItems: "center", gap: 6, borderWidth: 0.5, borderColor: "#1e1e1e" },
+  actionLabel: { fontSize: 9, color: "#555" },
+  noteRow: { flexDirection: "row", alignItems: "center", gap: 12, backgroundColor: "#111", borderRadius: 14, padding: 12, borderWidth: 0.5, borderColor: "#1e1e1e", marginBottom: 8 },
+  noteInfo: { flex: 1 },
+  noteName: { fontSize: 12, color: "#ddd", fontWeight: "500" },
+  noteSub: { fontSize: 10, color: "#444", marginTop: 2 },
 });
+

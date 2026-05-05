@@ -5,8 +5,16 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
   const clerkUserId = req.headers["x-clerk-user-id"] as string;
   if (!clerkUserId) return res.status(401).json({ error: "Unauthorized" });
 
-  const user = await prisma.user.findUnique({ where: { clerkId: clerkUserId } });
-  if (!user) return res.status(401).json({ error: "User not found" });
+  let user = await prisma.user.findUnique({ where: { clerkId: clerkUserId } });
+  if (!user) {
+    user = await prisma.user.create({
+      data: {
+        clerkId: clerkUserId,
+        email: `${clerkUserId}@clerk.local`,
+        name: "Student",
+      },
+    });
+  }
 
   (req as any).user = user;
   next();
