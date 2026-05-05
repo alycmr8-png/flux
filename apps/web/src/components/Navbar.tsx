@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import Link from "next/link";
 import { Layers } from "lucide-react";
 
@@ -37,9 +37,8 @@ export function Navbar() {
             <Link
               key={label}
               href={href}
-              style={{ fontSize: 14, color: "rgba(0,0,0,0.45)", textDecoration: "none", transition: "color 0.15s" }}
-              onMouseEnter={e => (e.currentTarget.style.color = "#111110")}
-              onMouseLeave={e => (e.currentTarget.style.color = "rgba(0,0,0,0.45)")}
+              className="navbar-link"
+              style={{ fontSize: 14, textDecoration: "none" }}
             >
               {label}
             </Link>
@@ -48,12 +47,7 @@ export function Navbar() {
 
         {/* Auth buttons */}
         <div className="flex items-center gap-2">
-          <Link
-            href="/sign-in"
-            style={{ fontSize: 14, color: "rgba(0,0,0,0.45)", textDecoration: "none", padding: "7px 14px", borderRadius: 999, transition: "color 0.15s" }}
-            onMouseEnter={e => (e.currentTarget.style.color = "#111110")}
-            onMouseLeave={e => (e.currentTarget.style.color = "rgba(0,0,0,0.45)")}
-          >
+          <Link href="/sign-in" className="navbar-link" style={{ fontSize: 14, textDecoration: "none", padding: "7px 14px", borderRadius: 999 }}>
             Sign in
           </Link>
           <Link
@@ -65,7 +59,11 @@ export function Navbar() {
           </Link>
         </div>
       </div>
+
+      <style>{`
+        .navbar-link { color: rgba(0,0,0,0.45); transition: color 0.15s; }
+        .navbar-link:hover { color: #111110; }
+      `}</style>
     </header>
   );
 }
-

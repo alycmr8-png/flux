@@ -41,7 +41,7 @@ export function TiptapNoteEditor({
     const incoming = content && !content.trimStart().startsWith("<")
       ? `<p>${content.replace(/\n/g, "</p><p>")}</p>`
       : content || "<p></p>";
-    if (current !== incoming) editor.commands.setContent(incoming, false);
+    if (current !== incoming) editor.commands.setContent(incoming);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [content]);
 

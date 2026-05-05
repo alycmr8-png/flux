@@ -335,7 +335,7 @@ export default function DashboardHome() {
                         href="/dashboard/calendar"
                         className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider mt-2 transition-colors hover:text-white"
                         style={{ color: `${color}cc` }}
-                        onClick={e => e.stopPropagation()}
+                        onClick={(e: React.MouseEvent) => e.stopPropagation()}
                       >
                         Open in calendar <ChevronRight size={10} />
                       </Link>

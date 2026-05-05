@@ -77,7 +77,7 @@ function Sidebar() {
   );
 }
 
-function ClassesView({ cardRef }: { cardRef: React.RefObject<HTMLDivElement> }) {
+function ClassesView({ cardRef }: { cardRef: React.RefObject<HTMLDivElement | null> }) {
   return (
     <div className="flex-1 p-7">
       <div className="flex items-center justify-between mb-6">
@@ -115,10 +115,10 @@ function ClassesView({ cardRef }: { cardRef: React.RefObject<HTMLDivElement> }) 
 function ClassView({ tab, phase, recordTabRef, quizTabRef, sbTabRef, micBtnRef }: {
   tab: string;
   phase: string;
-  recordTabRef: React.RefObject<HTMLDivElement>;
-  quizTabRef:   React.RefObject<HTMLDivElement>;
-  sbTabRef:     React.RefObject<HTMLDivElement>;
-  micBtnRef:    React.RefObject<HTMLDivElement>;
+  recordTabRef: React.RefObject<HTMLDivElement | null>;
+  quizTabRef:   React.RefObject<HTMLDivElement | null>;
+  sbTabRef:     React.RefObject<HTMLDivElement | null>;
+  micBtnRef:    React.RefObject<HTMLDivElement | null>;
 }) {
   const isRecording = phase === "recording";
 
