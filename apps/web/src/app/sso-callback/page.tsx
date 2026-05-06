@@ -1,6 +1,2 @@
-"use client";
-import { AuthenticateWithRedirectCallback } from "@clerk/nextjs";
-
-export default function SSOCallback() {
-  return <AuthenticateWithRedirectCallback />;
-}
+export const dynamic = "force-dynamic";
+export { default } from "@/components/SSOCallback";
