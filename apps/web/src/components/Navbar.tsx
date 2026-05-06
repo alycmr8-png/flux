@@ -6,7 +6,7 @@ export function Navbar() {
   return (
     <header className="fixed left-0 right-0 z-50 flex justify-center px-4" style={{ top: 20, pointerEvents: "none" }}>
       <div
-        className="flex items-center justify-between px-8 w-full"
+        className="flex items-center justify-between px-4 md:px-8 w-full"
         style={{
           maxWidth: 780,
           height: 60,
@@ -47,7 +47,7 @@ export function Navbar() {
 
         {/* Auth buttons */}
         <div className="flex items-center gap-2">
-          <Link href="/sign-in" className="navbar-link" style={{ fontSize: 14, textDecoration: "none", padding: "7px 14px", borderRadius: 999 }}>
+          <Link href="/sign-in" className="navbar-link hidden md:block" style={{ fontSize: 14, textDecoration: "none", padding: "7px 14px", borderRadius: 999 }}>
             Sign in
           </Link>
           <Link
