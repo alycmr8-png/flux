@@ -1,6 +1,5 @@
 import { Router } from "express";
 import axios from "axios";
-import { YoutubeTranscript } from "youtube-transcript";
 import { prisma } from "../lib/prisma";
 import { generateStudyBook, condenseTranscript, summarizeTranscript, generateFlashcardsFromTranscript, answerVideoQuestion } from "../services/claude";
 
@@ -40,6 +39,7 @@ async function withTimeout<T>(promise: Promise<T>, ms: number, label: string): P
 async function fetchYouTubeTranscript(videoId: string): Promise<YTTranscript> {
   // Strategy 1: youtube-transcript package — returns timestamps
   try {
+    const { YoutubeTranscript } = await import("youtube-transcript");
     const items = await withTimeout(YoutubeTranscript.fetchTranscript(videoId), 15000, "YouTube transcript fetch");
     if (items.length) {
       const segments = items.map((t: any) => ({
