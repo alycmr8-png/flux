@@ -1,17 +1,26 @@
-import Anthropic from "@anthropic-ai/sdk";
+import OpenAI from "openai";
 
-let _anthropic: Anthropic | null = null;
+let _openai: OpenAI | null = null;
 function getClient() {
-  if (!_anthropic) _anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY, timeout: 90000 });
-  return _anthropic;
+  if (!_openai) _openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY, timeout: 90000 });
+  return _openai;
 }
 
 async function createWithRetry(params: any, retries = 3): Promise<any> {
-  const models = [params.model, "claude-haiku-4-5-20251001"];
+  const models = [params.model, "gpt-3.5-turbo"];
   let modelIdx = 0;
   for (let i = 0; i < retries; i++) {
     try {
-      return await getClient().messages.create({ ...params, model: models[modelIdx] });
+      const { system, messages, model, max_tokens, ...rest } = { ...params, model: models[modelIdx] };
+      const openaiMessages: OpenAI.Chat.ChatCompletionMessageParam[] = [];
+      if (system) openaiMessages.push({ role: "system", content: system });
+      if (messages) openaiMessages.push(...messages);
+      return await getClient().chat.completions.create({
+        ...rest,
+        model,
+        max_tokens,
+        messages: openaiMessages,
+      });
     } catch (err: any) {
       const status = err?.status ?? err?.error?.status;
       const isRetryable = status >= 500 || status === 429;
@@ -27,8 +36,7 @@ async function createWithRetry(params: any, retries = 3): Promise<any> {
 }
 
 function extractText(msg: any): string {
-  const block = msg.content.find((b: any) => b.type === "text");
-  return block?.text ?? "";
+  return msg?.choices?.[0]?.message?.content ?? "";
 }
 
 async function batchPromises<T>(tasks: (() => Promise<T>)[], limit: number): Promise<T[]> {
@@ -65,7 +73,7 @@ async function summarizeChunk(
 ): Promise<string> {
   const langName = LANG_NAMES[language] ?? "English";
   const msg = await createWithRetry({
-    model: "claude-haiku-4-5-20251001",
+    model: "gpt-3.5-turbo",
     max_tokens: 900,
     system: `Extract and preserve all important content from this lecture segment. Write in ${langName}.
 Return structured notes with clearly labeled sections:
@@ -152,7 +160,7 @@ export async function condenseTranscript(
 export async function generateCheatSheet(transcript: string, lectureTitle: string, language = "en") {
   const langName = LANG_NAMES[language] ?? "English";
   const message = await createWithRetry({
-    model: "claude-sonnet-4-6",
+    model: "gpt-4o",
     max_tokens: 6000,
     system: `You are an expert study assistant. Generate a comprehensive, detailed cheat sheet from a lecture transcript.
 Write ALL text (headings, bullets, tips) in ${langName}.
@@ -191,7 +199,7 @@ export async function generateStructuredLearningFile(
 ) {
   const langName = LANG_NAMES[language] ?? "English";
   const message = await createWithRetry({
-    model: "claude-sonnet-4-6",
+    model: "gpt-4o",
     max_tokens: 4096,
     system: `You are an expert study assistant. Generate a comprehensive structured learning file from a document.
 Write ALL text in ${langName}.
@@ -238,7 +246,7 @@ export async function generateStudyBook(transcript: string, lectureTitle: string
   }[tier];
 
   const msg = await createWithRetry({
-    model: "claude-sonnet-4-6",
+    model: "gpt-4o",
     max_tokens: depth.maxTokens,
     system: `You are an expert Instructional Designer creating comprehensive study materials.
 Your primary goal: if the speaker explains something in depth, YOU explain it in depth too. Never summarise what can be detailed.
@@ -314,10 +322,7 @@ export async function streamSocraticResponse(
   messages: { role: "user" | "assistant"; content: string }[],
   onChunk: (text: string) => void
 ): Promise<void> {
-  const stream = getClient().messages.stream({
-    model: "claude-sonnet-4-6",
-    max_tokens: 1024,
-    system: `You are a Socratic tutor helping a student review their lecture on "${lectureTitle}".
+  const systemPrompt = `You are a Socratic tutor helping a student review their lecture on "${lectureTitle}".
 
 Lecture context:
 ---
@@ -345,19 +350,29 @@ B) MATH STEPS: When a student asks a math or calculation problem, append step-by
 MATH_STEPS:[{"label":"Step 1: Identify","latex":"f(x) = x^2 + 3x + 2","hint":"What form is this?"},{"label":"Step 2: Factor","latex":"f(x) = (x+1)(x+2)","hint":"What are the roots?"}]
 Each step must be valid LaTeX. Max 6 steps. The student reveals one step at a time.
 
-Only include ONE whiteboard element per response. Never both. Never use these formats unless genuinely helpful.`,
-    messages,
+Only include ONE whiteboard element per response. Never both. Never use these formats unless genuinely helpful.`;
+
+  const openaiMessages: OpenAI.Chat.ChatCompletionMessageParam[] = [
+    { role: "system", content: systemPrompt },
+    ...messages,
+  ];
+
+  const stream = await getClient().chat.completions.create({
+    model: "gpt-4o",
+    max_tokens: 1024,
+    messages: openaiMessages,
+    stream: true,
   });
+
   for await (const chunk of stream) {
-    if (chunk.type === "content_block_delta" && chunk.delta.type === "text_delta") {
-      onChunk(chunk.delta.text);
-    }
+    const delta = chunk.choices?.[0]?.delta?.content;
+    if (delta) onChunk(delta);
   }
 }
 
 export async function parseSyllabus(text: string, courseName: string) {
   const msg = await createWithRetry({
-    model: "claude-sonnet-4-6",
+    model: "gpt-4o",
     max_tokens: 8192,
     system: `You are an expert academic document parser and data engineer.
 Extract ALL structured information from a course syllabus. Return ONLY valid JSON — no markdown, no code blocks.
@@ -413,7 +428,7 @@ export async function generateQuiz(
   }[]
 > {
   const message = await createWithRetry({
-    model: "claude-sonnet-4-6",
+    model: "gpt-4o",
     max_tokens: 4096,
     system: `You are an expert study assistant. Generate 5-10 multiple choice questions from a lecture transcript.
 Write ALL text (questions, options, explanations) in ${LANG_NAMES[language] ?? "English"}.
@@ -441,7 +456,7 @@ Questions should test deep understanding, not just memorization.`,
 export async function summarizeTranscript(transcript: string, title: string, language = "en"): Promise<string> {
   const langName = LANG_NAMES[language] ?? "English";
   const msg = await createWithRetry({
-    model: "claude-haiku-4-5-20251001",
+    model: "gpt-3.5-turbo",
     max_tokens: 1000,
     system: `You are a study assistant. Summarize the lecture transcript in 3-4 clear paragraphs in ${langName}. Cover the main topics, key insights, and important takeaways. Be informative and concise. Never refuse, never apologize, never comment on transcript quality — always extract and summarize whatever useful content is present, even if the transcript is noisy, mixed-language, or imperfect.`,
     messages: [{ role: "user", content: `Lecture: "${title}"\n\nTranscript:\n${transcript.slice(0, 12000)}` }],
@@ -452,7 +467,7 @@ export async function summarizeTranscript(transcript: string, title: string, lan
 export async function generateFlashcardsFromTranscript(transcript: string, language = "en"): Promise<{ front: string; back: string }[]> {
   const langName = LANG_NAMES[language] ?? "English";
   const msg = await createWithRetry({
-    model: "claude-haiku-4-5-20251001",
+    model: "gpt-3.5-turbo",
     max_tokens: 2000,
     system: `Generate 8-12 flashcards from this lecture in ${langName}. Return ONLY valid JSON array — no markdown, no code blocks.\n[{"front": string, "back": string}]`,
     messages: [{ role: "user", content: `Transcript:\n${transcript.slice(0, 12000)}` }],
@@ -469,7 +484,7 @@ export async function answerVideoQuestion(
 ): Promise<string> {
   const langName = LANG_NAMES[language] ?? "English";
   const msg = await createWithRetry({
-    model: "claude-haiku-4-5-20251001",
+    model: "gpt-3.5-turbo",
     max_tokens: 512,
     system: `You are a helpful tutor for the lecture "${title}". Answer questions about it clearly and concisely in ${langName}. Only use information from the transcript.\n\nTranscript:\n${transcript.slice(0, 8000)}`,
     messages,
