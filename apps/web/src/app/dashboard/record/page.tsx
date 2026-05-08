@@ -333,25 +333,51 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: { course: any;
   const [savingSheet, setSavingSheet] = useState(false);
   const [addingToBook, setAddingToBook] = useState(false);
   const [addedToBook, setAddedToBook] = useState(false);
+  const [processingError, setProcessingError] = useState("");
+  const [inlineTranscript, setInlineTranscript] = useState("");
+  const [inlineSummary, setInlineSummary] = useState<any | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const pollStartRef = useRef<number>(0);
 
   useEffect(() => {
     if (!processingId) return;
+    setProcessingError("");
+    pollStartRef.current = Date.now();
     pollRef.current = setInterval(async () => {
+      // 6-minute hard timeout
+      if (Date.now() - pollStartRef.current > 6 * 60 * 1000) {
+        if (pollRef.current) clearInterval(pollRef.current);
+        setProcessingError("Processing timed out. Please try again.");
+        setProcessingId(null);
+        return;
+      }
       try {
         const res = await apiFetch(`/api/lectures/${processingId}/status`);
         const status = res.data?.status;
         setProcessingStatus(status);
         if (status === "ready" || status === "error") {
           if (pollRef.current) clearInterval(pollRef.current);
-          if (status === "ready") {
-            const updated: any = await mutateLectures();
-            const processedLecture = (updated?.data ?? []).find((l: any) => l.id === processingId);
-            if (processedLecture?.transcript) setLectureTranscript(processedLecture.transcript);
+          if (status === "error") {
+            setProcessingError("Processing failed. Check that your API keys are set in Railway and try again.");
+            setProcessingId(null);
+            return;
+          }
+          // Ready — fetch results
+          const updated: any = await mutateLectures();
+          const processedLecture = (updated?.data ?? []).find((l: any) => l.id === processingId);
+          const transcript = processedLecture?.transcript ?? "";
+          if (transcript) setLectureTranscript(transcript);
+
+          if (recordAction === "transcribe") {
+            setInlineTranscript(transcript || "No transcript returned.");
+            setProcessingId(null);
+          } else {
+            // summarize — fetch cheatsheet and show inline
             const sheetRes = await apiFetch(`/api/cheatsheets?lectureId=${processingId}`);
             const sheets = (sheetRes.data ?? []).filter((s: any) => !s.title?.startsWith("Study Book:"));
             if (sheets.length) {
               const sh = sheets[0];
+              setInlineSummary(sh);
               setLectureSheet(sh);
               setResultTab("read");
               setEditTitle(sh.title ?? "");
@@ -362,14 +388,17 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: { course: any;
               setEditKeyTerms(
                 (sh.content?.keyTerms ?? []).map((kt: any) => `${kt.term}: ${kt.definition}`).join("\n")
               );
+            } else {
+              setProcessingError("Summary was generated but could not be loaded. Check your recordings list.");
             }
+            setProcessingId(null);
           }
         }
       } catch (_) {}
     }, 3000);
     return () => { if (pollRef.current) clearInterval(pollRef.current); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [processingId]);
+  }, [processingId, recordAction]);
 
   async function startRecording() {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -553,6 +582,9 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: { course: any;
     setPlaying(false);
     setRecordAction(null);
     if (audioElemRef.current) { audioElemRef.current.pause(); audioElemRef.current = null; }
+    setProcessingError("");
+    setInlineTranscript("");
+    setInlineSummary(null);
   }
 
   const fmt = (s: number) =>
@@ -1320,14 +1352,71 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: { course: any;
             </div>
           )}
 
+          {/* ── Error state ── */}
+          {processingError && (
+            <div className="bg-red-50 border border-red-100 rounded-2xl px-5 py-4 flex items-start gap-3">
+              <X size={15} className="text-red-400 shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <div className="text-sm font-medium text-red-700">Processing failed</div>
+                <div className="text-xs text-red-500 mt-0.5">{processingError}</div>
+              </div>
+              <button onClick={() => setProcessingError("")} className="text-xs text-red-400 hover:text-red-600">Dismiss</button>
+            </div>
+          )}
+
           {/* ── Processing indicator ── */}
-          {processingId && !lectureSheet && (
+          {processingId && (
             <div className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl px-5 py-4 flex items-center gap-4">
               <Loader2 size={16} className="animate-spin text-[#555] shrink-0" />
               <div>
-                <div className="text-sm font-medium text-[#111110]">Processing your recording…</div>
-                <div className="text-xs text-[#555] mt-0.5 capitalize">{processingStatus === "transcribing" ? "Transcribing audio" : processingStatus === "generating" ? "Generating summary" : "Reading audio"}</div>
+                <div className="text-sm font-medium text-[#111110]">
+                  {recordAction === "transcribe" ? "Transcribing your audio…" : "Generating summary…"}
+                </div>
+                <div className="text-xs text-[#555] mt-0.5">
+                  {processingStatus === "transcribing" ? "Converting speech to text" : processingStatus === "generating" ? "AI is building your summary" : "Uploading audio"}
+                </div>
               </div>
+            </div>
+          )}
+
+          {/* ── Inline transcript result ── */}
+          {inlineTranscript && (
+            <div className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl p-5 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold uppercase tracking-widest text-[#555]">Transcript</span>
+                <button onClick={() => { setInlineTranscript(""); resetRecorder(); }} className="text-xs text-[rgba(0,0,0,0.3)] hover:text-[#555]">✕ Close</button>
+              </div>
+              <div className="max-h-72 overflow-y-auto text-sm text-[#333] leading-relaxed whitespace-pre-wrap">
+                {inlineTranscript}
+              </div>
+              <button onClick={resetRecorder} className="text-xs text-[rgba(0,0,0,0.3)] hover:text-[#555]">Record another</button>
+            </div>
+          )}
+
+          {/* ── Inline summary result ── */}
+          {inlineSummary && (
+            <div className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl p-5 space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold uppercase tracking-widest text-[#555]">Summary</span>
+                <button onClick={() => { setInlineSummary(null); resetRecorder(); }} className="text-xs text-[rgba(0,0,0,0.3)] hover:text-[#555]">✕ Close</button>
+              </div>
+              {(inlineSummary.content?.sections ?? []).slice(0, 3).map((s: any, i: number) => (
+                <div key={i}>
+                  <div className="text-xs font-semibold uppercase tracking-widest text-[#555] mb-2">{s.heading}</div>
+                  {(s.bullets ?? []).map((b: string, j: number) => (
+                    <div key={j} className="flex gap-2 text-sm text-[#333] mb-1"><span className="opacity-30 shrink-0">•</span>{b}</div>
+                  ))}
+                </div>
+              ))}
+              {(inlineSummary.content?.keyTerms ?? []).length > 0 && (
+                <div>
+                  <div className="text-xs font-semibold uppercase tracking-widest text-[#555] mb-2">Key Terms</div>
+                  {(inlineSummary.content.keyTerms ?? []).slice(0, 5).map((kt: any, i: number) => (
+                    <div key={i} className="text-sm text-[#333] mb-1"><span className="font-medium">{kt.term}</span> — {kt.definition}</div>
+                  ))}
+                </div>
+              )}
+              <button onClick={resetRecorder} className="text-xs text-[rgba(0,0,0,0.3)] hover:text-[#555]">Record another</button>
             </div>
           )}
 
