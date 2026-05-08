@@ -79,11 +79,15 @@ export async function processLecture(lectureId: string, userId: string) {
     ]);
 
     if (user?.googleTokens) {
-      const driveUrl = await syncToDrive(user, cheatSheetContent, lecture.title);
-      if (driveUrl) {
-        await prisma.cheatSheet.update({ where: { id: cheatSheet.id }, data: { driveUrl } });
+      try {
+        const driveUrl = await syncToDrive(user, cheatSheetContent, lecture.title);
+        if (driveUrl) {
+          await prisma.cheatSheet.update({ where: { id: cheatSheet.id }, data: { driveUrl } });
+        }
+        await scheduleSpacedRepetition(user, lectureId);
+      } catch (driveErr) {
+        console.error("[processLecture] Google Drive sync failed (non-fatal):", (driveErr as any)?.message);
       }
-      await scheduleSpacedRepetition(user, lectureId);
     }
 
     await safeStatusUpdate(lectureId, { status: "ready" });
