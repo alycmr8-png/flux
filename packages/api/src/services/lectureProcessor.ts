@@ -5,24 +5,40 @@ import { condenseTranscript, generateCheatSheet, generateQuiz } from "./claude";
 import { syncToDrive } from "./google";
 import { scheduleSpacedRepetition } from "./spaced-repetition";
 
+async function safeStatusUpdate(lectureId: string, data: object) {
+  try {
+    await prisma.lecture.update({ where: { id: lectureId }, data });
+  } catch {
+    try {
+      await prisma.$disconnect();
+      await prisma.$connect();
+      await prisma.lecture.update({ where: { id: lectureId }, data });
+    } catch (e) {
+      console.error("[safeStatusUpdate] failed after reconnect:", e);
+    }
+  }
+}
+
 export async function processLecture(lectureId: string, userId: string) {
   try {
     const lecture = await prisma.lecture.findUniqueOrThrow({ where: { id: lectureId } });
 
-    await prisma.lecture.update({ where: { id: lectureId }, data: { status: "transcribing" } });
+    await safeStatusUpdate(lectureId, { status: "transcribing" });
 
     let transcript = "";
     let segments: { start: number; end: number; text: string }[] = [];
 
-    if (lecture.audioUrl && fs.existsSync(lecture.audioUrl)) {
-      const result = await transcribeAudio(lecture.audioUrl);
-      transcript = result.text;
-      segments = result.segments;
-      await prisma.lecture.update({
-        where: { id: lectureId },
-        data: { transcript, status: "generating" },
-      });
+    if (!lecture.audioUrl || !fs.existsSync(lecture.audioUrl)) {
+      throw new Error(`Audio file not found: ${lecture.audioUrl}`);
     }
+
+    const result = await transcribeAudio(lecture.audioUrl);
+    transcript = result.text;
+    segments = result.segments;
+
+    if (!transcript.trim()) throw new Error("Whisper returned empty transcript");
+
+    await safeStatusUpdate(lectureId, { transcript, status: "generating" });
 
     const user = await prisma.user.findUnique({ where: { id: userId }, include: { googleTokens: true } });
     const language = user?.language ?? "en";
@@ -70,9 +86,9 @@ export async function processLecture(lectureId: string, userId: string) {
       await scheduleSpacedRepetition(user, lectureId);
     }
 
-    await prisma.lecture.update({ where: { id: lectureId }, data: { status: "ready" } });
+    await safeStatusUpdate(lectureId, { status: "ready" });
   } catch (err) {
     console.error("Processing failed for lecture", lectureId, err);
-    await prisma.lecture.update({ where: { id: lectureId }, data: { status: "error" } });
+    await safeStatusUpdate(lectureId, { status: "error" });
   }
 }

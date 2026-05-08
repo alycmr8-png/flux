@@ -21,12 +21,18 @@ export async function transcribeAudio(filePath: string): Promise<TranscriptionRe
 
   const file = await toFile(fs.createReadStream(filePath), `audio${ext}`, { type: mime });
 
-  const response = await openai.audio.transcriptions.create({
-    file,
-    model: "whisper-1",
-    response_format: "verbose_json",
-    timestamp_granularities: ["segment"],
-  }) as any;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 5 * 60 * 1000);
+
+  let response: any;
+  try {
+    response = await openai.audio.transcriptions.create(
+      { file, model: "whisper-1", response_format: "verbose_json", timestamp_granularities: ["segment"] },
+      { signal: controller.signal }
+    ) as any;
+  } finally {
+    clearTimeout(timer);
+  }
 
   return {
     text: response.text ?? "",
