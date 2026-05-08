@@ -313,6 +313,11 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: { course: any;
   const [savedAudioUrl, setSavedAudioUrl] = useState<string | null>(null);
   const [playing, setPlaying] = useState(false);
   const [recordAction, setRecordAction] = useState<"transcribe" | "summarize" | null>(null);
+  const [recStep, setRecStep] = useState<"name" | "recording" | "saved" | "processing" | "done">("name");
+  const [openLectureId, setOpenLectureId] = useState<string | null>(null);
+  const [openTab, setOpenTab] = useState<"listen" | "transcript" | "summary">("listen");
+  const [openLectureData, setOpenLectureData] = useState<{ transcript: string; sheet: any | null; audioUrl: string | null } | null>(null);
+  const localAudioUrlsRef = useRef<Map<string, string>>(new Map());
   const mediaRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -344,11 +349,11 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: { course: any;
     setProcessingError("");
     pollStartRef.current = Date.now();
     pollRef.current = setInterval(async () => {
-      // 6-minute hard timeout
       if (Date.now() - pollStartRef.current > 6 * 60 * 1000) {
         if (pollRef.current) clearInterval(pollRef.current);
         setProcessingError("Processing timed out. Please try again.");
         setProcessingId(null);
+        setRecStep("saved");
         return;
       }
       try {
@@ -360,45 +365,34 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: { course: any;
           if (status === "error") {
             setProcessingError("Processing failed. Check that your API keys are set in Railway and try again.");
             setProcessingId(null);
+            setRecStep("saved");
             return;
           }
-          // Ready — fetch results
-          const updated: any = await mutateLectures();
-          const processedLecture = (updated?.data ?? []).find((l: any) => l.id === processingId);
-          const transcript = processedLecture?.transcript ?? "";
-          if (transcript) setLectureTranscript(transcript);
-
-          if (recordAction === "transcribe") {
-            setInlineTranscript(transcript || "No transcript returned.");
-            setProcessingId(null);
-          } else {
-            // summarize — fetch cheatsheet and show inline
-            const sheetRes = await apiFetch(`/api/cheatsheets?lectureId=${processingId}`);
-            const sheets = (sheetRes.data ?? []).filter((s: any) => !s.title?.startsWith("Study Book:"));
-            if (sheets.length) {
-              const sh = sheets[0];
-              setInlineSummary(sh);
-              setLectureSheet(sh);
-              setResultTab("read");
-              setEditTitle(sh.title ?? "");
-              setEditSections((sh.content?.sections ?? []).map((s: any) => ({
-                heading: s.heading ?? "",
-                bullets: (s.bullets ?? []).join("\n"),
-              })));
-              setEditKeyTerms(
-                (sh.content?.keyTerms ?? []).map((kt: any) => `${kt.term}: ${kt.definition}`).join("\n")
-              );
-            } else {
-              setProcessingError("Summary was generated but could not be loaded. Check your recordings list.");
-            }
-            setProcessingId(null);
-          }
+          await mutateLectures();
+          setProcessingId(null);
+          setRecStep("done");
         }
       } catch (_) {}
     }, 3000);
     return () => { if (pollRef.current) clearInterval(pollRef.current); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [processingId, recordAction]);
+  }, [processingId]);
+
+  useEffect(() => {
+    if (recStep !== "done") return;
+    const t = setTimeout(() => {
+      setRecStep("name");
+      setSeconds(0);
+      setRecTitle("");
+      setSavedBlob(null);
+      setSavedAudioUrl(null);
+      setPlaying(false);
+      setProcessingError("");
+      if (audioElemRef.current) { audioElemRef.current.pause(); audioElemRef.current = null; }
+    }, 3000);
+    return () => clearTimeout(t);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [recStep]);
 
   async function startRecording() {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -408,6 +402,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: { course: any;
     recorder.ondataavailable = e => chunksRef.current.push(e.data);
     recorder.start(250);
     setRecording(true);
+    setRecStep("recording");
     timerRef.current = setInterval(() => setSeconds(s => s + 1), 1000);
   }
 
@@ -437,6 +432,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: { course: any;
     const url = URL.createObjectURL(blob);
     setSavedBlob(blob);
     setSavedAudioUrl(url);
+    setRecStep("saved");
   }
 
   function playAudio() {
@@ -454,11 +450,11 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: { course: any;
     }
   }
 
-  async function processAudio(action: "transcribe" | "summarize") {
+  async function processAudio() {
     if (!savedBlob) return;
-    setRecordAction(action);
     if (audioElemRef.current) { audioElemRef.current.pause(); setPlaying(false); }
     setUploading(true);
+    setRecStep("processing");
     try {
       const fd = new FormData();
       fd.append("audio", savedBlob, "lecture.webm");
@@ -466,16 +462,19 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: { course: any;
       fd.append("title", recTitle.trim() || `Lecture ${new Date().toLocaleDateString()}`);
       if (slidesFile) fd.append("slides", slidesFile);
       const res = await apiFetch("/api/lectures", { method: "POST", body: fd });
-      setProcessingId(res.data?.id ?? null);
+      const lectureId = res.data?.id ?? null;
+      if (lectureId && savedAudioUrl) {
+        localAudioUrlsRef.current.set(lectureId, savedAudioUrl);
+      } else if (savedAudioUrl) {
+        URL.revokeObjectURL(savedAudioUrl);
+      }
+      setProcessingId(lectureId);
       setProcessingStatus("processing");
-      setLectureSheet(null);
-      setLectureTranscript("");
-      setAddedToBook(false);
       setSavedBlob(null);
-      if (savedAudioUrl) URL.revokeObjectURL(savedAudioUrl);
       setSavedAudioUrl(null);
     } catch (e: any) {
       alert(e?.message ?? "Upload failed");
+      setRecStep("saved");
     } finally {
       setUploading(false);
     }
@@ -585,6 +584,30 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: { course: any;
     setProcessingError("");
     setInlineTranscript("");
     setInlineSummary(null);
+    setRecStep("name");
+    setOpenLectureId(null);
+    setOpenLectureData(null);
+  }
+
+  async function openLecture(lecture: any) {
+    setOpenLectureId(lecture.id);
+    setOpenTab("listen");
+    setOpenLectureData(null);
+    const transcript = lecture.transcript ?? "";
+    const audioUrl = localAudioUrlsRef.current.get(lecture.id) ?? null;
+    try {
+      const sheetRes = await apiFetch(`/api/cheatsheets?lectureId=${lecture.id}`);
+      const shts = (sheetRes.data ?? []).filter((s: any) => !s.title?.startsWith("Study Book:"));
+      setOpenLectureData({ transcript, sheet: shts[0] ?? null, audioUrl });
+    } catch {
+      setOpenLectureData({ transcript, sheet: null, audioUrl });
+    }
+  }
+
+  function closeOpenLecture() {
+    setOpenLectureId(null);
+    setOpenLectureData(null);
+    setOpenTab("listen");
   }
 
   const fmt = (s: number) =>
@@ -1241,388 +1264,295 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: { course: any;
       {/* ── RECORD ── */}
       {tab === "record" && (
         <div className="space-y-4">
-          <input
-            value={recTitle}
-            onChange={e => setRecTitle(e.target.value)}
-            placeholder="Lecture title (optional)"
-            className="w-full bg-white border border-[rgba(0,0,0,0.08)] rounded-xl px-4 py-2.5 text-sm text-[#111110] placeholder-[rgba(0,0,0,0.3)] outline-none focus:border-[rgba(0,0,0,0.1)]"
-          />
           <style>{`
             @keyframes waveBar {
               0%, 100% { transform: scaleY(0.25); }
               50% { transform: scaleY(1); }
             }
+            @keyframes ringPulse {
+              0% { transform: scale(1); opacity: 0.5; }
+              100% { transform: scale(2.4); opacity: 0; }
+            }
           `}</style>
 
-          {/* Saved audio action card */}
-          {savedBlob && (
-            <div className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl p-5 space-y-3">
-              <div className="flex items-center gap-2">
-                <CheckCircle size={16} className="text-green-500" />
-                <span className="text-sm font-medium text-[#111110]">Recording saved</span>
-                <span className="ml-auto text-xs text-[#888]">{fmt(seconds)}</span>
-              </div>
-
-              <button
-                onClick={playAudio}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-[rgba(0,0,0,0.08)] hover:bg-[rgba(0,0,0,0.02)] transition-colors"
-              >
-                {playing ? <Pause size={16} className="text-[#111110]" /> : <Play size={16} className="text-[#111110]" />}
-                <span className="text-sm text-[#111110]">{playing ? "Pause" : "Listen to recording"}</span>
+          {/* ── Open lecture detail screen ── */}
+          {openLectureId ? (
+            <div>
+              <button onClick={closeOpenLecture} className="flex items-center gap-2 text-sm text-[#555] hover:text-[#111110] transition-colors mb-6">
+                <ArrowLeft size={14} /> Back to recordings
               </button>
-
-              <div className="flex gap-2">
-                <button
-                  onClick={() => processAudio("transcribe")}
-                  disabled={uploading}
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-[rgba(0,0,0,0.08)] hover:bg-[rgba(0,0,0,0.02)] transition-colors disabled:opacity-40"
-                >
-                  {uploading && recordAction === "transcribe" ? <Loader2 size={14} className="animate-spin" /> : <FileText size={14} className="text-[#555]" />}
-                  <span className="text-sm text-[#555]">Transcribe</span>
-                </button>
-                <button
-                  onClick={() => processAudio("summarize")}
-                  disabled={uploading}
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-[#111110] hover:opacity-90 transition-opacity disabled:opacity-40"
-                >
-                  {uploading && recordAction === "summarize" ? <Loader2 size={14} className="animate-spin text-white" /> : <Sparkles size={14} className="text-white" />}
-                  <span className="text-sm text-white font-medium">Summarize</span>
-                </button>
-              </div>
-
-              <button onClick={resetRecorder} className="w-full text-xs text-[rgba(0,0,0,0.3)] hover:text-[#555] transition-colors pt-1">
-                Discard recording
-              </button>
-            </div>
-          )}
-
-          {/* Recording card */}
-          {!savedBlob && (
-            <div className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl p-8 flex flex-col items-center gap-4">
-              <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 64, fontWeight: 400, color: "#111110", letterSpacing: -2, fontVariantNumeric: "tabular-nums" }}>{fmt(seconds)}</div>
-
-              {recording ? (
-                <div className="flex items-end gap-0.5 h-12 my-1" style={{ opacity: paused ? 0.2 : 1, transition: "opacity 0.3s" }}>
-                  {waveHeights.current.map((h, i) => (
-                    <div
-                      key={i}
-                      style={{
-                        width: 3,
-                        height: 48,
-                        borderRadius: 2,
-                        background: "#111110",
-                        transformOrigin: "center",
-                        animation: paused ? "none" : `waveBar ${waveDurations.current[i]}s ease-in-out infinite`,
-                        animationDelay: `${i * 0.04}s`,
-                        transform: paused ? `scaleY(0.25)` : undefined,
-                      }}
-                    />
-                  ))}
+              {openLectureData === null ? (
+                <div className="flex items-center gap-3 text-sm text-[#555] py-8">
+                  <Loader2 size={16} className="animate-spin" /> Loading…
                 </div>
               ) : (
-                <p className="text-[#555] text-xs">Tap to start recording</p>
-              )}
-
-              {recording ? (
-                <div className="flex gap-3 w-full">
-                  <button
-                    onClick={paused ? resumeRecording : pauseRecording}
-                    className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border border-[rgba(0,0,0,0.12)] hover:bg-[rgba(0,0,0,0.03)] transition-colors"
-                  >
-                    {paused ? <Play size={16} className="text-[#111110]" /> : <Pause size={16} className="text-[#111110]" />}
-                    <span className="text-sm font-medium text-[#111110]">{paused ? "Resume" : "Pause"}</span>
-                  </button>
-                  <button
-                    onClick={stopRecording}
-                    className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-[#111110] hover:opacity-90 transition-opacity"
-                  >
-                    <StopCircle size={16} className="text-white" />
-                    <span className="text-sm font-medium text-white">Stop</span>
-                  </button>
-                </div>
-              ) : (
-                <button
-                  onClick={startRecording}
-                  disabled={uploading}
-                  className="w-16 h-16 rounded-full flex items-center justify-center bg-[rgba(0,0,0,0.06)] hover:bg-[rgba(0,0,0,0.1)] transition-colors disabled:opacity-40"
-                >
-                  <Mic size={22} className="text-[#111110]" />
-                </button>
-              )}
-            </div>
-          )}
-
-          {/* ── Error state ── */}
-          {processingError && (
-            <div className="bg-red-50 border border-red-100 rounded-2xl px-5 py-4 flex items-start gap-3">
-              <X size={15} className="text-red-400 shrink-0 mt-0.5" />
-              <div className="flex-1">
-                <div className="text-sm font-medium text-red-700">Processing failed</div>
-                <div className="text-xs text-red-500 mt-0.5">{processingError}</div>
-              </div>
-              <button onClick={() => setProcessingError("")} className="text-xs text-red-400 hover:text-red-600">Dismiss</button>
-            </div>
-          )}
-
-          {/* ── Processing indicator ── */}
-          {processingId && (
-            <div className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl px-5 py-4 flex items-center gap-4">
-              <Loader2 size={16} className="animate-spin text-[#555] shrink-0" />
-              <div>
-                <div className="text-sm font-medium text-[#111110]">
-                  {recordAction === "transcribe" ? "Transcribing your audio…" : "Generating summary…"}
-                </div>
-                <div className="text-xs text-[#555] mt-0.5">
-                  {processingStatus === "transcribing" ? "Converting speech to text" : processingStatus === "generating" ? "AI is building your summary" : "Uploading audio"}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* ── Inline transcript result ── */}
-          {inlineTranscript && (
-            <div className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl p-5 space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold uppercase tracking-widest text-[#555]">Transcript</span>
-                <button onClick={() => { setInlineTranscript(""); resetRecorder(); }} className="text-xs text-[rgba(0,0,0,0.3)] hover:text-[#555]">✕ Close</button>
-              </div>
-              <div className="max-h-72 overflow-y-auto text-sm text-[#333] leading-relaxed whitespace-pre-wrap">
-                {inlineTranscript}
-              </div>
-              <button onClick={resetRecorder} className="text-xs text-[rgba(0,0,0,0.3)] hover:text-[#555]">Record another</button>
-            </div>
-          )}
-
-          {/* ── Inline summary result ── */}
-          {inlineSummary && (
-            <div className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl p-5 space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold uppercase tracking-widest text-[#555]">Summary</span>
-                <button onClick={() => { setInlineSummary(null); resetRecorder(); }} className="text-xs text-[rgba(0,0,0,0.3)] hover:text-[#555]">✕ Close</button>
-              </div>
-              {(inlineSummary.content?.sections ?? []).slice(0, 3).map((s: any, i: number) => (
-                <div key={i}>
-                  <div className="text-xs font-semibold uppercase tracking-widest text-[#555] mb-2">{s.heading}</div>
-                  {(s.bullets ?? []).map((b: string, j: number) => (
-                    <div key={j} className="flex gap-2 text-sm text-[#333] mb-1"><span className="opacity-30 shrink-0">•</span>{b}</div>
-                  ))}
-                </div>
-              ))}
-              {(inlineSummary.content?.keyTerms ?? []).length > 0 && (
-                <div>
-                  <div className="text-xs font-semibold uppercase tracking-widest text-[#555] mb-2">Key Terms</div>
-                  {(inlineSummary.content.keyTerms ?? []).slice(0, 5).map((kt: any, i: number) => (
-                    <div key={i} className="text-sm text-[#333] mb-1"><span className="font-medium">{kt.term}</span> — {kt.definition}</div>
-                  ))}
-                </div>
-              )}
-              <button onClick={resetRecorder} className="text-xs text-[rgba(0,0,0,0.3)] hover:text-[#555]">Record another</button>
-            </div>
-          )}
-
-          {audioLectures.length > 0 && (
-            <div className="mt-2">
-              <p className="text-xs text-[#555] uppercase tracking-widest mb-3">Recordings</p>
-              <div className="space-y-2">
-                {audioLectures.map(l => (
-                  <div key={l.id} className="bg-white border border-[rgba(0,0,0,0.08)] rounded-xl px-4 py-3 transition-all" style={{ borderColor: confirmArchiveId === l.id ? "rgba(239,68,68,0.25)" : undefined }}>
-                    {confirmArchiveId === l.id ? (
-                      /* ── inline archive confirmation ── */
-                      <div className="flex items-center justify-between gap-3">
-                        <p className="text-xs text-[#555] flex-1">Move <span className="font-medium text-[#111110]">"{l.title}"</span> to Archive?</p>
-                        <div className="flex items-center gap-2 shrink-0">
-                          <button
-                            onClick={() => setConfirmArchiveId(null)}
-                            className="text-xs px-3 py-1.5 rounded-lg transition-colors"
-                            style={{ background: "white", color: "#555" }}
-                          >
-                            Cancel
-                          </button>
-                          <button
-                            onClick={() => archiveLecture(l.id)}
-                            className="text-xs px-3 py-1.5 rounded-lg font-medium transition-colors"
-                            style={{ background: "#ef4444", color: "#111110" }}
-                          >
-                            Archive
-                          </button>
+                <div className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl overflow-hidden">
+                  <div className="px-6 py-5 border-b border-[rgba(0,0,0,0.06)]">
+                    <div className="text-lg font-medium text-[#111110]">
+                      {audioLectures.find(l => l.id === openLectureId)?.title ?? "Recording"}
+                    </div>
+                    <div className="text-xs text-[#888] mt-0.5">
+                      {(() => { const l = audioLectures.find(l => l.id === openLectureId); return l ? format(new Date(l.recordedAt), "MMMM d, yyyy") : ""; })()}
+                    </div>
+                  </div>
+                  {/* Tabs */}
+                  <div className="flex gap-1 px-6 pt-3 border-b border-[rgba(0,0,0,0.06)]">
+                    {(["listen", "transcript", "summary"] as const).map(t => (
+                      <button
+                        key={t}
+                        onClick={() => setOpenTab(t)}
+                        className={`px-4 py-2 text-sm font-medium capitalize transition-colors border-b-2 -mb-px ${
+                          openTab === t ? "text-[#111110] border-[#111110]" : "text-[#555] border-transparent hover:text-[#111110]"
+                        }`}
+                      >
+                        {t === "listen" ? "Listen" : t === "transcript" ? "Transcript" : "Summary"}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="px-6 py-6 min-h-48">
+                    {openTab === "listen" && (
+                      openLectureData.audioUrl ? (
+                        <div className="space-y-3">
+                          <audio src={openLectureData.audioUrl} controls className="w-full rounded-xl" />
                         </div>
-                      </div>
-                    ) : (
-                      /* ── normal row ── */
-                      <div className="flex items-center justify-between gap-3">
-                        <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ background: "rgba(0,0,0,0.04)" }}>
-                          <Mic2 size={12} style={{ color: "#444" }} />
+                      ) : (
+                        <div className="text-sm text-[#888] text-center py-10">
+                          Audio playback is available only for recordings made in the current session.
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="text-sm text-[#111110] truncate">{l.title}</div>
-                          <div className="text-xs text-[#555] mt-0.5 mb-1.5">{format(new Date(l.recordedAt), "MMM d, yyyy")}</div>
-                          {/* ── Status stepper ── */}
-                          {(() => {
-                            const steps = [
-                              { label: "Read",       done: ["transcribing","generating","ready"].includes(l.status), active: l.status === "processing" },
-                              { label: "Transcribe", done: ["generating","ready"].includes(l.status),                active: l.status === "transcribing" },
-                              { label: "Summarise",  done: l.status === "ready",                                    active: l.status === "generating" },
-                            ];
-                            return (
-                              <div className="flex items-center gap-1">
-                                {steps.map((step, i) => (
-                                  <div key={step.label} className="flex items-center gap-1">
-                                    {i > 0 && <div className="w-3 h-px" style={{ background: "rgba(0,0,0,0.1)" }} />}
-                                    <div className={`flex items-center gap-1 text-[9px] font-semibold px-1.5 py-0.5 rounded-full ${
-                                      step.done   ? "bg-[#111110] text-white" :
-                                      step.active ? "bg-[rgba(0,0,0,0.08)] text-[#111110]" :
-                                                    "text-[rgba(0,0,0,0.25)]"
-                                    }`}>
-                                      {step.active && <Loader2 size={7} className="animate-spin" />}
-                                      {step.done   && <CheckCircle size={7} />}
-                                      {step.label}
-                                    </div>
-                                  </div>
-                                ))}
-                                {l.status === "error" && (
-                                  <span className="text-[9px] font-semibold text-red-400 px-1.5 py-0.5 rounded-full bg-red-50">Failed</span>
-                                )}
-                              </div>
-                            );
-                          })()}
-                        </div>
-                        <div className="flex items-center gap-2 shrink-0">
-                          {l.status === "ready" && (
-                            <button
-                              onClick={() => setSelectedLecture(l.id)}
-                              className="text-xs font-medium px-3 py-1.5 rounded-lg transition-colors"
-                              style={{ background: "rgba(0,0,0,0.06)", color: "#111110" }}
-                            >
-                              Open
-                            </button>
-                          )}
-                          <button
-                            onClick={() => setConfirmArchiveId(l.id)}
-                            className="p-1.5 rounded-lg transition-colors hover:bg-red-50"
-                            style={{ color: "rgba(0,0,0,0.3)" }}
-                            title="Archive recording"
-                          >
-                            <Trash2 size={13} />
-                          </button>
-                        </div>
+                      )
+                    )}
+                    {openTab === "transcript" && (
+                      <div className="text-sm text-[#555] leading-relaxed whitespace-pre-wrap max-h-[480px] overflow-y-auto">
+                        {openLectureData.transcript || "Transcript not available."}
                       </div>
                     )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ── RESULT POPUP ── */}
-      {lectureSheet && (
-        <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center" style={{ background: "rgba(0,0,0,0.5)" }}>
-          <div className="bg-white rounded-t-3xl md:rounded-3xl w-full md:max-w-2xl flex flex-col" style={{ maxHeight: "85vh" }}>
-
-            {/* Header */}
-            <div className="flex items-start justify-between px-6 py-4 border-b border-[rgba(0,0,0,0.06)] shrink-0">
-              <div>
-                <div className="text-[10px] font-semibold uppercase tracking-widest text-[#555] mb-0.5">Recording complete</div>
-                <div className="font-medium text-[#111110] text-base">{lectureSheet.title?.replace(/^Study Book:\s*/, "")}</div>
-              </div>
-              <button onClick={resetRecorder} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-[rgba(0,0,0,0.05)] transition-colors shrink-0 mt-0.5">
-                <X size={15} className="text-[#555]" />
-              </button>
-            </div>
-
-            {/* Tabs */}
-            <div className="flex gap-1 px-6 pt-3 shrink-0">
-              {(["read", "transcript", "summarise"] as const).map(t => (
-                <button
-                  key={t}
-                  onClick={() => setResultTab(t)}
-                  className={`px-4 py-2 text-sm font-medium capitalize rounded-t-lg transition-colors border-b-2 ${
-                    resultTab === t ? "text-[#111110] border-[#111110]" : "text-[#555] border-transparent hover:text-[#111110]"
-                  }`}
-                >
-                  {t}
-                </button>
-              ))}
-            </div>
-            <div className="h-px bg-[rgba(0,0,0,0.06)] shrink-0" />
-
-            {/* Content */}
-            <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
-
-              {/* Read — cheatsheet sections */}
-              {resultTab === "read" && (
-                <>
-                  {(lectureSheet.content?.sections ?? []).map((s: any, i: number) => (
-                    <div key={i}>
-                      <div className="text-xs font-semibold uppercase tracking-widest text-[#555] mb-2">{s.heading}</div>
-                      <ul className="space-y-1.5">
-                        {(s.bullets ?? []).map((b: string, j: number) => (
-                          <li key={j} className="flex gap-2 text-sm text-[#111110] leading-relaxed">
-                            <span className="text-[#555] shrink-0 mt-0.5">·</span>{b}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  ))}
-                  {(lectureSheet.content?.keyTerms ?? []).length > 0 && (
-                    <div>
-                      <div className="text-xs font-semibold uppercase tracking-widest text-[#555] mb-2">Key Terms</div>
-                      <div className="space-y-2">
-                        {(lectureSheet.content.keyTerms ?? []).map((kt: any, i: number) => (
-                          <div key={i} className="flex gap-2 text-sm">
-                            <span className="font-medium text-[#111110] shrink-0">{kt.term}:</span>
-                            <span className="text-[#555]">{kt.definition}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </>
-              )}
-
-              {/* Transcript — raw text */}
-              {resultTab === "transcript" && (
-                <div className="text-sm text-[#555] leading-relaxed whitespace-pre-wrap">
-                  {lectureTranscript || "Transcript not available."}
-                </div>
-              )}
-
-              {/* Summarise — brief summary */}
-              {resultTab === "summarise" && (
-                <div>
-                  {lectureSheet.content?.summary ? (
-                    <p className="text-sm text-[#111110] leading-relaxed">{lectureSheet.content.summary}</p>
-                  ) : (
-                    <div className="space-y-2">
-                      {(lectureSheet.content?.sections ?? []).slice(0, 3).map((s: any, i: number) => (
-                        <div key={i} className="text-sm text-[#111110]">
-                          <span className="font-medium">{s.heading}: </span>
-                          <span className="text-[#555]">{(s.bullets ?? [])[0]}</span>
+                    {openTab === "summary" && (
+                      openLectureData.sheet ? (
+                        <div className="space-y-5">
+                          {(openLectureData.sheet.content?.sections ?? []).map((s: any, i: number) => (
+                            <div key={i}>
+                              <div className="text-xs font-semibold uppercase tracking-widest text-[#555] mb-2">{s.heading}</div>
+                              <ul className="space-y-1.5">
+                                {(s.bullets ?? []).map((b: string, j: number) => (
+                                  <li key={j} className="flex gap-2 text-sm text-[#111110] leading-relaxed">
+                                    <span className="text-[#888] shrink-0 mt-0.5">·</span>{b}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          ))}
+                          {(openLectureData.sheet.content?.keyTerms ?? []).length > 0 && (
+                            <div>
+                              <div className="text-xs font-semibold uppercase tracking-widest text-[#555] mb-2">Key Terms</div>
+                              <div className="space-y-2">
+                                {(openLectureData.sheet.content.keyTerms ?? []).map((kt: any, i: number) => (
+                                  <div key={i} className="flex gap-2 text-sm">
+                                    <span className="font-medium text-[#111110] shrink-0">{kt.term}:</span>
+                                    <span className="text-[#555]">{kt.definition}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
                         </div>
-                      ))}
-                    </div>
-                  )}
+                      ) : (
+                        <div className="text-sm text-[#888] text-center py-10">Summary not available.</div>
+                      )
+                    )}
+                  </div>
                 </div>
               )}
             </div>
+          ) : (
+            <>
+              {/* ── Step: name ── */}
+              {recStep === "name" && (
+                <div className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl p-8 flex flex-col items-center gap-5">
+                  <div className="w-full space-y-2">
+                    <label className="text-[10px] text-[#555] uppercase tracking-widest block">Recording Name</label>
+                    <input
+                      autoFocus
+                      value={recTitle}
+                      onChange={e => setRecTitle(e.target.value)}
+                      onKeyDown={e => e.key === "Enter" && recTitle.trim() && startRecording()}
+                      placeholder="e.g. Lecture 3 — Cell Division"
+                      className="w-full bg-[rgba(0,0,0,0.03)] border border-[rgba(0,0,0,0.08)] rounded-xl px-4 py-3 text-sm text-[#111110] placeholder-[rgba(0,0,0,0.3)] outline-none focus:border-[rgba(0,0,0,0.18)]"
+                    />
+                    <p className="text-xs text-[#888]">{format(new Date(), "MMMM d, yyyy")}</p>
+                  </div>
+                  <button
+                    onClick={startRecording}
+                    disabled={!recTitle.trim()}
+                    className="w-16 h-16 rounded-full flex items-center justify-center bg-[rgba(0,0,0,0.06)] hover:bg-[rgba(0,0,0,0.1)] transition-colors disabled:opacity-30"
+                  >
+                    <Mic size={22} className="text-[#111110]" />
+                  </button>
+                  <p className="text-xs text-[#888]">{recTitle.trim() ? "Tap to start recording" : "Enter a name to start"}</p>
+                </div>
+              )}
 
-            {/* Footer */}
-            <div className="px-6 py-4 border-t border-[rgba(0,0,0,0.06)] flex items-center justify-between shrink-0">
-              <button
-                onClick={resetRecorder}
-                className="text-xs text-[#555] hover:text-[#111110] transition-colors"
-              >
-                Close
-              </button>
-              <button
-                onClick={resetRecorder}
-                className="flex items-center gap-2 bg-[#111110] text-white text-xs font-medium px-4 py-2 rounded-full hover:bg-[#333] transition-colors"
-              >
-                <CheckCircle size={12} /> Done
-              </button>
-            </div>
-          </div>
+              {/* ── Step: recording ── */}
+              {recStep === "recording" && (
+                <div className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl p-8 flex flex-col items-center gap-4">
+                  <div className="text-xs text-[#888] self-start font-medium">{recTitle}</div>
+                  <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 64, fontWeight: 400, color: "#111110", letterSpacing: -2, fontVariantNumeric: "tabular-nums" }}>{fmt(seconds)}</div>
+                  <div className="flex items-end gap-0.5 h-12 my-1" style={{ opacity: paused ? 0.2 : 1, transition: "opacity 0.3s" }}>
+                    {waveHeights.current.map((h, i) => (
+                      <div key={i} style={{ width: 3, height: 48, borderRadius: 2, background: "#111110", transformOrigin: "center", animation: paused ? "none" : `waveBar ${waveDurations.current[i]}s ease-in-out infinite`, animationDelay: `${i * 0.04}s`, transform: paused ? "scaleY(0.25)" : undefined }} />
+                    ))}
+                  </div>
+                  <div className="flex gap-3 w-full">
+                    <button
+                      onClick={paused ? resumeRecording : pauseRecording}
+                      className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border border-[rgba(0,0,0,0.12)] hover:bg-[rgba(0,0,0,0.03)] transition-colors"
+                    >
+                      {paused ? <Play size={16} className="text-[#111110]" /> : <Pause size={16} className="text-[#111110]" />}
+                      <span className="text-sm font-medium text-[#111110]">{paused ? "Resume" : "Pause"}</span>
+                    </button>
+                    <button
+                      onClick={stopRecording}
+                      className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-[#111110] hover:opacity-90 transition-opacity"
+                    >
+                      <StopCircle size={16} className="text-white" />
+                      <span className="text-sm font-medium text-white">Stop</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* ── Step: saved ── */}
+              {recStep === "saved" && (
+                <div className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl p-6 space-y-4">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle size={15} className="text-green-500" />
+                    <span className="text-sm font-medium text-[#111110]">{recTitle || "Recording"}</span>
+                    <span className="ml-auto text-xs text-[#888]">{fmt(seconds)}</span>
+                  </div>
+                  <button
+                    onClick={playAudio}
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-[rgba(0,0,0,0.08)] hover:bg-[rgba(0,0,0,0.02)] transition-colors"
+                  >
+                    {playing ? <Pause size={15} className="text-[#111110]" /> : <Play size={15} className="text-[#111110]" />}
+                    <span className="text-sm text-[#111110]">{playing ? "Pause" : "Listen to recording"}</span>
+                  </button>
+                  {processingError && (
+                    <div className="bg-red-50 border border-red-100 rounded-xl px-4 py-3 text-sm text-red-600">{processingError}</div>
+                  )}
+                  <button
+                    onClick={processAudio}
+                    disabled={uploading}
+                    className="w-full flex items-center justify-center gap-2 py-4 rounded-xl bg-[#111110] hover:opacity-90 transition-opacity disabled:opacity-40"
+                  >
+                    {uploading ? <Loader2 size={16} className="animate-spin text-white" /> : <Sparkles size={16} className="text-white" />}
+                    <span className="text-base font-medium text-white">Process Audio</span>
+                  </button>
+                  <button onClick={resetRecorder} className="w-full text-xs text-[rgba(0,0,0,0.3)] hover:text-[#555] transition-colors">
+                    Discard recording
+                  </button>
+                </div>
+              )}
+
+              {/* ── Step: processing ── */}
+              {recStep === "processing" && (
+                <div className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl p-16 flex flex-col items-center gap-6">
+                  <div className="relative flex items-center justify-center w-28 h-28">
+                    {[0, 1, 2].map(i => (
+                      <div key={i} className="absolute rounded-full border border-[rgba(0,0,0,0.1)]" style={{
+                        width: 40 + i * 22,
+                        height: 40 + i * 22,
+                        animation: `ringPulse 2s ease-out ${i * 0.45}s infinite`,
+                      }} />
+                    ))}
+                    <Loader2 size={22} className="animate-spin text-[#111110] relative z-10" />
+                  </div>
+                  <div className="text-center space-y-1">
+                    <div className="text-sm font-medium text-[#111110]">Processing your audio…</div>
+                    <div className="text-xs text-[#888]">
+                      {processingStatus === "transcribing"
+                        ? "Converting speech to text"
+                        : processingStatus === "generating"
+                        ? "AI is building your summary"
+                        : "Uploading audio"}
+                    </div>
+                  </div>
+                  <div className="flex items-end gap-0.5 h-6 opacity-20">
+                    {waveHeights.current.slice(0, 14).map((_, i) => (
+                      <div key={i} style={{ width: 3, height: 24, borderRadius: 2, background: "#111110", transformOrigin: "center", animation: `waveBar ${waveDurations.current[i]}s ease-in-out infinite`, animationDelay: `${i * 0.07}s` }} />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* ── Step: done ── */}
+              {recStep === "done" && (
+                <div className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl p-12 flex flex-col items-center gap-4">
+                  <div className="w-14 h-14 rounded-full bg-green-50 flex items-center justify-center">
+                    <CheckCircle size={24} className="text-green-500" />
+                  </div>
+                  <div className="text-center">
+                    <div className="text-base font-medium text-[#111110] mb-1">Processing complete!</div>
+                    <div className="text-sm text-[#888]">Your recording is ready. Open it from the list below.</div>
+                  </div>
+                </div>
+              )}
+
+              {/* ── Recordings list ── */}
+              {audioLectures.length > 0 && (
+                <div className="mt-2">
+                  <p className="text-xs text-[#555] uppercase tracking-widest mb-3">Recordings</p>
+                  <div className="space-y-2">
+                    {audioLectures.map(l => (
+                      <div key={l.id} className="bg-white border border-[rgba(0,0,0,0.08)] rounded-xl px-4 py-3 transition-all" style={{ borderColor: confirmArchiveId === l.id ? "rgba(239,68,68,0.25)" : undefined }}>
+                        {confirmArchiveId === l.id ? (
+                          <div className="flex items-center justify-between gap-3">
+                            <p className="text-xs text-[#555] flex-1">Delete <span className="font-medium text-[#111110]">"{l.title}"</span>?</p>
+                            <div className="flex items-center gap-2 shrink-0">
+                              <button onClick={() => setConfirmArchiveId(null)} className="text-xs px-3 py-1.5 rounded-lg text-[#555] hover:text-[#111110] transition-colors">Cancel</button>
+                              <button onClick={() => archiveLecture(l.id)} className="text-xs px-3 py-1.5 rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors">Delete</button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-3">
+                            <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 bg-[rgba(0,0,0,0.04)]">
+                              <Mic2 size={12} className="text-[#444]" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="text-sm text-[#111110] truncate">{l.title}</div>
+                              <div className="text-xs text-[#888] mt-0.5">{format(new Date(l.recordedAt), "MMM d, yyyy")}</div>
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                              {l.status === "ready" ? (
+                                <button
+                                  onClick={() => openLecture(l)}
+                                  className="text-xs font-medium px-3 py-1.5 rounded-lg bg-[rgba(0,0,0,0.06)] text-[#111110] hover:bg-[rgba(0,0,0,0.1)] transition-colors"
+                                >
+                                  Open
+                                </button>
+                              ) : l.status === "error" ? (
+                                <span className="text-[9px] font-semibold text-red-400 px-2 py-0.5 rounded-full bg-red-50">Failed</span>
+                              ) : (
+                                <span className="text-[9px] font-semibold text-[#555] px-2 py-0.5 rounded-full bg-[rgba(0,0,0,0.05)] flex items-center gap-1">
+                                  <Loader2 size={8} className="animate-spin" /> Processing
+                                </span>
+                              )}
+                              <button
+                                onClick={() => setConfirmArchiveId(l.id)}
+                                className="p-1.5 rounded-lg hover:bg-red-50 transition-colors"
+                                style={{ color: "rgba(0,0,0,0.3)" }}
+                                title="Delete recording"
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
         </div>
       )}
 
