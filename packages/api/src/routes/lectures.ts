@@ -77,6 +77,24 @@ lectureRouter.post(
   }
 );
 
+lectureRouter.get("/:id/audio", async (req, res) => {
+  const user = (req as any).user;
+  const lecture = await prisma.lecture.findFirst({
+    where: { id: req.params.id, userId: user.id },
+    select: { audioUrl: true },
+  });
+  if (!lecture?.audioUrl || !fs.existsSync(lecture.audioUrl)) {
+    return res.status(404).json({ error: "Audio not found" });
+  }
+  const ext = path.extname(lecture.audioUrl).toLowerCase();
+  const mime = ext === ".webm" ? "audio/webm" : "audio/mp4";
+  const stat = fs.statSync(lecture.audioUrl);
+  res.setHeader("Content-Type", mime);
+  res.setHeader("Content-Length", stat.size);
+  res.setHeader("Accept-Ranges", "bytes");
+  fs.createReadStream(lecture.audioUrl).pipe(res);
+});
+
 lectureRouter.get("/:id/status", async (req, res) => {
   const user = (req as any).user;
   const lecture = await prisma.lecture.findFirst({

@@ -248,6 +248,7 @@ function ClassList({ onSelect, onCreate }: { onSelect: (c: any) => void; onCreat
 function ClassWorkspace({ course, allCourses, onSelect, onBack }: { course: any; allCourses: any[]; onSelect: (c: any) => void; onBack: () => void }) {
   const apiFetch = useApiFetch();
   const fetcher = useApiSWRFetcher();
+  const { userId } = useAuth();
   const [tab, setTab] = useState<"record" | "files" | "quizzes" | "video" | "studybook" | "note">("record");
 
   const { data: lecturesData, mutate: mutateLectures } = useSWR(`${BASE}/api/lectures?courseId=${course.id}`, fetcher);
@@ -594,7 +595,21 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: { course: any;
     setOpenTab("listen");
     setOpenLectureData(null);
     const transcript = lecture.transcript ?? "";
-    const audioUrl = localAudioUrlsRef.current.get(lecture.id) ?? null;
+
+    let audioUrl: string | null = localAudioUrlsRef.current.get(lecture.id) ?? null;
+    if (!audioUrl) {
+      try {
+        const r = await fetch(`${BASE}/api/lectures/${lecture.id}/audio`, {
+          headers: { "x-clerk-user-id": userId ?? "" },
+        });
+        if (r.ok) {
+          const blob = await r.blob();
+          audioUrl = URL.createObjectURL(blob);
+          localAudioUrlsRef.current.set(lecture.id, audioUrl);
+        }
+      } catch { /* audio unavailable */ }
+    }
+
     try {
       const sheetRes = await apiFetch(`/api/cheatsheets?lectureId=${lecture.id}`);
       const shts = (sheetRes.data ?? []).filter((s: any) => !s.title?.startsWith("Study Book:"));
@@ -1312,13 +1327,9 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: { course: any;
                   <div className="px-6 py-6 min-h-48">
                     {openTab === "listen" && (
                       openLectureData.audioUrl ? (
-                        <div className="space-y-3">
-                          <audio src={openLectureData.audioUrl} controls className="w-full rounded-xl" />
-                        </div>
+                        <audio src={openLectureData.audioUrl} controls className="w-full" />
                       ) : (
-                        <div className="text-sm text-[#888] text-center py-10">
-                          Audio playback is available only for recordings made in the current session.
-                        </div>
+                        <div className="text-sm text-[#888] text-center py-10">Audio not available.</div>
                       )
                     )}
                     {openTab === "transcript" && (
