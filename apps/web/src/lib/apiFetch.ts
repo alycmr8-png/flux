@@ -29,8 +29,11 @@ export function useApiFetch() {
 export function useApiSWRFetcher() {
   const { userId } = useAuth();
   return useCallback(
-    (url: string) =>
-      fetch(url, { headers: { "x-clerk-user-id": userId ?? "" } }).then((r) => r.json()),
+    async (url: string) => {
+      const r = await fetch(url, { headers: { "x-clerk-user-id": userId ?? "" } });
+      if (!r.ok) throw new Error(`API ${r.status}`);
+      return r.json();
+    },
     [userId]
   );
 }
