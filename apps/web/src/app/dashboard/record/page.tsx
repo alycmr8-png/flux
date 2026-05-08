@@ -1,9 +1,9 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
 import {
-  Mic, Square, FileUp, CheckCircle, Loader2, Plus,
+  Mic, Square, FileUp, CheckCircle, Loader2, Plus, Pause, Play, StopCircle,
   BookOpen, Calendar, X, Mic2, FileText, ArrowLeft, Layers, BookMarked, Youtube,
-  ChevronDown, PenLine, Trash2, RotateCcw,
+  ChevronDown, PenLine, Trash2, RotateCcw, Sparkles, FileText as FileTextIcon,
 } from "lucide-react";
 import { useApiFetch, useApiSWRFetcher } from "@/lib/apiFetch";
 import { useAuth } from "@clerk/nextjs";
@@ -304,13 +304,21 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: { course: any;
 
   // ── record ──
   const [recording, setRecording] = useState(false);
+  const [paused, setPaused] = useState(false);
   const [seconds, setSeconds] = useState(0);
   const [uploading, setUploading] = useState(false);
   const [recTitle, setRecTitle] = useState("");
   const [slidesFile, setSlidesFile] = useState<File | null>(null);
+  const [savedBlob, setSavedBlob] = useState<Blob | null>(null);
+  const [savedAudioUrl, setSavedAudioUrl] = useState<string | null>(null);
+  const [playing, setPlaying] = useState(false);
+  const [recordAction, setRecordAction] = useState<"transcribe" | "summarize" | null>(null);
   const mediaRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const audioElemRef = useRef<HTMLAudioElement | null>(null);
+  const waveHeights = useRef(Array.from({ length: 20 }, () => 0.3 + Math.random() * 0.7));
+  const waveDurations = useRef(Array.from({ length: 20 }, () => 0.4 + Math.random() * 0.7));
 
   // processing + inline sheet state
   const [processingId, setProcessingId] = useState<string | null>(null);
@@ -374,26 +382,74 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: { course: any;
     timerRef.current = setInterval(() => setSeconds(s => s + 1), 1000);
   }
 
+  function pauseRecording() {
+    if (!mediaRef.current || paused) return;
+    mediaRef.current.pause();
+    setPaused(true);
+    if (timerRef.current) clearInterval(timerRef.current);
+  }
+
+  function resumeRecording() {
+    if (!mediaRef.current || !paused) return;
+    mediaRef.current.resume();
+    setPaused(false);
+    timerRef.current = setInterval(() => setSeconds(s => s + 1), 1000);
+  }
+
   async function stopRecording() {
     if (!mediaRef.current) return;
     mediaRef.current.stop();
     mediaRef.current.stream.getTracks().forEach(t => t.stop());
     if (timerRef.current) clearInterval(timerRef.current);
+    setPaused(false);
     setRecording(false);
-    setUploading(true);
     await new Promise<void>(res => { mediaRef.current!.onstop = () => res(); });
     const blob = new Blob(chunksRef.current, { type: "audio/webm" });
-    const fd = new FormData();
-    fd.append("audio", blob, "lecture.webm");
-    fd.append("courseId", course.id);
-    fd.append("title", recTitle.trim() || `Lecture ${new Date().toLocaleDateString()}`);
-    if (slidesFile) fd.append("slides", slidesFile);
-    const res = await apiFetch("/api/lectures", { method: "POST", body: fd });
-    setProcessingId(res.data?.id ?? null);
-    setProcessingStatus("processing");
-    setLectureSheet(null);
-    setAddedToBook(false);
-    setUploading(false);
+    const url = URL.createObjectURL(blob);
+    setSavedBlob(blob);
+    setSavedAudioUrl(url);
+  }
+
+  function playAudio() {
+    if (!savedAudioUrl) return;
+    if (!audioElemRef.current) {
+      audioElemRef.current = new Audio(savedAudioUrl);
+      audioElemRef.current.onended = () => setPlaying(false);
+    }
+    if (playing) {
+      audioElemRef.current.pause();
+      setPlaying(false);
+    } else {
+      audioElemRef.current.play();
+      setPlaying(true);
+    }
+  }
+
+  async function processAudio(action: "transcribe" | "summarize") {
+    if (!savedBlob) return;
+    setRecordAction(action);
+    if (audioElemRef.current) { audioElemRef.current.pause(); setPlaying(false); }
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("audio", savedBlob, "lecture.webm");
+      fd.append("courseId", course.id);
+      fd.append("title", recTitle.trim() || `Lecture ${new Date().toLocaleDateString()}`);
+      if (slidesFile) fd.append("slides", slidesFile);
+      const res = await apiFetch("/api/lectures", { method: "POST", body: fd });
+      setProcessingId(res.data?.id ?? null);
+      setProcessingStatus("processing");
+      setLectureSheet(null);
+      setLectureTranscript("");
+      setAddedToBook(false);
+      setSavedBlob(null);
+      if (savedAudioUrl) URL.revokeObjectURL(savedAudioUrl);
+      setSavedAudioUrl(null);
+    } catch (e: any) {
+      alert(e?.message ?? "Upload failed");
+    } finally {
+      setUploading(false);
+    }
   }
 
   async function saveSheet() {
@@ -484,11 +540,19 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: { course: any;
     setProcessingId(null);
     setProcessingStatus("processing");
     setLectureSheet(null);
+    setLectureTranscript("");
     setSeconds(0);
     setRecTitle("");
     setSlidesFile(null);
     setEditMode(false);
     setAddedToBook(false);
+    setPaused(false);
+    setSavedBlob(null);
+    if (savedAudioUrl) URL.revokeObjectURL(savedAudioUrl);
+    setSavedAudioUrl(null);
+    setPlaying(false);
+    setRecordAction(null);
+    if (audioElemRef.current) { audioElemRef.current.pause(); audioElemRef.current = null; }
   }
 
   const fmt = (s: number) =>
@@ -1151,26 +1215,110 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: { course: any;
             placeholder="Lecture title (optional)"
             className="w-full bg-white border border-[rgba(0,0,0,0.08)] rounded-xl px-4 py-2.5 text-sm text-[#111110] placeholder-[rgba(0,0,0,0.3)] outline-none focus:border-[rgba(0,0,0,0.1)]"
           />
-          <div className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl p-8 flex flex-col items-center gap-6">
-            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 64, fontWeight: 400, color: "#111110", letterSpacing: -2, fontVariantNumeric: "tabular-nums" }}>{fmt(seconds)}</div>
-            {recording && (
-              <div className="flex items-center gap-2 text-xs text-[#555]">
-                <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                Recording — {course.name}
+          <style>{`
+            @keyframes waveBar {
+              0%, 100% { transform: scaleY(0.25); }
+              50% { transform: scaleY(1); }
+            }
+          `}</style>
+
+          {/* Saved audio action card */}
+          {savedBlob && (
+            <div className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl p-5 space-y-3">
+              <div className="flex items-center gap-2">
+                <CheckCircle size={16} className="text-green-500" />
+                <span className="text-sm font-medium text-[#111110]">Recording saved</span>
+                <span className="ml-auto text-xs text-[#888]">{fmt(seconds)}</span>
               </div>
-            )}
-            <button
-              onClick={recording ? stopRecording : startRecording}
-              disabled={uploading}
-              className={`w-16 h-16 rounded-full flex items-center justify-center transition-colors ${
-                recording ? "bg-red-500" : "bg-[rgba(255,255,255,0.15)] hover:opacity-85"
-              } disabled:opacity-40`}
-            >
-              {recording ? <Square size={20} className="text-[#111110]" /> : <Mic size={20} className="text-[#111110]" />}
-            </button>
-            {uploading && <p className="text-[#555] text-sm">Uploading…</p>}
-            {!recording && !uploading && <p className="text-[#555] text-xs">Tap to start recording</p>}
-          </div>
+
+              <button
+                onClick={playAudio}
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-[rgba(0,0,0,0.08)] hover:bg-[rgba(0,0,0,0.02)] transition-colors"
+              >
+                {playing ? <Pause size={16} className="text-[#111110]" /> : <Play size={16} className="text-[#111110]" />}
+                <span className="text-sm text-[#111110]">{playing ? "Pause" : "Listen to recording"}</span>
+              </button>
+
+              <div className="flex gap-2">
+                <button
+                  onClick={() => processAudio("transcribe")}
+                  disabled={uploading}
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-[rgba(0,0,0,0.08)] hover:bg-[rgba(0,0,0,0.02)] transition-colors disabled:opacity-40"
+                >
+                  {uploading && recordAction === "transcribe" ? <Loader2 size={14} className="animate-spin" /> : <FileText size={14} className="text-[#555]" />}
+                  <span className="text-sm text-[#555]">Transcribe</span>
+                </button>
+                <button
+                  onClick={() => processAudio("summarize")}
+                  disabled={uploading}
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-[#111110] hover:opacity-90 transition-opacity disabled:opacity-40"
+                >
+                  {uploading && recordAction === "summarize" ? <Loader2 size={14} className="animate-spin text-white" /> : <Sparkles size={14} className="text-white" />}
+                  <span className="text-sm text-white font-medium">Summarize</span>
+                </button>
+              </div>
+
+              <button onClick={resetRecorder} className="w-full text-xs text-[rgba(0,0,0,0.3)] hover:text-[#555] transition-colors pt-1">
+                Discard recording
+              </button>
+            </div>
+          )}
+
+          {/* Recording card */}
+          {!savedBlob && (
+            <div className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl p-8 flex flex-col items-center gap-4">
+              <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 64, fontWeight: 400, color: "#111110", letterSpacing: -2, fontVariantNumeric: "tabular-nums" }}>{fmt(seconds)}</div>
+
+              {recording ? (
+                <div className="flex items-end gap-0.5 h-12 my-1" style={{ opacity: paused ? 0.2 : 1, transition: "opacity 0.3s" }}>
+                  {waveHeights.current.map((h, i) => (
+                    <div
+                      key={i}
+                      style={{
+                        width: 3,
+                        height: 48,
+                        borderRadius: 2,
+                        background: "#111110",
+                        transformOrigin: "center",
+                        animation: paused ? "none" : `waveBar ${waveDurations.current[i]}s ease-in-out infinite`,
+                        animationDelay: `${i * 0.04}s`,
+                        transform: paused ? `scaleY(0.25)` : undefined,
+                      }}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <p className="text-[#555] text-xs">Tap to start recording</p>
+              )}
+
+              {recording ? (
+                <div className="flex gap-3 w-full">
+                  <button
+                    onClick={paused ? resumeRecording : pauseRecording}
+                    className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border border-[rgba(0,0,0,0.12)] hover:bg-[rgba(0,0,0,0.03)] transition-colors"
+                  >
+                    {paused ? <Play size={16} className="text-[#111110]" /> : <Pause size={16} className="text-[#111110]" />}
+                    <span className="text-sm font-medium text-[#111110]">{paused ? "Resume" : "Pause"}</span>
+                  </button>
+                  <button
+                    onClick={stopRecording}
+                    className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-[#111110] hover:opacity-90 transition-opacity"
+                  >
+                    <StopCircle size={16} className="text-white" />
+                    <span className="text-sm font-medium text-white">Stop</span>
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={startRecording}
+                  disabled={uploading}
+                  className="w-16 h-16 rounded-full flex items-center justify-center bg-[rgba(0,0,0,0.06)] hover:bg-[rgba(0,0,0,0.1)] transition-colors disabled:opacity-40"
+                >
+                  <Mic size={22} className="text-[#111110]" />
+                </button>
+              )}
+            </div>
+          )}
 
           {/* ── Processing indicator ── */}
           {processingId && !lectureSheet && (
