@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import {
   View, Text, StyleSheet, TouchableOpacity, Alert,
-  StatusBar, ScrollView, TextInput, ActivityIndicator,
+  StatusBar, ScrollView, TextInput, ActivityIndicator, Animated,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -104,19 +104,27 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
 
   // ── record ──
   const [recording, setRecording] = useState<Audio.Recording | null>(null);
+  const [paused, setPaused] = useState(false);
   const [seconds, setSeconds] = useState(0);
   const [uploading, setUploading] = useState(false);
   const [recTitle, setRecTitle] = useState("");
   const [slidesUri, setSlidesUri] = useState<string | null>(null);
+  const [savedUri, setSavedUri] = useState<string | null>(null);
+  const [recordAction, setRecordAction] = useState<"transcribe" | "summarize" | null>(null);
+  const [sound, setSound] = useState<Audio.Sound | null>(null);
+  const [playing, setPlaying] = useState(false);
   const [processingLectureId, setProcessingLectureId] = useState<string | null>(null);
   const [processingStatus, setProcessingStatus] = useState<string>("processing");
   const [lectureSheet, setLectureSheet] = useState<any | null>(null);
+  const [lectureTranscript, setLectureTranscript] = useState<string | null>(null);
   const [addingToBook, setAddingToBook] = useState(false);
   const [addedToBook, setAddedToBook] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const waveAnims = useRef(Array.from({ length: 20 }, () => new Animated.Value(0.15))).current;
+  const waveLoops = useRef<Animated.CompositeAnimation[]>([]);
 
-  // Poll lecture status until ready, then load sheet
+  // Poll lecture status until ready
   useEffect(() => {
     if (!processingLectureId) return;
     pollRef.current = setInterval(async () => {
@@ -128,15 +136,44 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
           if (pollRef.current) clearInterval(pollRef.current);
           if (status === "ready") {
             await mutateLectures();
-            const sheetRes = await api.get(`/api/cheatsheets?lectureId=${processingLectureId}`);
-            const sheets = (sheetRes.data?.data ?? []).filter((s: any) => !s.title?.startsWith("Study Book:"));
-            if (sheets.length) setLectureSheet(sheets[0]);
+            if (recordAction === "transcribe") {
+              try {
+                const lecRes = await api.get(`/api/lectures/${processingLectureId}`);
+                setLectureTranscript(lecRes.data?.data?.transcript ?? "Transcript not available.");
+              } catch { setLectureTranscript("Could not load transcript."); }
+            } else {
+              const sheetRes = await api.get(`/api/cheatsheets?lectureId=${processingLectureId}`);
+              const sheets = (sheetRes.data?.data ?? []).filter((s: any) => !s.title?.startsWith("Study Book:"));
+              if (sheets.length) setLectureSheet(sheets[0]);
+            }
           }
         }
       } catch {}
     }, 3000);
     return () => { if (pollRef.current) clearInterval(pollRef.current); };
-  }, [processingLectureId]);
+  }, [processingLectureId, recordAction]);
+
+  // Waveform animation
+  useEffect(() => {
+    if (recording && !paused) {
+      waveLoops.current.forEach(a => a.stop());
+      waveLoops.current = waveAnims.map((anim) => {
+        const loop = Animated.loop(
+          Animated.sequence([
+            Animated.timing(anim, { toValue: 0.2 + Math.random() * 0.8, duration: 150 + Math.random() * 400, useNativeDriver: false }),
+            Animated.timing(anim, { toValue: 0.05 + Math.random() * 0.25, duration: 150 + Math.random() * 350, useNativeDriver: false }),
+          ])
+        );
+        loop.start();
+        return loop;
+      });
+    } else {
+      waveLoops.current.forEach(a => a.stop());
+      waveAnims.forEach(anim =>
+        Animated.timing(anim, { toValue: 0.15, duration: 200, useNativeDriver: false }).start()
+      );
+    }
+  }, [recording, paused]);
 
   async function startRecording() {
     try {
@@ -150,20 +187,64 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
     } catch { Alert.alert("Error", "Could not start recording."); }
   }
 
+  async function pauseRecording() {
+    if (!recording || paused) return;
+    await recording.pauseAsync();
+    setPaused(true);
+    if (timerRef.current) clearInterval(timerRef.current);
+  }
+
+  async function resumeRecording() {
+    if (!recording || !paused) return;
+    await recording.startAsync();
+    setPaused(false);
+    timerRef.current = setInterval(() => setSeconds(s => s + 1), 1000);
+  }
+
   async function stopRecording() {
     if (!recording) return;
     if (timerRef.current) clearInterval(timerRef.current);
-    const uri = recording.getURI();
-    await recording.stopAndUnloadAsync();
-    setRecording(null);
-    if (!uri) {
-      Alert.alert("Recording failed", "Could not read the audio file. Please try again.");
+    setPaused(false);
+    try {
+      const uri = recording.getURI();
+      await recording.stopAndUnloadAsync();
+      setRecording(null);
+      if (!uri) { Alert.alert("Recording failed", "Could not read the audio file."); return; }
+      setSavedUri(uri);
+    } catch {
+      Alert.alert("Error", "Could not stop recording.");
+      setRecording(null);
+    }
+  }
+
+  async function playAudio() {
+    if (!savedUri) return;
+    if (playing && sound) {
+      await sound.pauseAsync();
+      setPlaying(false);
       return;
     }
+    try {
+      if (sound) { await sound.playAsync(); setPlaying(true); return; }
+      await Audio.setAudioModeAsync({ allowsRecordingIOS: false, playsInSilentModeIOS: true });
+      const { sound: s } = await Audio.Sound.createAsync({ uri: savedUri });
+      setSound(s);
+      setPlaying(true);
+      s.setOnPlaybackStatusUpdate(status => {
+        if ((status as any).didJustFinish) { setPlaying(false); s.unloadAsync(); setSound(null); }
+      });
+      await s.playAsync();
+    } catch { Alert.alert("Error", "Could not play audio."); }
+  }
+
+  async function processAudio(action: "transcribe" | "summarize") {
+    if (!savedUri) return;
+    setRecordAction(action);
+    if (sound) { await sound.unloadAsync(); setSound(null); setPlaying(false); }
     setUploading(true);
     try {
       const fd = new FormData();
-      fd.append("audio", { uri, name: "lecture.m4a", type: "audio/m4a" } as any);
+      fd.append("audio", { uri: savedUri, name: "lecture.m4a", type: "audio/m4a" } as any);
       fd.append("courseId", course.id);
       fd.append("title", recTitle.trim() || `Lecture ${new Date().toLocaleDateString()}`);
       if (slidesUri) fd.append("slides", { uri: slidesUri, name: "slides.pdf", type: "application/pdf" } as any);
@@ -171,11 +252,12 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
       setProcessingLectureId(res.data?.data?.id ?? null);
       setProcessingStatus("processing");
       setLectureSheet(null);
+      setLectureTranscript(null);
       setAddedToBook(false);
+      setSavedUri(null);
     } catch (e: any) {
       const msg = e?.response?.data?.message ?? e?.response?.data?.error ?? e?.message ?? "Unknown error";
-      const status = e?.response?.status;
-      Alert.alert("Upload failed", status ? `${status}: ${msg}` : msg);
+      Alert.alert("Upload failed", msg);
     } finally {
       setUploading(false);
     }
@@ -198,10 +280,16 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
     setProcessingLectureId(null);
     setProcessingStatus("processing");
     setLectureSheet(null);
+    setLectureTranscript(null);
     setSeconds(0);
     setRecTitle("");
     setSlidesUri(null);
     setAddedToBook(false);
+    setSavedUri(null);
+    setRecordAction(null);
+    setPaused(false);
+    if (sound) { sound.unloadAsync(); setSound(null); }
+    setPlaying(false);
   }
 
   async function pickSlides() {
@@ -401,8 +489,8 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
       {/* ── RECORD ── */}
       {tab === "record" && (
         <>
-          {/* Processing spinner */}
-          {processingLectureId && !lectureSheet && (
+          {/* Processing */}
+          {processingLectureId && !lectureSheet && !lectureTranscript && (
             <View style={w.doneCard}>
               {processingStatus === "error"
                 ? <Ionicons name="alert-circle-outline" size={28} color="#555" style={{ marginBottom: 12 }} />
@@ -435,11 +523,25 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
             </View>
           )}
 
-          {/* Inline summary sheet */}
+          {/* Transcript view */}
+          {lectureTranscript && (
+            <View style={w.card}>
+              <Text style={[w.listLbl, { marginTop: 0, marginBottom: 10 }]}>Transcript</Text>
+              <ScrollView style={{ maxHeight: 300 }} nestedScrollEnabled>
+                <Text style={[w.cardDesc, { color: "#aaa", lineHeight: 20 }]}>{lectureTranscript}</Text>
+              </ScrollView>
+              <View style={{ borderTopWidth: 0.5, borderTopColor: "#1a1a1a", paddingTop: 12, marginTop: 12 }}>
+                <TouchableOpacity onPress={resetRecorder} style={[w.againBtn, { marginTop: 0, alignSelf: "center" }]}>
+                  <Text style={w.againTxt}>Record another</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+
+          {/* Summary sheet */}
           {lectureSheet && (
             <View style={w.card}>
               <Text style={[w.listTitle, { color: "#fff", fontSize: 14, marginBottom: 12 }]}>{lectureSheet.title}</Text>
-
               {(lectureSheet.content?.sections ?? []).slice(0, 3).map((s: any, i: number) => (
                 <View key={i} style={{ marginBottom: 12 }}>
                   <Text style={[w.listLbl, { marginTop: 0, marginBottom: 6 }]}>{s.heading}</Text>
@@ -451,26 +553,22 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
                   ))}
                 </View>
               ))}
-
               {(lectureSheet.content?.keyTerms ?? []).length > 0 && (
                 <View style={{ marginBottom: 12 }}>
                   <Text style={[w.listLbl, { marginTop: 0, marginBottom: 6 }]}>Key Terms</Text>
                   {(lectureSheet.content.keyTerms ?? []).slice(0, 4).map((kt: any, i: number) => (
                     <Text key={i} style={[w.cardDesc, { marginBottom: 4 }]}>
-                      <Text style={{ color: "#fff" }}>{kt.term}</Text>
-                      {" — "}{kt.definition}
+                      <Text style={{ color: "#fff" }}>{kt.term}</Text>{" — "}{kt.definition}
                     </Text>
                   ))}
                 </View>
               )}
-
               {(lectureSheet.content?.examTips ?? []).length > 0 && (
                 <View style={{ backgroundColor: "#0a0a0a", borderRadius: 12, padding: 10, marginBottom: 12 }}>
                   <Text style={[w.listLbl, { marginTop: 0, marginBottom: 4 }]}>Exam Tip</Text>
                   <Text style={w.cardDesc}>{lectureSheet.content.examTips[0]}</Text>
                 </View>
               )}
-
               <View style={{ flexDirection: "row", alignItems: "center", borderTopWidth: 0.5, borderTopColor: "#1a1a1a", paddingTop: 12, gap: 10 }}>
                 <TouchableOpacity
                   onPress={addToStudyBook}
@@ -482,8 +580,7 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
                     ? <><ActivityIndicator size="small" color="#888" /><Text style={w.againTxt}>Adding…</Text></>
                     : addedToBook
                     ? <Text style={[w.againTxt, { color: "#4ade80" }]}>✓ Added to Study Book</Text>
-                    : <Text style={w.againTxt}>+ Add to Study Book</Text>
-                  }
+                    : <Text style={w.againTxt}>+ Add to Study Book</Text>}
                 </TouchableOpacity>
                 <TouchableOpacity onPress={resetRecorder} style={{ marginLeft: "auto" as any }}>
                   <Text style={[w.againTxt, { color: "#333" }]}>Record another</Text>
@@ -492,8 +589,54 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
             </View>
           )}
 
-          {/* Recorder — only shown when not processing */}
-          {!processingLectureId && (
+          {/* Saved audio action card */}
+          {savedUri && !processingLectureId && (
+            <View style={w.savedCard}>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 16 }}>
+                <Ionicons name="checkmark-circle" size={18} color="#4ade80" />
+                <Text style={{ color: "#fff", fontSize: 13, fontWeight: "600" }}>Recording saved</Text>
+                <Text style={[w.listSub, { marginLeft: "auto" as any }]}>{fmt(seconds)}</Text>
+              </View>
+
+              <TouchableOpacity style={w.listenBtn} onPress={playAudio} activeOpacity={0.8}>
+                <Ionicons name={playing ? "pause-circle" : "play-circle"} size={22} color="#fff" />
+                <Text style={w.listenTxt}>{playing ? "Pause" : "Listen to recording"}</Text>
+              </TouchableOpacity>
+
+              <View style={{ flexDirection: "row", gap: 8, marginTop: 8 }}>
+                <TouchableOpacity
+                  style={[w.actionBtn, uploading && { opacity: 0.4 }]}
+                  onPress={() => processAudio("transcribe")}
+                  disabled={uploading}
+                  activeOpacity={0.8}
+                >
+                  {uploading && recordAction === "transcribe"
+                    ? <ActivityIndicator size="small" color="#888" />
+                    : <Ionicons name="document-text-outline" size={15} color="#888" />}
+                  <Text style={w.actionBtnTxt}>Transcribe</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[w.actionBtn, w.actionBtnWhite, uploading && { opacity: 0.4 }]}
+                  onPress={() => processAudio("summarize")}
+                  disabled={uploading}
+                  activeOpacity={0.8}
+                >
+                  {uploading && recordAction === "summarize"
+                    ? <ActivityIndicator size="small" color="#000" />
+                    : <Ionicons name="sparkles-outline" size={15} color="#000" />}
+                  <Text style={[w.actionBtnTxt, { color: "#000" }]}>Summarize</Text>
+                </TouchableOpacity>
+              </View>
+
+              <TouchableOpacity onPress={resetRecorder} style={{ alignSelf: "center", marginTop: 14 }}>
+                <Text style={{ fontSize: 11, color: "#333" }}>Discard recording</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {/* Recorder */}
+          {!processingLectureId && !savedUri && (
             <>
               <TextInput
                 style={w.titleInput}
@@ -504,26 +647,41 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
               />
               <View style={w.recCard}>
                 <Text style={w.timer}>{fmt(seconds)}</Text>
-                {recording && (
-                  <View style={w.liveRow}>
-                    <View style={w.liveDot} />
-                    <Text style={w.liveText}>Recording — {course.name}</Text>
+
+                {recording ? (
+                  <View style={w.waveContainer}>
+                    {waveAnims.map((anim, i) => (
+                      <Animated.View
+                        key={i}
+                        style={[w.waveBar, {
+                          height: anim.interpolate({ inputRange: [0, 1], outputRange: [3, 52] }),
+                          opacity: paused ? 0.2 : 1,
+                        }]}
+                      />
+                    ))}
                   </View>
+                ) : (
+                  <Text style={[w.hint, { marginBottom: 20 }]}>Tap to start recording</Text>
                 )}
-                <TouchableOpacity
-                  style={[w.btn, recording ? w.btnStop : w.btnStart]}
-                  onPress={recording ? stopRecording : startRecording}
-                  disabled={uploading}
-                  activeOpacity={0.8}
-                >
-                  {uploading
-                    ? <ActivityIndicator size="small" color="#555" />
-                    : <Ionicons name={recording ? "stop" : "mic"} size={28} color={recording ? "#000" : "#fff"} />
-                  }
-                </TouchableOpacity>
-                {uploading && <Text style={w.hint}>Uploading…</Text>}
-                {!recording && !uploading && <Text style={w.hint}>Tap to start</Text>}
+
+                {recording ? (
+                  <View style={w.recBtnRow}>
+                    <TouchableOpacity style={w.pauseBtn} onPress={paused ? resumeRecording : pauseRecording} activeOpacity={0.8}>
+                      <Ionicons name={paused ? "play" : "pause"} size={18} color="#fff" />
+                      <Text style={w.pauseBtnTxt}>{paused ? "Resume" : "Pause"}</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={w.stopBtn} onPress={stopRecording} activeOpacity={0.8}>
+                      <Ionicons name="stop" size={18} color="#000" />
+                      <Text style={w.stopBtnTxt}>Stop</Text>
+                    </TouchableOpacity>
+                  </View>
+                ) : (
+                  <TouchableOpacity style={w.startBtn} onPress={startRecording} disabled={uploading} activeOpacity={0.8}>
+                    <Ionicons name="mic" size={28} color="#fff" />
+                  </TouchableOpacity>
+                )}
               </View>
+
               <TouchableOpacity style={w.attachRow} onPress={pickSlides} activeOpacity={0.7}>
                 <Ionicons name="attach" size={15} color={slidesUri ? "#fff" : "#555"} />
                 <Text style={[w.attachTxt, slidesUri && { color: "#fff" }]}>
@@ -533,7 +691,7 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
             </>
           )}
 
-          {lectures.length > 0 && (
+          {lectures.length > 0 && !savedUri && (
             <>
               <Text style={w.listLbl}>Recordings</Text>
               {lectures.map((l) => (
@@ -1052,12 +1210,20 @@ const w = StyleSheet.create({
   titleInput: { backgroundColor: "#111", borderRadius: 14, paddingHorizontal: 14, paddingVertical: 12, fontSize: 13, color: "#fff", borderWidth: 0.5, borderColor: "#1e1e1e", marginBottom: 10 },
   recCard: { backgroundColor: "#111", borderRadius: 28, padding: 28, alignItems: "center", borderWidth: 0.5, borderColor: "#1e1e1e", marginBottom: 10 },
   timer: { fontSize: 52, color: "#fff", fontWeight: "200", letterSpacing: -2, marginBottom: 10 },
-  liveRow: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 20 },
-  liveDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: "#fff" },
-  liveText: { fontSize: 11, color: "#888" },
-  btn: { width: 68, height: 68, borderRadius: 34, alignItems: "center", justifyContent: "center", marginBottom: 14 },
-  btnStart: { backgroundColor: "#1a1a1a", borderWidth: 0.5, borderColor: "#333" },
-  btnStop: { backgroundColor: "#fff" },
+  waveContainer: { flexDirection: "row", alignItems: "center", gap: 3, height: 60, marginBottom: 24 },
+  waveBar: { width: 3, borderRadius: 2, backgroundColor: "#fff" },
+  recBtnRow: { flexDirection: "row", gap: 10, width: "100%" },
+  pauseBtn: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, backgroundColor: "#1a1a1a", borderRadius: 18, paddingVertical: 14, borderWidth: 0.5, borderColor: "#333" },
+  pauseBtnTxt: { fontSize: 13, color: "#fff", fontWeight: "500" },
+  stopBtn: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, backgroundColor: "#fff", borderRadius: 18, paddingVertical: 14 },
+  stopBtnTxt: { fontSize: 13, color: "#000", fontWeight: "600" },
+  startBtn: { width: 68, height: 68, borderRadius: 34, backgroundColor: "#1a1a1a", borderWidth: 0.5, borderColor: "#333", alignItems: "center", justifyContent: "center", marginBottom: 8 },
+  savedCard: { backgroundColor: "#111", borderRadius: 20, padding: 16, borderWidth: 0.5, borderColor: "#1e1e1e", marginBottom: 10 },
+  listenBtn: { flexDirection: "row", alignItems: "center", gap: 10, backgroundColor: "#1a1a1a", borderRadius: 14, padding: 14, borderWidth: 0.5, borderColor: "#2a2a2a" },
+  listenTxt: { fontSize: 13, color: "#fff", fontWeight: "500" },
+  actionBtn: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 7, backgroundColor: "#1a1a1a", borderRadius: 14, paddingVertical: 13, borderWidth: 0.5, borderColor: "#2a2a2a" },
+  actionBtnWhite: { backgroundColor: "#fff", borderColor: "#fff" },
+  actionBtnTxt: { fontSize: 13, color: "#888", fontWeight: "500" },
   hint: { fontSize: 11, color: "#333" },
   attachRow: { flexDirection: "row", alignItems: "center", gap: 10, backgroundColor: "#111", borderRadius: 14, padding: 14, borderWidth: 0.5, borderColor: "#1e1e1e", marginBottom: 10 },
   attachTxt: { fontSize: 12, color: "#555" },
