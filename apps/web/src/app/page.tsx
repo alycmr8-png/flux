@@ -20,32 +20,32 @@ export default async function LandingPage() {
   if (userId) redirect("/dashboard");
 
   return (
-    <main className="min-h-screen flex flex-col" style={{ background: "linear-gradient(to top, #F97316, #FDE047)" }}>
+    <main className="min-h-screen flex flex-col" style={{ background: "linear-gradient(to top, #7C2D12, #C2410C)" }}>
       <Navbar />
 
       {/* Hero */}
       <div className="flex flex-col items-center text-center px-6 md:px-16 pt-36 md:pt-52 pb-16">
-        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-10" style={{ background: "rgba(0,0,0,0.08)", border: "1px solid rgba(0,0,0,0.1)" }}>
-          <Layers size={12} style={{ color: "rgba(0,0,0,0.5)" }} />
-          <span className="text-[10px] uppercase tracking-[0.2em] font-semibold" style={{ color: "rgba(0,0,0,0.5)" }}>
+        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-10" style={{ background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.18)" }}>
+          <Layers size={12} style={{ color: "rgba(255,255,255,0.6)" }} />
+          <span className="text-[10px] uppercase tracking-[0.2em] font-semibold" style={{ color: "rgba(255,255,255,0.6)" }}>
             Flux — AI Study Assistant
           </span>
         </div>
-        <h1 className="italic text-5xl md:text-7xl mb-6 leading-[1.1]" style={{ fontFamily: "’Playfair Display’, Georgia, serif", fontWeight: 400, color: "#111110", letterSpacing: "-0.01em" }}>
+        <h1 className="italic text-5xl md:text-7xl mb-6 leading-[1.1]" style={{ fontFamily: "’Playfair Display’, Georgia, serif", fontWeight: 400, color: "white", letterSpacing: "-0.01em" }}>
           Record the lecture.<br />Get the A.
         </h1>
-        <p className="text-sm md:text-base mb-10 leading-relaxed max-w-md" style={{ color: "rgba(0,0,0,0.5)" }}>
+        <p className="text-sm md:text-base mb-10 leading-relaxed max-w-md" style={{ color: "rgba(255,255,255,0.65)" }}>
           Flux turns your lecture recordings into cheat sheets, quizzes, and study books — automatically.
         </p>
         <div className="flex gap-3 mb-5">
-          <Link href="/sign-up" className="font-semibold px-8 py-3 rounded-full text-sm transition-all" style={{ background: "#111110", color: "white" }}>
+          <Link href="/sign-up" className="font-semibold px-8 py-3 rounded-full text-sm transition-all" style={{ background: "white", color: "#111110" }}>
             Get started free
           </Link>
-          <Link href="/sign-in" className="font-medium px-8 py-3 rounded-full text-sm transition-all" style={{ border: "1.5px solid rgba(0,0,0,0.18)", color: "#111110", background: "rgba(255,255,255,0.3)" }}>
+          <Link href="/sign-in" className="font-medium px-8 py-3 rounded-full text-sm transition-all" style={{ border: "1.5px solid rgba(255,255,255,0.3)", color: "white", background: "rgba(255,255,255,0.12)" }}>
             Sign in
           </Link>
         </div>
-        <span className="text-xs" style={{ color: "rgba(0,0,0,0.35)" }}>Free to start · No credit card needed</span>
+        <span className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>Free to start · No credit card needed</span>
       </div>
 
       {/* Wave divider */}
@@ -74,10 +74,10 @@ export default async function LandingPage() {
 
       {/* Tagline */}
       <ScrollReveal className="text-center py-10 px-6">
-        <p className="text-[10px] uppercase tracking-[0.22em] font-semibold mb-3" style={{ color: "rgba(0,0,0,0.38)" }}>
+        <p className="text-[10px] uppercase tracking-[0.22em] font-semibold mb-3" style={{ color: "rgba(255,255,255,0.45)" }}>
           Trusted by students at
         </p>
-        <p className="text-2xl md:text-3xl" style={{ fontFamily: "’Playfair Display’, Georgia, serif", fontStyle: "italic", fontWeight: 400, color: "#111110" }}>
+        <p className="text-2xl md:text-3xl" style={{ fontFamily: "’Playfair Display’, Georgia, serif", fontStyle: "italic", fontWeight: 400, color: "white" }}>
           universities across the country.
         </p>
       </ScrollReveal>
@@ -97,12 +97,12 @@ export default async function LandingPage() {
               <Image src="/usman.jpeg" alt="Usman Tariq" fill className="rounded-2xl object-cover" style={{ objectPosition: "center top" }} />
             </div>
             <div className="flex flex-col justify-center">
-              <div className="text-5xl mb-4" style={{ color: "rgba(0,0,0,0.15)", fontFamily: "Georgia, serif", lineHeight: 1 }}>"</div>
-              <p className="text-lg md:text-xl leading-relaxed mb-6" style={{ fontFamily: "’Playfair Display’, Georgia, serif", fontStyle: "italic", fontWeight: 400, color: "#111110" }}>
+              <div className="text-5xl mb-4" style={{ color: "rgba(255,255,255,0.2)", fontFamily: "Georgia, serif", lineHeight: 1 }}>"</div>
+              <p className="text-lg md:text-xl leading-relaxed mb-6" style={{ fontFamily: "’Playfair Display’, Georgia, serif", fontStyle: "italic", fontWeight: 400, color: "white" }}>
                 Flux literally saved my semester. I record every business lecture and get a full cheat sheet before I even leave the classroom.
               </p>
-              <div className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: "rgba(0,0,0,0.6)" }}>Usman Tariq</div>
-              <div className="text-xs" style={{ color: "rgba(0,0,0,0.45)" }}>Business Student · Queensborough Community College</div>
+              <div className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: "rgba(255,255,255,0.7)" }}>Usman Tariq</div>
+              <div className="text-xs" style={{ color: "rgba(255,255,255,0.45)" }}>Business Student · Queensborough Community College</div>
             </div>
           </div>
         </ScrollReveal>
@@ -114,12 +114,12 @@ export default async function LandingPage() {
               <Image src="/sira.png" alt="Sira Camara" fill className="rounded-2xl object-cover" style={{ objectPosition: "center 25%" }} />
             </div>
             <div className="flex flex-col justify-center md:ml-auto">
-              <div className="text-5xl mb-4" style={{ color: "rgba(0,0,0,0.15)", fontFamily: "Georgia, serif", lineHeight: 1 }}>"</div>
-              <p className="text-lg md:text-xl leading-relaxed mb-6" style={{ fontFamily: "’Playfair Display’, Georgia, serif", fontStyle: "italic", fontWeight: 400, color: "#111110" }}>
+              <div className="text-5xl mb-4" style={{ color: "rgba(255,255,255,0.2)", fontFamily: "Georgia, serif", lineHeight: 1 }}>"</div>
+              <p className="text-lg md:text-xl leading-relaxed mb-6" style={{ fontFamily: "’Playfair Display’, Georgia, serif", fontStyle: "italic", fontWeight: 400, color: "white" }}>
                 Between clinicals and coursework, I barely had time to review. Flux turns my lecture recordings into study guides overnight — I actually feel prepared walking into exams now.
               </p>
-              <div className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: "rgba(0,0,0,0.6)" }}>Sira Camara</div>
-              <div className="text-xs" style={{ color: "rgba(0,0,0,0.45)" }}>Nursing Student · LaGuardia Community College</div>
+              <div className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: "rgba(255,255,255,0.7)" }}>Sira Camara</div>
+              <div className="text-xs" style={{ color: "rgba(255,255,255,0.45)" }}>Nursing Student · LaGuardia Community College</div>
             </div>
           </div>
         </ScrollReveal>
@@ -157,13 +157,13 @@ export default async function LandingPage() {
 
       {/* CTA footer */}
       <ScrollReveal className="py-24 text-center px-6">
-        <h2 className="text-4xl mb-4" style={{ fontFamily: "’Playfair Display’, Georgia, serif", fontStyle: "italic", fontWeight: 400, color: "#111110" }}>
+        <h2 className="text-4xl mb-4" style={{ fontFamily: "’Playfair Display’, Georgia, serif", fontStyle: "italic", fontWeight: 400, color: "white" }}>
           Start studying smarter.
         </h2>
-        <p className="text-sm mb-8 max-w-xs mx-auto" style={{ color: "rgba(0,0,0,0.45)", lineHeight: 1.7 }}>
+        <p className="text-sm mb-8 max-w-xs mx-auto" style={{ color: "rgba(255,255,255,0.55)", lineHeight: 1.7 }}>
           Join students who stopped wasting hours making their own notes.
         </p>
-        <Link href="/sign-up" className="font-semibold px-10 py-3.5 rounded-full text-sm transition-all" style={{ background: "#111110", color: "white" }}>
+        <Link href="/sign-up" className="font-semibold px-10 py-3.5 rounded-full text-sm transition-all" style={{ background: "white", color: "#111110" }}>
           Get started free
         </Link>
       </ScrollReveal>
