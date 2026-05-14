@@ -26,8 +26,7 @@ export default async function LandingPage() {
       {/* Hero */}
       <div className="relative flex flex-col items-center text-center px-6 md:px-16 pt-36 md:pt-52 pb-16 overflow-hidden">
         {/* Rope — left */}
-        <div className="absolute top-0 left-[8%] hidden md:block pointer-events-none select-none"
-          style={{ animation: "ropeSwingL 4.5s ease-in-out infinite", transformOrigin: "20px 0px" }}>
+        <div className="absolute left-[8%] hidden md:block pointer-events-none select-none" style={{ top: -40, animation: "ropeSwingL 4.5s ease-in-out infinite", transformOrigin: "20px 0px" }}>
           <svg width="44" height="340" viewBox="0 0 44 340" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M22,0 C14,50 30,100 22,150 C14,200 30,250 22,300 C18,318 22,325 22,325"
               stroke="rgba(255,220,160,0.55)" strokeWidth="5" strokeLinecap="round"/>
@@ -40,8 +39,7 @@ export default async function LandingPage() {
         </div>
 
         {/* Rope — right */}
-        <div className="absolute top-0 right-[8%] hidden md:block pointer-events-none select-none"
-          style={{ animation: "ropeSwingR 3.8s ease-in-out infinite", transformOrigin: "22px 0px" }}>
+        <div className="absolute right-[8%] hidden md:block pointer-events-none select-none" style={{ top: -40, animation: "ropeSwingR 3.8s ease-in-out infinite", transformOrigin: "22px 0px" }}>
           <svg width="44" height="280" viewBox="0 0 44 280" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M22,0 C14,45 30,90 22,135 C14,180 30,225 22,265 C20,272 22,275 22,275"
               stroke="rgba(255,220,160,0.5)" strokeWidth="5" strokeLinecap="round"/>
