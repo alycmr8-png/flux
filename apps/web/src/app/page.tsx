@@ -24,33 +24,28 @@ export default async function LandingPage() {
       <Navbar />
 
       {/* Hero */}
-      <div className="flex flex-col items-center text-center px-6 md:px-16 pt-36 md:pt-48 pb-12">
-        <div className="flex items-center gap-3 mb-8">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(0,0,0,0.1)", border: "1px solid rgba(0,0,0,0.12)" }}>
-            <span className="text-lg">📚</span>
-          </div>
+      <div className="flex flex-col items-center text-center px-6 md:px-16 pt-36 md:pt-52 pb-16">
+        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-10" style={{ background: "rgba(0,0,0,0.08)", border: "1px solid rgba(0,0,0,0.1)" }}>
+          <Layers size={12} style={{ color: "rgba(0,0,0,0.5)" }} />
           <span className="text-[10px] uppercase tracking-[0.2em] font-semibold" style={{ color: "rgba(0,0,0,0.5)" }}>
-            Flux — Study Assistant
+            Flux — AI Study Assistant
           </span>
         </div>
-        <h1 className="italic text-4xl md:text-6xl mb-5 leading-tight" style={{ fontFamily: "’Playfair Display’, Georgia, serif", fontWeight: 400, color: "#111110" }}>
-          Your 24/7<br />AI study team. 🎓
+        <h1 className="italic text-5xl md:text-7xl mb-6 leading-[1.1]" style={{ fontFamily: "’Playfair Display’, Georgia, serif", fontWeight: 400, color: "#111110", letterSpacing: "-0.01em" }}>
+          Record the lecture.<br />Get the A.
         </h1>
-        <p className="text-sm md:text-base mb-10 leading-relaxed max-w-sm md:max-w-none" style={{ color: "rgba(0,0,0,0.55)" }}>
-          You record the lecture. You get flashcards, quizzes,
-          practice tests, and more — built from exactly what you need to know.
+        <p className="text-sm md:text-base mb-10 leading-relaxed max-w-md" style={{ color: "rgba(0,0,0,0.5)" }}>
+          Flux turns your lecture recordings into cheat sheets, quizzes, and study books — automatically.
         </p>
-        <div className="flex gap-3 mb-4">
-          <Link href="/sign-up" className="font-medium px-7 py-2.5 rounded-full text-sm transition-colors" style={{ background: "#111110", color: "white" }}>
+        <div className="flex gap-3 mb-5">
+          <Link href="/sign-up" className="font-semibold px-8 py-3 rounded-full text-sm transition-all" style={{ background: "#111110", color: "white" }}>
             Get started free
           </Link>
-          <Link href="/sign-in" className="border font-medium px-7 py-2.5 rounded-full text-sm transition-colors" style={{ borderColor: "rgba(0,0,0,0.2)", color: "#111110" }}>
+          <Link href="/sign-in" className="font-medium px-8 py-3 rounded-full text-sm transition-all" style={{ border: "1.5px solid rgba(0,0,0,0.18)", color: "#111110", background: "rgba(255,255,255,0.3)" }}>
             Sign in
           </Link>
         </div>
-        <Link href="/pricing" className="text-xs transition-colors" style={{ color: "rgba(0,0,0,0.4)" }}>
-          View pricing →
-        </Link>
+        <span className="text-xs" style={{ color: "rgba(0,0,0,0.35)" }}>Free to start · No credit card needed</span>
       </div>
 
       {/* Wave divider */}
@@ -78,12 +73,12 @@ export default async function LandingPage() {
       </div>
 
       {/* Tagline */}
-      <ScrollReveal className="text-center pb-10">
-        <p className="text-sm uppercase tracking-widest font-semibold mb-2" style={{ color: "rgba(0,0,0,0.4)" }}>
-          Focus on the grade, not the busywork.
+      <ScrollReveal className="text-center py-10 px-6">
+        <p className="text-[10px] uppercase tracking-[0.22em] font-semibold mb-3" style={{ color: "rgba(0,0,0,0.38)" }}>
+          Trusted by students at
         </p>
-        <p className="text-2xl" style={{ fontFamily: "’Playfair Display’, Georgia, serif", fontStyle: "italic", fontWeight: 400, color: "#111110" }}>
-          With Flux, straight A&apos;s. 😄
+        <p className="text-2xl md:text-3xl" style={{ fontFamily: "’Playfair Display’, Georgia, serif", fontStyle: "italic", fontWeight: 400, color: "#111110" }}>
+          universities across the country.
         </p>
       </ScrollReveal>
 
@@ -104,7 +99,7 @@ export default async function LandingPage() {
             <div className="flex flex-col justify-center">
               <div className="text-5xl mb-4" style={{ color: "rgba(0,0,0,0.15)", fontFamily: "Georgia, serif", lineHeight: 1 }}>"</div>
               <p className="text-lg md:text-xl leading-relaxed mb-6" style={{ fontFamily: "’Playfair Display’, Georgia, serif", fontStyle: "italic", fontWeight: 400, color: "#111110" }}>
-                Flux literally saved my semester. I record every business lecture and get a full cheat sheet before I even leave the classroom. 😂
+                Flux literally saved my semester. I record every business lecture and get a full cheat sheet before I even leave the classroom.
               </p>
               <div className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: "rgba(0,0,0,0.6)" }}>Usman Tariq</div>
               <div className="text-xs" style={{ color: "rgba(0,0,0,0.45)" }}>Business Student · Queensborough Community College</div>
@@ -121,7 +116,7 @@ export default async function LandingPage() {
             <div className="flex flex-col justify-center md:ml-auto">
               <div className="text-5xl mb-4" style={{ color: "rgba(0,0,0,0.15)", fontFamily: "Georgia, serif", lineHeight: 1 }}>"</div>
               <p className="text-lg md:text-xl leading-relaxed mb-6" style={{ fontFamily: "’Playfair Display’, Georgia, serif", fontStyle: "italic", fontWeight: 400, color: "#111110" }}>
-                Between clinicals and coursework, I barely had time to review. Flux turns my lecture recordings into study guides overnight — I actually feel prepared walking into exams now. 📖
+                Between clinicals and coursework, I barely had time to review. Flux turns my lecture recordings into study guides overnight — I actually feel prepared walking into exams now.
               </p>
               <div className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: "rgba(0,0,0,0.6)" }}>Sira Camara</div>
               <div className="text-xs" style={{ color: "rgba(0,0,0,0.45)" }}>Nursing Student · LaGuardia Community College</div>
@@ -161,12 +156,14 @@ export default async function LandingPage() {
       </ScrollReveal>
 
       {/* CTA footer */}
-      <ScrollReveal className="py-20 text-center">
-        <h2 className="text-3xl mb-4" style={{ fontFamily: "’Playfair Display’, Georgia, serif", fontStyle: "italic", fontWeight: 400, color: "#111110" }}>
-          Ready to study smarter? 🚀
+      <ScrollReveal className="py-24 text-center px-6">
+        <h2 className="text-4xl mb-4" style={{ fontFamily: "’Playfair Display’, Georgia, serif", fontStyle: "italic", fontWeight: 400, color: "#111110" }}>
+          Start studying smarter.
         </h2>
-        <p className="text-sm mb-8" style={{ color: "rgba(0,0,0,0.45)" }}>Free to start. No credit card needed.</p>
-        <Link href="/sign-up" className="font-medium px-8 py-3 rounded-full text-sm transition-colors" style={{ background: "#111110", color: "white" }}>
+        <p className="text-sm mb-8 max-w-xs mx-auto" style={{ color: "rgba(0,0,0,0.45)", lineHeight: 1.7 }}>
+          Join students who stopped wasting hours making their own notes.
+        </p>
+        <Link href="/sign-up" className="font-semibold px-10 py-3.5 rounded-full text-sm transition-all" style={{ background: "#111110", color: "white" }}>
           Get started free
         </Link>
       </ScrollReveal>

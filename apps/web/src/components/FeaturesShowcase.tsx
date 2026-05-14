@@ -1,14 +1,13 @@
 "use client";
 import { useState } from "react";
-import { Mic, FileText, BookOpen, BookMarked, Brain, Youtube } from "lucide-react";
+import { Mic, FileText, BookOpen, BookMarked, Youtube } from "lucide-react";
 
 const TABS = [
-  { key: "record",    label: "Record",         icon: Mic        },
-  { key: "cheatsheet",label: "Cheat Sheet",    icon: FileText   },
-  { key: "quiz",      label: "Quiz",           icon: BookOpen   },
-  { key: "studybook", label: "Study Book",     icon: BookMarked },
-  { key: "video",     label: "Upload Video",   icon: Youtube    },
-  { key: "tutor",     label: "AI Tutor",       icon: Brain      },
+  { key: "record",    label: "Record",       icon: Mic        },
+  { key: "cheatsheet",label: "Cheat Sheet",  icon: FileText   },
+  { key: "quiz",      label: "Quiz",         icon: BookOpen   },
+  { key: "studybook", label: "Study Book",   icon: BookMarked },
+  { key: "video",     label: "Upload Video", icon: Youtube    },
 ] as const;
 
 function RecordPreview() {
@@ -324,66 +323,41 @@ function VideoPreview() {
   );
 }
 
-function TutorPreview() {
-  return (
-    <div className="rounded-2xl p-5" style={{ background: "rgba(255,255,255,0.6)", border: "1px solid rgba(0,0,0,0.07)" }}>
-      <div className="text-[10px] uppercase tracking-widest mb-4" style={{ color: "rgba(0,0,0,0.35)" }}>AI Tutor — Psychology 301</div>
-      <div className="space-y-3">
-        <div className="flex justify-end">
-          <div className="px-4 py-2.5 rounded-2xl rounded-tr-sm text-sm max-w-[80%]" style={{ background: "#111110", color: "white" }}>
-            Can you explain cognitive dissonance with an example?
-          </div>
-        </div>
-        <div className="flex justify-start">
-          <div className="px-4 py-2.5 rounded-2xl rounded-tl-sm text-sm max-w-[85%] leading-relaxed" style={{ background: "white", color: "rgba(0,0,0,0.7)", border: "1px solid rgba(0,0,0,0.07)" }}>
-            Sure! Cognitive dissonance is the discomfort you feel when two beliefs conflict. For example, a student who smokes but knows it's unhealthy feels tension between "I smoke" and "smoking is bad." They might resolve it by rationalising — "I'll quit after exams."
-          </div>
-        </div>
-        <div className="flex justify-end">
-          <div className="px-4 py-2.5 rounded-2xl rounded-tr-sm text-sm max-w-[80%]" style={{ background: "#111110", color: "white" }}>
-            How does this relate to my lecture notes?
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 const PREVIEWS: Record<string, React.ReactNode> = {
   record:     <RecordPreview />,
   cheatsheet: <CheatSheetPreview />,
   quiz:       <QuizPreview />,
   studybook:  <StudyBookPreview />,
   video:      <VideoPreview />,
-  tutor:      <TutorPreview />,
 };
 
 export function FeaturesShowcase() {
   const [active, setActive] = useState<string>("cheatsheet");
 
   return (
-    <section className="px-16 py-24" style={{ background: "rgba(255,255,255,0.04)" }}>
+    <section className="px-6 md:px-16 py-16 md:py-24">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-12">
-          <div className="text-[10px] uppercase tracking-widest mb-3" style={{ color: "rgba(255,255,255,0.35)" }}>What you get</div>
-          <h2 className="text-4xl" style={{ fontFamily: "'Playfair Display', Georgia, serif", fontStyle: "italic", fontWeight: 400, color: "white" }}>
+        <div className="text-center mb-10">
+          <div className="text-[10px] uppercase tracking-[0.2em] font-semibold mb-3" style={{ color: "rgba(0,0,0,0.4)" }}>What you get</div>
+          <h2 className="text-3xl md:text-4xl" style={{ fontFamily: "'Playfair Display', Georgia, serif", fontStyle: "italic", fontWeight: 400, color: "#111110" }}>
             Everything to ace the semester.
           </h2>
-          <p className="text-base mt-3" style={{ color: "rgba(255,255,255,0.5)" }}>
-            One recording. Cheat sheets, quizzes, study books, and a tutor — generated instantly.
+          <p className="text-sm md:text-base mt-3" style={{ color: "rgba(0,0,0,0.5)" }}>
+            One recording. Cheat sheets, quizzes, study books — generated instantly.
           </p>
         </div>
 
         {/* Tab bar */}
-        <div className="flex justify-center mb-8">
-          <div className="flex gap-1 p-1 rounded-2xl" style={{ background: "rgba(255,255,255,0.08)" }}>
+        <div className="flex justify-center mb-8 overflow-x-auto">
+          <div className="flex gap-1 p-1 rounded-2xl shrink-0" style={{ background: "rgba(0,0,0,0.07)" }}>
             {TABS.map(({ key, label, icon: Icon }) => (
               <button key={key} onClick={() => setActive(key)}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-all"
+                className="flex items-center gap-2 px-4 md:px-5 py-2.5 rounded-xl text-sm font-medium transition-all whitespace-nowrap"
                 style={{
                   background: active === key ? "white" : "transparent",
-                  color: active === key ? "#111110" : "rgba(255,255,255,0.5)",
+                  color: active === key ? "#111110" : "rgba(0,0,0,0.45)",
+                  boxShadow: active === key ? "0 1px 4px rgba(0,0,0,0.1)" : "none",
                 }}>
                 <Icon size={13} />
                 {label}
