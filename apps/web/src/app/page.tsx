@@ -20,7 +20,7 @@ export default async function LandingPage() {
   if (userId) redirect("/dashboard");
 
   return (
-    <main className="min-h-screen flex flex-col" style={{ background: "linear-gradient(to top, #E8520A, #F5B830)" }}>
+    <main className="min-h-screen flex flex-col" style={{ background: "linear-gradient(to top, #F97316, #FDE047)" }}>
       <Navbar />
 
       {/* Hero */}
