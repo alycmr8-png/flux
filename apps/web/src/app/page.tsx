@@ -19,35 +19,35 @@ export default async function LandingPage() {
   if (userId) redirect("/dashboard");
 
   return (
-    <main className="min-h-screen flex flex-col" style={{ background: "#111110" }}>
+    <main className="min-h-screen flex flex-col" style={{ background: "linear-gradient(to top, #E8520A, #F5B830)" }}>
       <Navbar />
 
       {/* Hero */}
       <div className="flex flex-col items-center text-center px-6 md:px-16 pt-36 md:pt-48 pb-12">
         <div className="flex items-center gap-3 mb-8">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.12)" }}>
-            <Layers size={18} style={{ color: "white" }} />
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(0,0,0,0.1)", border: "1px solid rgba(0,0,0,0.12)" }}>
+            <Layers size={18} style={{ color: "#111110" }} />
           </div>
-          <span className="text-[10px] uppercase tracking-[0.2em] font-semibold" style={{ color: "rgba(255,255,255,0.35)" }}>
+          <span className="text-[10px] uppercase tracking-[0.2em] font-semibold" style={{ color: "rgba(0,0,0,0.5)" }}>
             Flux — Study Assistant
           </span>
         </div>
-        <h1 className="italic text-4xl md:text-6xl text-white mb-5 leading-tight" style={{ fontFamily: "’Playfair Display’, Georgia, serif", fontWeight: 400 }}>
+        <h1 className="italic text-4xl md:text-6xl mb-5 leading-tight" style={{ fontFamily: "’Playfair Display’, Georgia, serif", fontWeight: 400, color: "#111110" }}>
           Your 24/7<br />AI study team.
         </h1>
-        <p className="text-sm md:text-base mb-10 leading-relaxed max-w-sm md:max-w-none" style={{ color: "rgba(255,255,255,0.5)" }}>
+        <p className="text-sm md:text-base mb-10 leading-relaxed max-w-sm md:max-w-none" style={{ color: "rgba(0,0,0,0.55)" }}>
           You record the lecture. You get flashcards, quizzes,
           practice tests, and more — built from exactly what you need to know.
         </p>
         <div className="flex gap-3 mb-4">
-          <Link href="/sign-up" className="bg-white text-[#111110] font-medium px-7 py-2.5 rounded-full text-sm hover:bg-[#eee] transition-colors">
+          <Link href="/sign-up" className="font-medium px-7 py-2.5 rounded-full text-sm transition-colors" style={{ background: "#111110", color: "white" }}>
             Get started free
           </Link>
-          <Link href="/sign-in" className="border font-medium px-7 py-2.5 rounded-full text-sm transition-colors" style={{ borderColor: "rgba(255,255,255,0.15)", color: "white" }}>
+          <Link href="/sign-in" className="border font-medium px-7 py-2.5 rounded-full text-sm transition-colors" style={{ borderColor: "rgba(0,0,0,0.2)", color: "#111110" }}>
             Sign in
           </Link>
         </div>
-        <Link href="/pricing" className="text-xs transition-colors" style={{ color: "rgba(255,255,255,0.3)" }}>
+        <Link href="/pricing" className="text-xs transition-colors" style={{ color: "rgba(0,0,0,0.4)" }}>
           View pricing →
         </Link>
       </div>
@@ -64,10 +64,10 @@ export default async function LandingPage() {
 
       {/* Tagline */}
       <div className="text-center pb-10">
-        <p className="text-sm uppercase tracking-widest font-semibold mb-2" style={{ color: "rgba(255,255,255,0.3)" }}>
+        <p className="text-sm uppercase tracking-widest font-semibold mb-2" style={{ color: "rgba(0,0,0,0.4)" }}>
           Focus on the grade, not the busywork.
         </p>
-        <p className="text-2xl" style={{ fontFamily: "'Playfair Display', Georgia, serif", fontStyle: "italic", fontWeight: 400, color: "white" }}>
+        <p className="text-2xl" style={{ fontFamily: "'Playfair Display', Georgia, serif", fontStyle: "italic", fontWeight: 400, color: "#111110" }}>
           With Flux, straight A&apos;s.
         </p>
       </div>
@@ -90,12 +90,12 @@ export default async function LandingPage() {
             />
           </div>
           <div className="flex flex-col justify-center">
-            <div className="text-5xl mb-4" style={{ color: "rgba(255,255,255,0.15)", fontFamily: "Georgia, serif", lineHeight: 1 }}>"</div>
-            <p className="text-lg md:text-xl leading-relaxed mb-6" style={{ fontFamily: "'Playfair Display', Georgia, serif", fontStyle: "italic", fontWeight: 400, color: "white" }}>
+            <div className="text-5xl mb-4" style={{ color: "rgba(0,0,0,0.15)", fontFamily: "Georgia, serif", lineHeight: 1 }}>"</div>
+            <p className="text-lg md:text-xl leading-relaxed mb-6" style={{ fontFamily: "'Playfair Display', Georgia, serif", fontStyle: "italic", fontWeight: 400, color: "#111110" }}>
               Flux literally saved my semester. I record every business lecture and get a full cheat sheet before I even leave the classroom.
             </p>
-            <div className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: "rgba(255,255,255,0.6)" }}>Usman Tariq</div>
-            <div className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>Business Student · Queensborough Community College</div>
+            <div className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: "rgba(0,0,0,0.6)" }}>Usman Tariq</div>
+            <div className="text-xs" style={{ color: "rgba(0,0,0,0.45)" }}>Business Student · Queensborough Community College</div>
           </div>
         </div>
 
@@ -111,12 +111,12 @@ export default async function LandingPage() {
             />
           </div>
           <div className="flex flex-col justify-center md:ml-auto">
-            <div className="text-5xl mb-4" style={{ color: "rgba(255,255,255,0.15)", fontFamily: "Georgia, serif", lineHeight: 1 }}>"</div>
-            <p className="text-lg md:text-xl leading-relaxed mb-6" style={{ fontFamily: "'Playfair Display', Georgia, serif", fontStyle: "italic", fontWeight: 400, color: "white" }}>
+            <div className="text-5xl mb-4" style={{ color: "rgba(0,0,0,0.15)", fontFamily: "Georgia, serif", lineHeight: 1 }}>"</div>
+            <p className="text-lg md:text-xl leading-relaxed mb-6" style={{ fontFamily: "'Playfair Display', Georgia, serif", fontStyle: "italic", fontWeight: 400, color: "#111110" }}>
               Between clinicals and coursework, I barely had time to review. Flux turns my lecture recordings into study guides overnight — I actually feel prepared walking into exams now.
             </p>
-            <div className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: "rgba(255,255,255,0.6)" }}>Sira Camara</div>
-            <div className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>Nursing Student · LaGuardia Community College</div>
+            <div className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: "rgba(0,0,0,0.6)" }}>Sira Camara</div>
+            <div className="text-xs" style={{ color: "rgba(0,0,0,0.45)" }}>Nursing Student · LaGuardia Community College</div>
           </div>
         </div>
 
@@ -133,11 +133,11 @@ export default async function LandingPage() {
 
       {/* CTA footer */}
       <div className="py-20 text-center">
-        <h2 className="text-3xl mb-4" style={{ fontFamily: "'Playfair Display', Georgia, serif", fontStyle: "italic", fontWeight: 400, color: "white" }}>
+        <h2 className="text-3xl mb-4" style={{ fontFamily: "'Playfair Display', Georgia, serif", fontStyle: "italic", fontWeight: 400, color: "#111110" }}>
           Ready to study smarter?
         </h2>
-        <p className="text-sm mb-8" style={{ color: "rgba(255,255,255,0.4)" }}>Free to start. No credit card needed.</p>
-        <Link href="/sign-up" className="bg-white text-[#111110] font-medium px-8 py-3 rounded-full text-sm hover:bg-[#eee] transition-colors">
+        <p className="text-sm mb-8" style={{ color: "rgba(0,0,0,0.45)" }}>Free to start. No credit card needed.</p>
+        <Link href="/sign-up" className="font-medium px-8 py-3 rounded-full text-sm transition-colors" style={{ background: "#111110", color: "white" }}>
           Get started free
         </Link>
       </div>
