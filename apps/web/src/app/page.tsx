@@ -31,7 +31,7 @@ export default async function LandingPage() {
             Flux — AI Study Assistant
           </span>
         </div>
-        <h1 className="italic text-5xl md:text-7xl mb-6 leading-[1.1]" style={{ fontFamily: "’Playfair Display’, Georgia, serif", fontWeight: 400, color: "white", letterSpacing: "-0.01em" }}>
+        <h1 className="italic text-3xl md:text-5xl mb-6 leading-[1.1]" style={{ fontFamily: "’Playfair Display’, Georgia, serif", fontWeight: 400, color: "white", letterSpacing: "-0.01em" }}>
           Record the lecture.<br />Get the A.
         </h1>
         <p className="text-sm md:text-base mb-10 leading-relaxed max-w-md" style={{ color: "rgba(255,255,255,0.65)" }}>
