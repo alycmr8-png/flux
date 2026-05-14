@@ -13,7 +13,7 @@ const TABS = [
 function RecordPreview() {
   return (
     <div className="space-y-4">
-      <div className="rounded-2xl p-6 text-center" style={{ background: "rgba(255,255,255,0.6)", border: "1px solid rgba(0,0,0,0.07)" }}>
+      <div className="rounded-2xl p-6 text-center" style={{ background: "#f7f6f4", border: "1px solid rgba(0,0,0,0.07)" }}>
         <div className="text-5xl font-light mb-4 tabular-nums" style={{ fontFamily: "'Playfair Display', serif", color: "#111110" }}>01:24</div>
         <div className="w-14 h-14 rounded-full bg-red-500 mx-auto flex items-center justify-center mb-3">
           <div className="w-4 h-4 rounded-sm bg-white" />
@@ -23,7 +23,7 @@ function RecordPreview() {
           <span className="text-sm" style={{ color: "rgba(0,0,0,0.5)" }}>Recording Psychology 301…</span>
         </div>
       </div>
-      <div className="rounded-2xl p-4" style={{ background: "rgba(255,255,255,0.6)", border: "1px solid rgba(0,0,0,0.07)" }}>
+      <div className="rounded-2xl p-4" style={{ background: "#f7f6f4", border: "1px solid rgba(0,0,0,0.07)" }}>
         <div className="text-[10px] uppercase tracking-widest mb-2" style={{ color: "rgba(0,0,0,0.35)" }}>Previous recordings</div>
         {["Week 3 - Memory & Cognition", "Week 2 - Behavioral Theory", "Week 1 - Introduction"].map((title, i) => (
           <div key={i} className="flex items-center justify-between py-2 border-b last:border-0" style={{ borderColor: "rgba(0,0,0,0.06)" }}>
@@ -38,7 +38,7 @@ function RecordPreview() {
 
 function CheatSheetPreview() {
   return (
-    <div className="rounded-2xl p-6" style={{ background: "rgba(255,255,255,0.6)", border: "1px solid rgba(0,0,0,0.07)" }}>
+    <div className="rounded-2xl p-6" style={{ background: "#f7f6f4", border: "1px solid rgba(0,0,0,0.07)" }}>
       <div className="text-[10px] uppercase tracking-widest mb-1" style={{ color: "rgba(0,0,0,0.35)" }}>Cheat Sheet</div>
       <div className="text-lg mb-4" style={{ fontFamily: "'Playfair Display', serif", fontStyle: "italic", color: "#111110" }}>Week 3 &mdash; Memory &amp; Cognition</div>
       <div className="space-y-4">
@@ -72,7 +72,7 @@ function CheatSheetPreview() {
 function QuizPreview() {
   const [selected, setSelected] = useState<number | null>(0);
   return (
-    <div className="rounded-2xl p-6" style={{ background: "rgba(255,255,255,0.6)", border: "1px solid rgba(0,0,0,0.07)" }}>
+    <div className="rounded-2xl p-6" style={{ background: "#f7f6f4", border: "1px solid rgba(0,0,0,0.07)" }}>
       <div className="text-[10px] uppercase tracking-widest mb-1" style={{ color: "rgba(0,0,0,0.35)" }}>Question 2 of 8</div>
       <div className="text-sm font-medium leading-relaxed mb-5" style={{ color: "#111110" }}>
         Which memory system has the largest storage capacity?
@@ -109,7 +109,7 @@ function StudyBookPreview() {
         { title: "Week 3 - Memory & Cognition",  chapters: 4, terms: 16, flashcards: 12 },
         { title: "Final Exam Master Book",        chapters: 8, terms: 36, flashcards: 24 },
       ].map((book, i) => (
-        <div key={i} className="flex overflow-hidden rounded-2xl" style={{ background: "rgba(255,255,255,0.6)", border: "1px solid rgba(0,0,0,0.07)" }}>
+        <div key={i} className="flex overflow-hidden rounded-2xl" style={{ background: "#f7f6f4", border: "1px solid rgba(0,0,0,0.07)" }}>
           <div className="w-3 shrink-0" style={{ background: spines[i % spines.length] }} />
           <div className="px-5 py-4 flex-1 flex items-center justify-between gap-4">
             <div>
@@ -145,7 +145,7 @@ function VideoPreview() {
     <div className="space-y-4">
       {/* URL bar */}
       <div className="flex gap-2">
-        <div className="flex-1 flex items-center gap-2 px-4 py-3 rounded-xl" style={{ background: "rgba(255,255,255,0.6)", border: "1px solid rgba(0,0,0,0.08)" }}>
+        <div className="flex-1 flex items-center gap-2 px-4 py-3 rounded-xl" style={{ background: "#f7f6f4", border: "1px solid rgba(0,0,0,0.08)" }}>
           <Youtube size={14} style={{ color: "rgba(0,0,0,0.35)" }} />
           <span className="text-sm" style={{ color: "rgba(0,0,0,0.4)" }}>youtube.com/watch?v=vo4pMVb0R6M</span>
         </div>
@@ -163,7 +163,7 @@ function VideoPreview() {
       </div>
 
       {/* Sub-tabs */}
-      <div className="flex gap-1 p-1 rounded-xl overflow-x-auto" style={{ background: "#e8e6e1" }}>
+      <div className="flex gap-1 p-1 rounded-xl overflow-x-auto" style={{ background: "rgba(0,0,0,0.06)" }}>
         {vtabs.map(t => (
           <button key={t} onClick={() => setVtab(t.toLowerCase())}
             className="flex-1 py-2.5 px-3 rounded-lg text-sm font-medium transition-all whitespace-nowrap"
@@ -174,7 +174,7 @@ function VideoPreview() {
       </div>
 
       {/* Tab content */}
-      <div className="rounded-2xl p-5" style={{ background: "rgba(255,255,255,0.6)", border: "1px solid rgba(0,0,0,0.07)", minHeight: 280 }}>
+      <div className="rounded-2xl p-5" style={{ background: "#f7f6f4", border: "1px solid rgba(0,0,0,0.07)", minHeight: 280 }}>
 
         {/* SUMMARY */}
         {vtab === "summary" && (
@@ -335,7 +335,7 @@ export function FeaturesShowcase() {
   const [active, setActive] = useState<string>("cheatsheet");
 
   return (
-    <section className="px-6 md:px-16 py-16 md:py-24">
+    <section className="px-6 md:px-16 py-16 md:py-24" style={{ background: "#ffffff", borderTop: "1px solid rgba(0,0,0,0.07)", borderBottom: "1px solid rgba(0,0,0,0.07)" }}>
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="text-center mb-10">
