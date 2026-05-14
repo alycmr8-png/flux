@@ -24,7 +24,46 @@ export default async function LandingPage() {
       <Navbar />
 
       {/* Hero */}
-      <div className="flex flex-col items-center text-center px-6 md:px-16 pt-36 md:pt-52 pb-16">
+      <div className="relative flex flex-col items-center text-center px-6 md:px-16 pt-36 md:pt-52 pb-16 overflow-hidden">
+        {/* Rope — left */}
+        <div className="absolute top-0 left-[8%] hidden md:block pointer-events-none select-none"
+          style={{ animation: "ropeSwingL 4.5s ease-in-out infinite", transformOrigin: "20px 0px" }}>
+          <svg width="44" height="340" viewBox="0 0 44 340" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M22,0 C14,50 30,100 22,150 C14,200 30,250 22,300 C18,318 22,325 22,325"
+              stroke="rgba(255,220,160,0.55)" strokeWidth="5" strokeLinecap="round"/>
+            <path d="M22,0 C30,50 14,100 22,150 C30,200 14,250 22,300 C26,318 22,325 22,325"
+              stroke="rgba(200,150,80,0.35)" strokeWidth="3" strokeLinecap="round" strokeDasharray="10 14"/>
+            <ellipse cx="22" cy="325" rx="6" ry="4" fill="rgba(255,210,140,0.5)"/>
+            <rect x="4" y="330" width="36" height="22" rx="5" fill="white" opacity="0.92"/>
+            <text x="22" y="346" textAnchor="middle" fontFamily="Georgia, serif" fontStyle="italic" fontSize="13" fontWeight="700" fill="#1C0A03">A+</text>
+          </svg>
+        </div>
+
+        {/* Rope — right */}
+        <div className="absolute top-0 right-[8%] hidden md:block pointer-events-none select-none"
+          style={{ animation: "ropeSwingR 3.8s ease-in-out infinite", transformOrigin: "22px 0px" }}>
+          <svg width="44" height="280" viewBox="0 0 44 280" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M22,0 C14,45 30,90 22,135 C14,180 30,225 22,265 C20,272 22,275 22,275"
+              stroke="rgba(255,220,160,0.5)" strokeWidth="5" strokeLinecap="round"/>
+            <path d="M22,0 C30,45 14,90 22,135 C30,180 14,225 22,265 C24,272 22,275 22,275"
+              stroke="rgba(200,150,80,0.3)" strokeWidth="3" strokeLinecap="round" strokeDasharray="10 14"/>
+            <ellipse cx="22" cy="275" rx="6" ry="4" fill="rgba(255,210,140,0.5)"/>
+            <rect x="4" y="280" width="36" height="22" rx="5" fill="white" opacity="0.92"/>
+            <text x="22" y="296" textAnchor="middle" fontFamily="Georgia, serif" fontStyle="italic" fontSize="11" fontWeight="700" fill="#1C0A03">100%</text>
+          </svg>
+        </div>
+
+        <style>{`
+          @keyframes ropeSwingL {
+            0%, 100% { transform: rotate(-7deg); }
+            50%       { transform: rotate(7deg); }
+          }
+          @keyframes ropeSwingR {
+            0%, 100% { transform: rotate(8deg); }
+            50%       { transform: rotate(-8deg); }
+          }
+        `}</style>
+
         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-10" style={{ background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.18)" }}>
           <Layers size={12} style={{ color: "rgba(255,255,255,0.6)" }} />
           <span className="text-[10px] uppercase tracking-[0.2em] font-semibold" style={{ color: "rgba(255,255,255,0.6)" }}>
