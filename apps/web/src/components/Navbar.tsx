@@ -22,7 +22,7 @@ export function Navbar() {
           <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ background: "#111110" }}>
             <Layers size={13} style={{ color: "white" }} />
           </div>
-          <span style={{ fontFamily: "'Playfair Display', Georgia, serif", fontStyle: "italic", fontSize: 20, fontWeight: 500, color: "#111110", letterSpacing: "-0.3px" }}>
+          <span style={{ fontSize: 16, fontWeight: 600, color: "#111110" }}>
             Flux
           </span>
         </Link>
