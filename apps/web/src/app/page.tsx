@@ -24,36 +24,7 @@ export default async function LandingPage() {
       <Navbar />
 
       {/* Hero */}
-      <div className="relative flex flex-col items-center text-center px-6 md:px-16 pt-36 md:pt-52 pb-16 overflow-hidden">
-        {/* Parabolic ropes */}
-        <div className="absolute top-0 left-0 w-full pointer-events-none select-none" style={{ height: 300 }}>
-          <svg width="100%" height="300" viewBox="0 0 1440 300" preserveAspectRatio="none" fill="none" xmlns="http://www.w3.org/2000/svg">
-            {/* Back rope — shallow, soft */}
-            <g style={{ transformOrigin: "720px 0px", animation: "parabolaBounce 5s ease-in-out infinite" }}>
-              <path d="M -10,0 Q 720,140 1450,0"
-                stroke="rgba(255,255,255,0.08)" strokeWidth="4" strokeLinecap="round"/>
-            </g>
-            {/* Main rope — deep */}
-            <g style={{ transformOrigin: "720px 0px", animation: "parabolaBounce 4s ease-in-out infinite 0.6s" }}>
-              <path d="M -10,0 Q 720,260 1450,0"
-                stroke="rgba(255,255,255,0.25)" strokeWidth="5" strokeLinecap="round"/>
-              <path d="M -10,6 Q 720,266 1450,6"
-                stroke="rgba(255,255,255,0.1)" strokeWidth="2.5" strokeLinecap="round" strokeDasharray="14 18"/>
-            </g>
-            {/* A+ tag hanging from lowest point */}
-            <g style={{ transformOrigin: "720px 0px", animation: "parabolaBounce 4s ease-in-out infinite 0.6s" }}>
-              <line x1="720" y1="260" x2="720" y2="278" stroke="rgba(255,255,255,0.2)" strokeWidth="2"/>
-              <rect x="698" y="278" width="44" height="22" rx="5" fill="white" opacity="0.15"/>
-              <text x="720" y="294" textAnchor="middle" fontFamily="Georgia, serif" fontStyle="italic" fontSize="13" fontWeight="700" fill="white">A+</text>
-            </g>
-          </svg>
-          <style>{`
-            @keyframes parabolaBounce {
-              0%, 100% { transform: scaleY(1); }
-              50%       { transform: scaleY(0.72); }
-            }
-          `}</style>
-        </div>
+      <div className="flex flex-col items-center text-center px-6 md:px-16 pt-36 md:pt-52 pb-16">
 
         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-10" style={{ background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.18)" }}>
           <Layers size={12} style={{ color: "rgba(255,255,255,0.6)" }} />
