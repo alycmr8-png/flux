@@ -49,11 +49,11 @@ export function UniversityTicker() {
       <div className="relative overflow-hidden">
         <div
           className="absolute inset-y-0 left-0 w-32 z-10 pointer-events-none"
-          style={{ background: "linear-gradient(to right, #2D0E05, transparent)" }}
+          style={{ background: "linear-gradient(to right, #0a0a0a, transparent)" }}
         />
         <div
           className="absolute inset-y-0 right-0 w-32 z-10 pointer-events-none"
-          style={{ background: "linear-gradient(to left, #2D0E05, transparent)" }}
+          style={{ background: "linear-gradient(to left, #0a0a0a, transparent)" }}
         />
         <div className="animate-marquee">
           {ITEMS.map((uni, i) => (

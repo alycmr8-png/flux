@@ -20,7 +20,7 @@ export default async function LandingPage() {
   if (userId) redirect("/dashboard");
 
   return (
-    <main className="min-h-screen flex flex-col" style={{ background: "linear-gradient(to top, #1C0A03, #431407)" }}>
+    <main className="min-h-screen flex flex-col" style={{ background: "#0a0a0a" }}>
       <Navbar />
 
       {/* Hero */}
@@ -31,20 +31,20 @@ export default async function LandingPage() {
             {/* Back rope — shallow, soft */}
             <g style={{ transformOrigin: "720px 0px", animation: "parabolaBounce 5s ease-in-out infinite" }}>
               <path d="M -10,0 Q 720,140 1450,0"
-                stroke="rgba(255,210,130,0.2)" strokeWidth="4" strokeLinecap="round"/>
+                stroke="rgba(255,255,255,0.08)" strokeWidth="4" strokeLinecap="round"/>
             </g>
             {/* Main rope — deep */}
             <g style={{ transformOrigin: "720px 0px", animation: "parabolaBounce 4s ease-in-out infinite 0.6s" }}>
               <path d="M -10,0 Q 720,260 1450,0"
-                stroke="rgba(255,220,160,0.55)" strokeWidth="5" strokeLinecap="round"/>
+                stroke="rgba(255,255,255,0.25)" strokeWidth="5" strokeLinecap="round"/>
               <path d="M -10,6 Q 720,266 1450,6"
-                stroke="rgba(200,150,80,0.3)" strokeWidth="2.5" strokeLinecap="round" strokeDasharray="14 18"/>
+                stroke="rgba(255,255,255,0.1)" strokeWidth="2.5" strokeLinecap="round" strokeDasharray="14 18"/>
             </g>
             {/* A+ tag hanging from lowest point */}
             <g style={{ transformOrigin: "720px 0px", animation: "parabolaBounce 4s ease-in-out infinite 0.6s" }}>
-              <line x1="720" y1="260" x2="720" y2="278" stroke="rgba(255,215,140,0.5)" strokeWidth="2"/>
-              <rect x="698" y="278" width="44" height="22" rx="5" fill="white" opacity="0.92"/>
-              <text x="720" y="294" textAnchor="middle" fontFamily="Georgia, serif" fontStyle="italic" fontSize="13" fontWeight="700" fill="#1C0A03">A+</text>
+              <line x1="720" y1="260" x2="720" y2="278" stroke="rgba(255,255,255,0.2)" strokeWidth="2"/>
+              <rect x="698" y="278" width="44" height="22" rx="5" fill="white" opacity="0.15"/>
+              <text x="720" y="294" textAnchor="middle" fontFamily="Georgia, serif" fontStyle="italic" fontSize="13" fontWeight="700" fill="white">A+</text>
             </g>
           </svg>
           <style>{`
