@@ -661,7 +661,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: { course: any;
       setDocSaveChoice("none");
     } else {
       const items: QueueItem[] = Array.from(files).map(f => ({ file: f, title: f.name.replace(/\.[^.]+$/, "") }));
-      setDocQueue(items);
+      setDocQueue(q => [...q, ...items]);
       setBatchResults([]);
       setDocView("staging");
     }
