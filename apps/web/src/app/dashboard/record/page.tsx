@@ -677,6 +677,26 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: { course: any;
     setDocSaveChoice("none");
   }
 
+  async function saveFiles() {
+    if (!docQueue.length) return;
+    setBatchProcessing(true);
+    const titles = docQueue.map(item => item.title || item.file.name.replace(/\.[^.]+$/, ""));
+    const results: BatchResult[] = [];
+    try {
+      await apiFetch("/api/documents/quick-save", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ titles, courseId: course.id }),
+      });
+      titles.forEach(title => results.push({ title, status: "done" }));
+      await mutateLectures();
+    } catch (e: any) {
+      titles.forEach(title => results.push({ title, status: "error", error: e?.message ?? "Failed" }));
+    }
+    setBatchResults(results);
+    setBatchProcessing(false);
+  }
+
   async function generateBatch() {
     if (!docQueue.length) return;
     setBatchProcessing(true);
@@ -1608,13 +1628,20 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: { course: any;
                   </div>
                   <div className="px-4 py-4 border-t border-[rgba(0,0,0,0.06)] flex items-center gap-3">
                     <button
-                      onClick={generateBatch}
+                      onClick={saveFiles}
                       disabled={batchProcessing}
                       className="flex items-center gap-2 bg-[#111110] text-white text-sm font-medium px-5 py-2.5 rounded-full hover:bg-[#222] transition-colors disabled:opacity-40"
                     >
-                      Generate all ({docQueue.length})
+                      Save ({docQueue.length})
                     </button>
-                    <button onClick={() => { setDocQueue([]); setDocView("idle"); }} className="text-xs text-[#555] hover:text-[#111110] transition-colors">
+                    <button
+                      onClick={generateBatch}
+                      disabled={batchProcessing}
+                      className="flex items-center gap-2 border border-[rgba(0,0,0,0.12)] text-[#111110] text-sm font-medium px-5 py-2.5 rounded-full hover:bg-[rgba(0,0,0,0.04)] transition-colors disabled:opacity-40"
+                    >
+                      Generate all
+                    </button>
+                    <button onClick={() => { setDocQueue([]); setDocView("idle"); }} className="text-xs text-[#555] hover:text-[#111110] transition-colors ml-auto">
                       Clear
                     </button>
                   </div>

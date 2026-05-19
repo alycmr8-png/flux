@@ -96,4 +96,22 @@ router.post("/save", async (req, res) => {
   res.json({ data: cheatSheet });
 });
 
+// POST /api/documents/quick-save — save file titles as lecture records without AI processing
+router.post("/quick-save", async (req, res) => {
+  const user = (req as any).user;
+  const { titles, courseId } = req.body as { titles: string[]; courseId: string };
+
+  if (!titles?.length || !courseId) return res.status(400).json({ error: "titles and courseId required" });
+
+  const saved = [];
+  for (const title of titles) {
+    const lecture = await prisma.lecture.create({
+      data: { userId: user.id, courseId, title, status: "ready" },
+    });
+    saved.push(lecture);
+  }
+
+  res.json({ data: saved });
+});
+
 export { router as documentRouter };
