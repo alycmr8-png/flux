@@ -14,6 +14,7 @@ import { RecordingDemo } from "@/components/RecordingDemo";
 import { Navbar } from "@/components/Navbar";
 import { PricingSection } from "@/components/PricingSection";
 import { ScrollReveal } from "@/components/ScrollReveal";
+import { YoutubeFeatureDemo } from "@/components/YoutubeFeatureDemo";
 
 export default async function LandingPage() {
   const { userId } = await auth();
@@ -133,6 +134,11 @@ export default async function LandingPage() {
           <path d="M0,60 C360,0 1080,80 1440,20 L1440,80 L0,80 Z" fill="rgba(0,0,0,0.06)" />
         </svg>
       </div>
+
+      {/* YouTube feature demo */}
+      <ScrollReveal>
+        <YoutubeFeatureDemo />
+      </ScrollReveal>
 
       {/* Calendar feature showcase */}
       <ScrollReveal>
