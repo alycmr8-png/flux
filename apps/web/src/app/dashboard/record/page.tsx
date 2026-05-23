@@ -2058,8 +2058,8 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: { course: any;
 
               {/* Feature tabs + content */}
               <div className="bg-white rounded-2xl overflow-hidden" style={{ border: "1.5px solid rgba(37,99,235,0.2)" }}>
-                {/* Tab bar — scrollable */}
-                <div className="flex overflow-x-auto border-b scrollbar-hide" style={{ background: "rgba(37,99,235,0.06)", borderColor: "rgba(37,99,235,0.12)" }}>
+                {/* Tab bar — scrollable pills */}
+                <div className="flex gap-2 overflow-x-auto p-3" style={{ background: "rgba(37,99,235,0.05)", borderBottom: "1px solid rgba(37,99,235,0.12)" }}>
                   {([
                     { key: "transcript", label: "Transcript" },
                     { key: "summary",    label: "Summary"    },
@@ -2074,10 +2074,15 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: { course: any;
                         setYtActiveTab(key);
                         if (key === "transcript") loadTranscript();
                       }}
-                      className="shrink-0 px-5 py-3 m-1 rounded-xl text-sm font-semibold transition-all whitespace-nowrap"
+                      className="shrink-0 whitespace-nowrap transition-all"
                       style={{
-                        background: ytActiveTab === key ? "#2563eb" : "transparent",
-                        color: ytActiveTab === key ? "white" : "rgba(0,0,0,0.45)",
+                        padding: "10px 20px",
+                        borderRadius: 999,
+                        fontSize: 15,
+                        fontWeight: ytActiveTab === key ? 700 : 500,
+                        background: ytActiveTab === key ? "#2563eb" : "rgba(255,255,255,0.8)",
+                        color: ytActiveTab === key ? "white" : "rgba(0,0,0,0.5)",
+                        border: ytActiveTab === key ? "none" : "1px solid rgba(0,0,0,0.1)",
                       }}
                     >{label}</button>
                   ))}
