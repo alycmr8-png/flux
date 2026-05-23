@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
+    "@distube/ytdl-core": "^4.16.12",
     "@prisma/client": "^6.0.0",
     "@sano/shared": "*",
     "axios": "^1.7.7",

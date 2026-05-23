@@ -1,7 +1,11 @@
 import { Router } from "express";
 import axios from "axios";
+import fs from "fs";
+import os from "os";
+import path from "path";
 import { prisma } from "../lib/prisma";
 import { generateStudyBook, condenseTranscript, summarizeTranscript, generateFlashcardsFromTranscript, answerVideoQuestion } from "../services/claude";
+import { transcribeAudio } from "../services/whisper";
 
 const router = Router();
 
@@ -72,7 +76,28 @@ async function fetchYouTubeTranscript(videoId: string): Promise<YTTranscript> {
     } catch (_e) { continue; }
   }
 
-  throw new Error("Could not fetch transcript. Make sure the video has captions (auto-generated or manual) and is publicly available.");
+  // Strategy 3: Download audio and transcribe with Whisper
+  console.log(`[studybook] captions unavailable — falling back to Whisper for ${videoId}`);
+  const tmpFile = path.join(os.tmpdir(), `yt_${videoId}_${Date.now()}.mp4`);
+  try {
+    const ytdl = (await import("@distube/ytdl-core")).default;
+    await new Promise<void>((resolve, reject) => {
+      const stream = ytdl(`https://www.youtube.com/watch?v=${videoId}`, {
+        filter: "audioonly",
+        quality: "lowestaudio",
+        requestOptions: { headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" } },
+      });
+      const out = fs.createWriteStream(tmpFile);
+      stream.pipe(out);
+      stream.on("error", reject);
+      out.on("finish", resolve);
+      out.on("error", reject);
+    });
+    const result = await transcribeAudio(tmpFile);
+    return result;
+  } finally {
+    fs.unlink(tmpFile, () => {});
+  }
 }
 
 async function getVideoTitle(videoId: string): Promise<string> {
@@ -159,24 +184,30 @@ router.post("/fetch-transcript", async (req, res) => {
   const videoId = extractVideoId(url);
   if (!videoId) return res.status(400).json({ error: "Invalid YouTube URL" });
 
-  const { text: transcript } = await fetchYouTubeTranscript(videoId);
-  const title = await getVideoTitle(videoId);
+  try {
+    const { text: transcript } = await fetchYouTubeTranscript(videoId);
+    const title = await getVideoTitle(videoId);
 
-  let course: any;
-  if (courseId) course = await prisma.course.findFirst({ where: { id: courseId, userId: user.id } });
-  if (!course) {
-    course = await prisma.course.findFirst({ where: { userId: user.id, name: "YouTube Videos" } });
-    if (!course) course = await prisma.course.create({ data: { userId: user.id, name: "YouTube Videos", code: "YT" } });
+    let course: any;
+    if (courseId) course = await prisma.course.findFirst({ where: { id: courseId, userId: user.id } });
+    if (!course) {
+      course = await prisma.course.findFirst({ where: { userId: user.id, name: "YouTube Videos" } });
+      if (!course) course = await prisma.course.create({ data: { userId: user.id, name: "YouTube Videos", code: "YT" } });
+    }
+
+    let lecture = await prisma.lecture.findFirst({ where: { userId: user.id, courseId: course.id, title } });
+    if (!lecture) {
+      lecture = await prisma.lecture.create({ data: { userId: user.id, courseId: course.id, title, transcript, status: "ready" } });
+    } else {
+      await prisma.lecture.update({ where: { id: lecture.id }, data: { transcript, status: "ready" } });
+    }
+
+    res.json({ data: { lectureId: lecture.id, title, transcript } });
+  } catch (err: any) {
+    console.error("[fetch-transcript] error:", err?.message ?? err);
+    const msg = err?.message ?? "Failed to fetch transcript";
+    res.status(500).json({ error: msg });
   }
-
-  let lecture = await prisma.lecture.findFirst({ where: { userId: user.id, courseId: course.id, title } });
-  if (!lecture) {
-    lecture = await prisma.lecture.create({ data: { userId: user.id, courseId: course.id, title, transcript, status: "ready" } });
-  } else {
-    await prisma.lecture.update({ where: { id: lecture.id }, data: { transcript, status: "ready" } });
-  }
-
-  res.json({ data: { lectureId: lecture.id, title, transcript } });
 });
 
 router.post("/generate", async (req, res) => {
