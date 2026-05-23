@@ -2012,8 +2012,8 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: { course: any;
         <div className="space-y-4">
           {/* URL input */}
           <div className="flex gap-2">
-            <div className="flex-1 bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl px-4 py-3 flex items-center gap-3">
-              <Youtube size={14} className="text-[#555] shrink-0" />
+            <div className="flex-1 bg-white rounded-2xl px-4 py-3 flex items-center gap-3" style={{ border: "1.5px solid rgba(37,99,235,0.3)" }}>
+              <Youtube size={14} style={{ color: "#2563eb" }} className="shrink-0" />
               <input
                 value={ytVideoId ? ytUrl : ytDraft}
                 onChange={e => { if (ytVideoId) return; setYtDraft(e.target.value); setYtError(""); }}
@@ -2031,7 +2031,8 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: { course: any;
               <button
                 onClick={confirmYtUrl}
                 disabled={!ytDraft.trim()}
-                className="bg-white text-[#111110] text-sm font-medium px-5 rounded-2xl hover:bg-[#eee] transition-colors disabled:opacity-40 shrink-0"
+                className="text-sm font-semibold px-5 rounded-2xl transition-opacity disabled:opacity-40 shrink-0"
+                style={{ background: "#2563eb", color: "white" }}
               >
                 Load
               </button>
@@ -2056,9 +2057,9 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: { course: any;
               </div>
 
               {/* Feature tabs + content */}
-              <div className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl overflow-hidden">
+              <div className="bg-white rounded-2xl overflow-hidden" style={{ border: "1.5px solid rgba(37,99,235,0.2)" }}>
                 {/* Tab bar — scrollable */}
-                <div className="flex overflow-x-auto border-b border-[rgba(0,0,0,0.06)] scrollbar-hide" style={{ background: "rgba(0,0,0,0.06)" }}>
+                <div className="flex overflow-x-auto border-b scrollbar-hide" style={{ background: "rgba(37,99,235,0.06)", borderColor: "rgba(37,99,235,0.12)" }}>
                   {([
                     { key: "transcript", label: "Transcript" },
                     { key: "summary",    label: "Summary"    },
@@ -2073,11 +2074,11 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: { course: any;
                         setYtActiveTab(key);
                         if (key === "transcript") loadTranscript();
                       }}
-                      className={`shrink-0 px-5 py-3 m-1 rounded-xl text-sm font-medium transition-colors whitespace-nowrap ${
-                        ytActiveTab === key
-                          ? "bg-white text-[#111110]"
-                          : "text-[rgba(0,0,0,0.45)] hover:text-[#111110]"
-                      }`}
+                      className="shrink-0 px-5 py-3 m-1 rounded-xl text-sm font-semibold transition-all whitespace-nowrap"
+                      style={{
+                        background: ytActiveTab === key ? "#2563eb" : "transparent",
+                        color: ytActiveTab === key ? "white" : "rgba(0,0,0,0.45)",
+                      }}
                     >{label}</button>
                   ))}
                 </div>
@@ -2102,7 +2103,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: { course: any;
                     ) : (
                       <div className="py-12 text-center space-y-4">
                         <p className="text-sm text-[#555]">Load the full transcript for this video.</p>
-                        <button onClick={loadTranscript} className="text-sm text-[#111110] bg-[rgba(255,255,255,0.15)] hover:opacity-80 px-5 py-2.5 rounded-full transition-opacity">
+                        <button onClick={loadTranscript} className="text-sm font-semibold px-5 py-2.5 rounded-full transition-opacity" style={{ background: "#2563eb", color: "white" }}>
                           Load Transcript
                         </button>
                       </div>
@@ -2124,7 +2125,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: { course: any;
                     ) : (
                       <div className="py-12 text-center space-y-4">
                         <p className="text-sm text-[#555]">Get a concise summary of the video lecture.</p>
-                        <button onClick={generateYtSummary} className="text-sm text-[#111110] bg-[rgba(255,255,255,0.15)] hover:opacity-80 px-5 py-2.5 rounded-full transition-opacity">
+                        <button onClick={generateYtSummary} className="text-sm font-semibold px-5 py-2.5 rounded-full transition-opacity" style={{ background: "#2563eb", color: "white" }}>
                           Generate Summary
                         </button>
                       </div>
@@ -2165,7 +2166,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: { course: any;
                         <button
                           onClick={generateYtQuiz}
                           disabled={!ytQuizName.trim()}
-                          className="w-full text-sm text-[#111110] bg-[rgba(255,255,255,0.15)] hover:opacity-80 px-5 py-2.5 rounded-full transition-opacity disabled:opacity-40"
+                          className="w-full text-sm font-semibold px-5 py-2.5 rounded-full transition-opacity disabled:opacity-40" style={{ background: "#2563eb", color: "white" }}
                         >
                           Generate Quiz
                         </button>
@@ -2185,9 +2186,13 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: { course: any;
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           {ytFlashcards.map((fc: any, i: number) => (
                             <div key={i} onClick={() => setYtFlipped(p => { const s = new Set(p); s.has(i) ? s.delete(i) : s.add(i); return s; })}
-                              className="cursor-pointer bg-white border border-[rgba(0,0,0,0.08)] rounded-xl p-4 min-h-[110px] flex flex-col items-center justify-center text-center hover:border-[rgba(0,0,0,0.1)] transition-colors">
-                              <div className="text-[10px] text-[#555] uppercase tracking-widest mb-2">{ytFlipped.has(i) ? "Answer" : "Question"}</div>
-                              <p className="text-sm text-[#555] leading-relaxed">{ytFlipped.has(i) ? fc.back : fc.front}</p>
+                              className="cursor-pointer rounded-xl p-4 min-h-[110px] flex flex-col items-center justify-center text-center transition-all"
+                              style={{
+                                background: ytFlipped.has(i) ? "rgba(37,99,235,0.08)" : "white",
+                                border: `1.5px solid ${ytFlipped.has(i) ? "#3b82f6" : "rgba(0,0,0,0.08)"}`,
+                              }}>
+                              <div className="text-[10px] uppercase tracking-widest mb-2" style={{ color: ytFlipped.has(i) ? "#2563eb" : "#999" }}>{ytFlipped.has(i) ? "Answer" : "Question"}</div>
+                              <p className="text-sm leading-relaxed" style={{ color: ytFlipped.has(i) ? "#1e3a8a" : "#555" }}>{ytFlipped.has(i) ? fc.back : fc.front}</p>
                             </div>
                           ))}
                         </div>
@@ -2196,7 +2201,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: { course: any;
                     ) : (
                       <div className="py-12 text-center space-y-4">
                         <p className="text-sm text-[#555]">Create flashcards from key concepts in the video.</p>
-                        <button onClick={generateYtFlashcards} className="text-sm text-[#111110] bg-[rgba(255,255,255,0.15)] hover:opacity-80 px-5 py-2.5 rounded-full transition-opacity">
+                        <button onClick={generateYtFlashcards} className="text-sm font-semibold px-5 py-2.5 rounded-full transition-opacity" style={{ background: "#2563eb", color: "white" }}>
                           Generate Flashcards
                         </button>
                       </div>
@@ -2234,7 +2239,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: { course: any;
                           <button
                             onClick={() => saveYtNote(ytNoteName)}
                             disabled={!ytNoteName.trim()}
-                            className="text-sm text-[#111110] bg-[rgba(255,255,255,0.15)] hover:opacity-80 px-5 py-2.5 rounded-xl transition-opacity disabled:opacity-40 shrink-0"
+                            className="text-sm font-semibold px-5 py-2.5 rounded-xl transition-opacity disabled:opacity-40 shrink-0" style={{ background: "#2563eb", color: "white" }}
                           >
                             Save
                           </button>
@@ -2249,7 +2254,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: { course: any;
                         <button
                           onClick={() => setYtNoteNaming(true)}
                           disabled={!ytNote.trim()}
-                          className="text-sm text-[#111110] bg-[rgba(255,255,255,0.15)] hover:opacity-80 px-5 py-2.5 rounded-full transition-opacity disabled:opacity-40"
+                          className="text-sm font-semibold px-5 py-2.5 rounded-full transition-opacity disabled:opacity-40" style={{ background: "#2563eb", color: "white" }}
                         >
                           Save to Notes
                         </button>
@@ -2264,9 +2269,11 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: { course: any;
                       <div className="flex-1 space-y-3 max-h-64 overflow-y-auto">
                         {ytMessages.map((m, i) => (
                           <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
-                            <span className={`text-sm px-4 py-2.5 rounded-xl max-w-[85%] leading-relaxed ${
-                              m.role === "user" ? "bg-[rgba(255,255,255,0.15)] text-[#111110]" : "bg-white text-[#555]"
-                            }`}>{m.content}</span>
+                            <span className="text-sm px-4 py-2.5 rounded-xl max-w-[85%] leading-relaxed"
+                              style={m.role === "user"
+                                ? { background: "#2563eb", color: "white" }
+                                : { background: "#f3f4f6", color: "#374151" }
+                              }>{m.content}</span>
                           </div>
                         ))}
                         {ytChatLoading && (
@@ -2288,7 +2295,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: { course: any;
                         <button
                           onClick={sendYtChat}
                           disabled={!ytChatInput.trim() || ytChatLoading}
-                          className="text-sm text-[#111110] bg-[rgba(255,255,255,0.15)] hover:opacity-80 px-4 py-3 rounded-xl transition-opacity disabled:opacity-40"
+                          className="text-sm font-semibold px-4 py-3 rounded-xl transition-opacity disabled:opacity-40" style={{ background: "#2563eb", color: "white" }}
                         >Send</button>
                       </div>
                     </div>
