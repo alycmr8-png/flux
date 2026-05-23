@@ -57,7 +57,7 @@ function Sidebar() {
   return (
     <div className="w-44 shrink-0 flex flex-col py-5" style={{ background: "rgba(255,255,255,0.04)", borderRight: "1px solid rgba(255,255,255,0.07)" }}>
       <div className="px-4 pb-4 mb-2" style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
-        <div style={{ fontFamily: "'Playfair Display', Georgia, serif", fontStyle: "italic", fontSize: 18, fontWeight: 500, color: "white" }}>Flux</div>
+        <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontStyle: "normal", fontSize: 18, fontWeight: 800, color: "white" }}>Flux</div>
         <div style={{ fontSize: 8, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginTop: 1 }}>Study Assistant</div>
       </div>
       <div className="flex-1 px-2 pt-1 flex flex-col gap-0.5">
@@ -82,7 +82,7 @@ function ClassesView({ cardRef }: { cardRef: React.RefObject<HTMLDivElement | nu
     <div className="flex-1 p-7">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <div style={{ fontFamily: "'Playfair Display', serif", fontStyle: "italic", fontSize: 22, color: "white", fontWeight: 400 }}>Workspace</div>
+          <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontStyle: "italic", fontSize: 22, color: "white", fontWeight: 400 }}>Workspace</div>
           <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", marginTop: 2 }}>Your classes, lectures, and quizzes</div>
         </div>
         <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full" style={{ background: "rgba(255,255,255,0.1)", color: "white", fontSize: 11 }}>
@@ -162,7 +162,7 @@ function ClassView({ tab, phase, recordTabRef, quizTabRef, sbTabRef, micBtnRef }
         {tab === "record" && (
           <div className="flex gap-6">
             <div className="rounded-2xl p-6 text-center shrink-0 flex flex-col items-center" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", width: 180 }}>
-              <div className="text-3xl mb-4 tabular-nums" style={{ fontFamily: "'Playfair Display', serif", color: "white" }}>
+              <div className="text-3xl mb-4 tabular-nums" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: "white" }}>
                 {isRecording ? "00:42" : "00:00"}
               </div>
               <div
@@ -317,7 +317,7 @@ export function ProductDemo() {
           <div className="w-3 h-3 rounded-full" style={{ background: "rgba(255,255,255,0.15)" }} />
           <div className="w-3 h-3 rounded-full" style={{ background: "rgba(255,255,255,0.15)" }} />
           <div className="w-3 h-3 rounded-full" style={{ background: "rgba(255,255,255,0.15)" }} />
-          <div className="mx-auto text-sm" style={{ color: "rgba(255,255,255,0.3)", fontStyle: "italic", fontFamily: "'Playfair Display', serif" }}>Flux</div>
+          <div className="mx-auto text-sm" style={{ color: "rgba(255,255,255,0.3)", fontStyle: "italic", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Flux</div>
         </div>
 
         <div ref={bodyRef} className="flex relative" style={{ height: 420 }}>

@@ -1,19 +1,20 @@
-﻿"use client";
+"use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { UserButton } from "@clerk/nextjs";
-import { Home, Layers, FileText, Calendar, BarChart2, CreditCard, Archive } from "lucide-react";
+import { Home, Layers, HelpCircle, Calendar, BarChart2, CreditCard, Archive, Users } from "lucide-react";
 import { LanguageSwitcher } from "@/components/I18nProvider";
 import { useState, useEffect } from "react";
 
 const nav = [
-  { href: "/dashboard",          icon: Home,      label: "Home"      },
-  { href: "/dashboard/record",   icon: Layers,    label: "Workspace" },
-  { href: "/dashboard/summaries",icon: FileText,  label: "Summaries" },
-  { href: "/dashboard/calendar", icon: Calendar,  label: "Calendar"  },
-  { href: "/dashboard/progress", icon: BarChart2, label: "Progress"  },
-  { href: "/dashboard/archive",  icon: Archive,   label: "Archive"   },
-  { href: "/dashboard/billing",  icon: CreditCard,label: "Billing"   },
+  { href: "/dashboard",          icon: Home,        label: "Home"      },
+  { href: "/dashboard/record",   icon: Layers,      label: "Workspace" },
+  { href: "/dashboard/network",  icon: Users,       label: "Network"   },
+  { href: "/dashboard/calendar", icon: Calendar,    label: "Calendar"  },
+  { href: "/dashboard/progress", icon: BarChart2,   label: "Progress"  },
+  { href: "/dashboard/archive",  icon: Archive,     label: "Archive"   },
+  { href: "/dashboard/billing",  icon: CreditCard,  label: "Billing"   },
+  { href: "/dashboard/help",     icon: HelpCircle,  label: "Help"      },
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -36,7 +37,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <Layers size={15} style={{ color: "#111110" }} />
             </div>
             <div>
-              <div style={{ fontFamily: "'Playfair Display', Georgia, serif", fontStyle: "italic", fontSize: 20, fontWeight: 500, color: "white", letterSpacing: "-0.5px", lineHeight: 1.1 }}>
+              <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontStyle: "normal", fontSize: 20, fontWeight: 800, color: "white", letterSpacing: "-0.5px", lineHeight: 1.1 }}>
                 Flux
               </div>
               <div style={{ fontSize: 9, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)" }}>
@@ -112,4 +113,3 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     </div>
   );
 }
-

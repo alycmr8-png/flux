@@ -457,8 +457,8 @@ export async function summarizeTranscript(transcript: string, title: string, lan
   const langName = LANG_NAMES[language] ?? "English";
   const msg = await createWithRetry({
     model: "gpt-3.5-turbo",
-    max_tokens: 1000,
-    system: `You are a study assistant. Summarize the lecture transcript in 3-4 clear paragraphs in ${langName}. Cover the main topics, key insights, and important takeaways. Be informative and concise. Never refuse, never apologize, never comment on transcript quality — always extract and summarize whatever useful content is present, even if the transcript is noisy, mixed-language, or imperfect.`,
+    max_tokens: 400,
+    system: `You are a study assistant. Write a short 2-paragraph summary of the lecture in ${langName}. First paragraph: what the lecture was about. Second paragraph: the 2-3 most important takeaways. Be brief and direct. Never refuse or comment on transcript quality.`,
     messages: [{ role: "user", content: `Lecture: "${title}"\n\nTranscript:\n${transcript.slice(0, 12000)}` }],
   });
   return extractText(msg);

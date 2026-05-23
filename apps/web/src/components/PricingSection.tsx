@@ -56,7 +56,7 @@ export function PricingSection() {
           <div className="text-[10px] uppercase tracking-[0.2em] mb-4 font-semibold" style={{ color: "rgba(255,255,255,0.3)" }}>
             Pricing
           </div>
-          <h2 className="text-4xl md:text-5xl mb-4" style={{ fontFamily: "'Playfair Display', Georgia, serif", fontStyle: "italic", fontWeight: 400, color: "white", lineHeight: 1.15 }}>
+          <h2 className="text-4xl md:text-5xl mb-4" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontStyle: "italic", fontWeight: 400, color: "white", lineHeight: 1.15 }}>
             Choose your plan to Get started.
           </h2>
           <p style={{ color: "rgba(255,255,255,0.45)", fontSize: 15 }}>

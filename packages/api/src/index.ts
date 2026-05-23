@@ -19,6 +19,7 @@ import { settingsRouter } from "./routes/settings";
 import { documentRouter } from "./routes/documents";
 import { noteRouter } from "./routes/notes";
 import { eventRouter } from "./routes/events";
+import { networkRouter } from "./routes/network";
 import { errorHandler } from "./middleware/errorHandler";
 import { requireAuth } from "./middleware/requireAuth";
 
@@ -47,6 +48,7 @@ app.use("/api/notes", noteRouter);
 app.use("/api/events", eventRouter);
 app.use("/api/billing", billingRouter);
 app.use("/api/studybook", studyBookRouter);
+app.use("/api/network", networkRouter);
 
 app.use(errorHandler);
 

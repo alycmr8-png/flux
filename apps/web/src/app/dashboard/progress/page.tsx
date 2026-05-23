@@ -94,7 +94,7 @@ export default function ProgressPage() {
   return (
     <div className="p-8 max-w-2xl">
       <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: 6 }}>Analytics</div>
-      <h1 style={{ fontFamily: "'Playfair Display', Georgia, serif", fontStyle: "italic", fontSize: 30, fontWeight: 400, color: "white", marginBottom: 28 }}>Progress</h1>
+      <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 30, color: "white", marginBottom: 28 }}>Progress</h1>
 
       <div className="grid grid-cols-3 gap-4 mb-8">
         {[

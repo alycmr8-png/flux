@@ -3,9 +3,10 @@ import useSWR from "swr";
 import {
   format, startOfMonth, endOfMonth, eachDayOfInterval,
   isSameDay, isToday, addMonths, subMonths, startOfDay,
+  differenceInCalendarDays,
 } from "date-fns";
 import { useState } from "react";
-import { ChevronLeft, ChevronRight, X, Plus, Trash2, Pencil } from "lucide-react";
+import { ChevronLeft, ChevronRight, X, Plus, Trash2, Pencil, AlertCircle, Clock } from "lucide-react";
 import { useApiSWRFetcher, useApiFetch } from "@/lib/apiFetch";
 
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
@@ -19,8 +20,29 @@ const EVENT_TYPES = [
   { value: "other",      label: "Other",       color: "#6b7280" },
 ];
 
+const URGENT_TYPES = new Set(["exam", "assignment", "deadline", "quiz"]);
+
 function eventColor(type: string) {
   return EVENT_TYPES.find(t => t.value === type)?.color ?? "#6b7280";
+}
+
+function daysUntil(dateStr: string): number {
+  return differenceInCalendarDays(startOfDay(new Date(dateStr)), startOfDay(new Date()));
+}
+
+function countdownLabel(days: number): string {
+  if (days === 0) return "Today!";
+  if (days === 1) return "Tomorrow";
+  if (days <= 7) return `in ${days} days`;
+  return `in ${days}d`;
+}
+
+function countdownColor(days: number, type: string): string {
+  if (!URGENT_TYPES.has(type)) return "rgba(255,255,255,0.3)";
+  if (days === 0) return "#ef4444";
+  if (days <= 1) return "#f97316";
+  if (days <= 3) return "#eab308";
+  return "rgba(255,255,255,0.3)";
 }
 
 const todayStart = startOfDay(new Date());
@@ -36,7 +58,6 @@ export default function CalendarPage() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
 
-  // form state
   const [title, setTitle] = useState("");
   const [type, setType] = useState("exam");
   const [date, setDate] = useState("");
@@ -51,8 +72,6 @@ export default function CalendarPage() {
     fetcher
   );
   const allEvents: any[] = eventsData?.data ?? [];
-
-  // Only show events that are today or in the future
   const events = allEvents.filter(e => startOfDay(new Date(e.date)) >= todayStart);
 
   const { data: coursesData } = useSWR(`${BASE}/api/courses`, fetcher);
@@ -64,32 +83,42 @@ export default function CalendarPage() {
   const dayEvents = (day: Date) => events.filter(e => isSameDay(new Date(e.date), day));
   const selectedEvents = selectedDay ? dayEvents(selectedDay) : [];
 
+  // Smart: find the next urgent event (exam/assignment/deadline/quiz)
+  const upcoming = [...events].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  const nextUrgent = upcoming.find(e => URGENT_TYPES.has(e.type));
+  const nextUrgentDays = nextUrgent ? daysUntil(nextUrgent.date) : null;
+  const showAlert = nextUrgent !== null && nextUrgentDays !== null && nextUrgentDays <= 7;
+
+  // All urgent events on the same closest day (for multi-event banner)
+  const alertDayEvents = nextUrgent && nextUrgentDays !== null
+    ? upcoming.filter(e => URGENT_TYPES.has(e.type) && daysUntil(e.date) === nextUrgentDays)
+    : [];
+
+  // Days that have urgent events within 3 days (for pulsing cells)
+  const urgentDays = new Set(
+    events
+      .filter(e => URGENT_TYPES.has(e.type) && daysUntil(e.date) <= 3)
+      .map(e => format(new Date(e.date), "yyyy-MM-dd"))
+  );
+
   function openAdd(day: Date) {
     setEditingEvent(null);
     setDate(format(day, "yyyy-MM-dd"));
-    setTitle("");
-    setType("exam");
-    setCourseId("");
-    setDescription("");
-    setSaveError("");
+    setTitle(""); setType("exam"); setCourseId(""); setDescription(""); setSaveError("");
     setShowModal(true);
   }
 
   function openEdit(ev: any) {
     setEditingEvent(ev);
-    setTitle(ev.title);
-    setType(ev.type);
+    setTitle(ev.title); setType(ev.type);
     setDate(format(new Date(ev.date), "yyyy-MM-dd"));
-    setCourseId(ev.courseId ?? "");
-    setDescription(ev.description ?? "");
-    setSaveError("");
+    setCourseId(ev.courseId ?? ""); setDescription(ev.description ?? ""); setSaveError("");
     setShowModal(true);
   }
 
   async function saveEvent() {
     if (!title.trim() || !date) return;
-    setSaving(true);
-    setSaveError("");
+    setSaving(true); setSaveError("");
     try {
       if (editingEvent) {
         await apiFetch(`/api/events/${editingEvent.id}`, {
@@ -98,8 +127,7 @@ export default function CalendarPage() {
           body: JSON.stringify({
             title: title.trim(),
             date: new Date(date + "T12:00:00").toISOString(),
-            type,
-            courseId: courseId || null,
+            type, courseId: courseId || null,
             description: description.trim() || null,
           }),
         });
@@ -110,8 +138,7 @@ export default function CalendarPage() {
           body: JSON.stringify({
             title: title.trim(),
             date: new Date(date + "T12:00:00").toISOString(),
-            type,
-            courseId: courseId || undefined,
+            type, courseId: courseId || undefined,
             description: description.trim() || undefined,
           }),
         });
@@ -130,15 +157,20 @@ export default function CalendarPage() {
     mutate();
   }
 
-  // upcoming = visible events sorted by date
-  const upcoming = [...events].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-
   const isPastDay = (day: Date) => startOfDay(day) < todayStart;
 
   return (
     <div style={{ color: "white" }}>
+      <style>{`
+        @keyframes urgentPulse {
+          0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.5); }
+          50% { box-shadow: 0 0 0 4px rgba(239,68,68,0); }
+        }
+        .urgent-pulse { animation: urgentPulse 1.8s ease-in-out infinite; }
+      `}</style>
+
       <div className="mb-6">
-        <h1 style={{ fontFamily: "'Playfair Display', Georgia, serif", fontStyle: "italic", fontSize: 28, fontWeight: 500 }}>
+        <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 28 }}>
           Calendar
         </h1>
         <p style={{ color: "rgba(255,255,255,0.4)", fontSize: 13, marginTop: 2 }}>
@@ -146,13 +178,49 @@ export default function CalendarPage() {
         </p>
       </div>
 
+      {/* Smart alert banner */}
+      {showAlert && nextUrgent && nextUrgentDays !== null && (
+        <div className="mb-5 rounded-2xl px-4 py-3" style={{
+          background: nextUrgentDays === 0 ? "rgba(239,68,68,0.15)" : nextUrgentDays <= 1 ? "rgba(249,115,22,0.15)" : "rgba(234,179,8,0.12)",
+          border: `1px solid ${nextUrgentDays === 0 ? "rgba(239,68,68,0.3)" : nextUrgentDays <= 1 ? "rgba(249,115,22,0.3)" : "rgba(234,179,8,0.25)"}`,
+        }}>
+          <div className="flex items-center gap-3 mb-2">
+            <AlertCircle size={15} style={{ color: nextUrgentDays === 0 ? "#ef4444" : nextUrgentDays <= 1 ? "#f97316" : "#eab308", flexShrink: 0 }} />
+            <span style={{ fontSize: 13, fontWeight: 600 }}>
+              {alertDayEvents.length === 1
+                ? nextUrgentDays === 0
+                  ? `You have 1 event today`
+                  : nextUrgentDays === 1
+                  ? `You have 1 event tomorrow`
+                  : `1 event coming up in ${nextUrgentDays} days`
+                : nextUrgentDays === 0
+                  ? `You have ${alertDayEvents.length} events today`
+                  : nextUrgentDays === 1
+                  ? `You have ${alertDayEvents.length} events tomorrow`
+                  : `${alertDayEvents.length} events coming up in ${nextUrgentDays} days`}
+            </span>
+            {nextUrgentDays >= 2 && (
+              <span style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", marginLeft: "auto" }}>
+                {format(new Date(nextUrgent.date), "MMM d")}
+              </span>
+            )}
+          </div>
+          <div className="flex flex-col gap-1 pl-6">
+            {alertDayEvents.map(e => (
+              <div key={e.id} className="flex items-center gap-2">
+                <span style={{ width: 6, height: 6, borderRadius: "50%", background: eventColor(e.type), display: "inline-block", flexShrink: 0 }} />
+                <span style={{ fontSize: 12, color: "rgba(255,255,255,0.7)" }}>{e.title}</span>
+                <span style={{ fontSize: 10, color: "rgba(255,255,255,0.35)" }}>· {EVENT_TYPES.find(t => t.value === e.type)?.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-col lg:flex-row gap-6">
         {/* Calendar grid */}
         <div className="flex-1">
-          <div
-            className="rounded-2xl p-5"
-            style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)" }}
-          >
+          <div className="rounded-2xl p-5" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)" }}>
             {/* Month nav */}
             <div className="flex items-center justify-between mb-5">
               <button onClick={() => setMonth(subMonths(month, 1))} className="p-1.5" style={{ color: "rgba(255,255,255,0.5)" }}>
@@ -179,11 +247,12 @@ export default function CalendarPage() {
                 const isSelected = selectedDay && isSameDay(day, selectedDay);
                 const today = isToday(day);
                 const past = isPastDay(day);
+                const isUrgent = urgentDays.has(format(day, "yyyy-MM-dd"));
                 return (
                   <button
                     key={day.toISOString()}
                     onClick={() => setSelectedDay(isSelected ? null : day)}
-                    className="relative flex flex-col items-center py-1.5 rounded-xl transition-all"
+                    className={`relative flex flex-col items-center py-1.5 rounded-xl transition-all${isUrgent ? " urgent-pulse" : ""}`}
                     style={{
                       background: isSelected ? "rgba(255,255,255,0.15)" : today ? "rgba(255,255,255,0.1)" : "transparent",
                       outline: today ? "1px solid rgba(255,255,255,0.3)" : "none",
@@ -258,24 +327,35 @@ export default function CalendarPage() {
               <p style={{ fontSize: 12, color: "rgba(255,255,255,0.35)" }}>No upcoming events. Click any day to add one.</p>
             ) : (
               <div className="flex flex-col gap-2">
-                {upcoming.slice(0, 8).map(e => (
-                  <div key={e.id} className="flex items-start gap-3">
-                    <div style={{ textAlign: "right", minWidth: 36 }}>
-                      <div style={{ fontSize: 16, fontWeight: 600, lineHeight: 1, color: "white" }}>{format(new Date(e.date), "d")}</div>
-                      <div style={{ fontSize: 9, color: "rgba(255,255,255,0.35)", textTransform: "uppercase" }}>{format(new Date(e.date), "MMM")}</div>
-                    </div>
-                    <div className="flex-1 rounded-xl px-3 py-2" style={{ background: "rgba(255,255,255,0.04)", borderLeft: `2px solid ${eventColor(e.type)}` }}>
-                      <div style={{ fontSize: 12, fontWeight: 500 }}>{e.title}</div>
-                      <div style={{ fontSize: 10, color: "rgba(255,255,255,0.35)", marginTop: 2 }}>
-                        {EVENT_TYPES.find(t => t.value === e.type)?.label}{e.course && ` · ${e.course.code}`}
+                {upcoming.slice(0, 8).map(e => {
+                  const days = daysUntil(e.date);
+                  const cdColor = countdownColor(days, e.type);
+                  const isUrgentEvent = URGENT_TYPES.has(e.type) && days <= 3;
+                  return (
+                    <div key={e.id} className="flex items-start gap-3">
+                      <div style={{ textAlign: "right", minWidth: 36 }}>
+                        <div style={{ fontSize: 16, fontWeight: 600, lineHeight: 1, color: "white" }}>{format(new Date(e.date), "d")}</div>
+                        <div style={{ fontSize: 9, color: "rgba(255,255,255,0.35)", textTransform: "uppercase" }}>{format(new Date(e.date), "MMM")}</div>
+                      </div>
+                      <div className="flex-1 rounded-xl px-3 py-2" style={{ background: isUrgentEvent ? "rgba(239,68,68,0.06)" : "rgba(255,255,255,0.04)", borderLeft: `2px solid ${eventColor(e.type)}` }}>
+                        <div style={{ fontSize: 12, fontWeight: 500 }}>{e.title}</div>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span style={{ fontSize: 10, color: "rgba(255,255,255,0.35)" }}>
+                            {EVENT_TYPES.find(t => t.value === e.type)?.label}{e.course && ` · ${e.course.code}`}
+                          </span>
+                          <span className="flex items-center gap-0.5" style={{ fontSize: 10, fontWeight: 600, color: cdColor }}>
+                            <Clock size={9} style={{ flexShrink: 0 }} />
+                            {countdownLabel(days)}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex flex-col gap-3 mt-1">
+                        <button onClick={() => openEdit(e)} className="opacity-30 hover:opacity-70 transition-opacity"><Pencil size={11} /></button>
+                        <button onClick={() => deleteEvent(e.id)} className="opacity-30 hover:opacity-70 transition-opacity"><Trash2 size={11} /></button>
                       </div>
                     </div>
-                    <div className="flex flex-col gap-3 mt-1">
-                      <button onClick={() => openEdit(e)} className="opacity-30 hover:opacity-70 transition-opacity"><Pencil size={11} /></button>
-                      <button onClick={() => deleteEvent(e.id)} className="opacity-30 hover:opacity-70 transition-opacity"><Trash2 size={11} /></button>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
@@ -375,6 +455,8 @@ const inputStyle: React.CSSProperties = {
 };
 
 function EventCard({ event, onEdit, onDelete }: { event: any; onEdit: () => void; onDelete: () => void }) {
+  const days = daysUntil(event.date);
+  const cdColor = countdownColor(days, event.type);
   return (
     <div
       className="flex items-start justify-between rounded-xl px-3 py-2.5"
@@ -382,9 +464,15 @@ function EventCard({ event, onEdit, onDelete }: { event: any; onEdit: () => void
     >
       <div className="flex-1 min-w-0">
         <div style={{ fontSize: 13, fontWeight: 500 }}>{event.title}</div>
-        <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", marginTop: 2 }}>
-          {EVENT_TYPES.find(t => t.value === event.type)?.label}
-          {event.course && ` · ${event.course.code}`}
+        <div className="flex items-center gap-2 mt-1">
+          <span style={{ fontSize: 11, color: "rgba(255,255,255,0.4)" }}>
+            {EVENT_TYPES.find(t => t.value === event.type)?.label}
+            {event.course && ` · ${event.course.code}`}
+          </span>
+          <span className="flex items-center gap-0.5" style={{ fontSize: 10, fontWeight: 600, color: cdColor }}>
+            <Clock size={9} style={{ flexShrink: 0 }} />
+            {countdownLabel(days)}
+          </span>
         </div>
         {event.description && (
           <div style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", marginTop: 3 }}>{event.description}</div>

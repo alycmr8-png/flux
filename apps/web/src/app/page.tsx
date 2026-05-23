@@ -33,7 +33,7 @@ export default async function LandingPage() {
             Flux — AI Study Assistant
           </span>
         </div>
-        <h1 className="italic text-3xl md:text-5xl mb-6 leading-[1.1]" style={{ fontFamily: "’Playfair Display’, Georgia, serif", fontWeight: 400, color: "white", letterSpacing: "-0.01em" }}>
+        <h1 className="text-4xl md:text-6xl mb-6 leading-[1.05]" style={{ fontFamily: "’Plus Jakarta Sans’, sans-serif", fontWeight: 800, color: "white", letterSpacing: "-0.03em" }}>
           Record the lecture.<br />Get the A.
         </h1>
         <p className="text-sm md:text-base mb-10 leading-relaxed max-w-md" style={{ color: "rgba(255,255,255,0.65)" }}>
@@ -79,7 +79,7 @@ export default async function LandingPage() {
         <p className="text-[10px] uppercase tracking-[0.22em] font-semibold mb-3" style={{ color: "rgba(255,255,255,0.45)" }}>
           Trusted by students at
         </p>
-        <p className="text-2xl md:text-3xl" style={{ fontFamily: "’Playfair Display’, Georgia, serif", fontStyle: "italic", fontWeight: 400, color: "white" }}>
+        <p className="text-2xl md:text-3xl" style={{ fontFamily: "’Plus Jakarta Sans’, sans-serif", fontWeight: 800, color: "white", letterSpacing: "-0.02em" }}>
           universities across the country.
         </p>
       </ScrollReveal>
@@ -100,7 +100,7 @@ export default async function LandingPage() {
             </div>
             <div className="flex flex-col justify-center">
               <div className="text-5xl mb-4" style={{ color: "rgba(255,255,255,0.2)", fontFamily: "Georgia, serif", lineHeight: 1 }}>"</div>
-              <p className="text-lg md:text-xl leading-relaxed mb-6" style={{ fontFamily: "’Playfair Display’, Georgia, serif", fontStyle: "italic", fontWeight: 400, color: "white" }}>
+              <p className="text-lg md:text-xl leading-relaxed mb-6" style={{ fontFamily: "’Plus Jakarta Sans’, sans-serif", fontWeight: 700, color: "rgba(255,255,255,0.9)", lineHeight: 1.55 }}>
                 Flux literally saved my semester. I record every business lecture and get a full cheat sheet before I even leave the classroom.
               </p>
               <div className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: "rgba(255,255,255,0.7)" }}>Usman Tariq</div>
@@ -117,7 +117,7 @@ export default async function LandingPage() {
             </div>
             <div className="flex flex-col justify-center md:ml-auto">
               <div className="text-5xl mb-4" style={{ color: "rgba(255,255,255,0.2)", fontFamily: "Georgia, serif", lineHeight: 1 }}>"</div>
-              <p className="text-lg md:text-xl leading-relaxed mb-6" style={{ fontFamily: "’Playfair Display’, Georgia, serif", fontStyle: "italic", fontWeight: 400, color: "white" }}>
+              <p className="text-lg md:text-xl leading-relaxed mb-6" style={{ fontFamily: "’Plus Jakarta Sans’, sans-serif", fontWeight: 700, color: "rgba(255,255,255,0.9)", lineHeight: 1.55 }}>
                 Between clinicals and coursework, I barely had time to review. Flux turns my lecture recordings into study guides overnight — I actually feel prepared walking into exams now.
               </p>
               <div className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: "rgba(255,255,255,0.7)" }}>Sira Camara</div>
@@ -164,7 +164,7 @@ export default async function LandingPage() {
 
       {/* CTA footer */}
       <ScrollReveal className="py-24 text-center px-6">
-        <h2 className="text-4xl mb-4" style={{ fontFamily: "’Playfair Display’, Georgia, serif", fontStyle: "italic", fontWeight: 400, color: "white" }}>
+        <h2 className="text-4xl md:text-5xl mb-4" style={{ fontFamily: "’Plus Jakarta Sans’, sans-serif", fontWeight: 800, color: "white", letterSpacing: "-0.03em" }}>
           Start studying smarter.
         </h2>
         <p className="text-sm mb-8 max-w-xs mx-auto" style={{ color: "rgba(255,255,255,0.55)", lineHeight: 1.7 }}>

@@ -14,7 +14,7 @@ function RecordPreview() {
   return (
     <div className="space-y-4">
       <div className="rounded-2xl p-6 text-center" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}>
-        <div className="text-5xl font-light mb-4 tabular-nums" style={{ fontFamily: "'Playfair Display', serif", color: "white" }}>01:24</div>
+        <div className="text-5xl font-light mb-4 tabular-nums" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: "white" }}>01:24</div>
         <div className="w-14 h-14 rounded-full bg-red-500 mx-auto flex items-center justify-center mb-3">
           <div className="w-4 h-4 rounded-sm bg-white" />
         </div>
@@ -40,7 +40,7 @@ function CheatSheetPreview() {
   return (
     <div className="rounded-2xl p-6" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}>
       <div className="text-[10px] uppercase tracking-widest mb-1" style={{ color: "rgba(255,255,255,0.35)" }}>Cheat Sheet</div>
-      <div className="text-lg mb-4" style={{ fontFamily: "'Playfair Display', serif", fontStyle: "italic", color: "white" }}>Week 3 &mdash; Memory &amp; Cognition</div>
+      <div className="text-lg mb-4" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontStyle: "italic", color: "white" }}>Week 3 &mdash; Memory &amp; Cognition</div>
       <div className="space-y-4">
         {[
           { heading: "Types of Memory", bullets: ["Sensory memory lasts 1–3 seconds", "Short-term memory holds 7±2 items", "Long-term memory is virtually unlimited"] },
@@ -339,7 +339,7 @@ export function FeaturesShowcase() {
         {/* Header */}
         <div className="text-center mb-10">
           <div className="text-[10px] uppercase tracking-[0.2em] font-semibold mb-3" style={{ color: "rgba(255,255,255,0.4)" }}>What you get</div>
-          <h2 className="text-3xl md:text-4xl" style={{ fontFamily: "'Playfair Display', Georgia, serif", fontStyle: "italic", fontWeight: 400, color: "white" }}>
+          <h2 className="text-3xl md:text-4xl" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontStyle: "italic", fontWeight: 400, color: "white" }}>
             Everything to ace the semester.
           </h2>
           <p className="text-sm md:text-base mt-3" style={{ color: "rgba(255,255,255,0.5)" }}>

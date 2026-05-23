@@ -185,7 +185,7 @@ function StudyBookViewer({ book, lectureTitle, onRegenerate, regenerating }: {
             <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: "#a855f7" }}>Study Book</span>
           </div>
           <h1 className="text-3xl font-bold text-black leading-tight"
-            style={{ fontFamily: "'Playfair Display', Georgia, serif", fontStyle: "italic", fontWeight: 700 }}>
+            style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontStyle: "italic", fontWeight: 700 }}>
             {lectureTitle}
           </h1>
           <div className="flex items-center gap-3 mt-3">

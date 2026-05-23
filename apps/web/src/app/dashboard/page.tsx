@@ -40,8 +40,12 @@ export default function DashboardHome() {
   const fetcher = useApiSWRFetcher();
   const { data: progressData, isLoading } = useSWR(`${BASE}/api/progress`, fetcher);
   const { data: sheetsData } = useSWR(`${BASE}/api/cheatsheets`, fetcher);
-  const { data: eventsData } = useSWR(
-    `${BASE}/api/events?from=${new Date().toISOString()}&to=${new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()}`,
+  // Stable date range — must not be computed inline or the SWR key changes every render
+  const [eventsFrom] = useState(() => startOfDay(new Date()).toISOString());
+  const [eventsTo] = useState(() => new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString());
+
+  const { data: eventsData, isLoading: eventsLoading } = useSWR(
+    `${BASE}/api/events?from=${eventsFrom}&to=${eventsTo}`,
     fetcher
   );
 
@@ -89,7 +93,7 @@ export default function DashboardHome() {
 
         {/* Header */}
         <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: 6 }}>Overview</div>
-        <h1 style={{ fontFamily: "'Playfair Display', Georgia, serif", fontStyle: "italic", fontSize: 30, fontWeight: 400, color: "white", marginBottom: 28 }}>
+        <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 30, color: "white", marginBottom: 28 }}>
           {greeting()}.
         </h1>
 
@@ -105,10 +109,62 @@ export default function DashboardHome() {
               className="rounded-2xl p-4 border transition-all duration-200 hover:border-white/20 cursor-default"
               style={{ background: "rgba(255,255,255,0.06)", borderColor: "rgba(255,255,255,0.08)" }}
             >
-              <div style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: 28, fontWeight: 300, color: "white", lineHeight: 1, marginBottom: 4 }}>{s.value}</div>
+              <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 28, fontWeight: 300, color: "white", lineHeight: 1, marginBottom: 4 }}>{s.value}</div>
               <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)" }}>{s.label}</div>
             </div>
           ))}
+        </div>
+
+        {/* Coming up */}
+        <p className="text-xs uppercase tracking-widest mb-3" style={{ color: "rgba(255,255,255,0.3)" }}>Coming up</p>
+        <div className="flex flex-col gap-2 mb-8">
+          {eventsLoading ? (
+            [...Array(2)].map((_, i) => (
+              <div key={i} className="rounded-2xl px-4 py-3 border animate-pulse" style={{ background: "rgba(255,255,255,0.05)", borderColor: "rgba(255,255,255,0.08)", height: 58 }} />
+            ))
+          ) : allUpcoming.length === 0 ? (
+            <Link href="/dashboard/calendar"
+              className="flex items-center gap-3 rounded-2xl px-4 py-3 border transition-all hover:border-white/20 hover:bg-white/10"
+              style={{ background: "rgba(255,255,255,0.04)", borderColor: "rgba(255,255,255,0.08)", borderStyle: "dashed" }}>
+              <Plus size={14} style={{ color: "rgba(255,255,255,0.3)" }} />
+              <span className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>No upcoming events — add one in Calendar</span>
+            </Link>
+          ) : (
+            <>
+              {allUpcoming.slice(0, 3).map((e: any) => {
+                const diff = differenceInCalendarDays(new Date(e.date), today);
+                const color = TYPE_COLOR[e.type] ?? "#6b7280";
+                const cdLabel = diff === 0 ? "Today!" : diff === 1 ? "Tomorrow" : `In ${diff} days`;
+                const cdColor = diff === 0 ? "#ef4444" : diff <= 1 ? "#f97316" : diff <= 3 ? "#eab308" : "rgba(255,255,255,0.35)";
+                return (
+                  <Link key={e.id} href="/dashboard/calendar"
+                    className="flex items-center gap-4 rounded-2xl px-4 py-3 border transition-all duration-200 hover:border-white/20 hover:bg-white/10"
+                    style={{ background: diff === 0 ? "rgba(239,68,68,0.08)" : "rgba(255,255,255,0.05)", borderColor: diff === 0 ? "rgba(239,68,68,0.2)" : "rgba(255,255,255,0.08)", borderLeft: `3px solid ${color}` }}
+                  >
+                    <div style={{ minWidth: 38, textAlign: "center" }}>
+                      <div style={{ fontSize: 20, fontWeight: 700, lineHeight: 1, color: "white" }}>{format(new Date(e.date), "d")}</div>
+                      <div style={{ fontSize: 9, textTransform: "uppercase", color: "rgba(255,255,255,0.3)" }}>{format(new Date(e.date), "MMM")}</div>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium truncate" style={{ color: "white" }}>{e.title}</div>
+                      <div className="text-[10px] uppercase tracking-wider mt-0.5" style={{ color: "rgba(255,255,255,0.35)" }}>
+                        {TYPE_LABEL[e.type]}{e.course?.code ? ` · ${e.course.code}` : ""}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0 px-2.5 py-1 rounded-full" style={{ background: `${cdColor}18` }}>
+                      <Clock size={9} style={{ color: cdColor }} />
+                      <span style={{ fontSize: 11, fontWeight: 700, color: cdColor }}>{cdLabel}</span>
+                    </div>
+                  </Link>
+                );
+              })}
+              {allUpcoming.length > 3 && (
+                <Link href="/dashboard/calendar" className="text-xs text-center py-1 transition-colors hover:text-white" style={{ color: "rgba(255,255,255,0.3)" }}>
+                  +{allUpcoming.length - 3} more events →
+                </Link>
+              )}
+            </>
+          )}
         </div>
 
         {/* My classes */}

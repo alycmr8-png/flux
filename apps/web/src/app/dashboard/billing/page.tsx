@@ -85,12 +85,12 @@ export default function BillingPage() {
       {isNew ? (
         <>
           <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(0,0,0,0.38)", marginBottom: 6 }}>Billing</div>
-          <h1 style={{ fontFamily: "'Playfair Display', Georgia, serif", fontStyle: "italic", fontSize: 30, fontWeight: 400, color: "#111110", marginBottom: 28 }}>Choose your plan</h1>
+          <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 30, color: "#111110", marginBottom: 28 }}>Choose your plan</h1>
         </>
       ) : (
         <>
           <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(0,0,0,0.38)", marginBottom: 6 }}>Account</div>
-          <h1 style={{ fontFamily: "'Playfair Display', Georgia, serif", fontStyle: "italic", fontSize: 30, fontWeight: 400, color: "#111110", marginBottom: 28 }}>Billing</h1>
+          <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 30, color: "#111110", marginBottom: 28 }}>Billing</h1>
         </>
       )}
 

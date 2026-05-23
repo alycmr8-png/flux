@@ -91,7 +91,7 @@ export function RecordingDemo() {
           <span className="w-3 h-3 rounded-full" style={{ background: "#ff5f57" }} />
           <span className="w-3 h-3 rounded-full" style={{ background: "#febc2e" }} />
           <span className="w-3 h-3 rounded-full" style={{ background: "#28c840" }} />
-          <span className="mx-auto text-xs" style={{ color: "rgba(255,255,255,0.25)", fontFamily: "'Playfair Display', serif", fontStyle: "italic" }}>
+          <span className="mx-auto text-xs" style={{ color: "rgba(255,255,255,0.25)", fontFamily: "'Plus Jakarta Sans', sans-serif", fontStyle: "italic" }}>
             Flux &mdash; Workspace
           </span>
         </div>
@@ -121,7 +121,7 @@ export function RecordingDemo() {
                   <Square size={18} color="white" />
                 </div>
               </div>
-              <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 44, fontWeight: 300, color: "white", letterSpacing: -1, fontVariantNumeric: "tabular-nums", lineHeight: 1 }}>
+              <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 44, fontWeight: 300, color: "white", letterSpacing: -1, fontVariantNumeric: "tabular-nums", lineHeight: 1 }}>
                 {fmt(seconds)}
               </div>
               <div className="flex items-center gap-2 mt-3">

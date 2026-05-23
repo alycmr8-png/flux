@@ -1281,16 +1281,24 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: { course: any;
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-0.5 mb-8 rounded-xl p-1 overflow-x-auto max-w-full" style={{ background: "white" }}>
+      <div className="flex gap-2 mb-8 overflow-x-auto pb-1">
         {TABS.map(({ key, label, icon: Icon }) => (
           <button
             key={key}
             onClick={() => setTab(key)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-[9px] text-sm font-medium transition-colors ${
-              tab === key ? "bg-white text-[#111110]" : "text-[rgba(0,0,0,0.5)] hover:text-[#111110]"
-            }`}
+            className="flex items-center gap-2 whitespace-nowrap transition-all"
+            style={{
+              padding: "10px 20px",
+              borderRadius: 999,
+              fontSize: 15,
+              fontWeight: tab === key ? 700 : 500,
+              background: tab === key ? "white" : "rgba(255,255,255,0.07)",
+              color: tab === key ? "#111110" : "rgba(255,255,255,0.5)",
+              border: tab === key ? "none" : "1px solid rgba(255,255,255,0.1)",
+              letterSpacing: "-0.01em",
+            }}
           >
-            <Icon size={13} />
+            <Icon size={14} />
             {label}
           </button>
         ))}
@@ -1331,7 +1339,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: { course: any;
                     </div>
                   </div>
                   {/* Tabs */}
-                  <div className="flex gap-1 px-6 pt-3 border-b border-[rgba(0,0,0,0.06)]">
+                  <div className="flex justify-center gap-20 px-6 pt-3 border-b border-[rgba(0,0,0,0.06)]">
                     {(["listen", "transcript", "summary"] as const).map(t => (
                       <button
                         key={t}
@@ -1426,7 +1434,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: { course: any;
               {recStep === "recording" && (
                 <div className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl p-8 flex flex-col items-center gap-4">
                   <div className="text-xs text-[#888] self-start font-medium">{recTitle}</div>
-                  <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 64, fontWeight: 400, color: "#111110", letterSpacing: -2, fontVariantNumeric: "tabular-nums" }}>{fmt(seconds)}</div>
+                  <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 64, fontWeight: 400, color: "#111110", letterSpacing: -2, fontVariantNumeric: "tabular-nums" }}>{fmt(seconds)}</div>
                   <div className="flex items-end gap-0.5 h-12 my-1" style={{ opacity: paused ? 0.2 : 1, transition: "opacity 0.3s" }}>
                     {waveHeights.current.map((h, i) => (
                       <div key={i} style={{ width: 3, height: 48, borderRadius: 2, background: "#111110", transformOrigin: "center", animation: paused ? "none" : `waveBar ${waveDurations.current[i]}s ease-in-out infinite`, animationDelay: `${i * 0.04}s`, transform: paused ? "scaleY(0.25)" : undefined }} />

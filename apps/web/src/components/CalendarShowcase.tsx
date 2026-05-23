@@ -110,7 +110,7 @@ export function CalendarShowcase() {
           <div className="text-[10px] uppercase tracking-[0.2em] mb-4 font-semibold" style={{ color: "rgba(255,255,255,0.3)" }}>
             Stay ahead
           </div>
-          <h2 className="text-4xl md:text-5xl mb-4" style={{ fontFamily: "'Playfair Display', Georgia, serif", fontStyle: "italic", fontWeight: 400, color: "white", lineHeight: 1.15 }}>
+          <h2 className="text-4xl md:text-5xl mb-4" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontStyle: "italic", fontWeight: 400, color: "white", lineHeight: 1.15 }}>
             Never miss an exam<br />or deadline again.
           </h2>
           <p className="text-base" style={{ color: "rgba(255,255,255,0.45)" }}>

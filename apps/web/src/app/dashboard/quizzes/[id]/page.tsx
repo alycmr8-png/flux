@@ -24,7 +24,7 @@ export default function QuizPage() {
     return (
       <div className="p-8 max-w-2xl">
         <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(0,0,0,0.38)", marginBottom: 6 }}>Quizzes</div>
-        <h1 style={{ fontFamily: "'Playfair Display', Georgia, serif", fontStyle: "italic", fontSize: 30, fontWeight: 400, color: "#111110", marginBottom: 16 }}>Quiz not found</h1>
+        <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 30, color: "#111110", marginBottom: 16 }}>Quiz not found</h1>
         <p className="text-[#555] text-sm mb-6">This quiz could not be loaded. It may have been deleted or you don't have access.</p>
         <a href="/dashboard/quizzes" className="text-sm text-[#111110] underline underline-offset-2">← Back to quizzes</a>
       </div>
@@ -46,15 +46,15 @@ export default function QuizPage() {
     <div className="p-8 max-w-2xl">
       <div className="mb-6">
         <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(0,0,0,0.38)", marginBottom: 6 }}>Quiz</div>
-        <h1 style={{ fontFamily: "'Playfair Display', Georgia, serif", fontStyle: "italic", fontSize: 30, fontWeight: 400, color: "#111110", marginBottom: 4 }}>{quiz.title}</h1>
+        <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 30, color: "#111110", marginBottom: 4 }}>{quiz.title}</h1>
         <div className="text-[#555] text-sm">{quiz.questions.length} questions</div>
       </div>
 
       {submitted && result && (
         <div className="bg-[#f4f4f4] border border-[#e5e5e5] rounded-2xl p-5 mb-8 flex gap-8">
-          <div><div style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: 36, color: "#111110" }}>{Math.round(result.score)}%</div><div className="text-[#444] text-xs mt-1">Score</div></div>
-          <div><div style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: 36, color: "#111110" }}>{result.correct}</div><div className="text-[#444] text-xs mt-1">Correct</div></div>
-          <div><div style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: 36, color: "#111110" }}>{result.total}</div><div className="text-[#444] text-xs mt-1">Total</div></div>
+          <div><div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 36, color: "#111110" }}>{Math.round(result.score)}%</div><div className="text-[#444] text-xs mt-1">Score</div></div>
+          <div><div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 36, color: "#111110" }}>{result.correct}</div><div className="text-[#444] text-xs mt-1">Correct</div></div>
+          <div><div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 36, color: "#111110" }}>{result.total}</div><div className="text-[#444] text-xs mt-1">Total</div></div>
         </div>
       )}
 

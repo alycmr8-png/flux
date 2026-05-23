@@ -25,6 +25,52 @@ model User {
   subscription  Subscription?
   notes           Note[]
   calendarEvents  CalendarEvent[]
+
+  sentConnections     Connection[]  @relation("ConnectionFrom")
+  receivedConnections Connection[]  @relation("ConnectionTo")
+  sentMessages        Message[]     @relation("MessageFrom")
+  receivedMessages    Message[]     @relation("MessageTo")
+  sharedByMe          SharedItem[]  @relation("SharedFrom")
+  sharedWithMe        SharedItem[]  @relation("SharedTo")
+}
+
+model Connection {
+  id         String   @id @default(cuid())
+  fromUserId String
+  toUserId   String
+  status     String   @default("pending")
+  createdAt  DateTime @default(now())
+
+  fromUser User @relation("ConnectionFrom", fields: [fromUserId], references: [id], onDelete: Cascade)
+  toUser   User @relation("ConnectionTo",   fields: [toUserId],   references: [id], onDelete: Cascade)
+
+  @@unique([fromUserId, toUserId])
+}
+
+model Message {
+  id         String   @id @default(cuid())
+  fromUserId String
+  toUserId   String
+  text       String   @db.Text
+  read       Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  fromUser User @relation("MessageFrom", fields: [fromUserId], references: [id], onDelete: Cascade)
+  toUser   User @relation("MessageTo",   fields: [toUserId],   references: [id], onDelete: Cascade)
+}
+
+model SharedItem {
+  id         String   @id @default(cuid())
+  fromUserId String
+  toUserId   String
+  itemType   String
+  itemId     String
+  title      String
+  note       String?
+  createdAt  DateTime @default(now())
+
+  fromUser User @relation("SharedFrom", fields: [fromUserId], references: [id], onDelete: Cascade)
+  toUser   User @relation("SharedTo",   fields: [toUserId],   references: [id], onDelete: Cascade)
 }
 
 model Subscription {

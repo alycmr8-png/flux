@@ -25,7 +25,7 @@ export function YoutubeFeatureDemo() {
           <div className="text-[10px] uppercase tracking-[0.2em] font-semibold mb-3" style={{ color: "rgba(255,255,255,0.4)" }}>
             Upload any video
           </div>
-          <h2 className="text-3xl md:text-4xl" style={{ fontFamily: "'Playfair Display', Georgia, serif", fontStyle: "italic", fontWeight: 400, color: "white" }}>
+          <h2 className="text-3xl md:text-4xl" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontStyle: "italic", fontWeight: 400, color: "white" }}>
             Paste a YouTube link. Get everything.
           </h2>
           <p className="text-sm md:text-base mt-3 max-w-md mx-auto" style={{ color: "rgba(255,255,255,0.5)" }}>

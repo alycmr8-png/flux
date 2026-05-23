@@ -361,7 +361,7 @@ export default function SyllabusPage() {
       <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: 6 }}>
         Syllabus
       </div>
-      <h1 style={{ fontFamily: "'Playfair Display', Georgia, serif", fontStyle: "italic", fontSize: 30, fontWeight: 400, color: "white", marginBottom: 6 }}>
+      <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 30, color: "white", marginBottom: 6 }}>
         Syllabus Parser
       </h1>
       <p className="text-sm mb-8" style={{ color: "rgba(255,255,255,0.4)" }}>
