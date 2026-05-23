@@ -1252,7 +1252,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: { course: any;
     <div className="w-full max-w-5xl px-6 py-8">
       {/* Header */}
       <div className="mb-8">
-        <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(255,255,255,0.4)", marginBottom: 14 }}>
+        <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "#3b82f6", marginBottom: 14 }}>
           Workspace
         </div>
         {/* Class pills */}
@@ -1261,10 +1261,10 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: { course: any;
             <button
               key={c.id}
               onClick={() => onSelect(c)}
-              className="px-4 py-1.5 rounded-full text-sm font-medium transition-all"
+              className="whitespace-nowrap transition-all"
               style={c.id === course.id
-                ? { background: "rgba(0,0,0,0.08)", color: "#111110", border: "1px solid #111110" }
-                : { background: "white", color: "rgba(0,0,0,0.6)", border: "1px solid rgba(255,255,255,0.6)" }
+                ? { padding: "10px 22px", borderRadius: 999, fontSize: 15, fontWeight: 700, background: "#2563eb", color: "white", border: "none" }
+                : { padding: "10px 22px", borderRadius: 999, fontSize: 15, fontWeight: 500, background: "rgba(255,255,255,0.07)", color: "rgba(255,255,255,0.55)", border: "1px solid rgba(255,255,255,0.12)" }
               }
             >
               {c.name}
@@ -1272,8 +1272,8 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: { course: any;
           ))}
           <button
             onClick={onBack}
-            className="px-3 py-1.5 rounded-full text-xs transition-all"
-            style={{ background: "transparent", color: "rgba(0,0,0,0.38)", border: "1px solid rgba(0,0,0,0.12)" }}
+            className="whitespace-nowrap transition-all"
+            style={{ padding: "10px 18px", borderRadius: 999, fontSize: 14, fontWeight: 500, background: "transparent", color: "rgba(255,255,255,0.3)", border: "1px solid rgba(255,255,255,0.1)" }}
           >
             ← All classes
           </button>
