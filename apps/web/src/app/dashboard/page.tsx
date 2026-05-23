@@ -92,7 +92,7 @@ export default function DashboardHome() {
       <div className="flex-1 min-w-0 py-9 pl-10 pr-0">
 
         {/* Header */}
-        <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: 6 }}>Overview</div>
+        <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "#3b82f6", marginBottom: 6 }}>Overview</div>
         <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 30, color: "white", marginBottom: 28 }}>
           {greeting()}.
         </h1>
@@ -106,17 +106,17 @@ export default function DashboardHome() {
           ].map((s) => (
             <div
               key={s.label}
-              className="rounded-2xl p-4 border transition-all duration-200 hover:border-white/20 cursor-default"
-              style={{ background: "rgba(255,255,255,0.06)", borderColor: "rgba(255,255,255,0.08)" }}
+              className="rounded-2xl p-4 border transition-all duration-200 cursor-default"
+              style={{ background: "rgba(37,99,235,0.08)", borderColor: "rgba(37,99,235,0.2)" }}
             >
-              <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 28, fontWeight: 300, color: "white", lineHeight: 1, marginBottom: 4 }}>{s.value}</div>
+              <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 28, fontWeight: 700, color: "#60a5fa", lineHeight: 1, marginBottom: 4 }}>{s.value}</div>
               <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)" }}>{s.label}</div>
             </div>
           ))}
         </div>
 
         {/* Coming up */}
-        <p className="text-xs uppercase tracking-widest mb-3" style={{ color: "rgba(255,255,255,0.3)" }}>Coming up</p>
+        <p className="text-xs uppercase tracking-widest mb-3" style={{ color: "#3b82f6" }}>Coming up</p>
         <div className="flex flex-col gap-2 mb-8">
           {eventsLoading ? (
             [...Array(2)].map((_, i) => (
@@ -168,7 +168,7 @@ export default function DashboardHome() {
         </div>
 
         {/* My classes */}
-        <p className="text-xs uppercase tracking-widest mb-3" style={{ color: "rgba(255,255,255,0.3)" }}>My classes</p>
+        <p className="text-xs uppercase tracking-widest mb-3" style={{ color: "#3b82f6" }}>My classes</p>
         <div className="space-y-2 mb-8">
           {isLoading ? (
             [...Array(2)].map((_, i) => (
@@ -237,7 +237,7 @@ export default function DashboardHome() {
         </div>
 
         {/* Quick actions */}
-        <p className="text-xs uppercase tracking-widest mb-3" style={{ color: "rgba(255,255,255,0.3)" }}>Quick actions</p>
+        <p className="text-xs uppercase tracking-widest mb-3" style={{ color: "#3b82f6" }}>Quick actions</p>
         <div className="grid grid-cols-4 gap-3 mb-8">
           {ACTIONS.map(({ icon: Icon, label, href, color }) => (
             <Link
@@ -257,7 +257,7 @@ export default function DashboardHome() {
         {/* Saved notes */}
         {notes.length > 0 && (
           <>
-            <p className="text-xs uppercase tracking-widest mb-3" style={{ color: "rgba(255,255,255,0.3)" }}>Saved notes</p>
+            <p className="text-xs uppercase tracking-widest mb-3" style={{ color: "#3b82f6" }}>Saved notes</p>
             <div className="space-y-2">
               {notes.map((cs: any) => (
                 <Link

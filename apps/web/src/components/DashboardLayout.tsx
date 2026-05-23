@@ -28,16 +28,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       {/* Sidebar — desktop only */}
       <aside
         className="hidden md:flex w-52 shrink-0 flex-col py-7"
-        style={{ background: "rgba(255,255,255,0.04)", borderRight: "1px solid rgba(255,255,255,0.08)" }}
+        style={{ background: "rgba(255,255,255,0.03)", borderRight: "1px solid rgba(255,255,255,0.07)" }}
       >
         {/* Logo */}
-        <div className="px-6 pb-6 mb-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+        <div className="px-6 pb-6 mb-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "white" }}>
-              <Layers size={15} style={{ color: "#111110" }} />
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "#2563eb" }}>
+              <Layers size={15} style={{ color: "white" }} />
             </div>
             <div>
-              <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontStyle: "normal", fontSize: 20, fontWeight: 800, color: "white", letterSpacing: "-0.5px", lineHeight: 1.1 }}>
+              <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 20, color: "white", letterSpacing: "-0.5px", lineHeight: 1.1 }}>
                 Flux
               </div>
               <div style={{ fontSize: 9, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)" }}>
@@ -60,9 +60,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 href={href}
                 className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm transition-all"
                 style={{
-                  background: active ? "rgba(255,255,255,0.12)" : "transparent",
-                  color: active ? "white" : "rgba(255,255,255,0.45)",
-                  fontWeight: active ? 500 : 400,
+                  background: active ? "rgba(37,99,235,0.18)" : "transparent",
+                  color: active ? "#60a5fa" : "rgba(255,255,255,0.45)",
+                  fontWeight: active ? 600 : 400,
                 }}
               >
                 <Icon size={15} />
@@ -73,7 +73,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </nav>
 
         {/* Footer */}
-        <div className="px-3 pt-3 flex flex-col gap-3" style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }}>
+        <div className="px-3 pt-3 flex flex-col gap-3" style={{ borderTop: "1px solid rgba(255,255,255,0.07)" }}>
           <LanguageSwitcher />
           <div className="px-2">
             {mounted && <UserButton appearance={{ elements: { avatarBox: "w-8 h-8" } }} />}
@@ -98,7 +98,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               key={href}
               href={href}
               className="flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-xl transition-all"
-              style={{ color: active ? "white" : "rgba(255,255,255,0.38)" }}
+              style={{ color: active ? "#3b82f6" : "rgba(255,255,255,0.38)" }}
             >
               <Icon size={19} />
               <span className="text-[9px] font-medium">{label}</span>

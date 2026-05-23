@@ -27,23 +27,23 @@ export default async function LandingPage() {
       {/* Hero */}
       <div className="flex flex-col items-center text-center px-6 md:px-16 pt-36 md:pt-52 pb-16">
 
-        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-10" style={{ background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.18)" }}>
-          <Layers size={12} style={{ color: "rgba(255,255,255,0.6)" }} />
-          <span className="text-[10px] uppercase tracking-[0.2em] font-semibold" style={{ color: "rgba(255,255,255,0.6)" }}>
+        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-10" style={{ background: "rgba(37,99,235,0.15)", border: "1px solid rgba(37,99,235,0.4)" }}>
+          <Layers size={12} style={{ color: "#60a5fa" }} />
+          <span className="text-[10px] uppercase tracking-[0.2em] font-semibold" style={{ color: "#60a5fa" }}>
             Flux — AI Study Assistant
           </span>
         </div>
         <h1 className="text-4xl md:text-6xl mb-6 leading-[1.05]" style={{ fontFamily: "’Plus Jakarta Sans’, sans-serif", fontWeight: 800, color: "white", letterSpacing: "-0.03em" }}>
-          Record the lecture.<br />Get the A.
+          Record the lecture.<br /><span style={{ color: "#3b82f6" }}>Get the A.</span>
         </h1>
         <p className="text-sm md:text-base mb-10 leading-relaxed max-w-md" style={{ color: "rgba(255,255,255,0.65)" }}>
           Flux turns your lecture recordings into cheat sheets, quizzes, and study books — automatically.
         </p>
         <div className="flex gap-3 mb-5">
-          <Link href="/sign-up" className="font-semibold px-8 py-3 rounded-full text-sm transition-all" style={{ background: "white", color: "#111110" }}>
+          <Link href="/sign-up" className="font-semibold px-8 py-3 rounded-full text-sm transition-all hover:opacity-90" style={{ background: "#2563eb", color: "white" }}>
             Get started free
           </Link>
-          <Link href="/sign-in" className="font-medium px-8 py-3 rounded-full text-sm transition-all" style={{ border: "1.5px solid rgba(255,255,255,0.3)", color: "white", background: "rgba(255,255,255,0.12)" }}>
+          <Link href="/sign-in" className="font-medium px-8 py-3 rounded-full text-sm transition-all" style={{ border: "1.5px solid rgba(255,255,255,0.2)", color: "white", background: "rgba(255,255,255,0.07)" }}>
             Sign in
           </Link>
         </div>
@@ -170,7 +170,7 @@ export default async function LandingPage() {
         <p className="text-sm mb-8 max-w-xs mx-auto" style={{ color: "rgba(255,255,255,0.55)", lineHeight: 1.7 }}>
           Join students who stopped wasting hours making their own notes.
         </p>
-        <Link href="/sign-up" className="font-semibold px-10 py-3.5 rounded-full text-sm transition-all" style={{ background: "white", color: "#111110" }}>
+        <Link href="/sign-up" className="font-semibold px-10 py-3.5 rounded-full text-sm transition-all hover:opacity-90" style={{ background: "#2563eb", color: "white" }}>
           Get started free
         </Link>
       </ScrollReveal>

@@ -1292,8 +1292,8 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: { course: any;
               borderRadius: 999,
               fontSize: 15,
               fontWeight: tab === key ? 700 : 500,
-              background: tab === key ? "white" : "rgba(255,255,255,0.07)",
-              color: tab === key ? "#111110" : "rgba(255,255,255,0.5)",
+              background: tab === key ? "#2563eb" : "rgba(255,255,255,0.07)",
+              color: tab === key ? "white" : "rgba(255,255,255,0.5)",
               border: tab === key ? "none" : "1px solid rgba(255,255,255,0.1)",
               letterSpacing: "-0.01em",
             }}
