@@ -21,11 +21,49 @@ export default async function LandingPage() {
   if (userId) redirect("/dashboard");
 
   return (
-    <main className="min-h-screen flex flex-col" style={{ background: "#0a0a0a" }}>
+    <main className="min-h-screen flex flex-col" style={{ background: "#0a0a0a", position: "relative", overflow: "hidden" }}>
+
+      {/* Background arcs */}
+      <svg
+        aria-hidden="true"
+        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none", zIndex: 0 }}
+        preserveAspectRatio="xMidYMid slice"
+        viewBox="0 0 1440 900"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        {/* Large arc — top left sweeping to bottom right */}
+        <path
+          d="M -200,800 Q 400,-200 1600,400"
+          fill="none" stroke="rgba(37,99,235,0.18)" strokeWidth="1.5"
+        />
+        {/* Second arc — crossing, top right to bottom left */}
+        <path
+          d="M 1600,100 Q 800,600 -100,300"
+          fill="none" stroke="rgba(37,99,235,0.12)" strokeWidth="1"
+        />
+        {/* Third arc — bottom sweep */}
+        <path
+          d="M -100,1100 Q 700,200 1600,700"
+          fill="none" stroke="rgba(96,165,250,0.08)" strokeWidth="1"
+        />
+        {/* Subtle glow blob — top right */}
+        <radialGradient id="glowA" cx="75%" cy="15%" r="40%">
+          <stop offset="0%" stopColor="#2563eb" stopOpacity="0.12" />
+          <stop offset="100%" stopColor="#2563eb" stopOpacity="0" />
+        </radialGradient>
+        <rect x="0" y="0" width="100%" height="100%" fill="url(#glowA)" />
+        {/* Subtle glow blob — bottom left */}
+        <radialGradient id="glowB" cx="20%" cy="85%" r="35%">
+          <stop offset="0%" stopColor="#1d4ed8" stopOpacity="0.1" />
+          <stop offset="100%" stopColor="#1d4ed8" stopOpacity="0" />
+        </radialGradient>
+        <rect x="0" y="0" width="100%" height="100%" fill="url(#glowB)" />
+      </svg>
+
       <Navbar />
 
       {/* Hero */}
-      <div className="flex flex-col items-center text-center px-6 md:px-16 pt-36 md:pt-52 pb-16">
+      <div className="flex flex-col items-center text-center px-6 md:px-16 pt-36 md:pt-52 pb-16" style={{ position: "relative", zIndex: 1 }}>
 
         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-10" style={{ background: "rgba(37,99,235,0.15)", border: "1px solid rgba(37,99,235,0.4)" }}>
           <Layers size={12} style={{ color: "#60a5fa" }} />
