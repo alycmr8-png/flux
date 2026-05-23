@@ -8,7 +8,7 @@ export function Navbar() {
       <div
         className="flex items-center justify-between px-4 md:px-8 w-full"
         style={{
-          maxWidth: 960,
+          maxWidth: 1200,
           height: 74,
           background: "rgba(255,255,255,0.95)",
           backdropFilter: "blur(14px)",
