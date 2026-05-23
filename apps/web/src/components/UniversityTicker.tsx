@@ -56,7 +56,7 @@ function UniLabel({ name, style, size }: { name: string; style: string; size: st
 export function UniversityTicker() {
   return (
     <div className="w-full py-14">
-      <p className="text-center text-[10px] font-bold uppercase tracking-[0.22em] mb-8" style={{ color: "rgba(255,255,255,0.3)" }}>
+      <p className="text-center text-sm font-bold uppercase tracking-[0.22em] mb-8" style={{ color: "rgba(255,255,255,0.8)" }}>
         Trusted by students at
       </p>
 

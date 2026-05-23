@@ -67,25 +67,25 @@ export default async function LandingPage() {
 
         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-10" style={{ background: "rgba(37,99,235,0.15)", border: "1px solid rgba(37,99,235,0.4)" }}>
           <Layers size={12} style={{ color: "#60a5fa" }} />
-          <span className="text-[10px] uppercase tracking-[0.2em] font-semibold" style={{ color: "#60a5fa" }}>
+          <span className="text-xs uppercase tracking-[0.2em] font-semibold" style={{ color: "#60a5fa" }}>
             Flux — AI Study Assistant
           </span>
         </div>
-        <h1 className="text-4xl md:text-6xl mb-6 leading-[1.05]" style={{ fontFamily: "’Plus Jakarta Sans’, sans-serif", fontWeight: 800, color: "white", letterSpacing: "-0.03em" }}>
+        <h1 className="text-5xl md:text-7xl mb-6 leading-[1.05]" style={{ fontFamily: "’Plus Jakarta Sans’, sans-serif", fontWeight: 800, color: "white", letterSpacing: "-0.03em" }}>
           Record the lecture.<br /><span style={{ color: "#3b82f6" }}>Get the A.</span>
         </h1>
-        <p className="text-sm md:text-base mb-10 leading-relaxed max-w-md" style={{ color: "rgba(255,255,255,0.65)" }}>
+        <p className="text-base md:text-lg mb-10 leading-relaxed max-w-xl" style={{ color: "rgba(255,255,255,0.65)" }}>
           Flux turns your lecture recordings into cheat sheets, quizzes, and study books — automatically.
         </p>
         <div className="flex gap-3 mb-5">
-          <Link href="/sign-up" className="font-semibold px-8 py-3 rounded-full text-sm transition-all hover:opacity-90" style={{ background: "#2563eb", color: "white" }}>
+          <Link href="/sign-up" className="font-semibold px-10 py-4 rounded-full text-base transition-all hover:opacity-90" style={{ background: "#2563eb", color: "white" }}>
             Get started free
           </Link>
-          <Link href="/sign-in" className="font-medium px-8 py-3 rounded-full text-sm transition-all" style={{ border: "1.5px solid rgba(255,255,255,0.2)", color: "white", background: "rgba(255,255,255,0.07)" }}>
+          <Link href="/sign-in" className="font-medium px-10 py-4 rounded-full text-base transition-all" style={{ border: "1.5px solid rgba(255,255,255,0.2)", color: "white", background: "rgba(255,255,255,0.07)" }}>
             Sign in
           </Link>
         </div>
-        <span className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>Free to start · No credit card needed</span>
+        <span className="text-sm" style={{ color: "rgba(255,255,255,0.4)" }}>Free to start · No credit card needed</span>
       </div>
 
       {/* Wave divider */}
@@ -114,7 +114,7 @@ export default async function LandingPage() {
 
       {/* Tagline */}
       <ScrollReveal className="text-center py-10 px-6">
-        <p className="text-[10px] uppercase tracking-[0.22em] font-semibold mb-3" style={{ color: "rgba(255,255,255,0.45)" }}>
+        <p className="text-sm uppercase tracking-[0.22em] font-semibold mb-3" style={{ color: "rgba(255,255,255,0.8)" }}>
           Trusted by students at
         </p>
         <p className="text-2xl md:text-3xl" style={{ fontFamily: "’Plus Jakarta Sans’, sans-serif", fontWeight: 800, color: "white", letterSpacing: "-0.02em" }}>

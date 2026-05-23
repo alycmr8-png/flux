@@ -87,7 +87,7 @@ function CreateClassPage({ onBack, onCreate }: { onBack: () => void; onCreate: (
         <ArrowLeft size={14} /> Back
       </button>
 
-      <h1 className="font-serif italic text-3xl mb-1">New Class</h1>
+      <h1 className="font-serif italic text-5xl mb-1">New Class</h1>
       <p className="text-[#555] text-sm mb-8">Set up your class to start organizing lectures and materials.</p>
 
       <div className="space-y-4">

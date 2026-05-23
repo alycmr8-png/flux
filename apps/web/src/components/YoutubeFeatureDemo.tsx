@@ -22,13 +22,13 @@ export function YoutubeFeatureDemo() {
 
         {/* Header */}
         <div className="text-center mb-10">
-          <div className="text-[10px] uppercase tracking-[0.2em] font-semibold mb-3" style={{ color: "#3b82f6" }}>
+          <div className="text-sm uppercase tracking-[0.2em] font-semibold mb-3" style={{ color: "#3b82f6" }}>
             Upload any video
           </div>
-          <h2 className="text-3xl md:text-4xl" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, color: "white", letterSpacing: "-0.02em" }}>
+          <h2 className="text-4xl md:text-5xl" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, color: "white", letterSpacing: "-0.02em" }}>
             Paste a YouTube link. <span style={{ color: "#3b82f6" }}>Get everything.</span>
           </h2>
-          <p className="text-sm md:text-base mt-3 max-w-md mx-auto" style={{ color: "rgba(255,255,255,0.5)" }}>
+          <p className="text-base md:text-lg mt-3 max-w-xl mx-auto" style={{ color: "rgba(255,255,255,0.5)" }}>
             Drop any lecture, tutorial, or documentary — Flux gives you a summary, transcript, flashcards, and a quiz instantly.
           </p>
         </div>
