@@ -212,7 +212,7 @@ Return ONLY valid JSON — no markdown, no code blocks, no commentary.
   "examTips": string[],
   "practiceQuestions": [{ "question": string, "answer": string }]
 }
-Be thorough. Include 4-6 sections, 5-10 key terms, all formulas, 5 exam tips, 5 practice questions.`,
+Be thorough. The "summary" field must be exactly 7 sentences. Include 4-6 sections, 5-10 key terms, all formulas, 5 exam tips, 5 practice questions.`,
     messages: [
       {
         role: "user",
@@ -287,7 +287,7 @@ DEPTH REQUIREMENTS:
 - flashcards: ${depth.flashcards} per chapter. Specific fronts; complete, detailed backs.
 - examQuestions: 1 MCQ + 1 short-answer per chapter.
 - glossary: ${depth.glossary} terms across the full lecture.
-- executiveSummary: 2-3 paragraphs covering the full arc.
+- executiveSummary: 3-5 sentences covering only the most important points. Be concise — no filler, no restating the obvious.
 
 Rules:
 - MCQ options = ["A. ...", "B. ...", "C. ...", "D. ..."], correctAnswer = "A"/"B"/"C"/"D"

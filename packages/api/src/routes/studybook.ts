@@ -76,16 +76,55 @@ async function fetchYouTubeTranscript(videoId: string): Promise<YTTranscript> {
     } catch (_e) { continue; }
   }
 
-  // Strategy 3: Download audio and transcribe with Whisper
-  console.log(`[studybook] captions unavailable — falling back to Whisper for ${videoId}`);
+  // Strategy 3: InnerTube ANDROID — grab a direct audio stream URL and download it
+  console.log(`[studybook] captions unavailable — trying InnerTube audio for ${videoId}`);
+  try {
+    const { data: player } = await axios.post(
+      "https://www.youtube.com/youtubei/v1/player?prettyPrint=false",
+      {
+        context: { client: { clientName: "ANDROID", clientVersion: "20.10.38", androidSdkVersion: 30, hl: "en", gl: "US" } },
+        videoId, contentCheckOk: true, racyCheckOk: true,
+      },
+      { timeout: 8000, headers: { "Content-Type": "application/json", "User-Agent": "com.google.android.youtube/20.10.38 (Linux; U; Android 14) gzip" } }
+    );
+
+    const audioFormats: any[] = (player?.streamingData?.adaptiveFormats ?? [])
+      .filter((f: any) => f.mimeType?.startsWith("audio/") && f.url)
+      .sort((a: any, b: any) => (a.bitrate ?? 0) - (b.bitrate ?? 0));
+
+    if (audioFormats.length) {
+      const audioUrl = audioFormats[0].url;
+      const tmpFile = path.join(os.tmpdir(), `yt_${videoId}_${Date.now()}.mp4`);
+      try {
+        const resp = await axios.get(audioUrl, {
+          responseType: "arraybuffer",
+          timeout: 120000,
+          headers: { "Range": "bytes=0-", "User-Agent": "com.google.android.youtube/20.10.38 (Linux; U; Android 14) gzip" },
+        });
+        fs.writeFileSync(tmpFile, Buffer.from(resp.data));
+        const result = await transcribeAudio(tmpFile);
+        if (result.text) return result;
+      } finally {
+        fs.unlink(tmpFile, () => {});
+      }
+    }
+  } catch (_e) {
+    console.log(`[studybook] InnerTube audio failed: ${(_e as any)?.message}`);
+  }
+
+  // Strategy 4: ytdl-core audio download as last resort
+  console.log(`[studybook] falling back to ytdl-core for ${videoId}`);
   const tmpFile = path.join(os.tmpdir(), `yt_${videoId}_${Date.now()}.mp4`);
   try {
     const ytdl = (await import("@distube/ytdl-core")).default;
     await new Promise<void>((resolve, reject) => {
-      const stream = ytdl(`https://www.youtube.com/watch?v=${videoId}`, {
-        filter: "audioonly",
-        quality: "lowestaudio",
-      });
+      let stream: any;
+      try {
+        stream = ytdl(`https://www.youtube.com/watch?v=${videoId}`, {
+          filter: "audioonly",
+          quality: "lowestaudio",
+        });
+      } catch (e) { return reject(e); }
       const out = fs.createWriteStream(tmpFile);
       stream.pipe(out);
       stream.on("error", reject);
@@ -94,6 +133,8 @@ async function fetchYouTubeTranscript(videoId: string): Promise<YTTranscript> {
     });
     const result = await transcribeAudio(tmpFile);
     return result;
+  } catch (e: any) {
+    throw new Error(`Could not retrieve audio or captions for this video. Try a video with auto-generated captions enabled.`);
   } finally {
     fs.unlink(tmpFile, () => {});
   }
