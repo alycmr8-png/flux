@@ -638,6 +638,9 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: { course: any;
   const [docResult, setDocResult] = useState<any | null>(null);
   const [docId, setDocId] = useState<string | null>(null);
   const [docError, setDocError] = useState("");
+  const [docTab, setDocTab] = useState<"summary" | "sections" | "terms" | "quiz" | "tips">("summary");
+  const [docQuizSelected, setDocQuizSelected] = useState<number | null>(null);
+  const [docFlipped, setDocFlipped] = useState<Set<number>>(new Set());
   const [docSaving, setDocSaving] = useState(false);
   const [docSaved, setDocSaved] = useState(false);
   const [docRegenerating, setDocRegenerating] = useState(false);
@@ -1758,40 +1761,105 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: { course: any;
                 )}
               </div>
 
-              {/* Content preview */}
-              <div className="px-6 py-5 space-y-5">
-                {docResult.summary && (
-                  <div>
-                    <div className="text-[10px] text-[#555] font-bold uppercase tracking-widest mb-2">Summary</div>
-                    <div className="text-sm text-[#555] leading-relaxed">{docResult.summary}</div>
+              {/* Tabs */}
+              <div className="flex gap-1 px-4 pt-4 pb-0">
+                {(["summary","sections","terms","quiz","tips"] as const).map(t => {
+                  const labels: Record<string, string> = { summary: "Summary", sections: "Sections", terms: "Key Terms", quiz: "Practice Q&A", tips: "Exam Tips" };
+                  return (
+                    <button key={t} onClick={() => { setDocTab(t); setDocQuizSelected(null); }}
+                      className="px-4 py-2 rounded-full text-xs font-medium transition-all"
+                      style={{
+                        background: docTab === t ? "#2563eb" : "rgba(37,99,235,0.07)",
+                        color: docTab === t ? "white" : "rgba(0,0,0,0.45)",
+                        border: `1px solid ${docTab === t ? "#2563eb" : "rgba(37,99,235,0.15)"}`,
+                      }}>
+                      {labels[t]}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Tab content */}
+              <div className="px-6 py-5 space-y-4 min-h-[200px]">
+
+                {docTab === "summary" && (
+                  <div className="space-y-3">
+                    {docResult.summary && (
+                      <p className="text-sm text-[#555] leading-relaxed">{docResult.summary}</p>
+                    )}
+                    {(docResult.formulas ?? []).length > 0 && (
+                      <div>
+                        <div className="text-[10px] text-[#555] font-bold uppercase tracking-widest mb-2">Formulas</div>
+                        <div className="space-y-1">
+                          {(docResult.formulas ?? []).map((f: string, i: number) => (
+                            <div key={i} className="text-xs font-mono bg-[rgba(0,0,0,0.04)] rounded-lg px-3 py-2 text-[#111110]">{f}</div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
-                {(docResult.sections ?? []).slice(0, 3).map((s: any, i: number) => (
-                  <div key={i}>
-                    <div className="text-[10px] text-[#555] font-bold uppercase tracking-widest mb-2">{s.heading}</div>
-                    <div className="space-y-1.5">
-                      {(s.bullets ?? []).map((b: string, j: number) => (
-                        <div key={j} className="flex gap-2 text-xs text-[#555]">
-                          <span className="shrink-0 mt-1.5 w-1 h-1 rounded-full bg-[#2a2a2a]" />
-                          {b}
+
+                {docTab === "sections" && (
+                  <div className="space-y-5">
+                    {(docResult.sections ?? []).map((s: any, i: number) => (
+                      <div key={i}>
+                        <div className="text-xs font-bold text-[#111110] mb-2">{s.heading}</div>
+                        <div className="space-y-1.5">
+                          {(s.bullets ?? []).map((b: string, j: number) => (
+                            <div key={j} className="flex gap-2 text-sm text-[#555]">
+                              <span className="shrink-0 mt-2 w-1.5 h-1.5 rounded-full bg-[#2563eb]" />
+                              {b}
+                            </div>
+                          ))}
                         </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-                {(docResult.keyTerms ?? []).length > 0 && (
-                  <div>
-                    <div className="text-[10px] text-[#555] font-bold uppercase tracking-widest mb-2">Key Terms</div>
-                    <div className="space-y-1">
-                      {(docResult.keyTerms ?? []).slice(0, 5).map((kt: any, i: number) => (
-                        <div key={i} className="text-xs">
-                          <span className="text-[#111110] font-medium">{kt.term}</span>
-                          <span className="text-[#555]"> — {kt.definition}</span>
-                        </div>
-                      ))}
-                    </div>
+                      </div>
+                    ))}
                   </div>
                 )}
+
+                {docTab === "terms" && (
+                  <div className="space-y-2">
+                    {(docResult.keyTerms ?? []).map((kt: any, i: number) => (
+                      <div key={i} className="rounded-xl border border-[rgba(0,0,0,0.07)] px-4 py-3">
+                        <div className="text-sm font-semibold text-[#111110] mb-0.5">{kt.term}</div>
+                        <div className="text-xs text-[#555] leading-relaxed">{kt.definition}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {docTab === "quiz" && (
+                  <div className="space-y-4">
+                    {(docResult.practiceQuestions ?? []).map((pq: any, i: number) => (
+                      <div key={i}
+                        onClick={() => setDocFlipped(p => { const s = new Set(p); s.has(i) ? s.delete(i) : s.add(i); return s; })}
+                        className="cursor-pointer rounded-xl border px-4 py-3 transition-all"
+                        style={{
+                          background: docFlipped.has(i) ? "rgba(37,99,235,0.06)" : "white",
+                          borderColor: docFlipped.has(i) ? "#3b82f6" : "rgba(0,0,0,0.08)",
+                        }}>
+                        <div className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: docFlipped.has(i) ? "#3b82f6" : "rgba(0,0,0,0.35)" }}>
+                          {docFlipped.has(i) ? "Answer" : `Q${i + 1}`}
+                        </div>
+                        <div className="text-sm text-[#111110]">{docFlipped.has(i) ? pq.answer : pq.question}</div>
+                        {!docFlipped.has(i) && <div className="text-[10px] text-[#555] mt-2">Tap to reveal answer</div>}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {docTab === "tips" && (
+                  <div className="space-y-2">
+                    {(docResult.examTips ?? []).map((tip: string, i: number) => (
+                      <div key={i} className="flex gap-3 text-sm text-[#555] rounded-xl border border-[rgba(0,0,0,0.07)] px-4 py-3">
+                        <span className="shrink-0 font-bold text-[#2563eb]">{i + 1}.</span>
+                        {tip}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
               </div>
 
               {/* Actions */}
@@ -1821,7 +1889,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: { course: any;
                       >
                         {docRegenerating ? <><Loader2 size={10} className="animate-spin" /> Regenerating…</> : "Regenerate"}
                       </button>
-                      <button onClick={() => { setDocView("idle"); setDocFile(null); setDocResult(null); setDocSaved(false); setDocSaveChoice("none"); }}
+                      <button onClick={() => { setDocView("idle"); setDocFile(null); setDocResult(null); setDocSaved(false); setDocSaveChoice("none"); setDocTab("summary"); setDocFlipped(new Set()); setDocQuizSelected(null); }}
                         className="ml-auto text-xs text-[#555] hover:text-[#555] transition-colors">
                         Upload another
                       </button>
@@ -1875,7 +1943,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: { course: any;
                     <div className="flex items-center gap-1.5 text-xs text-green-500">
                       <CheckCircle size={11} /> Saved to Study Book
                     </div>
-                    <button onClick={() => { setDocView("idle"); setDocFile(null); setDocResult(null); setDocSaved(false); setDocSaveChoice("none"); }}
+                    <button onClick={() => { setDocView("idle"); setDocFile(null); setDocResult(null); setDocSaved(false); setDocSaveChoice("none"); setDocTab("summary"); setDocFlipped(new Set()); setDocQuizSelected(null); }}
                       className="ml-auto text-xs text-[#555] hover:text-[#555] transition-colors">
                       Upload another
                     </button>

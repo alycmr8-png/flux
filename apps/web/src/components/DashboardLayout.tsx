@@ -47,7 +47,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 px-3 pt-2 flex flex-col gap-0.5">
+        <nav className="flex-1 px-3 pt-2 flex flex-col gap-1">
           <div style={{ fontSize: 9, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(255,255,255,0.25)", padding: "8px 10px 6px" }}>
             Menu
           </div>
@@ -57,14 +57,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <Link
                 key={href}
                 href={href}
-                className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm transition-all"
+                className="flex items-center gap-3 px-3 py-3 rounded-xl transition-all"
                 style={{
+                  fontSize: 15,
                   background: active ? "rgba(37,99,235,0.18)" : "transparent",
                   color: active ? "#60a5fa" : "rgba(255,255,255,0.45)",
-                  fontWeight: active ? 600 : 400,
+                  fontWeight: active ? 600 : 500,
                 }}
               >
-                <Icon size={15} />
+                <Icon size={17} />
                 {label}
               </Link>
             );
