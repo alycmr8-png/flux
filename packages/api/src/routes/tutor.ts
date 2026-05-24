@@ -1,9 +1,9 @@
 import { Router } from "express";
 import { prisma } from "../lib/prisma";
 import { streamSocraticResponse } from "../services/claude";
-import Anthropic from "@anthropic-ai/sdk";
+import OpenAI from "openai";
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY, timeout: 60000 });
 
 const router = Router();
 
@@ -151,17 +151,17 @@ Help them understand their material, prepare for exams, answer questions about t
 
 ${context ? `=== STUDENT DATA ===\n${context}\n=== END ===` : "No data yet — encourage them to record a lecture or upload a file."}`;
 
-  const response = await anthropic.messages.create({
-    model: "claude-sonnet-4-6",
+  const response = await openai.chat.completions.create({
+    model: "gpt-4o",
     max_tokens: 1024,
-    system,
     messages: [
+      { role: "system", content: system },
       ...history.slice(-10).map((m: any) => ({ role: m.role, content: m.content })),
       { role: "user", content: message },
     ],
   });
 
-  const reply = response.content[0].type === "text" ? response.content[0].text : "";
+  const reply = response.choices[0]?.message?.content ?? "";
   res.json({ data: { reply } });
 });
 
