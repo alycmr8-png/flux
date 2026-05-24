@@ -107,13 +107,13 @@ export function CalendarShowcase() {
       <div className="max-w-5xl mx-auto">
         {/* Header */}
         <div className="text-center mb-14">
-          <div className="text-[10px] uppercase tracking-[0.2em] mb-4 font-semibold" style={{ color: "rgba(255,255,255,0.3)" }}>
+          <div className="text-sm uppercase tracking-[0.2em] mb-4 font-semibold" style={{ color: "#3b82f6" }}>
             Stay ahead
           </div>
-          <h2 className="text-4xl md:text-5xl mb-4" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontStyle: "italic", fontWeight: 400, color: "white", lineHeight: 1.15 }}>
+          <h2 className="text-4xl md:text-5xl mb-4" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, color: "white", lineHeight: 1.1, letterSpacing: "-0.02em" }}>
             Never miss an exam<br />or deadline again.
           </h2>
-          <p className="text-base" style={{ color: "rgba(255,255,255,0.45)" }}>
+          <p className="text-base md:text-lg max-w-xl mx-auto" style={{ color: "rgba(255,255,255,0.5)" }}>
             Schedule exams, assignments and deadlines.<br />Color-coded, always visible.
           </p>
         </div>

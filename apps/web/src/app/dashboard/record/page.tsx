@@ -1615,9 +1615,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: { course: any;
                 <input type="file" accept=".pdf,.txt,.md" className="hidden" multiple
                   onChange={e => {
                     if (!e.target.files?.length) return;
-                    const newFiles = Array.from(e.target.files).map(f => ({ file: f, title: f.name.replace(/\.[^.]+$/, "") }));
-                    setDocQueue(q => [...q, ...newFiles]);
-                    setDocView("staging");
+                    handleDocFilesSelect(e.target.files);
                     e.target.value = "";
                   }} />
               </label>
@@ -1650,7 +1648,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: { course: any;
                       disabled={batchProcessing}
                       className="flex items-center gap-2 border border-[rgba(0,0,0,0.12)] text-[#111110] text-sm font-medium px-5 py-2.5 rounded-full hover:bg-[rgba(0,0,0,0.04)] transition-colors disabled:opacity-40"
                     >
-                      Generate all
+                      Process files
                     </button>
                     <button onClick={() => { setDocQueue([]); setDocView("idle"); }} className="text-xs text-[#555] hover:text-[#111110] transition-colors ml-auto">
                       Clear

@@ -15,6 +15,7 @@ import { Navbar } from "@/components/Navbar";
 import { PricingSection } from "@/components/PricingSection";
 import { ScrollReveal } from "@/components/ScrollReveal";
 import { YoutubeFeatureDemo } from "@/components/YoutubeFeatureDemo";
+import { FilesFeatureDemo } from "@/components/FilesFeatureDemo";
 
 export default async function LandingPage() {
   const { userId } = await auth();
@@ -176,6 +177,11 @@ export default async function LandingPage() {
       {/* YouTube feature demo */}
       <ScrollReveal>
         <YoutubeFeatureDemo />
+      </ScrollReveal>
+
+      {/* Files feature demo */}
+      <ScrollReveal>
+        <FilesFeatureDemo />
       </ScrollReveal>
 
       {/* Calendar feature showcase */}
