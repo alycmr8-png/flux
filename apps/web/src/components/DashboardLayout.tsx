@@ -2,14 +2,13 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { UserButton } from "@clerk/nextjs";
-import { Home, Layers, HelpCircle, Calendar, BarChart2, CreditCard, Archive, Users } from "lucide-react";
+import { Home, Layers, HelpCircle, Calendar, BarChart2, CreditCard, Archive } from "lucide-react";
 import { LanguageSwitcher } from "@/components/I18nProvider";
 import { useState, useEffect } from "react";
 
 const nav = [
   { href: "/dashboard",          icon: Home,        label: "Home"      },
   { href: "/dashboard/record",   icon: Layers,      label: "Workspace" },
-  { href: "/dashboard/network",  icon: Users,       label: "Network"   },
   { href: "/dashboard/calendar", icon: Calendar,    label: "Calendar"  },
   { href: "/dashboard/progress", icon: BarChart2,   label: "Progress"  },
   { href: "/dashboard/archive",  icon: Archive,     label: "Archive"   },
