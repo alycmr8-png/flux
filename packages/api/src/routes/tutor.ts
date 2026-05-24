@@ -95,7 +95,7 @@ router.post("/ask", async (req, res) => {
       where: { userId: user.id },
       orderBy: { createdAt: "desc" },
       take: 10,
-      select: { title: true, questions: true },
+      include: { questions: { take: 3, select: { question: true } } },
     }),
   ]);
 
@@ -130,9 +130,7 @@ router.post("/ask", async (req, res) => {
   }).join("\n\n");
 
   const quizzesCtx = quizzes.map(q => {
-    const qs = Array.isArray(q.questions)
-      ? (q.questions as any[]).slice(0, 3).map((qq: any) => qq.question).join("; ")
-      : "";
+    const qs = q.questions.map(qq => qq.question).join("; ");
     return `- ${q.title}: ${qs}`;
   }).join("\n");
 
