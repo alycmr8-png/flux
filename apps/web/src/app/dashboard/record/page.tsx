@@ -1765,7 +1765,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: { course: any;
                   const labels: Record<string, string> = { summary: "Summary", sections: "Sections", terms: "Key Terms", quiz: "Practice Q&A", tips: "Exam Tips" };
                   return (
                     <button key={t} onClick={() => { setDocTab(t); setDocQuizSelected(null); }}
-                      className="px-4 py-2 rounded-full text-xs font-medium transition-all"
+                      className="px-5 py-2.5 rounded-full text-sm font-medium transition-all"
                       style={{
                         background: docTab === t ? "#2563eb" : "rgba(37,99,235,0.07)",
                         color: docTab === t ? "white" : "rgba(0,0,0,0.45)",

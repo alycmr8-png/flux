@@ -66,9 +66,9 @@ function Sidebar() {
           const active = key === "record";
           return (
             <div key={key} className="flex items-center gap-2 px-2.5 py-2 rounded-lg"
-              style={{ background: active ? "rgba(255,255,255,0.12)" : "transparent", color: active ? "white" : "rgba(255,255,255,0.4)" }}>
+              style={{ background: active ? "rgba(37,99,235,0.18)" : "transparent", color: active ? "#60a5fa" : "rgba(255,255,255,0.4)" }}>
               <Icon size={12} />
-              <span style={{ fontSize: 11, fontWeight: active ? 500 : 400 }}>{label}</span>
+              <span style={{ fontSize: 11, fontWeight: active ? 600 : 400 }}>{label}</span>
             </div>
           );
         })}
@@ -85,7 +85,7 @@ function ClassesView({ cardRef }: { cardRef: React.RefObject<HTMLDivElement | nu
           <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontStyle: "italic", fontSize: 22, color: "white", fontWeight: 400 }}>Workspace</div>
           <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", marginTop: 2 }}>Your classes, lectures, and quizzes</div>
         </div>
-        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full" style={{ background: "rgba(255,255,255,0.1)", color: "white", fontSize: 11 }}>
+        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full" style={{ background: "#2563eb", color: "white", fontSize: 11 }}>
           <Plus size={11} /> New Class
         </div>
       </div>
@@ -96,8 +96,8 @@ function ClassesView({ cardRef }: { cardRef: React.RefObject<HTMLDivElement | nu
             ref={i === 0 ? cardRef : undefined}
             className="rounded-xl p-5"
             style={{
-              background: i === 0 ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.06)",
-              border: `1px solid ${i === 0 ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.08)"}`,
+              background: i === 0 ? "rgba(37,99,235,0.15)" : "rgba(255,255,255,0.04)",
+              border: `1px solid ${i === 0 ? "#2563eb" : "rgba(255,255,255,0.08)"}`,
             }}
           >
             <div className="w-8 h-8 rounded-lg flex items-center justify-center mb-3" style={{ background: "rgba(255,255,255,0.1)" }}>
@@ -131,7 +131,7 @@ function ClassView({ tab, phase, recordTabRef, quizTabRef, sbTabRef, micBtnRef }
             key={i}
             className="px-3 py-1 rounded-full text-xs"
             style={i === 0
-              ? { background: "rgba(255,255,255,0.12)", color: "white", border: "1px solid white", fontSize: 10 }
+              ? { background: "#2563eb", color: "white", border: "1px solid #2563eb", fontSize: 10 }
               : { background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.5)", border: "1px solid rgba(255,255,255,0.08)", fontSize: 10 }}
           >
             {c.name}
@@ -140,7 +140,7 @@ function ClassView({ tab, phase, recordTabRef, quizTabRef, sbTabRef, micBtnRef }
       </div>
 
       <div className="px-6 pt-4 pb-0">
-        <div className="flex gap-0.5 rounded-xl p-1 w-fit" style={{ background: "rgba(255,255,255,0.06)" }}>
+        <div className="flex gap-0.5 rounded-xl p-1 w-fit" style={{ background: "rgba(37,99,235,0.1)", border: "1px solid rgba(37,99,235,0.15)" }}>
           {CLASS_TABS.map(({ key, label, icon: Icon }) => {
             const ref = key === "record" ? recordTabRef : key === "quizzes" ? quizTabRef : key === "studybook" ? sbTabRef : undefined;
             return (
@@ -148,7 +148,7 @@ function ClassView({ tab, phase, recordTabRef, quizTabRef, sbTabRef, micBtnRef }
                 key={key}
                 ref={ref}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-colors"
-                style={{ background: tab === key ? "rgba(255,255,255,0.15)" : "transparent", color: tab === key ? "white" : "rgba(255,255,255,0.4)", fontSize: 10 }}
+                style={{ background: tab === key ? "#2563eb" : "transparent", color: tab === key ? "white" : "rgba(255,255,255,0.4)", fontSize: 10 }}
               >
                 <Icon size={10} />
                 {label}
@@ -191,9 +191,9 @@ function ClassView({ tab, phase, recordTabRef, quizTabRef, sbTabRef, micBtnRef }
                   </div>
                   <div className="flex-1 min-w-0">
                     <div style={{ fontSize: 11, color: "white", marginBottom: 1 }}>{title}</div>
-                    <div style={{ fontSize: 9, color: "rgba(255,255,255,0.35)" }}>Cheat sheet ready - AI ready</div>
+                    <div style={{ fontSize: 9, color: "#60a5fa" }}>AI ready</div>
                   </div>
-                  <div className="px-2.5 py-1 rounded-full shrink-0" style={{ background: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.5)", fontSize: 9 }}>Open</div>
+                  <div className="px-2.5 py-1 rounded-full shrink-0" style={{ background: "rgba(37,99,235,0.15)", color: "#60a5fa", fontSize: 9 }}>Open</div>
                 </div>
               ))}
             </div>
@@ -215,11 +215,11 @@ function ClassView({ tab, phase, recordTabRef, quizTabRef, sbTabRef, micBtnRef }
                   key={i}
                   className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl mb-2"
                   style={{
-                    border: `1px solid ${i === 0 ? "rgba(255,255,255,0.4)" : "rgba(255,255,255,0.07)"}`,
-                    background: i === 0 ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.03)",
+                    border: `1px solid ${i === 0 ? "#2563eb" : "rgba(255,255,255,0.07)"}`,
+                    background: i === 0 ? "rgba(37,99,235,0.15)" : "rgba(255,255,255,0.03)",
                   }}
                 >
-                  <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: i === 0 ? "white" : "rgba(255,255,255,0.2)" }} />
+                  <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: i === 0 ? "#3b82f6" : "rgba(255,255,255,0.2)" }} />
                   <span style={{ fontSize: 11, color: i === 0 ? "white" : "rgba(255,255,255,0.45)" }}>{opt}</span>
                 </div>
               ))}
@@ -346,7 +346,7 @@ export function ProductDemo() {
           <div
             key={i}
             className="rounded-full transition-all duration-300"
-            style={{ width: stepIdx === i ? 20 : 6, height: 6, background: stepIdx === i ? "rgba(255,255,255,0.5)" : "rgba(255,255,255,0.15)" }}
+            style={{ width: stepIdx === i ? 20 : 6, height: 6, background: stepIdx === i ? "#2563eb" : "rgba(255,255,255,0.15)" }}
           />
         ))}
       </div>
