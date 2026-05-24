@@ -58,7 +58,7 @@ export function FilesFeatureDemo() {
 
   return (
     <section className="px-6 md:px-16 py-16 md:py-24">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-5xl mx-auto">
 
         {/* Header */}
         <div className="text-center mb-10">
@@ -74,7 +74,7 @@ export function FilesFeatureDemo() {
         </div>
 
         {/* Demo */}
-        <div className="max-w-2xl mx-auto space-y-4">
+        <div className="max-w-4xl mx-auto space-y-4">
 
           {/* File bar */}
           <div className="flex items-center gap-3 px-4 py-3 rounded-xl" style={{ background: "rgba(37,99,235,0.08)", border: "1px solid rgba(37,99,235,0.25)" }}>
@@ -98,7 +98,7 @@ export function FilesFeatureDemo() {
           </div>
 
           {/* Tab content */}
-          <div className="rounded-2xl p-5" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(37,99,235,0.15)", minHeight: 280 }}>
+          <div className="rounded-2xl p-8" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(37,99,235,0.15)", minHeight: 400 }}>
 
             {tab === "Summary" && (
               <div className="space-y-4">
