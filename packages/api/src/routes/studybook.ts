@@ -85,7 +85,6 @@ async function fetchYouTubeTranscript(videoId: string): Promise<YTTranscript> {
       const stream = ytdl(`https://www.youtube.com/watch?v=${videoId}`, {
         filter: "audioonly",
         quality: "lowestaudio",
-        requestOptions: { headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" } },
       });
       const out = fs.createWriteStream(tmpFile);
       stream.pipe(out);
