@@ -2,11 +2,17 @@ import { Router } from "express";
 import multer from "multer";
 import { prisma } from "../lib/prisma";
 import { generateStructuredLearningFile } from "../services/claude";
+import OpenAI from "openai";
 
 const pdfParse = require("pdf-parse/lib/pdf-parse.js") as (buf: Buffer) => Promise<{ text: string }>;
+const mammoth = require("mammoth") as { extractRawText: (opts: { buffer: Buffer }) => Promise<{ value: string }> };
+
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+const IMAGE_MIMES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif", "image/heic", "image/heif"]);
 
 const router = Router();
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } });
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } });
 
 // Temp store for extracted text (for regeneration without re-uploading)
 const docStore = new Map<string, { text: string; title: string; userId: string }>();
@@ -20,14 +26,47 @@ router.post("/", upload.single("document"), async (req, res) => {
   if (!file) return res.status(400).json({ error: "No file uploaded" });
 
   let text = "";
+
   if (file.mimetype === "application/pdf") {
     try {
       const parsed = await pdfParse(file.buffer);
       text = parsed.text ?? "";
     } catch {
       return res.status(400).json({
-        error: "Could not read this PDF. Make sure it is not password-protected and contains selectable text (not a scanned image).",
+        error: "Could not read this PDF. Make sure it is not password-protected and contains selectable text.",
       });
+    }
+  } else if (
+    file.mimetype === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+    file.originalname?.toLowerCase().endsWith(".docx")
+  ) {
+    try {
+      const result = await mammoth.extractRawText({ buffer: file.buffer });
+      text = result.value ?? "";
+    } catch {
+      return res.status(400).json({ error: "Could not read this Word document." });
+    }
+  } else if (IMAGE_MIMES.has(file.mimetype) || /\.(jpe?g|png|webp|gif|heic|heif)$/i.test(file.originalname ?? "")) {
+    try {
+      const b64 = file.buffer.toString("base64");
+      const mime = IMAGE_MIMES.has(file.mimetype) ? file.mimetype : "image/jpeg";
+      const vision = await openai.chat.completions.create({
+        model: "gpt-4o",
+        max_tokens: 2000,
+        messages: [{
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: "This is a study image (lecture slide, textbook page, handwritten note, diagram, etc.). Extract and describe ALL content in detail: every word of text, every formula, every diagram label, every bullet point. Be thorough — this output will be used to generate study materials.",
+            },
+            { type: "image_url", image_url: { url: `data:${mime};base64,${b64}` } },
+          ],
+        }],
+      });
+      text = vision.choices[0]?.message?.content ?? "";
+    } catch (err: any) {
+      return res.status(400).json({ error: `Could not analyse image: ${err.message}` });
     }
   } else {
     text = file.buffer.toString("utf-8");
@@ -35,7 +74,7 @@ router.post("/", upload.single("document"), async (req, res) => {
 
   if (!text.trim()) {
     return res.status(400).json({
-      error: "No text found in this file. If it is a scanned PDF, try a version with selectable text.",
+      error: "No content found in this file. For scanned PDFs, try a version with selectable text.",
     });
   }
 

@@ -1610,9 +1610,9 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: { course: any;
                 <FileUp size={28} />
                 <div className="text-center">
                   <div className="text-sm font-medium mb-0.5">Click to add documents</div>
-                  <div className="text-xs text-[#555]">PDF, TXT, or MD — add as many as you need</div>
+                  <div className="text-xs text-[#555]">PDF, Word, images, TXT — add as many as you need</div>
                 </div>
-                <input type="file" accept=".pdf,.txt,.md" className="hidden" multiple
+                <input type="file" accept=".pdf,.txt,.md,.docx,.doc,.jpg,.jpeg,.png,.webp,.gif,.heic,.heif" className="hidden" multiple
                   onChange={e => {
                     if (!e.target.files?.length) return;
                     handleDocFilesSelect(e.target.files);
