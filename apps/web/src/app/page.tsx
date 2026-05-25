@@ -148,7 +148,24 @@ export default async function LandingPage() {
           </div>
         </ScrollReveal>
 
-        {/* Testimonial 2 — Sira */}
+        {/* Testimonial 2 — Mohamed (centered) */}
+        <ScrollReveal delay={100}>
+          <div className="flex flex-col items-center text-center max-w-xl mx-auto gap-6">
+            <div className="relative w-[260px] h-[320px] md:w-[300px] md:h-[370px] shrink-0">
+              <Image src="/mohamed.jpeg" alt="Mohamed Camara" fill className="rounded-2xl object-cover" style={{ objectPosition: "center 30%" }} />
+            </div>
+            <div className="flex flex-col items-center">
+              <div className="text-5xl mb-4" style={{ color: "rgba(255,255,255,0.2)", fontFamily: "Georgia, serif", lineHeight: 1 }}>"</div>
+              <p className="text-lg md:text-xl leading-relaxed mb-6" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 700, color: "rgba(255,255,255,0.9)", lineHeight: 1.55 }}>
+                Flux me permet de rester au top de mes cours de génie civil. Je transforme mes enregistrements en fiches de révision en quelques secondes — c'est indispensable.
+              </p>
+              <div className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: "rgba(255,255,255,0.7)" }}>Mohamed Camara</div>
+              <div className="text-xs" style={{ color: "rgba(255,255,255,0.45)" }}>Étudiant en Génie Civil · Université de Rennes, France</div>
+            </div>
+          </div>
+        </ScrollReveal>
+
+        {/* Testimonial 3 — Sira */}
         <ScrollReveal delay={100}>
           <div className="flex flex-col md:flex-row-reverse items-center md:items-stretch gap-8 md:gap-12">
             <div className="relative w-[200px] h-[250px] md:w-[240px] md:h-[340px] shrink-0">
