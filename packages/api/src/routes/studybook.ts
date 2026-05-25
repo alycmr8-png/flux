@@ -52,15 +52,29 @@ async function fetchYouTubeTranscript(videoId: string): Promise<YTTranscript> {
         text: t.text,
       }));
       const text = segments.map(s => s.text).join(" ").replace(/\s+/g, " ").trim();
-      if (text) return { text, segments };
+      if (text) { console.log(`[studybook] captions via youtube-transcript (${text.length} chars)`); return { text, segments }; }
     }
-  } catch (_e) {}
+  } catch (_e) { console.log(`[studybook] youtube-transcript failed: ${(_e as any)?.message}`); }
 
-  // Strategy 2: InnerTube API fallback (plain text, no timestamps)
-  for (const client of [
+  // Strategy 1.5: Direct timedtext endpoint (auto-generated captions)
+  for (const kind of ["asr", ""]) {
+    try {
+      const url = `https://www.youtube.com/api/timedtext?v=${videoId}&lang=en&fmt=json3${kind ? `&kind=${kind}` : ""}`;
+      const { data } = await axios.get(url, { timeout: 8000, headers: { "User-Agent": "Mozilla/5.0" } });
+      const events: any[] = data?.events ?? [];
+      const text = events.flatMap((e: any) => (e.segs ?? []).map((s: any) => s.utf8 ?? "")).join(" ").replace(/\s+/g, " ").trim();
+      if (text) { console.log(`[studybook] captions via timedtext kind=${kind||"manual"} (${text.length} chars)`); return { text, segments: [] }; }
+    } catch (_e) {}
+  }
+
+  // Strategy 2: InnerTube API — try multiple clients
+  const captionClients = [
     { name: "WEB",     version: "2.20240101.00.00", headers: { "Origin": "https://www.youtube.com", "Referer": "https://www.youtube.com/", "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" } },
-    { name: "ANDROID", version: "20.10.38",          headers: { "User-Agent": "com.google.android.youtube/20.10.38 (Linux; U; Android 14) gzip" } },
-  ]) {
+    { name: "IOS",     version: "19.09.3",           headers: { "User-Agent": "com.google.ios.youtube/19.09.3 (iPhone14,3; U; CPU iOS 15_0 like Mac OS X)" } },
+    { name: "ANDROID", version: "20.10.38",           headers: { "User-Agent": "com.google.android.youtube/20.10.38 (Linux; U; Android 14) gzip" } },
+    { name: "TVHTML5", version: "7.20240101.00.00",   headers: { "User-Agent": "Mozilla/5.0 (SMART-TV; Linux; Tizen 6.0) AppleWebKit/538.1" } },
+  ];
+  for (const client of captionClients) {
     try {
       const { data: player } = await axios.post(
         "https://www.youtube.com/youtubei/v1/player?prettyPrint=false",
@@ -68,12 +82,13 @@ async function fetchYouTubeTranscript(videoId: string): Promise<YTTranscript> {
         { timeout: 6000, headers: { "Content-Type": "application/json", ...client.headers } }
       );
       const tracks: any[] = player?.captions?.playerCaptionsTracklistRenderer?.captionTracks ?? [];
+      console.log(`[studybook] InnerTube ${client.name}: ${tracks.length} caption tracks`);
       if (!tracks.length) continue;
       const track = tracks.find((t: any) => t.languageCode === "en") ?? tracks[0];
       const { data: xml } = await axios.get(track.baseUrl, { timeout: 5000, responseType: "text" });
       const text = parseXmlTranscript(xml);
-      if (text) return { text, segments: [] }; // no timestamps in XML fallback
-    } catch (_e) { continue; }
+      if (text) { console.log(`[studybook] captions via InnerTube ${client.name} (${text.length} chars)`); return { text, segments: [] }; }
+    } catch (_e) { console.log(`[studybook] InnerTube ${client.name} error: ${(_e as any)?.message}`); }
   }
 
   // Strategy 3: InnerTube IOS/ANDROID — IOS client returns non-ciphered direct audio URLs
@@ -145,7 +160,7 @@ async function fetchYouTubeTranscript(videoId: string): Promise<YTTranscript> {
     const result = await transcribeAudio(tmpFile);
     return result;
   } catch (e: any) {
-    throw new Error(`Could not retrieve audio or captions for this video. Try a video with auto-generated captions enabled.`);
+    throw new Error(`This video doesn't have captions and audio download is blocked by YouTube on our servers. Please use a video that has auto-generated captions (most YouTube lectures do).`);
   } finally {
     fs.unlink(tmpFile, () => {});
   }
