@@ -31,10 +31,34 @@ router.post("/", upload.single("document"), async (req, res) => {
     try {
       const parsed = await pdfParse(file.buffer);
       text = parsed.text ?? "";
-    } catch {
-      return res.status(400).json({
-        error: "Could not read this PDF. Make sure it is not password-protected and contains selectable text.",
-      });
+    } catch { /* fall through to vision OCR below */ }
+
+    // Scanned PDF — no selectable text — send to GPT-4o for OCR
+    if (!text.trim()) {
+      try {
+        const uploaded = await openai.files.create({
+          file: new File([file.buffer], `${title}.pdf`, { type: "application/pdf" }),
+          purpose: "user_data" as any,
+        });
+        try {
+          const vision = await openai.chat.completions.create({
+            model: "gpt-4o",
+            max_tokens: 4000,
+            messages: [{
+              role: "user",
+              content: [
+                { type: "file", file: { file_id: uploaded.id } } as any,
+                { type: "text", text: "Extract ALL text from this document exactly as written. Include every word, heading, bullet, number, and formula. Output plain text only." },
+              ],
+            }],
+          });
+          text = vision.choices[0]?.message?.content ?? "";
+        } finally {
+          openai.files.del(uploaded.id).catch(() => {});
+        }
+      } catch (err: any) {
+        return res.status(400).json({ error: "Could not read this PDF. If it is scanned, try uploading a photo of it instead." });
+      }
     }
   } else if (
     file.mimetype === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||

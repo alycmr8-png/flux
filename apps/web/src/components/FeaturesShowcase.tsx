@@ -4,7 +4,7 @@ import { Mic2, FileText, BookOpen, BookMarked, Youtube, PenLine } from "lucide-r
 
 const TABS = [
   { key: "record",    label: "Record",       icon: Mic2       },
-  { key: "files",     label: "Files",        icon: FileText   },
+  { key: "files",     label: "Upload Files", icon: FileText   },
   { key: "quiz",      label: "Quizzes",      icon: BookOpen   },
   { key: "studybook", label: "Study Book",   icon: BookMarked },
   { key: "video",     label: "Upload Video", icon: Youtube    },
