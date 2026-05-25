@@ -97,11 +97,22 @@ async function fetchYouTubeTranscript(videoId: string): Promise<YTTranscript> {
       const tmpFile = path.join(os.tmpdir(), `yt_${videoId}_${Date.now()}.mp4`);
       try {
         const resp = await axios.get(audioFormats[0].url, {
-          responseType: "arraybuffer",
+          responseType: "stream",
           timeout: 120000,
-          headers: { "Range": "bytes=0-", "User-Agent": client.ua },
+          headers: {
+            "User-Agent": client.ua,
+            "Accept": "*/*",
+            "Accept-Language": "en-US,en;q=0.9",
+          },
+          maxRedirects: 5,
         });
-        fs.writeFileSync(tmpFile, Buffer.from(resp.data));
+        await new Promise<void>((resolve, reject) => {
+          const out = fs.createWriteStream(tmpFile);
+          resp.data.pipe(out);
+          out.on("finish", resolve);
+          out.on("error", reject);
+          resp.data.on("error", reject);
+        });
         const result = await transcribeAudio(tmpFile);
         if (result.text) return result;
       } finally {
