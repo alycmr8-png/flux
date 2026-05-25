@@ -2108,9 +2108,8 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: { course: any;
           {ytError && <p className="text-xs text-red-400 px-1">{ytError}</p>}
 
           {ytVideoId && (
-            <div className="md:grid md:grid-cols-[1fr_420px] gap-4 items-start">
-
-              {/* Left — video player */}
+            <>
+              {/* Video box */}
               <div className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl overflow-hidden p-3">
                 <div className="rounded-xl overflow-hidden bg-black w-full" style={{ aspectRatio: "16/9" }}>
                   <iframe
@@ -2120,62 +2119,59 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: { course: any;
                     allowFullScreen
                   />
                 </div>
-                {ytTitle && <p className="text-sm text-[#555] mt-2.5 font-medium truncate">{ytTitle}</p>}
+                {ytTitle && <p className="text-xs text-[#555] mt-2 truncate">{ytTitle}</p>}
               </div>
 
-              {/* Right — feature panel */}
+              {/* Feature tabs + content */}
               <div className="bg-white rounded-2xl overflow-hidden" style={{ border: "1.5px solid rgba(37,99,235,0.2)" }}>
                 {/* Tab bar */}
-                <div className="flex gap-1.5 overflow-x-auto p-3" style={{ background: "rgba(37,99,235,0.05)", borderBottom: "1px solid rgba(37,99,235,0.12)" }}>
+                <div className="flex gap-2 overflow-x-auto p-3" style={{ background: "rgba(37,99,235,0.05)", borderBottom: "1px solid rgba(37,99,235,0.12)" }}>
                   {([
-                    { key: "transcript", label: "Transcript", icon: FileText    },
-                    { key: "summary",    label: "Summary",    icon: Layers      },
-                    { key: "quiz",       label: "Quiz",       icon: BookOpen    },
-                    { key: "flashcards", label: "Flashcards", icon: BookMarked  },
-                    { key: "note",       label: "Take Note",  icon: PenLine     },
-                    { key: "chatbot",    label: "Chatbot",    icon: MessageSquare },
-                  ] as const).map(({ key, label, icon: Icon }) => (
+                    { key: "transcript", label: "Transcript" },
+                    { key: "summary",    label: "Summary"    },
+                    { key: "quiz",       label: "Quiz"       },
+                    { key: "flashcards", label: "Flashcards" },
+                    { key: "note",       label: "Take Note"  },
+                    { key: "chatbot",    label: "Chatbot"    },
+                  ] as const).map(({ key, label }) => (
                     <button
                       key={key}
                       onClick={() => { setYtActiveTab(key); if (key === "transcript") loadTranscript(); }}
-                      className="shrink-0 whitespace-nowrap flex items-center gap-1.5 transition-all"
+                      className="shrink-0 whitespace-nowrap transition-all"
                       style={{
-                        padding: "9px 16px",
+                        padding: "10px 20px",
                         borderRadius: 999,
-                        fontSize: 14,
+                        fontSize: 15,
                         fontWeight: ytActiveTab === key ? 700 : 500,
                         background: ytActiveTab === key ? "#2563eb" : "rgba(255,255,255,0.8)",
                         color: ytActiveTab === key ? "white" : "rgba(0,0,0,0.5)",
                         border: ytActiveTab === key ? "none" : "1px solid rgba(0,0,0,0.1)",
                       }}
-                    >
-                      <Icon size={13} />
-                      {label}
-                    </button>
+                    >{label}</button>
                   ))}
                 </div>
 
                 {/* Content area */}
-                <div className="p-6 min-h-[420px]">
+                <div className="p-6 min-h-[340px]">
 
                   {/* Transcript */}
                   {ytActiveTab === "transcript" && (
                     ytTranscriptLoading ? (
-                      <div className="flex items-center gap-2 py-16 justify-center">
-                        <Loader2 size={18} className="animate-spin text-[#555]" />
-                        <span className="text-base text-[#555]">Fetching transcript…</span>
+                      <div className="flex items-center gap-2 py-12 justify-center">
+                        <Loader2 size={16} className="animate-spin text-[#555]" />
+                        <span className="text-sm text-[#555]">Fetching transcript…</span>
                       </div>
                     ) : ytTranscript ? (
                       <textarea
                         value={ytTranscript}
                         onChange={e => setYtTranscript(e.target.value)}
-                        rows={16}
-                        className="w-full bg-transparent text-base text-[#444] outline-none resize-none leading-relaxed"
+                        rows={14}
+                        className="w-full bg-transparent text-sm text-[#555] outline-none resize-none leading-relaxed"
                       />
                     ) : (
-                      <div className="py-16 text-center space-y-4">
-                        <p className="text-base text-[#555]">Load the full transcript for this video.</p>
-                        <button onClick={loadTranscript} className="text-base font-semibold px-6 py-3 rounded-full transition-opacity" style={{ background: "#2563eb", color: "white" }}>
+                      <div className="py-12 text-center space-y-4">
+                        <p className="text-sm text-[#555]">Load the full transcript for this video.</p>
+                        <button onClick={loadTranscript} className="text-sm font-semibold px-5 py-2.5 rounded-full transition-opacity" style={{ background: "#2563eb", color: "white" }}>
                           Load Transcript
                         </button>
                       </div>
@@ -2185,19 +2181,19 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: { course: any;
                   {/* Summary */}
                   {ytActiveTab === "summary" && (
                     ytSummaryLoading ? (
-                      <div className="flex items-center gap-2 py-16 justify-center">
-                        <Loader2 size={18} className="animate-spin text-[#555]" />
-                        <span className="text-base text-[#555]">Summarizing…</span>
+                      <div className="flex items-center gap-2 py-12 justify-center">
+                        <Loader2 size={16} className="animate-spin text-[#555]" />
+                        <span className="text-sm text-[#555]">Summarizing…</span>
                       </div>
                     ) : ytSummary ? (
-                      <div className="space-y-5">
-                        <p className="text-base text-[#444] leading-relaxed whitespace-pre-line">{ytSummary}</p>
-                        <button onClick={generateYtSummary} className="text-sm text-[#555] hover:text-[#111110] transition-colors">Regenerate</button>
+                      <div className="space-y-4">
+                        <p className="text-sm text-[#555] leading-relaxed whitespace-pre-line">{ytSummary}</p>
+                        <button onClick={generateYtSummary} className="text-xs text-[#555] hover:text-[#555] transition-colors">Regenerate</button>
                       </div>
                     ) : (
-                      <div className="py-16 text-center space-y-4">
-                        <p className="text-base text-[#555]">Get a concise summary of the video lecture.</p>
-                        <button onClick={generateYtSummary} className="text-base font-semibold px-6 py-3 rounded-full transition-opacity" style={{ background: "#2563eb", color: "white" }}>
+                      <div className="py-12 text-center space-y-4">
+                        <p className="text-sm text-[#555]">Get a concise summary of the video lecture.</p>
+                        <button onClick={generateYtSummary} className="text-sm font-semibold px-5 py-2.5 rounded-full transition-opacity" style={{ background: "#2563eb", color: "white" }}>
                           Generate Summary
                         </button>
                       </div>
@@ -2207,36 +2203,33 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: { course: any;
                   {/* Quiz */}
                   {ytActiveTab === "quiz" && (
                     ytQuizLoading ? (
-                      <div className="flex items-center gap-2 py-16 justify-center">
-                        <Loader2 size={18} className="animate-spin text-[#555]" />
-                        <span className="text-base text-[#555]">Generating quiz…</span>
+                      <div className="flex items-center gap-2 py-12 justify-center">
+                        <Loader2 size={16} className="animate-spin text-[#555]" />
+                        <span className="text-sm text-[#555]">Generating quiz…</span>
                       </div>
                     ) : ytQuizSaved ? (
-                      <div className="py-16 text-center space-y-4">
+                      <div className="py-12 text-center space-y-4">
                         <div className="flex items-center justify-center gap-2 text-green-500">
-                          <CheckCircle size={18} />
-                          <span className="text-lg font-medium">Saved</span>
+                          <CheckCircle size={16} />
+                          <span className="text-base font-medium">Saved</span>
                         </div>
-                        <p className="text-base text-[#555]">"{ytQuizName}" added to your Quizzes.</p>
-                        <button onClick={() => { setYtQuizSaved(false); setYtQuizName(""); }} className="text-base text-[#555] hover:text-[#555] transition-colors">
+                        <p className="text-sm text-[#555]">"{ytQuizName}" added to your Quizzes.</p>
+                        <button onClick={() => { setYtQuizSaved(false); setYtQuizName(""); }} className="text-sm text-[#555] hover:text-[#555] transition-colors">
                           Generate another
                         </button>
                       </div>
                     ) : (
-                      <div className="py-10 space-y-4 max-w-sm mx-auto">
-                        <p className="text-base text-[#555] text-center">Name your quiz, then generate questions from this video.</p>
+                      <div className="py-12 space-y-4 max-w-sm mx-auto">
+                        <p className="text-sm text-[#555] text-center">Name your quiz, then generate questions from this video.</p>
                         <input
                           value={ytQuizName}
                           onChange={e => setYtQuizName(e.target.value)}
                           onKeyDown={e => e.key === "Enter" && generateYtQuiz()}
                           placeholder="Quiz name…"
-                          className="w-full bg-white border border-[rgba(0,0,0,0.08)] focus:border-[rgba(0,0,0,0.1)] rounded-xl px-4 py-3 text-base text-[#111110] placeholder-[rgba(0,0,0,0.3)] outline-none"
+                          className="w-full bg-white border border-[rgba(0,0,0,0.08)] focus:border-[rgba(0,0,0,0.1)] rounded-xl px-4 py-3 text-sm text-[#111110] placeholder-[rgba(0,0,0,0.3)] outline-none"
                         />
-                        <button
-                          onClick={generateYtQuiz}
-                          disabled={!ytQuizName.trim()}
-                          className="w-full text-base font-semibold px-5 py-3 rounded-full transition-opacity disabled:opacity-40" style={{ background: "#2563eb", color: "white" }}
-                        >
+                        <button onClick={generateYtQuiz} disabled={!ytQuizName.trim()}
+                          className="w-full text-sm font-semibold px-5 py-2.5 rounded-full transition-opacity disabled:opacity-40" style={{ background: "#2563eb", color: "white" }}>
                           Generate Quiz
                         </button>
                       </div>
@@ -2246,31 +2239,31 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: { course: any;
                   {/* Flashcards */}
                   {ytActiveTab === "flashcards" && (
                     ytFlashcardsLoading ? (
-                      <div className="flex items-center gap-2 py-16 justify-center">
-                        <Loader2 size={18} className="animate-spin text-[#555]" />
-                        <span className="text-base text-[#555]">Generating flashcards…</span>
+                      <div className="flex items-center gap-2 py-12 justify-center">
+                        <Loader2 size={16} className="animate-spin text-[#555]" />
+                        <span className="text-sm text-[#555]">Generating flashcards…</span>
                       </div>
                     ) : ytFlashcards ? (
                       <div className="space-y-4">
-                        <div className="grid grid-cols-1 gap-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           {ytFlashcards.map((fc: any, i: number) => (
                             <div key={i} onClick={() => setYtFlipped(p => { const s = new Set(p); s.has(i) ? s.delete(i) : s.add(i); return s; })}
-                              className="cursor-pointer rounded-xl p-4 min-h-[90px] flex flex-col justify-center transition-all"
+                              className="cursor-pointer rounded-xl p-4 min-h-[110px] flex flex-col items-center justify-center text-center transition-all"
                               style={{
                                 background: ytFlipped.has(i) ? "rgba(37,99,235,0.08)" : "white",
                                 border: `1.5px solid ${ytFlipped.has(i) ? "#3b82f6" : "rgba(0,0,0,0.08)"}`,
                               }}>
-                              <div className="text-xs uppercase tracking-widest mb-1.5" style={{ color: ytFlipped.has(i) ? "#2563eb" : "#999" }}>{ytFlipped.has(i) ? "Answer" : "Question"}</div>
-                              <p className="text-base leading-relaxed" style={{ color: ytFlipped.has(i) ? "#1e3a8a" : "#444" }}>{ytFlipped.has(i) ? fc.back : fc.front}</p>
+                              <div className="text-[10px] uppercase tracking-widest mb-2" style={{ color: ytFlipped.has(i) ? "#2563eb" : "#999" }}>{ytFlipped.has(i) ? "Answer" : "Question"}</div>
+                              <p className="text-sm leading-relaxed" style={{ color: ytFlipped.has(i) ? "#1e3a8a" : "#555" }}>{ytFlipped.has(i) ? fc.back : fc.front}</p>
                             </div>
                           ))}
                         </div>
-                        <button onClick={generateYtFlashcards} className="text-sm text-[#555] hover:text-[#111110] transition-colors">Regenerate</button>
+                        <button onClick={generateYtFlashcards} className="text-xs text-[#555] hover:text-[#555] transition-colors">Regenerate</button>
                       </div>
                     ) : (
-                      <div className="py-16 text-center space-y-4">
-                        <p className="text-base text-[#555]">Create flashcards from key concepts in the video.</p>
-                        <button onClick={generateYtFlashcards} className="text-base font-semibold px-6 py-3 rounded-full transition-opacity" style={{ background: "#2563eb", color: "white" }}>
+                      <div className="py-12 text-center space-y-4">
+                        <p className="text-sm text-[#555]">Create flashcards from key concepts in the video.</p>
+                        <button onClick={generateYtFlashcards} className="text-sm font-semibold px-5 py-2.5 rounded-full transition-opacity" style={{ background: "#2563eb", color: "white" }}>
                           Generate Flashcards
                         </button>
                       </div>
@@ -2280,17 +2273,17 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: { course: any;
                   {/* Take Note */}
                   {ytActiveTab === "note" && (
                     <div className="space-y-4">
-                      <p className="text-base text-[#555]">Jot down your notes while watching.</p>
+                      <p className="text-sm text-[#555]">Jot down your notes. Save to send them to your notes board.</p>
                       <textarea
                         value={ytNote}
                         onChange={e => { setYtNote(e.target.value); setYtNoteNaming(false); }}
                         rows={10}
                         placeholder="Start typing your notes…"
-                        className="w-full bg-white border border-[rgba(0,0,0,0.08)] focus:border-[rgba(0,0,0,0.1)] rounded-xl px-4 py-3 text-base text-[#444] placeholder-[rgba(0,0,0,0.3)] outline-none resize-none leading-relaxed"
+                        className="w-full bg-white border border-[rgba(0,0,0,0.08)] focus:border-[rgba(0,0,0,0.1)] rounded-xl px-4 py-3 text-sm text-[#555] placeholder-[rgba(0,0,0,0.3)] outline-none resize-none leading-relaxed"
                       />
                       {ytNoteSaved && (
-                        <div className="flex items-center gap-2 text-base text-green-600">
-                          <CheckCircle size={15} /> Saved!
+                        <div className="flex items-center gap-2 text-sm text-green-600">
+                          <CheckCircle size={14} /> Saved!
                         </div>
                       )}
                       {ytNoteNaming ? (
@@ -2301,20 +2294,20 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: { course: any;
                             onChange={e => setYtNoteName(e.target.value)}
                             onKeyDown={e => e.key === "Enter" && saveYtNote(ytNoteName)}
                             placeholder="Name this note…"
-                            className="flex-1 bg-white border border-[rgba(0,0,0,0.08)] focus:border-[rgba(0,0,0,0.1)] rounded-xl px-4 py-3 text-base text-[#111110] placeholder-[rgba(0,0,0,0.3)] outline-none"
+                            className="flex-1 bg-white border border-[rgba(0,0,0,0.08)] focus:border-[rgba(0,0,0,0.1)] rounded-xl px-4 py-2.5 text-sm text-[#111110] placeholder-[rgba(0,0,0,0.3)] outline-none"
                           />
                           <button onClick={() => saveYtNote(ytNoteName)} disabled={!ytNoteName.trim()}
-                            className="text-base font-semibold px-5 py-3 rounded-xl transition-opacity disabled:opacity-40 shrink-0" style={{ background: "#2563eb", color: "white" }}>
+                            className="text-sm font-semibold px-5 py-2.5 rounded-xl transition-opacity disabled:opacity-40 shrink-0" style={{ background: "#2563eb", color: "white" }}>
                             Save
                           </button>
                           <button onClick={() => { setYtNoteNaming(false); setYtNoteName(""); }}
-                            className="text-base text-[#555] hover:text-[#111110] px-3 transition-colors shrink-0">
+                            className="text-sm text-[#555] hover:text-[#111110] px-3 py-2.5 transition-colors shrink-0">
                             Cancel
                           </button>
                         </div>
                       ) : (
                         <button onClick={() => setYtNoteNaming(true)} disabled={!ytNote.trim()}
-                          className="text-base font-semibold px-6 py-3 rounded-full transition-opacity disabled:opacity-40" style={{ background: "#2563eb", color: "white" }}>
+                          className="text-sm font-semibold px-5 py-2.5 rounded-full transition-opacity disabled:opacity-40" style={{ background: "#2563eb", color: "white" }}>
                           Save to Notes
                         </button>
                       )}
@@ -2323,12 +2316,12 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: { course: any;
 
                   {/* Chatbot */}
                   {ytActiveTab === "chatbot" && (
-                    <div className="flex flex-col gap-4" style={{ minHeight: 360 }}>
-                      <p className="text-base text-[#555]">Ask anything about this video.</p>
-                      <div className="flex-1 space-y-3 max-h-72 overflow-y-auto">
+                    <div className="flex flex-col gap-4" style={{ minHeight: 300 }}>
+                      <p className="text-sm text-[#555]">Ask anything about this video.</p>
+                      <div className="flex-1 space-y-3 max-h-64 overflow-y-auto">
                         {ytMessages.map((m, i) => (
                           <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
-                            <span className="text-base px-4 py-3 rounded-xl max-w-[88%] leading-relaxed"
+                            <span className="text-sm px-4 py-2.5 rounded-xl max-w-[85%] leading-relaxed"
                               style={m.role === "user"
                                 ? { background: "#2563eb", color: "white" }
                                 : { background: "#f3f4f6", color: "#374151" }
@@ -2337,8 +2330,8 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: { course: any;
                         ))}
                         {ytChatLoading && (
                           <div className="flex justify-start">
-                            <span className="text-base px-4 py-3 rounded-xl bg-[#f3f4f6] text-[#555]">
-                              <Loader2 size={14} className="animate-spin inline" />
+                            <span className="text-sm px-4 py-2.5 rounded-xl bg-white text-[#555]">
+                              <Loader2 size={12} className="animate-spin inline" />
                             </span>
                           </div>
                         )}
@@ -2349,10 +2342,10 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: { course: any;
                           onChange={e => setYtChatInput(e.target.value)}
                           onKeyDown={e => e.key === "Enter" && !e.shiftKey && sendYtChat()}
                           placeholder="Ask a question…"
-                          className="flex-1 bg-white border border-[rgba(0,0,0,0.08)] focus:border-[rgba(0,0,0,0.1)] rounded-xl px-4 py-3 text-base text-[#444] placeholder-[rgba(0,0,0,0.3)] outline-none"
+                          className="flex-1 bg-white border border-[rgba(0,0,0,0.08)] focus:border-[rgba(0,0,0,0.1)] rounded-xl px-4 py-3 text-sm text-[#555] placeholder-[rgba(0,0,0,0.3)] outline-none"
                         />
                         <button onClick={sendYtChat} disabled={!ytChatInput.trim() || ytChatLoading}
-                          className="text-base font-semibold px-5 py-3 rounded-xl transition-opacity disabled:opacity-40" style={{ background: "#2563eb", color: "white" }}>
+                          className="text-sm font-semibold px-4 py-3 rounded-xl transition-opacity disabled:opacity-40" style={{ background: "#2563eb", color: "white" }}>
                           Send
                         </button>
                       </div>
@@ -2361,7 +2354,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: { course: any;
 
                 </div>
               </div>
-            </div>
+            </>
           )}
         </div>
       )}
