@@ -76,30 +76,30 @@ async function fetchYouTubeTranscript(videoId: string): Promise<YTTranscript> {
     } catch (_e) { continue; }
   }
 
-  // Strategy 3: InnerTube ANDROID — grab a direct audio stream URL and download it
+  // Strategy 3: InnerTube IOS/ANDROID — IOS client returns non-ciphered direct audio URLs
   console.log(`[studybook] captions unavailable — trying InnerTube audio for ${videoId}`);
-  try {
-    const { data: player } = await axios.post(
-      "https://www.youtube.com/youtubei/v1/player?prettyPrint=false",
-      {
-        context: { client: { clientName: "ANDROID", clientVersion: "20.10.38", androidSdkVersion: 30, hl: "en", gl: "US" } },
-        videoId, contentCheckOk: true, racyCheckOk: true,
-      },
-      { timeout: 8000, headers: { "Content-Type": "application/json", "User-Agent": "com.google.android.youtube/20.10.38 (Linux; U; Android 14) gzip" } }
-    );
-
-    const audioFormats: any[] = (player?.streamingData?.adaptiveFormats ?? [])
-      .filter((f: any) => f.mimeType?.startsWith("audio/") && f.url)
-      .sort((a: any, b: any) => (a.bitrate ?? 0) - (b.bitrate ?? 0));
-
-    if (audioFormats.length) {
-      const audioUrl = audioFormats[0].url;
+  const audioClients = [
+    { clientName: "IOS",     clientVersion: "19.09.3",  ua: "com.google.ios.youtube/19.09.3 (iPhone14,3; U; CPU iOS 15_0 like Mac OS X)", extra: { deviceModel: "iPhone14,3", osName: "iPhone", osVersion: "15.0" } },
+    { clientName: "ANDROID", clientVersion: "20.10.38", ua: "com.google.android.youtube/20.10.38 (Linux; U; Android 14) gzip",             extra: { androidSdkVersion: 30 } },
+  ];
+  for (const client of audioClients) {
+    try {
+      const { data: player } = await axios.post(
+        "https://www.youtube.com/youtubei/v1/player?prettyPrint=false",
+        { context: { client: { clientName: client.clientName, clientVersion: client.clientVersion, hl: "en", gl: "US", ...client.extra } }, videoId, contentCheckOk: true, racyCheckOk: true },
+        { timeout: 8000, headers: { "Content-Type": "application/json", "User-Agent": client.ua } }
+      );
+      const audioFormats: any[] = (player?.streamingData?.adaptiveFormats ?? [])
+        .filter((f: any) => f.mimeType?.startsWith("audio/") && f.url)
+        .sort((a: any, b: any) => (a.bitrate ?? 0) - (b.bitrate ?? 0));
+      console.log(`[studybook] ${client.clientName} audio formats with direct URL: ${audioFormats.length}`);
+      if (!audioFormats.length) continue;
       const tmpFile = path.join(os.tmpdir(), `yt_${videoId}_${Date.now()}.mp4`);
       try {
-        const resp = await axios.get(audioUrl, {
+        const resp = await axios.get(audioFormats[0].url, {
           responseType: "arraybuffer",
           timeout: 120000,
-          headers: { "Range": "bytes=0-", "User-Agent": "com.google.android.youtube/20.10.38 (Linux; U; Android 14) gzip" },
+          headers: { "Range": "bytes=0-", "User-Agent": client.ua },
         });
         fs.writeFileSync(tmpFile, Buffer.from(resp.data));
         const result = await transcribeAudio(tmpFile);
@@ -107,9 +107,9 @@ async function fetchYouTubeTranscript(videoId: string): Promise<YTTranscript> {
       } finally {
         fs.unlink(tmpFile, () => {});
       }
+    } catch (_e) {
+      console.log(`[studybook] ${client.clientName} audio failed: ${(_e as any)?.message}`);
     }
-  } catch (_e) {
-    console.log(`[studybook] InnerTube audio failed: ${(_e as any)?.message}`);
   }
 
   // Strategy 4: ytdl-core audio download as last resort
