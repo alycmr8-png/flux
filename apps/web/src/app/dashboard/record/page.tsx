@@ -2151,10 +2151,10 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
 
           {ytError && <p className="text-xs text-red-400 px-1">{ytError}</p>}
 
-          {ytVideoId && (
+          {(ytVideoId || ytLectureId) && (
             <>
-              {/* Video box */}
-              <div className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl overflow-hidden p-3">
+              {/* Video box — only when we have the URL */}
+              {ytVideoId && <div className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl overflow-hidden p-3">
                 <div className="rounded-xl overflow-hidden bg-black w-full" style={{ aspectRatio: "16/9" }}>
                   <iframe
                     src={`https://www.youtube.com/embed/${ytVideoId}`}
@@ -2164,7 +2164,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
                   />
                 </div>
                 {ytTitle && <p className="text-xs text-[#555] mt-2 truncate">{ytTitle}</p>}
-              </div>
+              </div>}
 
               {/* Feature tabs + content */}
               <div className="bg-white rounded-2xl overflow-hidden" style={{ border: "1.5px solid rgba(37,99,235,0.2)" }}>
