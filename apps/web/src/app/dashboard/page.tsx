@@ -2,8 +2,9 @@
 import { useState } from "react";
 import Link from "next/link";
 import useSWR from "swr";
+import Image from "next/image";
 import { useApiSWRFetcher } from "@/lib/apiFetch";
-import { Mic, FileText, BookOpen, Calendar, ChevronRight, Plus, Clock, Layers } from "lucide-react";
+import { Mic, FileText, BookOpen, Calendar, ChevronRight, Plus, Clock, Layers, Youtube } from "lucide-react";
 import { startOfDay, format, differenceInCalendarDays } from "date-fns";
 
 const TYPE_COLOR: Record<string, string> = {
@@ -43,6 +44,9 @@ export default function DashboardHome() {
   // Stable date range — must not be computed inline or the SWR key changes every render
   const [eventsFrom] = useState(() => startOfDay(new Date()).toISOString());
   const [eventsTo] = useState(() => new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString());
+
+  const { data: recentVideosData } = useSWR(`${BASE}/api/studybook/recent-videos`, fetcher);
+  const recentVideos: any[] = recentVideosData?.data ?? [];
 
   const { data: eventsData, isLoading: eventsLoading } = useSWR(
     `${BASE}/api/events?from=${eventsFrom}&to=${eventsTo}`,
@@ -253,6 +257,48 @@ export default function DashboardHome() {
             </Link>
           ))}
         </div>
+
+        {/* Recent Videos */}
+        {recentVideos.length > 0 && (
+          <>
+            <p className="text-xs uppercase tracking-widest mb-3" style={{ color: "#3b82f6" }}>Recent Videos</p>
+            <div className="grid grid-cols-3 gap-3 mb-8">
+              {recentVideos.slice(0, 6).map((v: any) => (
+                <Link
+                  key={v.lectureId}
+                  href={`/dashboard/record?lectureId=${v.lectureId}`}
+                  className="rounded-2xl overflow-hidden border transition-all duration-200 hover:border-white/20 hover:scale-[1.02] group"
+                  style={{ background: "rgba(255,255,255,0.06)", borderColor: "rgba(255,255,255,0.08)" }}
+                >
+                  <div className="relative w-full" style={{ paddingBottom: "56.25%" }}>
+                    {v.thumbnail ? (
+                      <Image
+                        src={v.thumbnail}
+                        alt={v.title}
+                        fill
+                        className="object-cover"
+                        unoptimized
+                      />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center" style={{ background: "rgba(255,255,255,0.05)" }}>
+                        <Youtube size={20} style={{ color: "rgba(255,255,255,0.3)" }} />
+                      </div>
+                    )}
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity" style={{ background: "rgba(0,0,0,0.4)" }}>
+                      <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: "#2563eb" }}>
+                        <Youtube size={14} style={{ color: "white" }} />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="px-3 py-2.5">
+                    <div className="text-xs font-medium truncate" style={{ color: "white" }}>{v.title}</div>
+                    <div className="text-[10px] mt-0.5" style={{ color: "rgba(255,255,255,0.35)" }}>YouTube Video</div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </>
+        )}
 
         {/* Saved notes */}
         {notes.length > 0 && (

@@ -1,5 +1,6 @@
 "use client";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   Mic, Square, FileUp, CheckCircle, Loader2, Plus, Pause, Play, StopCircle,
   BookOpen, Calendar, X, Mic2, FileText, ArrowLeft, Layers, BookMarked, Youtube,
@@ -245,11 +246,18 @@ function ClassList({ onSelect, onCreate }: { onSelect: (c: any) => void; onCreat
 }
 
 // ─── Class workspace ──────────────────────────────────────────────────────────
-function ClassWorkspace({ course, allCourses, onSelect, onBack }: { course: any; allCourses: any[]; onSelect: (c: any) => void; onBack: () => void }) {
+type InitialYtState = { lectureId: string; videoId: string | null; title: string; transcript: string; url: string; cache: any };
+
+function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, initialYtState }: {
+  course: any; allCourses: any[]; onSelect: (c: any) => void; onBack: () => void;
+  initialTab?: string; initialYtState?: InitialYtState;
+}) {
   const apiFetch = useApiFetch();
   const fetcher = useApiSWRFetcher();
   const { userId } = useAuth();
-  const [tab, setTab] = useState<"record" | "files" | "quizzes" | "video" | "studybook" | "note">("record");
+  const [tab, setTab] = useState<"record" | "files" | "quizzes" | "video" | "studybook" | "note">(
+    (initialTab as any) ?? "record"
+  );
 
   const { data: lecturesData, mutate: mutateLectures } = useSWR(`${BASE}/api/lectures?courseId=${course.id}`, fetcher);
   const lectures: any[] = lecturesData?.data ?? [];
@@ -875,20 +883,25 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: { course: any;
 
   // ── youtube video ──
   const [ytDraft, setYtDraft] = useState("");
-  const [ytUrl, setYtUrl] = useState("");
-  const [ytVideoId, setYtVideoId] = useState<string | null>(null);
-  const [ytTitle, setYtTitle] = useState("");
-  const [ytLectureId, setYtLectureId] = useState<string | null>(null);
-  const [ytTranscript, setYtTranscript] = useState("");
+  const [ytUrl, setYtUrl] = useState(initialYtState?.url ?? "");
+  const [ytVideoId, setYtVideoId] = useState<string | null>(initialYtState?.videoId ?? null);
+  const [ytTitle, setYtTitle] = useState(initialYtState?.title ?? "");
+  const [ytLectureId, setYtLectureId] = useState<string | null>(initialYtState?.lectureId ?? null);
+  const [ytTranscript, setYtTranscript] = useState(initialYtState?.transcript ?? "");
   const [ytTranscriptLoading, setYtTranscriptLoading] = useState(false);
-  const [ytActiveTab, setYtActiveTab] = useState<"transcript" | "quiz" | "summary" | "note" | "chatbot" | "flashcards">("transcript");
+  const [ytActiveTab, setYtActiveTab] = useState<"transcript" | "quiz" | "summary" | "note" | "chatbot" | "flashcards" | "keypoints">("transcript");
   const [ytQuizName, setYtQuizName] = useState("");
   const [ytQuizLoading, setYtQuizLoading] = useState(false);
   const [ytQuizSaved, setYtQuizSaved] = useState(false);
-  const [ytSummary, setYtSummary] = useState("");
+  const [ytInlineQuiz, setYtInlineQuiz] = useState<any[] | null>(initialYtState?.cache?.quiz ?? null);
+  const [ytInlineQuizLoading, setYtInlineQuizLoading] = useState(false);
+  const [ytQuizRevealed, setYtQuizRevealed] = useState<Set<number>>(new Set());
+  const [ytKeyPoints, setYtKeyPoints] = useState<any[] | null>(initialYtState?.cache?.keyPoints ?? null);
+  const [ytKeyPointsLoading, setYtKeyPointsLoading] = useState(false);
+  const [ytSummary, setYtSummary] = useState(initialYtState?.cache?.summary ?? "");
   const [ytSummaryLoading, setYtSummaryLoading] = useState(false);
   const [ytNote, setYtNote] = useState("");
-  const [ytFlashcards, setYtFlashcards] = useState<any[] | null>(null);
+  const [ytFlashcards, setYtFlashcards] = useState<any[] | null>(initialYtState?.cache?.flashcards ?? null);
   const [ytFlashcardsLoading, setYtFlashcardsLoading] = useState(false);
   const [ytFlipped, setYtFlipped] = useState<Set<number>>(new Set());
   const [ytMessages, setYtMessages] = useState<{ role: "user" | "assistant"; content: string }[]>([]);
@@ -908,6 +921,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: { course: any;
     setYtVideoId(id);
     setYtTranscript(""); setYtLectureId(null); setYtQuizName(""); setYtQuizSaved(false);
     setYtTitle(""); setYtSummary(""); setYtFlashcards(null); setYtMessages([]); setYtNote(""); setYtError("");
+    setYtInlineQuiz(null); setYtQuizRevealed(new Set()); setYtKeyPoints(null);
   }
 
   function handleYtUrl(url: string) {
@@ -960,6 +974,36 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: { course: any;
     } catch (e: any) {
       setYtError(e?.message ?? "Failed to generate quiz");
     } finally { setYtQuizLoading(false); }
+  }
+
+  async function generateYtInlineQuiz() {
+    setYtInlineQuizLoading(true); setYtQuizRevealed(new Set()); setYtError("");
+    try {
+      const lid = await ensureLecture();
+      if (!lid) return;
+      const res = await apiFetch("/api/studybook/inline-quiz", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ lectureId: lid }),
+      });
+      setYtInlineQuiz(res.data.questions ?? []);
+    } catch (e: any) {
+      setYtError(e?.message ?? "Failed to generate quiz");
+    } finally { setYtInlineQuizLoading(false); }
+  }
+
+  async function generateYtKeyPoints() {
+    setYtKeyPointsLoading(true); setYtError("");
+    try {
+      const lid = await ensureLecture();
+      if (!lid) return;
+      const res = await apiFetch("/api/studybook/key-points", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ lectureId: lid }),
+      });
+      setYtKeyPoints(res.data.points ?? []);
+    } catch (e: any) {
+      setYtError(e?.message ?? "Failed to generate key points");
+    } finally { setYtKeyPointsLoading(false); }
   }
 
   async function generateYtSummary() {
@@ -2129,6 +2173,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: { course: any;
                   {([
                     { key: "transcript", label: "Transcript" },
                     { key: "summary",    label: "Summary"    },
+                    { key: "keypoints",  label: "Key Points" },
                     { key: "quiz",       label: "Quiz"       },
                     { key: "flashcards", label: "Flashcards" },
                     { key: "note",       label: "Take Note"  },
@@ -2200,36 +2245,100 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: { course: any;
                     )
                   )}
 
-                  {/* Quiz */}
+                  {/* Key Points */}
+                  {ytActiveTab === "keypoints" && (
+                    ytKeyPointsLoading ? (
+                      <div className="flex items-center gap-2 py-12 justify-center">
+                        <Loader2 size={16} className="animate-spin text-[#555]" />
+                        <span className="text-sm text-[#555]">Extracting key points…</span>
+                      </div>
+                    ) : ytKeyPoints ? (
+                      <div className="space-y-2.5">
+                        {ytKeyPoints.map((kp: any, i: number) => {
+                          const colorMap: Record<string, { bg: string; text: string; border: string }> = {
+                            Definition: { bg: "rgba(37,99,235,0.07)",  text: "#2563eb", border: "rgba(37,99,235,0.25)"  },
+                            Important:  { bg: "rgba(245,158,11,0.07)", text: "#d97706", border: "rgba(245,158,11,0.25)" },
+                            Formula:    { bg: "rgba(16,185,129,0.07)", text: "#059669", border: "rgba(16,185,129,0.25)" },
+                            Example:    { bg: "rgba(139,92,246,0.07)", text: "#7c3aed", border: "rgba(139,92,246,0.25)" },
+                            Warning:    { bg: "rgba(239,68,68,0.07)",  text: "#dc2626", border: "rgba(239,68,68,0.25)"  },
+                          };
+                          const c = colorMap[kp.category] ?? colorMap["Important"];
+                          return (
+                            <div key={i} className="flex gap-3 items-start rounded-xl px-4 py-3"
+                              style={{ background: c.bg, border: `1px solid ${c.border}` }}>
+                              <span className="text-[9px] font-bold uppercase tracking-widest shrink-0 mt-0.5 px-2 py-0.5 rounded-full whitespace-nowrap"
+                                style={{ background: c.border, color: c.text }}>
+                                {kp.category}
+                              </span>
+                              <p className="text-sm text-[#333] leading-relaxed">{kp.point}</p>
+                            </div>
+                          );
+                        })}
+                        <button onClick={generateYtKeyPoints} className="text-xs text-[#555] hover:text-[#111110] transition-colors pt-1">Regenerate</button>
+                      </div>
+                    ) : (
+                      <div className="py-12 text-center space-y-4">
+                        <p className="text-sm text-[#555]">Extract and highlight all key points from this video.</p>
+                        <button onClick={generateYtKeyPoints} className="text-sm font-semibold px-5 py-2.5 rounded-full transition-opacity" style={{ background: "#2563eb", color: "white" }}>
+                          Extract Key Points
+                        </button>
+                      </div>
+                    )
+                  )}
+
+                  {/* Quiz — inline */}
                   {ytActiveTab === "quiz" && (
-                    ytQuizLoading ? (
+                    ytInlineQuizLoading ? (
                       <div className="flex items-center gap-2 py-12 justify-center">
                         <Loader2 size={16} className="animate-spin text-[#555]" />
                         <span className="text-sm text-[#555]">Generating quiz…</span>
                       </div>
-                    ) : ytQuizSaved ? (
-                      <div className="py-12 text-center space-y-4">
-                        <div className="flex items-center justify-center gap-2 text-green-500">
-                          <CheckCircle size={16} />
-                          <span className="text-base font-medium">Saved</span>
-                        </div>
-                        <p className="text-sm text-[#555]">"{ytQuizName}" added to your Quizzes.</p>
-                        <button onClick={() => { setYtQuizSaved(false); setYtQuizName(""); }} className="text-sm text-[#555] hover:text-[#555] transition-colors">
-                          Generate another
-                        </button>
+                    ) : ytInlineQuiz ? (
+                      <div className="space-y-3">
+                        {ytInlineQuiz.map((q: any, i: number) => {
+                          const revealed = ytQuizRevealed.has(i);
+                          return (
+                            <div key={i} className="rounded-xl border overflow-hidden"
+                              style={{ borderColor: revealed ? "#2563eb" : "rgba(0,0,0,0.08)" }}>
+                              <div className="px-4 py-3 text-sm font-medium text-[#111110]"
+                                style={{ background: revealed ? "rgba(37,99,235,0.05)" : "rgba(0,0,0,0.02)" }}>
+                                <span className="text-[#2563eb] font-bold mr-2">Q{i + 1}.</span>{q.question}
+                              </div>
+                              <div className="px-4 pb-3 pt-2 space-y-1.5 bg-white">
+                                {(q.options ?? []).map((opt: string, j: number) => {
+                                  const letter = ["A","B","C","D"][j];
+                                  const isCorrect = revealed && letter === q.answer;
+                                  return (
+                                    <div key={j} className="text-sm px-3 py-2 rounded-lg flex items-center gap-2"
+                                      style={{
+                                        background: isCorrect ? "rgba(16,185,129,0.1)" : "rgba(0,0,0,0.03)",
+                                        color: isCorrect ? "#059669" : "#555",
+                                        fontWeight: isCorrect ? 600 : 400,
+                                      }}>
+                                      {isCorrect && <CheckCircle size={12} className="shrink-0" />}
+                                      {opt}
+                                    </div>
+                                  );
+                                })}
+                                {revealed && q.explanation && (
+                                  <p className="text-xs text-[#666] mt-1.5 px-1 leading-relaxed italic">{q.explanation}</p>
+                                )}
+                                {!revealed && (
+                                  <button onClick={() => setYtQuizRevealed(p => { const s = new Set(p); s.add(i); return s; })}
+                                    className="text-xs font-semibold text-[#2563eb] mt-1 px-1 hover:opacity-70 transition-opacity">
+                                    Reveal answer →
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                        <button onClick={generateYtInlineQuiz} className="text-xs text-[#555] hover:text-[#111110] transition-colors pt-1">Regenerate</button>
                       </div>
                     ) : (
-                      <div className="py-12 space-y-4 max-w-sm mx-auto">
-                        <p className="text-sm text-[#555] text-center">Name your quiz, then generate questions from this video.</p>
-                        <input
-                          value={ytQuizName}
-                          onChange={e => setYtQuizName(e.target.value)}
-                          onKeyDown={e => e.key === "Enter" && generateYtQuiz()}
-                          placeholder="Quiz name…"
-                          className="w-full bg-white border border-[rgba(0,0,0,0.08)] focus:border-[rgba(0,0,0,0.1)] rounded-xl px-4 py-3 text-sm text-[#111110] placeholder-[rgba(0,0,0,0.3)] outline-none"
-                        />
-                        <button onClick={generateYtQuiz} disabled={!ytQuizName.trim()}
-                          className="w-full text-sm font-semibold px-5 py-2.5 rounded-full transition-opacity disabled:opacity-40" style={{ background: "#2563eb", color: "white" }}>
+                      <div className="py-12 text-center space-y-4">
+                        <p className="text-sm text-[#555]">Generate quiz questions from this video.</p>
+                        <button onClick={generateYtInlineQuiz} className="text-sm font-semibold px-5 py-2.5 rounded-full transition-opacity" style={{ background: "#2563eb", color: "white" }}>
                           Generate Quiz
                         </button>
                       </div>
@@ -3031,14 +3140,47 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: { course: any;
 // ─── Page ─────────────────────────────────────────────────────────────────────
 type View = "list" | "create" | "class";
 
-export default function WorkspacePage() {
+function WorkspacePageInner() {
   const fetcher = useApiSWRFetcher();
+  const apiFetch = useApiFetch();
   const { userId } = useAuth();
+  const searchParams = useSearchParams();
+  const lectureIdParam = searchParams.get("lectureId");
+
   const { data: coursesData } = useSWR(userId ? `${BASE}/api/courses` : null, fetcher, { revalidateOnFocus: false });
   const allCourses: any[] = coursesData?.data ?? [];
 
   const [view, setView] = useState<View>("list");
   const [activeCourse, setActiveCourse] = useState<any | null>(null);
+  const [initialYtState, setInitialYtState] = useState<InitialYtState | null>(null);
+  const autoNavigatedRef = useRef(false);
+
+  useEffect(() => {
+    if (!lectureIdParam || !coursesData || autoNavigatedRef.current || allCourses.length === 0) return;
+    autoNavigatedRef.current = true;
+    (async () => {
+      try {
+        const res = await apiFetch(`/api/studybook/yt-lecture/${lectureIdParam}`);
+        const info = res.data;
+        if (!info) return;
+        const course = allCourses.find((c: any) => c.id === info.courseId);
+        if (!course) return;
+        setInitialYtState({
+          lectureId: info.lectureId,
+          videoId: info.videoId,
+          title: info.title,
+          transcript: info.transcript,
+          url: info.videoId ? `https://www.youtube.com/watch?v=${info.videoId}` : "",
+          cache: info.cache ?? {},
+        });
+        setActiveCourse(course);
+        setView("class");
+      } catch (e) {
+        console.error("Failed to auto-load lecture", e);
+      }
+    })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lectureIdParam, coursesData, allCourses.length]);
 
   if (view === "create") {
     return (
@@ -3057,7 +3199,9 @@ export default function WorkspacePage() {
         course={activeCourse}
         allCourses={allCourses}
         onSelect={c => setActiveCourse(c)}
-        onBack={() => setView("list")}
+        onBack={() => { setView("list"); setInitialYtState(null); autoNavigatedRef.current = false; }}
+        initialTab={initialYtState ? "video" : undefined}
+        initialYtState={initialYtState ?? undefined}
       />
     );
   }
@@ -3071,5 +3215,13 @@ export default function WorkspacePage() {
         />
       </div>
     </div>
+  );
+}
+
+export default function WorkspacePage() {
+  return (
+    <Suspense fallback={null}>
+      <WorkspacePageInner />
+    </Suspense>
   );
 }

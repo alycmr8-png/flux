@@ -476,6 +476,36 @@ export async function generateFlashcardsFromTranscript(transcript: string, langu
   return JSON.parse(json);
 }
 
+export async function generateInlineQuiz(
+  transcript: string,
+  language = "en"
+): Promise<{ question: string; options: string[]; answer: string; explanation: string }[]> {
+  const langName = LANG_NAMES[language] ?? "English";
+  const msg = await createWithRetry({
+    model: "gpt-3.5-turbo",
+    max_tokens: 2000,
+    system: `Generate 6 multiple-choice quiz questions from this lecture in ${langName}. Return ONLY valid JSON array — no markdown, no code blocks.\n[{"question": string, "options": ["A. ...", "B. ...", "C. ...", "D. ..."], "answer": "A"|"B"|"C"|"D", "explanation": string}]`,
+    messages: [{ role: "user", content: `Transcript:\n${transcript.slice(0, 12000)}` }],
+  });
+  const json = extractText(msg).match(/\[[\s\S]*\]/)?.[0] ?? "[]";
+  return JSON.parse(json);
+}
+
+export async function generateKeyPoints(
+  transcript: string,
+  language = "en"
+): Promise<{ point: string; category: string }[]> {
+  const langName = LANG_NAMES[language] ?? "English";
+  const msg = await createWithRetry({
+    model: "gpt-3.5-turbo",
+    max_tokens: 1500,
+    system: `Extract 10-15 key points from this lecture in ${langName}. Categorize each as one of: "Definition", "Important", "Formula", "Example", "Warning". Return ONLY valid JSON array — no markdown, no code blocks.\n[{"point": string, "category": "Definition"|"Important"|"Formula"|"Example"|"Warning"}]`,
+    messages: [{ role: "user", content: `Transcript:\n${transcript.slice(0, 12000)}` }],
+  });
+  const json = extractText(msg).match(/\[[\s\S]*\]/)?.[0] ?? "[]";
+  return JSON.parse(json);
+}
+
 export async function answerVideoQuestion(
   transcript: string,
   title: string,
