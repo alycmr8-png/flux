@@ -178,23 +178,8 @@ async function getVideoTitle(videoId: string): Promise<string> {
   }
 }
 
-async function upsertYTCache(lectureId: string, userId: string, updates: object) {
-  const existing = await prisma.cheatSheet.findFirst({
-    where: { lectureId, userId, title: { startsWith: "YT-Cache:" } },
-  });
-  const newContent = { ...(existing?.content as object ?? {}), ...updates };
-  if (existing) {
-    await prisma.cheatSheet.update({ where: { id: existing.id }, data: { content: newContent } });
-  } else {
-    await prisma.cheatSheet.create({
-      data: { lectureId, userId, title: `YT-Cache:${lectureId}`, content: newContent },
-    });
-  }
-}
-
 router.get("/recent-videos", async (req, res) => {
   const user = (req as any).user;
-  const ytCourse = await prisma.course.findFirst({ where: { userId: user.id, name: "YouTube Videos" } });
   const lectures = await prisma.lecture.findMany({
     where: {
       userId: user.id,
@@ -203,7 +188,6 @@ router.get("/recent-videos", async (req, res) => {
       OR: [
         { audioUrl: { contains: "youtube.com" } },
         { audioUrl: { contains: "youtu.be" } },
-        ...(ytCourse ? [{ courseId: ytCourse.id }] : []),
       ],
     },
     orderBy: { createdAt: "desc" },
@@ -212,18 +196,9 @@ router.get("/recent-videos", async (req, res) => {
   res.json({
     data: lectures.map(l => {
       const videoId = l.audioUrl?.match(/(?:youtube\.com\/(?:watch\?v=|shorts\/)|youtu\.be\/)([^&?\s/]+)/)?.[1] ?? null;
-      return { lectureId: l.id, courseId: l.courseId, videoId, title: l.title, thumbnail: videoId ? `https://img.youtube.com/vi/${videoId}/mqdefault.jpg` : null, createdAt: l.createdAt };
-    }),
+      return { courseId: l.courseId, videoId, title: l.title, thumbnail: videoId ? `https://img.youtube.com/vi/${videoId}/mqdefault.jpg` : null };
+    }).filter(v => v.videoId !== null),
   });
-});
-
-router.get("/yt-lecture/:lectureId", async (req, res) => {
-  const user = (req as any).user;
-  const lecture = await prisma.lecture.findFirst({ where: { id: req.params.lectureId, userId: user.id } });
-  if (!lecture) return res.status(404).json({ error: "Not found" });
-  const cache = await prisma.cheatSheet.findFirst({ where: { lectureId: req.params.lectureId, userId: user.id, title: { startsWith: "YT-Cache:" } } });
-  const videoId = lecture.audioUrl?.match(/(?:youtube\.com\/(?:watch\?v=|shorts\/)|youtu\.be\/)([^&?\s/]+)/)?.[1] ?? null;
-  res.json({ data: { lectureId: lecture.id, courseId: lecture.courseId, videoId, title: lecture.title, transcript: lecture.transcript ?? "", cache: cache ? cache.content : null } });
 });
 
 router.get("/list", async (req, res) => {
@@ -268,7 +243,6 @@ router.post("/summarize", async (req, res) => {
   const lecture = await prisma.lecture.findFirst({ where: { id: lectureId, userId: user.id } });
   if (!lecture?.transcript) return res.status(400).json({ error: "No transcript available." });
   const summary = await summarizeTranscript(lecture.transcript, lecture.title, user.language ?? "en");
-  await upsertYTCache(lectureId, user.id, { summary }).catch(() => {});
   res.json({ data: { summary } });
 });
 
@@ -278,7 +252,6 @@ router.post("/flashcards", async (req, res) => {
   const lecture = await prisma.lecture.findFirst({ where: { id: lectureId, userId: user.id } });
   if (!lecture?.transcript) return res.status(400).json({ error: "No transcript available." });
   const flashcards = await generateFlashcardsFromTranscript(lecture.transcript, user.language ?? "en");
-  await upsertYTCache(lectureId, user.id, { flashcards }).catch(() => {});
   res.json({ data: { flashcards } });
 });
 
@@ -288,7 +261,6 @@ router.post("/inline-quiz", async (req, res) => {
   const lecture = await prisma.lecture.findFirst({ where: { id: lectureId, userId: user.id } });
   if (!lecture?.transcript) return res.status(400).json({ error: "No transcript available." });
   const questions = await generateInlineQuiz(lecture.transcript, user.language ?? "en");
-  await upsertYTCache(lectureId, user.id, { quiz: questions }).catch(() => {});
   res.json({ data: { questions } });
 });
 
@@ -298,7 +270,6 @@ router.post("/key-points", async (req, res) => {
   const lecture = await prisma.lecture.findFirst({ where: { id: lectureId, userId: user.id } });
   if (!lecture?.transcript) return res.status(400).json({ error: "No transcript available." });
   const points = await generateKeyPoints(lecture.transcript, user.language ?? "en");
-  await upsertYTCache(lectureId, user.id, { keyPoints: points }).catch(() => {});
   res.json({ data: { points } });
 });
 

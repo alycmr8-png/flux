@@ -246,7 +246,7 @@ function ClassList({ onSelect, onCreate }: { onSelect: (c: any) => void; onCreat
 }
 
 // ─── Class workspace ──────────────────────────────────────────────────────────
-type InitialYtState = { lectureId: string; videoId: string | null; title: string; transcript: string; url: string; cache: any };
+type InitialYtState = { videoId: string; url: string };
 
 function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, initialYtState }: {
   course: any; allCourses: any[]; onSelect: (c: any) => void; onBack: () => void;
@@ -885,23 +885,23 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
   const [ytDraft, setYtDraft] = useState("");
   const [ytUrl, setYtUrl] = useState(initialYtState?.url ?? "");
   const [ytVideoId, setYtVideoId] = useState<string | null>(initialYtState?.videoId ?? null);
-  const [ytTitle, setYtTitle] = useState(initialYtState?.title ?? "");
-  const [ytLectureId, setYtLectureId] = useState<string | null>(initialYtState?.lectureId ?? null);
-  const [ytTranscript, setYtTranscript] = useState(initialYtState?.transcript ?? "");
+  const [ytTitle, setYtTitle] = useState("");
+  const [ytLectureId, setYtLectureId] = useState<string | null>(null);
+  const [ytTranscript, setYtTranscript] = useState("");
   const [ytTranscriptLoading, setYtTranscriptLoading] = useState(false);
   const [ytActiveTab, setYtActiveTab] = useState<"transcript" | "quiz" | "summary" | "note" | "chatbot" | "flashcards" | "keypoints">("transcript");
   const [ytQuizName, setYtQuizName] = useState("");
   const [ytQuizLoading, setYtQuizLoading] = useState(false);
   const [ytQuizSaved, setYtQuizSaved] = useState(false);
-  const [ytInlineQuiz, setYtInlineQuiz] = useState<any[] | null>(initialYtState?.cache?.quiz ?? null);
+  const [ytInlineQuiz, setYtInlineQuiz] = useState<any[] | null>(null);
   const [ytInlineQuizLoading, setYtInlineQuizLoading] = useState(false);
   const [ytQuizRevealed, setYtQuizRevealed] = useState<Set<number>>(new Set());
-  const [ytKeyPoints, setYtKeyPoints] = useState<any[] | null>(initialYtState?.cache?.keyPoints ?? null);
+  const [ytKeyPoints, setYtKeyPoints] = useState<any[] | null>(null);
   const [ytKeyPointsLoading, setYtKeyPointsLoading] = useState(false);
-  const [ytSummary, setYtSummary] = useState(initialYtState?.cache?.summary ?? "");
+  const [ytSummary, setYtSummary] = useState("");
   const [ytSummaryLoading, setYtSummaryLoading] = useState(false);
   const [ytNote, setYtNote] = useState("");
-  const [ytFlashcards, setYtFlashcards] = useState<any[] | null>(initialYtState?.cache?.flashcards ?? null);
+  const [ytFlashcards, setYtFlashcards] = useState<any[] | null>(null);
   const [ytFlashcardsLoading, setYtFlashcardsLoading] = useState(false);
   const [ytFlipped, setYtFlipped] = useState<Set<number>>(new Set());
   const [ytMessages, setYtMessages] = useState<{ role: "user" | "assistant"; content: string }[]>([]);
@@ -3142,10 +3142,10 @@ type View = "list" | "create" | "class";
 
 function WorkspacePageInner() {
   const fetcher = useApiSWRFetcher();
-  const apiFetch = useApiFetch();
   const { userId } = useAuth();
   const searchParams = useSearchParams();
-  const lectureIdParam = searchParams.get("lectureId");
+  const videoIdParam = searchParams.get("videoId");
+  const courseIdParam = searchParams.get("courseId");
 
   const { data: coursesData } = useSWR(userId ? `${BASE}/api/courses` : null, fetcher, { revalidateOnFocus: false });
   const allCourses: any[] = coursesData?.data ?? [];
@@ -3156,31 +3156,15 @@ function WorkspacePageInner() {
   const autoNavigatedRef = useRef(false);
 
   useEffect(() => {
-    if (!lectureIdParam || !coursesData || autoNavigatedRef.current || allCourses.length === 0) return;
+    if (!videoIdParam || !courseIdParam || !coursesData || autoNavigatedRef.current || allCourses.length === 0) return;
     autoNavigatedRef.current = true;
-    (async () => {
-      try {
-        const res = await apiFetch(`/api/studybook/yt-lecture/${lectureIdParam}`);
-        const info = res.data;
-        if (!info) return;
-        const course = allCourses.find((c: any) => c.id === info.courseId);
-        if (!course) return;
-        setInitialYtState({
-          lectureId: info.lectureId,
-          videoId: info.videoId,
-          title: info.title,
-          transcript: info.transcript,
-          url: info.videoId ? `https://www.youtube.com/watch?v=${info.videoId}` : "",
-          cache: info.cache ?? {},
-        });
-        setActiveCourse(course);
-        setView("class");
-      } catch (e) {
-        console.error("Failed to auto-load lecture", e);
-      }
-    })();
+    const course = allCourses.find((c: any) => c.id === courseIdParam);
+    if (!course) return;
+    setInitialYtState({ videoId: videoIdParam, url: `https://www.youtube.com/watch?v=${videoIdParam}` });
+    setActiveCourse(course);
+    setView("class");
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lectureIdParam, coursesData, allCourses.length]);
+  }, [videoIdParam, courseIdParam, coursesData, allCourses.length]);
 
   if (view === "create") {
     return (

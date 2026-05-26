@@ -265,8 +265,8 @@ export default function DashboardHome() {
             <div className="grid grid-cols-3 gap-3 mb-8">
               {recentVideos.slice(0, 6).map((v: any) => (
                 <Link
-                  key={v.lectureId}
-                  href={`/dashboard/record?lectureId=${v.lectureId}`}
+                  key={v.videoId}
+                  href={`/dashboard/record?videoId=${v.videoId}&courseId=${v.courseId}`}
                   className="rounded-2xl overflow-hidden border transition-all duration-200 hover:border-white/20 hover:scale-[1.02] group"
                   style={{ background: "rgba(255,255,255,0.06)", borderColor: "rgba(255,255,255,0.08)" }}
                 >
