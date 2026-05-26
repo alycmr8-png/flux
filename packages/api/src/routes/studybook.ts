@@ -180,6 +180,7 @@ async function getVideoTitle(videoId: string): Promise<string> {
 
 router.get("/recent-videos", async (req, res) => {
   const user = (req as any).user;
+  const ytCourse = await prisma.course.findFirst({ where: { userId: user.id, name: "YouTube Videos" } });
   const lectures = await prisma.lecture.findMany({
     where: {
       userId: user.id,
@@ -188,17 +189,23 @@ router.get("/recent-videos", async (req, res) => {
       OR: [
         { audioUrl: { contains: "youtube.com" } },
         { audioUrl: { contains: "youtu.be" } },
+        ...(ytCourse ? [{ courseId: ytCourse.id }] : []),
       ],
     },
     orderBy: { createdAt: "desc" },
     take: 12,
   });
-  res.json({
-    data: lectures.map(l => {
-      const videoId = l.audioUrl?.match(/(?:youtube\.com\/(?:watch\?v=|shorts\/)|youtu\.be\/)([^&?\s/]+)/)?.[1] ?? null;
-      return { courseId: l.courseId, videoId, title: l.title, thumbnail: videoId ? `https://img.youtube.com/vi/${videoId}/mqdefault.jpg` : null };
-    }).filter(v => v.videoId !== null),
+  const seen = new Set<string>();
+  const data = lectures.map(l => {
+    const videoId = l.audioUrl?.match(/(?:youtube\.com\/(?:watch\?v=|shorts\/)|youtu\.be\/)([^&?\s/]+)/)?.[1] ?? null;
+    return { courseId: l.courseId, videoId, title: l.title, thumbnail: videoId ? `https://img.youtube.com/vi/${videoId}/mqdefault.jpg` : null };
+  }).filter(v => {
+    const key = v.videoId ?? v.title;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
   });
+  res.json({ data });
 });
 
 router.get("/list", async (req, res) => {
