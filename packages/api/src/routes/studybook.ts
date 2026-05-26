@@ -197,7 +197,7 @@ router.get("/recent-videos", async (req, res) => {
   const ytCourse = await prisma.course.findFirst({ where: { userId: user.id, name: "YouTube Videos" } });
   if (!ytCourse) return res.json({ data: [] });
   const lectures = await prisma.lecture.findMany({
-    where: { userId: user.id, courseId: ytCourse.id, status: "ready", archived: false, audioUrl: { not: null } },
+    where: { userId: user.id, courseId: ytCourse.id, status: "ready", archived: false },
     orderBy: { createdAt: "desc" },
     take: 12,
   });
