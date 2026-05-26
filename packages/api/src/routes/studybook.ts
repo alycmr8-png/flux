@@ -195,9 +195,17 @@ async function upsertYTCache(lectureId: string, userId: string, updates: object)
 router.get("/recent-videos", async (req, res) => {
   const user = (req as any).user;
   const ytCourse = await prisma.course.findFirst({ where: { userId: user.id, name: "YouTube Videos" } });
-  if (!ytCourse) return res.json({ data: [] });
   const lectures = await prisma.lecture.findMany({
-    where: { userId: user.id, courseId: ytCourse.id, status: "ready", archived: false },
+    where: {
+      userId: user.id,
+      status: "ready",
+      archived: false,
+      OR: [
+        { audioUrl: { contains: "youtube.com" } },
+        { audioUrl: { contains: "youtu.be" } },
+        ...(ytCourse ? [{ courseId: ytCourse.id }] : []),
+      ],
+    },
     orderBy: { createdAt: "desc" },
     take: 12,
   });
