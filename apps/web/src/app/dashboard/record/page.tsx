@@ -324,13 +324,17 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
   const [recordAction, setRecordAction] = useState<"transcribe" | "summarize" | null>(null);
   const [recStep, setRecStep] = useState<"name" | "recording" | "saved" | "processing" | "done">("name");
   const [openLectureId, setOpenLectureId] = useState<string | null>(null);
-  const [openTab, setOpenTab] = useState<"listen" | "transcript" | "summary">("listen");
+  const [openTab, setOpenTab] = useState<"transcript" | "summary" | "keypoints">("transcript");
+  const [openLectureKeyPoints, setOpenLectureKeyPoints] = useState<any[] | null>(null);
+  const [openLectureKeyPointsLoading, setOpenLectureKeyPointsLoading] = useState(false);
   const [openLectureData, setOpenLectureData] = useState<{ transcript: string; sheet: any | null; audioUrl: string | null } | null>(null);
   const localAudioUrlsRef = useRef<Map<string, string>>(new Map());
   const mediaRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const audioElemRef = useRef<HTMLAudioElement | null>(null);
+  const openAudioRef = useRef<HTMLAudioElement | null>(null);
+  const wakeLockRef = useRef<any>(null);
   const waveHeights = useRef(Array.from({ length: 20 }, () => 0.3 + Math.random() * 0.7));
   const waveDurations = useRef(Array.from({ length: 20 }, () => 0.4 + Math.random() * 0.7));
 
@@ -600,7 +604,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
 
   async function openLecture(lecture: any) {
     setOpenLectureId(lecture.id);
-    setOpenTab("listen");
+    setOpenTab("transcript");
     setOpenLectureData(null);
     const transcript = lecture.transcript ?? "";
 
@@ -630,7 +634,23 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
   function closeOpenLecture() {
     setOpenLectureId(null);
     setOpenLectureData(null);
-    setOpenTab("listen");
+    setOpenTab("transcript");
+    setOpenLectureKeyPoints(null);
+  }
+
+  async function generateOpenLectureKeyPoints() {
+    if (!openLectureId || openLectureKeyPointsLoading) return;
+    setOpenLectureKeyPointsLoading(true);
+    try {
+      const res = await apiFetch("/api/studybook/key-points", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ lectureId: openLectureId }),
+      });
+      setOpenLectureKeyPoints(res.data.points ?? []);
+    } catch { /* silent */ } finally {
+      setOpenLectureKeyPointsLoading(false);
+    }
   }
 
   const fmt = (s: number) =>
@@ -1385,41 +1405,110 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
                       {(() => { const l = audioLectures.find(l => l.id === openLectureId); return l ? format(new Date(l.recordedAt), "MMMM d, yyyy") : ""; })()}
                     </div>
                   </div>
+                  {/* Sticky audio player — always visible */}
+                  {openLectureData.audioUrl ? (
+                    <div className="px-6 py-3 border-b border-[rgba(0,0,0,0.06)] sticky top-0 z-10 bg-white">
+                      <audio
+                        ref={openAudioRef}
+                        src={openLectureData.audioUrl}
+                        controls
+                        className="w-full"
+                        onPlay={async () => {
+                          try {
+                            if ("wakeLock" in navigator && !wakeLockRef.current) {
+                              wakeLockRef.current = await (navigator as any).wakeLock.request("screen");
+                            }
+                          } catch {}
+                        }}
+                        onPause={() => {
+                          wakeLockRef.current?.release().catch(() => {});
+                          wakeLockRef.current = null;
+                        }}
+                        onEnded={() => {
+                          wakeLockRef.current?.release().catch(() => {});
+                          wakeLockRef.current = null;
+                        }}
+                      />
+                    </div>
+                  ) : (
+                    <div className="px-6 py-3 border-b border-[rgba(0,0,0,0.06)] text-sm text-[#888]">Audio not available.</div>
+                  )}
                   {/* Tabs */}
-                  <div className="flex justify-center gap-20 px-6 pt-3 border-b border-[rgba(0,0,0,0.06)]">
-                    {(["listen", "transcript", "summary"] as const).map(t => (
+                  <div className="flex gap-2 overflow-x-auto p-3" style={{ background: "rgba(37,99,235,0.05)", borderBottom: "1px solid rgba(37,99,235,0.12)" }}>
+                    {([
+                      { key: "transcript", label: "Transcript" },
+                      { key: "summary",    label: "Summary"    },
+                      { key: "keypoints",  label: "Key Points" },
+                    ] as const).map(({ key, label }) => (
                       <button
-                        key={t}
-                        onClick={() => setOpenTab(t)}
-                        className={`px-4 py-2 text-sm font-medium capitalize transition-colors border-b-2 -mb-px ${
-                          openTab === t ? "text-[#111110] border-[#111110]" : "text-[#555] border-transparent hover:text-[#111110]"
-                        }`}
+                        key={key}
+                        onClick={() => {
+                          setOpenTab(key);
+                          if (key === "keypoints" && !openLectureKeyPoints) generateOpenLectureKeyPoints();
+                        }}
+                        className="shrink-0 whitespace-nowrap transition-all"
+                        style={{
+                          padding: "10px 20px",
+                          borderRadius: 999,
+                          fontSize: 15,
+                          fontWeight: openTab === key ? 700 : 500,
+                          background: openTab === key ? "#2563eb" : "rgba(255,255,255,0.8)",
+                          color: openTab === key ? "white" : "rgba(0,0,0,0.5)",
+                          border: openTab === key ? "none" : "1px solid rgba(0,0,0,0.1)",
+                        }}
                       >
-                        {t === "listen" ? "Listen" : t === "transcript" ? "Transcript" : "Summary"}
+                        {label}
                       </button>
                     ))}
                   </div>
                   <div className="px-6 py-6 min-h-48">
-                    {openTab === "listen" && (
-                      openLectureData.audioUrl ? (
-                        <audio src={openLectureData.audioUrl} controls className="w-full" />
-                      ) : (
-                        <div className="text-sm text-[#888] text-center py-10">Audio not available.</div>
-                      )
-                    )}
                     {openTab === "transcript" && (
                       <div className="text-sm text-[#555] leading-relaxed whitespace-pre-wrap max-h-[480px] overflow-y-auto">
                         {openLectureData.transcript || "Transcript not available."}
                       </div>
                     )}
+                    {openTab === "keypoints" && (
+                      openLectureKeyPointsLoading ? (
+                        <div className="flex items-center gap-2 py-10 justify-center text-sm text-[#888]">
+                          <Loader2 size={14} className="animate-spin" /> Generating key points…
+                        </div>
+                      ) : openLectureKeyPoints ? (
+                        <div className="space-y-2">
+                          {openLectureKeyPoints.map((kp: any, i: number) => {
+                            const colors: Record<string, string> = { Definition: "#3b82f6", Important: "#f97316", Formula: "#8b5cf6", Example: "#22c55e", Warning: "#ef4444" };
+                            const bg: Record<string, string> = { Definition: "rgba(59,130,246,0.08)", Important: "rgba(249,115,22,0.08)", Formula: "rgba(139,92,246,0.08)", Example: "rgba(34,197,94,0.08)", Warning: "rgba(239,68,68,0.08)" };
+                            const color = colors[kp.category] ?? "#6b7280";
+                            const background = bg[kp.category] ?? "rgba(107,114,128,0.08)";
+                            return (
+                              <div key={i} className="rounded-xl px-4 py-3 flex gap-3 items-start" style={{ background }}>
+                                <span className="text-[9px] font-bold uppercase tracking-widest mt-1 shrink-0 px-1.5 py-0.5 rounded" style={{ color, background: `${color}22` }}>{kp.category}</span>
+                                <span className="text-sm text-[#111110] leading-relaxed">{kp.point}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center py-10 gap-3">
+                          <p className="text-sm text-[#888]">Generate key points from this lecture</p>
+                          <button
+                            onClick={generateOpenLectureKeyPoints}
+                            className="px-5 py-2.5 rounded-full text-sm font-semibold text-white"
+                            style={{ background: "#2563eb" }}
+                          >
+                            Generate Key Points
+                          </button>
+                        </div>
+                      )
+                    )}
+
                     {openTab === "summary" && (
                       openLectureData.sheet ? (
                         <div className="space-y-5">
-                          {(openLectureData.sheet.content?.sections ?? []).map((s: any, i: number) => (
+                          {(openLectureData.sheet.content?.sections ?? []).slice(0, 3).map((s: any, i: number) => (
                             <div key={i}>
                               <div className="text-xs font-semibold uppercase tracking-widest text-[#555] mb-2">{s.heading}</div>
                               <ul className="space-y-1.5">
-                                {(s.bullets ?? []).map((b: string, j: number) => (
+                                {(s.bullets ?? []).slice(0, 4).map((b: string, j: number) => (
                                   <li key={j} className="flex gap-2 text-sm text-[#111110] leading-relaxed">
                                     <span className="text-[#888] shrink-0 mt-0.5">·</span>{b}
                                   </li>

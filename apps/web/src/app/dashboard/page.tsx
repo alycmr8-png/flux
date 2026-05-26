@@ -3,8 +3,8 @@ import { useState } from "react";
 import Link from "next/link";
 import useSWR from "swr";
 import Image from "next/image";
-import { useApiSWRFetcher } from "@/lib/apiFetch";
-import { Mic, FileText, BookOpen, Calendar, ChevronRight, Plus, Clock, Layers, Youtube } from "lucide-react";
+import { useApiSWRFetcher, useApiFetch } from "@/lib/apiFetch";
+import { Mic, FileText, BookOpen, Calendar, ChevronRight, Plus, Clock, Layers, Youtube, X } from "lucide-react";
 import { startOfDay, format, differenceInCalendarDays } from "date-fns";
 
 const TYPE_COLOR: Record<string, string> = {
@@ -39,14 +39,20 @@ function greeting() {
 
 export default function DashboardHome() {
   const fetcher = useApiSWRFetcher();
+  const apiFetch = useApiFetch();
   const { data: progressData, isLoading } = useSWR(`${BASE}/api/progress`, fetcher);
   const { data: sheetsData } = useSWR(`${BASE}/api/cheatsheets`, fetcher);
   // Stable date range — must not be computed inline or the SWR key changes every render
   const [eventsFrom] = useState(() => startOfDay(new Date()).toISOString());
   const [eventsTo] = useState(() => new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString());
 
-  const { data: recentVideosData } = useSWR(`${BASE}/api/studybook/recent-videos`, fetcher);
+  const { data: recentVideosData, mutate: mutateVideos } = useSWR(`${BASE}/api/studybook/recent-videos`, fetcher);
   const recentVideos: any[] = recentVideosData?.data ?? [];
+
+  async function archiveVideo(lectureId: string) {
+    await apiFetch(`/api/lectures/${lectureId}/archive`, { method: "PATCH" });
+    mutateVideos();
+  }
 
   const { data: eventsData, isLoading: eventsLoading } = useSWR(
     `${BASE}/api/events?from=${eventsFrom}&to=${eventsTo}`,
@@ -262,12 +268,22 @@ export default function DashboardHome() {
         {recentVideos.length > 0 && (
           <>
             <p className="text-xs uppercase tracking-widest mb-3" style={{ color: "#3b82f6" }}>Recent Videos</p>
-            <div className="grid grid-cols-3 gap-3 mb-8">
-              {recentVideos.slice(0, 6).map((v: any) => (
+            <div className="grid grid-cols-4 gap-3 mb-8">
+              {recentVideos.slice(0, 8).map((v: any) => (
+                <div key={v.videoId ?? v.title} className="relative group/card">
+                {v.lectureId && (
+                  <button
+                    onClick={() => archiveVideo(v.lectureId)}
+                    className="absolute top-2 right-2 z-10 w-6 h-6 rounded-full flex items-center justify-center opacity-0 group-hover/card:opacity-100 transition-opacity"
+                    style={{ background: "rgba(0,0,0,0.6)" }}
+                    title="Remove from Home"
+                  >
+                    <X size={11} style={{ color: "white" }} />
+                  </button>
+                )}
                 <Link
-                  key={v.videoId ?? v.title}
                   href={v.videoId ? `/dashboard/record?videoId=${v.videoId}&courseId=${v.courseId}` : `/dashboard/record`}
-                  className="rounded-2xl overflow-hidden border transition-all duration-200 hover:border-white/20 hover:scale-[1.02] group"
+                  className="rounded-2xl overflow-hidden border transition-all duration-200 hover:border-white/20 hover:scale-[1.02] group block"
                   style={{ background: "rgba(255,255,255,0.06)", borderColor: "rgba(255,255,255,0.08)" }}
                 >
                   <div className="relative w-full" style={{ paddingBottom: "56.25%" }}>
@@ -295,6 +311,7 @@ export default function DashboardHome() {
                     <div className="text-[10px] mt-0.5" style={{ color: "rgba(255,255,255,0.35)" }}>YouTube Video</div>
                   </div>
                 </Link>
+                </div>
               ))}
             </div>
           </>

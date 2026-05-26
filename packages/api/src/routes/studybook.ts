@@ -198,7 +198,7 @@ router.get("/recent-videos", async (req, res) => {
   const seen = new Set<string>();
   const data = lectures.map(l => {
     const videoId = l.audioUrl?.match(/(?:youtube\.com\/(?:watch\?v=|shorts\/)|youtu\.be\/)([^&?\s/]+)/)?.[1] ?? null;
-    return { courseId: l.courseId, videoId, title: l.title, thumbnail: videoId ? `https://img.youtube.com/vi/${videoId}/mqdefault.jpg` : null };
+    return { lectureId: l.id, courseId: l.courseId, videoId, title: l.title, thumbnail: videoId ? `https://img.youtube.com/vi/${videoId}/mqdefault.jpg` : null };
   }).filter(v => {
     const key = v.videoId ?? v.title;
     if (seen.has(key)) return false;
