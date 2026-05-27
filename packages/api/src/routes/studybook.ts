@@ -299,6 +299,19 @@ router.post("/fetch-transcript", async (req, res) => {
   if (!videoId) return res.status(400).json({ error: "Invalid YouTube URL" });
 
   try {
+    const ytAudioUrl = `https://www.youtube.com/watch?v=${videoId}`;
+
+    // ── Check cache first — return immediately if transcript already stored ──
+    const existing = await prisma.lecture.findFirst({
+      where: { userId: user.id, audioUrl: ytAudioUrl, status: "ready", transcript: { not: null } },
+      orderBy: { createdAt: "desc" },
+    });
+    if (existing?.transcript) {
+      console.log(`[fetch-transcript] returning cached transcript for ${videoId}`);
+      return res.json({ data: { lectureId: existing.id, title: existing.title, transcript: existing.transcript } });
+    }
+
+    // ── Not cached — fetch from YouTube ──
     const { text: transcript } = await fetchYouTubeTranscript(videoId);
     const title = await getVideoTitle(videoId);
 
@@ -309,7 +322,6 @@ router.post("/fetch-transcript", async (req, res) => {
       if (!course) course = await prisma.course.create({ data: { userId: user.id, name: "YouTube Videos", code: "YT" } });
     }
 
-    const ytAudioUrl = `https://www.youtube.com/watch?v=${videoId}`;
     let lecture = await prisma.lecture.findFirst({ where: { userId: user.id, courseId: course.id, title } });
     if (!lecture) {
       lecture = await prisma.lecture.create({ data: { userId: user.id, courseId: course.id, title, transcript, status: "ready", audioUrl: ytAudioUrl } });
