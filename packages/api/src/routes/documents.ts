@@ -6,6 +6,7 @@ import OpenAI from "openai";
 
 const pdfParse = require("pdf-parse/lib/pdf-parse.js") as (buf: Buffer) => Promise<{ text: string }>;
 const mammoth = require("mammoth") as { extractRawText: (opts: { buffer: Buffer }) => Promise<{ value: string }> };
+const officeparser = require("officeparser") as { parseOfficeAsync: (input: Buffer | string, config?: any) => Promise<string> };
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -69,6 +70,24 @@ router.post("/", upload.single("document"), async (req, res) => {
       text = result.value ?? "";
     } catch {
       return res.status(400).json({ error: "Could not read this Word document." });
+    }
+  } else if (
+    /\.(pptx|ppt|xlsx|xls|odt|odp|ods|odg|doc)$/i.test(file.originalname ?? "") ||
+    [
+      "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+      "application/vnd.ms-powerpoint",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "application/vnd.ms-excel",
+      "application/vnd.oasis.opendocument.text",
+      "application/vnd.oasis.opendocument.presentation",
+      "application/vnd.oasis.opendocument.spreadsheet",
+      "application/msword",
+    ].includes(file.mimetype)
+  ) {
+    try {
+      text = await officeparser.parseOfficeAsync(file.buffer, { outputErrorToConsole: false });
+    } catch {
+      return res.status(400).json({ error: "Could not read this file. Try saving it as PDF and re-uploading." });
     }
   } else if (IMAGE_MIMES.has(file.mimetype) || /\.(jpe?g|png|webp|gif|heic|heif)$/i.test(file.originalname ?? "")) {
     try {

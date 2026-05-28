@@ -324,15 +324,10 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
   const [recordAction, setRecordAction] = useState<"transcribe" | "summarize" | null>(null);
   const [recStep, setRecStep] = useState<"name" | "recording" | "saved" | "processing" | "done">("name");
   const [openLectureId, setOpenLectureId] = useState<string | null>(null);
-  const [openTab, setOpenTab] = useState<"transcript" | "summary" | "keypoints" | "slides">("transcript");
+  const [openTab, setOpenTab] = useState<"transcript" | "summary" | "keypoints">("transcript");
   const [openLectureKeyPoints, setOpenLectureKeyPoints] = useState<any[] | null>(null);
   const [openLectureKeyPointsLoading, setOpenLectureKeyPointsLoading] = useState(false);
   const [openLectureData, setOpenLectureData] = useState<{ transcript: string; sheet: any | null; audioUrl: string | null } | null>(null);
-  const [slideInfo, setSlideInfo] = useState<{ count: number; alignment: any[] } | null>(null);
-  const [currentSlide, setCurrentSlide] = useState(0);
-  const [slideImgUrl, setSlideImgUrl] = useState<string | null>(null);
-  const [slideImgLoading, setSlideImgLoading] = useState(false);
-  const slideImgCacheRef = useRef<Map<string, string>>(new Map());
   const localAudioUrlsRef = useRef<Map<string, string>>(new Map());
   const mediaRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -611,9 +606,6 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
     setOpenLectureId(lecture.id);
     setOpenTab("transcript");
     setOpenLectureData(null);
-    setSlideInfo(null);
-    setCurrentSlide(0);
-    setSlideImgUrl(null);
     const transcript = lecture.transcript ?? "";
 
     let audioUrl: string | null = localAudioUrlsRef.current.get(lecture.id) ?? null;
@@ -631,17 +623,9 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
     }
 
     try {
-      const [sheetRes, slidesRes] = await Promise.allSettled([
-        apiFetch(`/api/cheatsheets?lectureId=${lecture.id}`),
-        apiFetch(`/api/lectures/${lecture.id}/slides/info`),
-      ]);
-      const shts = sheetRes.status === "fulfilled"
-        ? (sheetRes.value.data ?? []).filter((s: any) => !s.title?.startsWith("Study Book:"))
-        : [];
+      const sheetRes = await apiFetch(`/api/cheatsheets?lectureId=${lecture.id}`);
+      const shts = (sheetRes.data ?? []).filter((s: any) => !s.title?.startsWith("Study Book:"));
       setOpenLectureData({ transcript, sheet: shts[0] ?? null, audioUrl });
-      if (slidesRes.status === "fulfilled" && slidesRes.value.data?.count > 0) {
-        setSlideInfo(slidesRes.value.data);
-      }
     } catch {
       setOpenLectureData({ transcript, sheet: null, audioUrl });
     }
@@ -652,32 +636,6 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
     setOpenLectureData(null);
     setOpenTab("transcript");
     setOpenLectureKeyPoints(null);
-    setSlideInfo(null);
-    setCurrentSlide(0);
-    setSlideImgUrl(null);
-  }
-
-  async function loadSlideImage(lectureId: string, index: number) {
-    const key = `${lectureId}:${index}`;
-    if (slideImgCacheRef.current.has(key)) {
-      setSlideImgUrl(slideImgCacheRef.current.get(key)!);
-      return;
-    }
-    setSlideImgLoading(true);
-    try {
-      const r = await fetch(`${BASE}/api/lectures/${lectureId}/slides/${index}`, {
-        headers: { "x-clerk-user-id": userId ?? "" },
-      });
-      if (!r.ok) throw new Error("failed");
-      const blob = await r.blob();
-      const url = URL.createObjectURL(blob);
-      slideImgCacheRef.current.set(key, url);
-      setSlideImgUrl(url);
-    } catch {
-      setSlideImgUrl(null);
-    } finally {
-      setSlideImgLoading(false);
-    }
   }
 
   async function generateOpenLectureKeyPoints() {
@@ -1481,14 +1439,12 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
                       { key: "transcript" as const, label: "Transcript" },
                       { key: "summary" as const,    label: "Summary"    },
                       { key: "keypoints" as const,  label: "Key Points" },
-                      ...(slideInfo && slideInfo.count > 0 ? [{ key: "slides" as const, label: `Slides (${slideInfo.count})` }] : []),
                     ])).map(({ key, label }) => (
                       <button
                         key={key}
                         onClick={() => {
                           setOpenTab(key);
                           if (key === "keypoints" && !openLectureKeyPoints) generateOpenLectureKeyPoints();
-                          if (key === "slides" && openLectureId) loadSlideImage(openLectureId, 0);
                         }}
                         className="shrink-0 whitespace-nowrap transition-all"
                         style={{
@@ -1579,83 +1535,6 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
                       )
                     )}
 
-                    {openTab === "slides" && slideInfo && (
-                      <div>
-                        {/* Slide image */}
-                        <div className="relative w-full bg-[#f5f4f0] rounded-xl overflow-hidden mb-4" style={{ aspectRatio: "16/9" }}>
-                          {slideImgLoading ? (
-                            <div className="absolute inset-0 flex items-center justify-center">
-                              <Loader2 size={20} className="animate-spin text-[#888]" />
-                            </div>
-                          ) : slideImgUrl ? (
-                            <img src={slideImgUrl} alt={`Slide ${currentSlide + 1}`} className="w-full h-full object-contain" />
-                          ) : (
-                            <div className="absolute inset-0 flex items-center justify-center text-sm text-[#888]">Slide preview unavailable</div>
-                          )}
-                        </div>
-
-                        {/* Navigation */}
-                        <div className="flex items-center justify-between mb-4">
-                          <button
-                            disabled={currentSlide === 0}
-                            onClick={() => {
-                              const next = currentSlide - 1;
-                              setCurrentSlide(next);
-                              if (openLectureId) loadSlideImage(openLectureId, next);
-                            }}
-                            className="px-4 py-2 rounded-xl text-sm font-medium border border-[rgba(0,0,0,0.1)] disabled:opacity-30 hover:bg-[rgba(0,0,0,0.03)] transition-colors"
-                          >
-                            ← Prev
-                          </button>
-                          <span className="text-xs text-[#888] font-medium">Slide {currentSlide + 1} of {slideInfo.count}</span>
-                          <button
-                            disabled={currentSlide >= slideInfo.count - 1}
-                            onClick={() => {
-                              const next = currentSlide + 1;
-                              setCurrentSlide(next);
-                              if (openLectureId) loadSlideImage(openLectureId, next);
-                            }}
-                            className="px-4 py-2 rounded-xl text-sm font-medium border border-[rgba(0,0,0,0.1)] disabled:opacity-30 hover:bg-[rgba(0,0,0,0.03)] transition-colors"
-                          >
-                            Next →
-                          </button>
-                        </div>
-
-                        {/* Aligned transcript excerpt */}
-                        {(() => {
-                          const alignment = (slideInfo.alignment as any[]).find((a: any) => a.slideIndex === currentSlide);
-                          return alignment ? (
-                            <div className="bg-[rgba(37,99,235,0.04)] border border-[rgba(37,99,235,0.1)] rounded-xl px-4 py-3">
-                              <div className="text-[10px] font-semibold uppercase tracking-widest text-[#2563eb] mb-1.5">
-                                {Math.floor(alignment.startSeconds / 60)}:{String(Math.round(alignment.startSeconds % 60)).padStart(2,"0")} – {Math.floor(alignment.endSeconds / 60)}:{String(Math.round(alignment.endSeconds % 60)).padStart(2,"0")}
-                              </div>
-                              <p className="text-sm text-[#333] leading-relaxed">{alignment.description}</p>
-                            </div>
-                          ) : null;
-                        })()}
-
-                        {/* Slide strip */}
-                        <div className="flex gap-2 overflow-x-auto mt-4 pb-1">
-                          {Array.from({ length: slideInfo.count }).map((_, i) => (
-                            <button
-                              key={i}
-                              onClick={() => {
-                                setCurrentSlide(i);
-                                if (openLectureId) loadSlideImage(openLectureId, i);
-                              }}
-                              className="shrink-0 w-16 h-10 rounded-lg border-2 flex items-center justify-center text-xs font-medium transition-all"
-                              style={{
-                                borderColor: currentSlide === i ? "#2563eb" : "rgba(0,0,0,0.1)",
-                                background: currentSlide === i ? "rgba(37,99,235,0.08)" : "rgba(0,0,0,0.03)",
-                                color: currentSlide === i ? "#2563eb" : "#888",
-                              }}
-                            >
-                              {i + 1}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
                   </div>
                 </div>
               )}
@@ -1865,9 +1744,9 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
                 <FileUp size={28} />
                 <div className="text-center">
                   <div className="text-sm font-medium mb-0.5">Click to add documents</div>
-                  <div className="text-xs text-[#555]">PDF, Word, images, TXT — add as many as you need</div>
+                  <div className="text-xs text-[#555]">PDF, Word, PowerPoint, Excel, OpenDocument, images, TXT — add as many as you need</div>
                 </div>
-                <input type="file" accept=".pdf,.txt,.md,.docx,.doc,.jpg,.jpeg,.png,.webp,.gif,.heic,.heif" className="hidden" multiple
+                <input type="file" accept=".pdf,.txt,.md,.csv,.docx,.doc,.pptx,.ppt,.xlsx,.xls,.odt,.odp,.ods,.jpg,.jpeg,.png,.webp,.gif,.heic,.heif" className="hidden" multiple
                   onChange={e => {
                     if (!e.target.files?.length) return;
                     handleDocFilesSelect(e.target.files);
