@@ -132,3 +132,51 @@ lectureRouter.delete("/:id", async (req, res) => {
   await prisma.lecture.deleteMany({ where: { id: req.params.id, userId: user.id } });
   res.json({ data: { deleted: true } });
 });
+
+// ── Slides info (count + alignment) ──
+lectureRouter.get("/:id/slides/info", async (req, res) => {
+  const user = (req as any).user;
+  const lecture = await prisma.lecture.findFirst({
+    where: { id: req.params.id, userId: user.id },
+    select: { slideCount: true, slideAlignment: true, slidesUrl: true },
+  });
+  if (!lecture) return res.status(404).json({ error: "Not found" });
+  res.json({ data: { count: lecture.slideCount ?? 0, alignment: lecture.slideAlignment ?? [] } });
+});
+
+// ── Serve a single slide as JPEG (on-demand conversion) ──
+lectureRouter.get("/:id/slides/:index", async (req, res) => {
+  const user = (req as any).user;
+  const lecture = await prisma.lecture.findFirst({
+    where: { id: req.params.id, userId: user.id },
+    select: { slidesUrl: true },
+  });
+  if (!lecture?.slidesUrl || !fs.existsSync(lecture.slidesUrl)) {
+    return res.status(404).json({ error: "Slides not found" });
+  }
+  const pageNum = parseInt(req.params.index, 10) + 1; // 0-indexed → 1-indexed
+  if (isNaN(pageNum) || pageNum < 1) return res.status(400).json({ error: "Invalid slide index" });
+
+  try {
+    const { fromPath } = await import("pdf2pic");
+    const tmpDir = path.join(os.tmpdir(), "slides");
+    fs.mkdirSync(tmpDir, { recursive: true });
+    const convert = fromPath(lecture.slidesUrl, {
+      density: 150,
+      saveFilename: `${req.params.id}_${pageNum}`,
+      savePath: tmpDir,
+      format: "jpeg",
+      width: 1280,
+      height: 720,
+    });
+    const result = await convert(pageNum, { responseType: "base64" });
+    if (!result?.base64) return res.status(500).json({ error: "Conversion failed" });
+    const buf = Buffer.from(result.base64, "base64");
+    res.setHeader("Content-Type", "image/jpeg");
+    res.setHeader("Cache-Control", "public, max-age=3600");
+    res.send(buf);
+  } catch (err: any) {
+    console.error("[slides] conversion error:", err?.message);
+    res.status(500).json({ error: "Could not render slide" });
+  }
+});

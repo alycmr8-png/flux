@@ -1,7 +1,8 @@
 import fs from "fs";
+import path from "path";
 import { prisma } from "../lib/prisma";
 import { transcribeAudio } from "./whisper";
-import { condenseTranscript, generateCheatSheet, generateQuiz } from "./claude";
+import { condenseTranscript, generateCheatSheet, generateQuiz, alignSlidesToTranscript } from "./claude";
 import { syncToDrive } from "./google";
 import { scheduleSpacedRepetition } from "./spaced-repetition";
 
@@ -77,6 +78,36 @@ export async function processLecture(lectureId: string, userId: string) {
         },
       }),
     ]);
+
+    // ── Slide alignment (non-fatal) ──
+    if (lecture.slidesUrl && fs.existsSync(lecture.slidesUrl)) {
+      try {
+        const pdfParse = (await import("pdf-parse")).default;
+        const pdfBuffer = fs.readFileSync(lecture.slidesUrl);
+
+        // Extract text per page via pagerender callback
+        const pageTexts: string[] = [];
+        await pdfParse(pdfBuffer, {
+          pagerender: async (pageData: any) => {
+            const content = await pageData.getTextContent();
+            const text = (content.items as any[]).map((item: any) => item.str).join(" ").trim();
+            pageTexts.push(text);
+            return text;
+          },
+        });
+
+        const slideCount = pageTexts.length;
+        const totalDuration = lecture.durationSeconds || segments.reduce((m, s) => Math.max(m, s.end), 0);
+
+        if (slideCount > 0) {
+          const slideAlignment = await alignSlidesToTranscript(pageTexts, segments, totalDuration);
+          await safeStatusUpdate(lectureId, { slideCount, slideAlignment: slideAlignment as any });
+          console.log(`[processLecture] slide alignment done: ${slideCount} slides`);
+        }
+      } catch (slideErr) {
+        console.error("[processLecture] slide alignment failed (non-fatal):", (slideErr as any)?.message);
+      }
+    }
 
     if (user?.googleTokens) {
       try {

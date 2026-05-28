@@ -1,5 +1,5 @@
 [phases.setup]
-nixPkgs = ["nodejs_20"]
+nixPkgs = ["nodejs_20", "ghostscript"]
 
 [phases.start]
-cmd = "node packages/api/dist/index.js"
+cmd = "(cd packages/api && npx prisma db push --skip-generate --accept-data-loss) && node packages/api/dist/index.js"

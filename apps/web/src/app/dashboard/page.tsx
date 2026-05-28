@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { useUser } from "@clerk/nextjs";
 import Link from "next/link";
 import useSWR from "swr";
 import Image from "next/image";
@@ -38,6 +39,8 @@ function greeting() {
 }
 
 export default function DashboardHome() {
+  const { user } = useUser();
+  const firstName = user?.firstName ?? user?.username ?? "";
   const fetcher = useApiSWRFetcher();
   const apiFetch = useApiFetch();
   const { data: progressData, isLoading } = useSWR(`${BASE}/api/progress`, fetcher);
@@ -104,7 +107,7 @@ export default function DashboardHome() {
         {/* Header */}
         <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "#3b82f6", marginBottom: 6 }}>Overview</div>
         <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 30, color: "white", marginBottom: 28 }}>
-          {greeting()}.
+          {greeting()}{firstName ? `, ${firstName}` : ""}.
         </h1>
 
         {/* Stats */}

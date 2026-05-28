@@ -148,6 +148,8 @@ model Lecture {
   audioUrl        String?
   slidesUrl       String?
   transcript      String?       @db.Text
+  slideCount      Int?
+  slideAlignment  Json?
   status          LectureStatus @default(recording)
   archived        Boolean       @default(false)
   recordedAt      DateTime      @default(now())
