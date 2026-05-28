@@ -1,5 +1,8 @@
 import { Router } from "express";
 import multer from "multer";
+import fs from "fs";
+import os from "os";
+import path from "path";
 import { prisma } from "../lib/prisma";
 import { generateStructuredLearningFile } from "../services/claude";
 import OpenAI from "openai";
@@ -7,6 +10,17 @@ import OpenAI from "openai";
 const pdfParse = require("pdf-parse/lib/pdf-parse.js") as (buf: Buffer) => Promise<{ text: string }>;
 const mammoth = require("mammoth") as { extractRawText: (opts: { buffer: Buffer }) => Promise<{ value: string }> };
 const officeparser = require("officeparser") as { parseOfficeAsync: (input: Buffer | string, config?: any) => Promise<string> };
+
+async function parseOfficeFile(buffer: Buffer, originalName: string): Promise<string> {
+  const ext = path.extname(originalName).toLowerCase() || ".pptx";
+  const tmpPath = path.join(os.tmpdir(), `upload_${Date.now()}${ext}`);
+  try {
+    fs.writeFileSync(tmpPath, buffer);
+    return await officeparser.parseOfficeAsync(tmpPath, { outputErrorToConsole: false });
+  } finally {
+    fs.unlink(tmpPath, () => {});
+  }
+}
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -85,7 +99,7 @@ router.post("/", upload.single("document"), async (req, res) => {
     ].includes(file.mimetype)
   ) {
     try {
-      text = await officeparser.parseOfficeAsync(file.buffer, { outputErrorToConsole: false });
+      text = await parseOfficeFile(file.buffer, file.originalname ?? "file.pptx");
     } catch {
       return res.status(400).json({ error: "Could not read this file. Try saving it as PDF and re-uploading." });
     }
