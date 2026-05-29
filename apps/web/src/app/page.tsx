@@ -16,6 +16,7 @@ import { PricingSection } from "@/components/PricingSection";
 import { ScrollReveal } from "@/components/ScrollReveal";
 import { YoutubeFeatureDemo } from "@/components/YoutubeFeatureDemo";
 import { FilesFeatureDemo } from "@/components/FilesFeatureDemo";
+import { FaqSection } from "@/components/FaqSection";
 
 export default async function LandingPage() {
   const { userId } = await auth();
@@ -219,8 +220,15 @@ export default async function LandingPage() {
       </div>
 
       {/* Pricing */}
+      <div id="pricing">
+        <ScrollReveal>
+          <PricingSection />
+        </ScrollReveal>
+      </div>
+
+      {/* FAQ */}
       <ScrollReveal>
-        <PricingSection />
+        <FaqSection />
       </ScrollReveal>
 
       {/* CTA footer */}

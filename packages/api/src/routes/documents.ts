@@ -30,22 +30,64 @@ async function extractPptxText(buffer: Buffer): Promise<string> {
 async function parseOfficeFile(buffer: Buffer, originalName: string): Promise<string> {
   const ext = path.extname(originalName).toLowerCase() || ".pptx";
   const tmpPath = path.join(os.tmpdir(), `upload_${Date.now()}${ext}`);
+
+  // Strategy 1: officeparser via temp file
   try {
     fs.writeFileSync(tmpPath, buffer);
     const result = await officeparser.parseOfficeAsync(tmpPath, { outputErrorToConsole: false });
-    if (result?.trim()) return result;
-    throw new Error("empty result");
+    if (result?.trim()) { console.log("[officeparser] success"); return result; }
   } catch (err: any) {
-    console.error("[officeparser] failed, trying manual parse:", err?.message);
-    // Fallback: manual PPTX XML extraction
-    if (/\.pptx?$/i.test(originalName)) {
-      const manual = await extractPptxText(buffer);
-      if (manual.trim()) return manual;
-    }
-    throw err;
+    console.error("[officeparser] failed:", err?.message);
   } finally {
     fs.unlink(tmpPath, () => {});
   }
+
+  // Strategy 2: manual ZIP/XML extraction — pptx only (not old .ppt binary)
+  if (/\.pptx$/i.test(originalName)) {
+    try {
+      const manual = await extractPptxText(buffer);
+      if (manual.trim()) { console.log("[manual-pptx] success"); return manual; }
+    } catch (_) {}
+  }
+
+  // Strategy 3: GPT-4o file extraction — handles old .ppt, .xls, etc.
+  try {
+    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    const mimeTypes: Record<string, string> = {
+      ".ppt":  "application/vnd.ms-powerpoint",
+      ".pptx": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+      ".xls":  "application/vnd.ms-excel",
+      ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      ".doc":  "application/msword",
+      ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    };
+    const mime = mimeTypes[ext] ?? "application/octet-stream";
+    const uploaded = await openai.files.create({
+      file: new File([buffer], originalName, { type: mime }),
+      purpose: "user_data" as any,
+    });
+    try {
+      const res = await openai.chat.completions.create({
+        model: "gpt-4o",
+        max_tokens: 4000,
+        messages: [{
+          role: "user",
+          content: [
+            { type: "file", file: { file_id: uploaded.id } } as any,
+            { type: "text", text: "Extract ALL text from this file exactly as written — every title, bullet point, label, and body text. Output plain text only." },
+          ],
+        }],
+      });
+      const text = res.choices[0]?.message?.content ?? "";
+      if (text.trim()) { console.log("[gpt4o-file] success"); return text; }
+    } finally {
+      openai.files.del(uploaded.id).catch(() => {});
+    }
+  } catch (err: any) {
+    console.error("[gpt4o-file] failed:", err?.message);
+  }
+
+  throw new Error("Could not read this file. Try saving it as .pptx or PDF and re-uploading.");
 }
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
