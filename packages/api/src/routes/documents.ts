@@ -11,12 +11,38 @@ const pdfParse = require("pdf-parse/lib/pdf-parse.js") as (buf: Buffer) => Promi
 const mammoth = require("mammoth") as { extractRawText: (opts: { buffer: Buffer }) => Promise<{ value: string }> };
 const officeparser = require("officeparser") as { parseOfficeAsync: (input: Buffer | string, config?: any) => Promise<string> };
 
+// Manual PPTX text extraction — reads slide XML from ZIP without extra deps
+async function extractPptxText(buffer: Buffer): Promise<string> {
+  const AdmZip = require("adm-zip");
+  const zip = new AdmZip(buffer);
+  const entries: any[] = zip.getEntries();
+  const slideEntries = entries
+    .filter((e: any) => /^ppt\/slides\/slide\d+\.xml$/.test(e.entryName))
+    .sort((a: any, b: any) => a.entryName.localeCompare(b.entryName));
+  const texts = slideEntries.map((e: any) => {
+    const xml: string = e.getData().toString("utf-8");
+    return [...xml.matchAll(/<a:t[^>]*>([^<]*)<\/a:t>/g)]
+      .map(m => m[1].trim()).filter(Boolean).join(" ");
+  }).filter(Boolean);
+  return texts.join("\n\n");
+}
+
 async function parseOfficeFile(buffer: Buffer, originalName: string): Promise<string> {
   const ext = path.extname(originalName).toLowerCase() || ".pptx";
   const tmpPath = path.join(os.tmpdir(), `upload_${Date.now()}${ext}`);
   try {
     fs.writeFileSync(tmpPath, buffer);
-    return await officeparser.parseOfficeAsync(tmpPath, { outputErrorToConsole: false });
+    const result = await officeparser.parseOfficeAsync(tmpPath, { outputErrorToConsole: false });
+    if (result?.trim()) return result;
+    throw new Error("empty result");
+  } catch (err: any) {
+    console.error("[officeparser] failed, trying manual parse:", err?.message);
+    // Fallback: manual PPTX XML extraction
+    if (/\.pptx?$/i.test(originalName)) {
+      const manual = await extractPptxText(buffer);
+      if (manual.trim()) return manual;
+    }
+    throw err;
   } finally {
     fs.unlink(tmpPath, () => {});
   }
