@@ -41,6 +41,27 @@ async function withTimeout<T>(promise: Promise<T>, ms: number, label: string): P
 }
 
 async function fetchYouTubeTranscript(videoId: string): Promise<YTTranscript> {
+  // Strategy 0: Supadata API — reliable, bypasses Railway IP blocks
+  if (process.env.SUPADATA_API_KEY) {
+    try {
+      const url = `https://api.supadata.ai/v1/youtube/transcript?url=https://www.youtube.com/watch?v=${videoId}&lang=en`;
+      const { data } = await axios.get(url, {
+        timeout: 15000,
+        headers: { "x-api-key": process.env.SUPADATA_API_KEY },
+      });
+      const items: any[] = data?.content ?? [];
+      if (items.length) {
+        const segments = items.map((t: any) => ({
+          start: (t.offset ?? 0) / 1000,
+          end: ((t.offset ?? 0) + (t.duration ?? 5000)) / 1000,
+          text: t.text ?? "",
+        }));
+        const text = segments.map(s => s.text).join(" ").replace(/\s+/g, " ").trim();
+        if (text) { console.log(`[studybook] captions via Supadata (${text.length} chars)`); return { text, segments }; }
+      }
+    } catch (_e) { console.log(`[studybook] Supadata failed: ${(_e as any)?.message}`); }
+  }
+
   // Strategy 1: youtube-transcript package — returns timestamps
   try {
     const { YoutubeTranscript } = await import("youtube-transcript");
