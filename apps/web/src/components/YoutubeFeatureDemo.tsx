@@ -3,13 +3,38 @@ import { useState } from "react";
 import { Youtube } from "lucide-react";
 
 const FLASHCARDS = [
-  { q: "What is psychology?",               a: "The scientific study of mind and behavior, examining thoughts, emotions, and actions." },
+  { q: "What is psychology?",                a: "The scientific study of mind and behavior, examining thoughts, emotions, and actions." },
   { q: "Who opened the first psychology lab?", a: "Wilhelm Wundt, in Leipzig, Germany in 1879." },
-  { q: "What is behaviorism?",              a: "A school of thought focused only on observable behavior, rejecting the study of the mind." },
-  { q: "What is the cognitive revolution?", a: "A shift in the 1950s–70s back to studying mental processes like memory, perception, and reasoning." },
+  { q: "What is behaviorism?",               a: "A school of thought focused only on observable behavior, rejecting the study of the mind." },
+  { q: "What is the cognitive revolution?",  a: "A shift in the 1950s–70s back to studying mental processes like memory, perception, and reasoning." },
 ];
 
-const VTABS = ["Summary", "Transcript", "Flashcards", "Quiz"];
+const KEY_POINTS = [
+  { category: "Definition",  point: "Psychology is the scientific study of mind and behavior — it examines thoughts, feelings, and actions." },
+  { category: "Important",   point: "Wilhelm Wundt opened the first psychology lab in 1879, marking the birth of psychology as a science." },
+  { category: "Definition",  point: "Behaviorism (Watson, Skinner) studies only observable behavior — the inner mind is irrelevant." },
+  { category: "Important",   point: "The cognitive revolution of the 1950s–70s shifted focus back to memory, perception, and reasoning." },
+  { category: "Example",     point: "Pavlov's dogs salivating at a bell sound is a classic example of classical conditioning." },
+  { category: "Warning",     point: "Correlation ≠ causation — a common mistake in interpreting psychology studies." },
+  { category: "Formula",     point: "Behavior = Person × Environment (Lewin's equation for understanding human action)." },
+];
+
+const CATEGORY_COLORS: Record<string, { text: string; bg: string; pill: string }> = {
+  Definition: { text: "#3b82f6", bg: "rgba(59,130,246,0.08)",  pill: "rgba(59,130,246,0.18)"  },
+  Important:  { text: "#f97316", bg: "rgba(249,115,22,0.08)",  pill: "rgba(249,115,22,0.18)"  },
+  Formula:    { text: "#a78bfa", bg: "rgba(167,139,250,0.08)", pill: "rgba(167,139,250,0.18)" },
+  Example:    { text: "#22c55e", bg: "rgba(34,197,94,0.08)",   pill: "rgba(34,197,94,0.18)"   },
+  Warning:    { text: "#ef4444", bg: "rgba(239,68,68,0.08)",   pill: "rgba(239,68,68,0.18)"   },
+};
+
+const CHAT_MESSAGES = [
+  { role: "user",      text: "What's the difference between structuralism and functionalism?" },
+  { role: "assistant", text: "Structuralism (Wundt) asked what the mind is made of — breaking consciousness into basic elements through introspection. Functionalism (James) asked what the mind does and why — focusing on the purpose of mental processes from an evolutionary angle. Structuralism focused on structure; functionalism on adaptive function." },
+  { role: "user",      text: "Which one is more relevant today?" },
+  { role: "assistant", text: "Functionalism. Modern cognitive psychology, neuroscience, and evolutionary psychology all ask 'what does this process do?' rather than 'what is it made of?' Structuralism largely died out by the early 20th century." },
+];
+
+const VTABS = ["Summary", "Transcript", "Key Points", "Flashcards", "Quiz", "Chatbot"];
 
 export function YoutubeFeatureDemo() {
   const [vtab, setVtab] = useState("summary");
@@ -29,7 +54,7 @@ export function YoutubeFeatureDemo() {
             Paste a YouTube link. <span style={{ color: "#3b82f6" }}>Get everything.</span>
           </h2>
           <p className="text-base md:text-lg mt-3 max-w-xl mx-auto" style={{ color: "rgba(255,255,255,0.5)" }}>
-            Drop any lecture, tutorial, or documentary — Flux gives you a summary, transcript, flashcards, and a quiz instantly.
+            Transcript, summary, key points, flashcards, quiz, and an AI chatbot — all from one link.
           </p>
         </div>
 
@@ -58,11 +83,11 @@ export function YoutubeFeatureDemo() {
           {/* Sub-tabs */}
           <div className="flex gap-1 p-1 rounded-xl overflow-x-auto" style={{ background: "rgba(37,99,235,0.1)", border: "1px solid rgba(37,99,235,0.15)" }}>
             {VTABS.map(t => (
-              <button key={t} onClick={() => setVtab(t.toLowerCase())}
+              <button key={t} onClick={() => setVtab(t.toLowerCase().replace(" ", "-"))}
                 className="flex-1 py-2.5 px-3 rounded-lg text-sm font-medium transition-all whitespace-nowrap"
                 style={{
-                  background: vtab === t.toLowerCase() ? "#2563eb" : "transparent",
-                  color: vtab === t.toLowerCase() ? "white" : "rgba(255,255,255,0.45)",
+                  background: vtab === t.toLowerCase().replace(" ", "-") ? "#2563eb" : "transparent",
+                  color: vtab === t.toLowerCase().replace(" ", "-") ? "white" : "rgba(255,255,255,0.45)",
                 }}>
                 {t}
               </button>
@@ -109,6 +134,23 @@ export function YoutubeFeatureDemo() {
                     <span style={{ color: "rgba(255,255,255,0.65)", lineHeight: 1.6 }}>{line}</span>
                   </div>
                 ))}
+              </div>
+            )}
+
+            {vtab === "key-points" && (
+              <div className="space-y-2">
+                <div className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: "#3b82f6" }}>Key Points</div>
+                {KEY_POINTS.map((kp, i) => {
+                  const c = CATEGORY_COLORS[kp.category] ?? { text: "#94a3b8", bg: "rgba(148,163,184,0.08)", pill: "rgba(148,163,184,0.18)" };
+                  return (
+                    <div key={i} className="flex gap-3 items-start rounded-xl px-4 py-3" style={{ background: c.bg }}>
+                      <span className="text-[9px] font-bold uppercase tracking-widest mt-0.5 shrink-0 px-1.5 py-0.5 rounded" style={{ color: c.text, background: c.pill }}>
+                        {kp.category}
+                      </span>
+                      <span className="text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.8)" }}>{kp.point}</span>
+                    </div>
+                  );
+                })}
               </div>
             )}
 
@@ -169,6 +211,33 @@ export function YoutubeFeatureDemo() {
                     {quizSelected === 2 ? "✓ Correct! Behaviorism (Watson, Skinner) rejected the study of the mind." : "✗ Not quite — Behaviorism is the answer."}
                   </div>
                 )}
+              </div>
+            )}
+
+            {vtab === "chatbot" && (
+              <div className="flex flex-col gap-3">
+                <div className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: "#3b82f6" }}>Ask anything about this video</div>
+                <div className="space-y-3 flex-1">
+                  {CHAT_MESSAGES.map((m, i) => (
+                    <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+                      <div className="max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed"
+                        style={{
+                          background: m.role === "user" ? "#2563eb" : "rgba(255,255,255,0.07)",
+                          color: m.role === "user" ? "white" : "rgba(255,255,255,0.8)",
+                          borderRadius: m.role === "user" ? "18px 18px 4px 18px" : "18px 18px 18px 4px",
+                        }}>
+                        {m.text}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {/* Fake input */}
+                <div className="flex gap-2 mt-2">
+                  <div className="flex-1 px-4 py-2.5 rounded-xl text-sm" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.25)" }}>
+                    Ask a question about this lecture…
+                  </div>
+                  <div className="px-4 py-2.5 rounded-xl text-sm font-semibold" style={{ background: "#2563eb", color: "white" }}>Send</div>
+                </div>
               </div>
             )}
 

@@ -1461,78 +1461,81 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
                       </button>
                     ))}
                   </div>
-                  <div className="px-6 py-6 min-h-48">
+                  <div className="relative overflow-hidden" style={{ height: 460 }}>
                     {openTab === "transcript" && (
-                      <div className="text-sm text-[#555] leading-relaxed whitespace-pre-wrap max-h-[480px] overflow-y-auto">
-                        {openLectureData.transcript || "Transcript not available."}
+                      <div className="absolute inset-0 overflow-y-auto px-6 py-6">
+                        <p className="text-sm text-[#444] leading-[1.85] whitespace-pre-wrap">
+                          {openLectureData.transcript || "Transcript not available."}
+                        </p>
                       </div>
                     )}
                     {openTab === "keypoints" && (
-                      openLectureKeyPointsLoading ? (
-                        <div className="flex items-center gap-2 py-10 justify-center text-sm text-[#888]">
-                          <Loader2 size={14} className="animate-spin" /> Generating key points…
-                        </div>
-                      ) : openLectureKeyPoints ? (
-                        <div className="space-y-2">
-                          {openLectureKeyPoints.map((kp: any, i: number) => {
-                            const colors: Record<string, string> = { Definition: "#3b82f6", Important: "#f97316", Formula: "#8b5cf6", Example: "#22c55e", Warning: "#ef4444" };
-                            const bg: Record<string, string> = { Definition: "rgba(59,130,246,0.08)", Important: "rgba(249,115,22,0.08)", Formula: "rgba(139,92,246,0.08)", Example: "rgba(34,197,94,0.08)", Warning: "rgba(239,68,68,0.08)" };
-                            const color = colors[kp.category] ?? "#6b7280";
-                            const background = bg[kp.category] ?? "rgba(107,114,128,0.08)";
-                            return (
-                              <div key={i} className="rounded-xl px-4 py-3 flex gap-3 items-start" style={{ background }}>
-                                <span className="text-[9px] font-bold uppercase tracking-widest mt-1 shrink-0 px-1.5 py-0.5 rounded" style={{ color, background: `${color}22` }}>{kp.category}</span>
-                                <span className="text-sm text-[#111110] leading-relaxed">{kp.point}</span>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      ) : (
-                        <div className="flex flex-col items-center py-10 gap-3">
-                          <p className="text-sm text-[#888]">Generate key points from this lecture</p>
-                          <button
-                            onClick={generateOpenLectureKeyPoints}
-                            className="px-5 py-2.5 rounded-full text-sm font-semibold text-white"
-                            style={{ background: "#2563eb" }}
-                          >
-                            Generate Key Points
-                          </button>
-                        </div>
-                      )
+                      <div className="absolute inset-0 overflow-y-auto px-6 py-6">
+                        {openLectureKeyPointsLoading ? (
+                          <div className="h-full flex flex-col items-center justify-center gap-3">
+                            <Loader2 size={18} className="animate-spin text-[#bbb]" />
+                            <span className="text-sm text-[#aaa]">Generating key points…</span>
+                          </div>
+                        ) : openLectureKeyPoints ? (
+                          <div className="space-y-2">
+                            {openLectureKeyPoints.map((kp: any, i: number) => {
+                              const colors: Record<string, string> = { Definition: "#3b82f6", Important: "#f97316", Formula: "#8b5cf6", Example: "#22c55e", Warning: "#ef4444" };
+                              const bg: Record<string, string> = { Definition: "rgba(59,130,246,0.06)", Important: "rgba(249,115,22,0.06)", Formula: "rgba(139,92,246,0.06)", Example: "rgba(34,197,94,0.06)", Warning: "rgba(239,68,68,0.06)" };
+                              const color = colors[kp.category] ?? "#6b7280";
+                              const background = bg[kp.category] ?? "rgba(107,114,128,0.06)";
+                              return (
+                                <div key={i} className="rounded-xl px-4 py-3 flex gap-3 items-start" style={{ background }}>
+                                  <span className="text-[9px] font-bold uppercase tracking-widest mt-1 shrink-0 px-1.5 py-0.5 rounded" style={{ color, background: `${color}22` }}>{kp.category}</span>
+                                  <span className="text-sm text-[#333] leading-relaxed">{kp.point}</span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <div className="h-full flex flex-col items-center justify-center gap-4">
+                            <p className="text-sm text-[#aaa]">Generate key points from this lecture</p>
+                            <button onClick={generateOpenLectureKeyPoints} className="px-5 py-2.5 rounded-full text-sm font-semibold text-white" style={{ background: "#2563eb" }}>
+                              Generate Key Points
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     )}
 
                     {openTab === "summary" && (
-                      openLectureData.sheet ? (
-                        <div className="space-y-5">
-                          {(openLectureData.sheet.content?.sections ?? []).slice(0, 3).map((s: any, i: number) => (
-                            <div key={i}>
-                              <div className="text-xs font-semibold uppercase tracking-widest text-[#555] mb-2">{s.heading}</div>
-                              <ul className="space-y-1.5">
-                                {(s.bullets ?? []).slice(0, 4).map((b: string, j: number) => (
-                                  <li key={j} className="flex gap-2 text-sm text-[#111110] leading-relaxed">
-                                    <span className="text-[#888] shrink-0 mt-0.5">·</span>{b}
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          ))}
-                          {(openLectureData.sheet.content?.keyTerms ?? []).length > 0 && (
-                            <div>
-                              <div className="text-xs font-semibold uppercase tracking-widest text-[#555] mb-2">Key Terms</div>
-                              <div className="space-y-2">
-                                {(openLectureData.sheet.content.keyTerms ?? []).map((kt: any, i: number) => (
-                                  <div key={i} className="flex gap-2 text-sm">
-                                    <span className="font-medium text-[#111110] shrink-0">{kt.term}:</span>
-                                    <span className="text-[#555]">{kt.definition}</span>
-                                  </div>
-                                ))}
+                      <div className="absolute inset-0 overflow-y-auto px-6 py-6">
+                        {openLectureData.sheet ? (
+                          <div className="space-y-6">
+                            {(openLectureData.sheet.content?.sections ?? []).slice(0, 3).map((s: any, i: number) => (
+                              <div key={i} className="border-l-2 border-[rgba(37,99,235,0.2)] pl-4">
+                                <div className="text-[10px] font-bold uppercase tracking-widest text-[#2563eb] mb-2">{s.heading}</div>
+                                <ul className="space-y-2">
+                                  {(s.bullets ?? []).slice(0, 4).map((b: string, j: number) => (
+                                    <li key={j} className="flex gap-2 text-sm text-[#444] leading-[1.75]">
+                                      <span className="text-[#ccc] shrink-0 mt-0.5">·</span>{b}
+                                    </li>
+                                  ))}
+                                </ul>
                               </div>
-                            </div>
-                          )}
-                        </div>
-                      ) : (
-                        <div className="text-sm text-[#888] text-center py-10">Summary not available.</div>
-                      )
+                            ))}
+                            {(openLectureData.sheet.content?.keyTerms ?? []).length > 0 && (
+                              <div className="border-l-2 border-[rgba(0,0,0,0.08)] pl-4">
+                                <div className="text-[10px] font-bold uppercase tracking-widest text-[#888] mb-2">Key Terms</div>
+                                <div className="space-y-2">
+                                  {(openLectureData.sheet.content.keyTerms ?? []).map((kt: any, i: number) => (
+                                    <div key={i} className="flex gap-2 text-sm">
+                                      <span className="font-semibold text-[#333] shrink-0">{kt.term}:</span>
+                                      <span className="text-[#666]">{kt.definition}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="h-full flex items-center justify-center text-sm text-[#aaa]">Summary not available.</div>
+                        )}
+                      </div>
                     )}
 
                   </div>
@@ -2257,7 +2260,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
               </div>}
 
               {/* Feature tabs + content */}
-              <div className="bg-white rounded-2xl overflow-hidden" style={{ border: "1.5px solid rgba(37,99,235,0.2)" }}>
+              <div className="bg-white rounded-2xl overflow-hidden" style={{ border: "1px solid rgba(37,99,235,0.14)", boxShadow: "0 2px 12px rgba(37,99,235,0.05), 0 1px 3px rgba(0,0,0,0.06)" }}>
                 {/* Tab bar */}
                 <div className="flex gap-2 overflow-x-auto p-3" style={{ background: "rgba(37,99,235,0.05)", borderBottom: "1px solid rgba(37,99,235,0.12)" }}>
                   {([
@@ -2286,265 +2289,256 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
                   ))}
                 </div>
 
-                {/* Content area */}
-                <div className="p-6 min-h-[340px]">
+                {/* Content area — fixed height, each tab scrolls within */}
+                <div className="relative overflow-hidden" style={{ height: 460 }}>
 
                   {/* Transcript */}
                   {ytActiveTab === "transcript" && (
-                    ytTranscriptLoading ? (
-                      <div className="flex items-center gap-2 py-12 justify-center">
-                        <Loader2 size={16} className="animate-spin text-[#555]" />
-                        <span className="text-sm text-[#555]">Fetching transcript…</span>
-                      </div>
-                    ) : ytTranscript ? (
-                      <textarea
-                        value={ytTranscript}
-                        onChange={e => setYtTranscript(e.target.value)}
-                        rows={14}
-                        className="w-full bg-transparent text-sm text-[#555] outline-none resize-none leading-relaxed"
-                      />
-                    ) : (
-                      <div className="py-12 text-center space-y-4">
-                        <p className="text-sm text-[#555]">Load the full transcript for this video.</p>
-                        <button onClick={loadTranscript} className="text-sm font-semibold px-5 py-2.5 rounded-full transition-opacity" style={{ background: "#2563eb", color: "white" }}>
-                          Load Transcript
-                        </button>
-                      </div>
-                    )
+                    <div className="absolute inset-0 overflow-y-auto p-6">
+                      {ytTranscriptLoading ? (
+                        <div className="h-full flex flex-col items-center justify-center gap-3">
+                          <Loader2 size={18} className="animate-spin text-[#bbb]" />
+                          <span className="text-sm text-[#aaa]">Fetching transcript…</span>
+                        </div>
+                      ) : ytTranscript ? (
+                        <textarea
+                          value={ytTranscript}
+                          onChange={e => setYtTranscript(e.target.value)}
+                          className="w-full h-full bg-transparent text-sm text-[#444] outline-none resize-none leading-[1.85] tracking-[0.01em]"
+                        />
+                      ) : (
+                        <div className="h-full flex flex-col items-center justify-center gap-4">
+                          <p className="text-sm text-[#aaa]">Load the full transcript for this video.</p>
+                          <button onClick={loadTranscript} className="text-sm font-semibold px-5 py-2.5 rounded-full" style={{ background: "#2563eb", color: "white" }}>
+                            Load Transcript
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   )}
 
                   {/* Summary */}
                   {ytActiveTab === "summary" && (
-                    ytSummaryLoading ? (
-                      <div className="flex items-center gap-2 py-12 justify-center">
-                        <Loader2 size={16} className="animate-spin text-[#555]" />
-                        <span className="text-sm text-[#555]">Summarizing…</span>
-                      </div>
-                    ) : ytSummary ? (
-                      <div className="space-y-4">
-                        <p className="text-sm text-[#555] leading-relaxed whitespace-pre-line">{ytSummary}</p>
-                        <button onClick={generateYtSummary} className="text-xs text-[#555] hover:text-[#555] transition-colors">Regenerate</button>
-                      </div>
-                    ) : (
-                      <div className="py-12 text-center space-y-4">
-                        <p className="text-sm text-[#555]">Get a concise summary of the video lecture.</p>
-                        <button onClick={generateYtSummary} className="text-sm font-semibold px-5 py-2.5 rounded-full transition-opacity" style={{ background: "#2563eb", color: "white" }}>
-                          Generate Summary
-                        </button>
-                      </div>
-                    )
+                    <div className="absolute inset-0 overflow-y-auto p-6">
+                      {ytSummaryLoading ? (
+                        <div className="h-full flex flex-col items-center justify-center gap-3">
+                          <Loader2 size={18} className="animate-spin text-[#bbb]" />
+                          <span className="text-sm text-[#aaa]">Summarizing…</span>
+                        </div>
+                      ) : ytSummary ? (
+                        <div className="space-y-5">
+                          <p className="text-sm text-[#444] leading-[1.85] whitespace-pre-line">{ytSummary}</p>
+                          <button onClick={generateYtSummary} className="text-xs text-[#bbb] hover:text-[#888] transition-colors">Regenerate</button>
+                        </div>
+                      ) : (
+                        <div className="h-full flex flex-col items-center justify-center gap-4">
+                          <p className="text-sm text-[#aaa]">Get a concise summary of this video lecture.</p>
+                          <button onClick={generateYtSummary} className="text-sm font-semibold px-5 py-2.5 rounded-full" style={{ background: "#2563eb", color: "white" }}>
+                            Generate Summary
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   )}
 
                   {/* Key Points */}
                   {ytActiveTab === "keypoints" && (
-                    ytKeyPointsLoading ? (
-                      <div className="flex items-center gap-2 py-12 justify-center">
-                        <Loader2 size={16} className="animate-spin text-[#555]" />
-                        <span className="text-sm text-[#555]">Extracting key points…</span>
-                      </div>
-                    ) : ytKeyPoints ? (
-                      <div className="space-y-2.5">
-                        {ytKeyPoints.map((kp: any, i: number) => {
-                          const colorMap: Record<string, { bg: string; text: string; border: string }> = {
-                            Definition: { bg: "rgba(37,99,235,0.07)",  text: "#2563eb", border: "rgba(37,99,235,0.25)"  },
-                            Important:  { bg: "rgba(245,158,11,0.07)", text: "#d97706", border: "rgba(245,158,11,0.25)" },
-                            Formula:    { bg: "rgba(16,185,129,0.07)", text: "#059669", border: "rgba(16,185,129,0.25)" },
-                            Example:    { bg: "rgba(139,92,246,0.07)", text: "#7c3aed", border: "rgba(139,92,246,0.25)" },
-                            Warning:    { bg: "rgba(239,68,68,0.07)",  text: "#dc2626", border: "rgba(239,68,68,0.25)"  },
-                          };
-                          const c = colorMap[kp.category] ?? colorMap["Important"];
-                          return (
-                            <div key={i} className="flex gap-3 items-start rounded-xl px-4 py-3"
-                              style={{ background: c.bg, border: `1px solid ${c.border}` }}>
-                              <span className="text-[9px] font-bold uppercase tracking-widest shrink-0 mt-0.5 px-2 py-0.5 rounded-full whitespace-nowrap"
-                                style={{ background: c.border, color: c.text }}>
-                                {kp.category}
-                              </span>
-                              <p className="text-sm text-[#333] leading-relaxed">{kp.point}</p>
-                            </div>
-                          );
-                        })}
-                        <button onClick={generateYtKeyPoints} className="text-xs text-[#555] hover:text-[#111110] transition-colors pt-1">Regenerate</button>
-                      </div>
-                    ) : (
-                      <div className="py-12 text-center space-y-4">
-                        <p className="text-sm text-[#555]">Extract and highlight all key points from this video.</p>
-                        <button onClick={generateYtKeyPoints} className="text-sm font-semibold px-5 py-2.5 rounded-full transition-opacity" style={{ background: "#2563eb", color: "white" }}>
-                          Extract Key Points
-                        </button>
-                      </div>
-                    )
+                    <div className="absolute inset-0 overflow-y-auto p-6">
+                      {ytKeyPointsLoading ? (
+                        <div className="h-full flex flex-col items-center justify-center gap-3">
+                          <Loader2 size={18} className="animate-spin text-[#bbb]" />
+                          <span className="text-sm text-[#aaa]">Extracting key points…</span>
+                        </div>
+                      ) : ytKeyPoints ? (
+                        <div className="space-y-2">
+                          {ytKeyPoints.map((kp: any, i: number) => {
+                            const colorMap: Record<string, { bg: string; text: string; border: string }> = {
+                              Definition: { bg: "rgba(37,99,235,0.06)",  text: "#2563eb", border: "rgba(37,99,235,0.2)"  },
+                              Important:  { bg: "rgba(245,158,11,0.06)", text: "#d97706", border: "rgba(245,158,11,0.2)" },
+                              Formula:    { bg: "rgba(16,185,129,0.06)", text: "#059669", border: "rgba(16,185,129,0.2)" },
+                              Example:    { bg: "rgba(139,92,246,0.06)", text: "#7c3aed", border: "rgba(139,92,246,0.2)" },
+                              Warning:    { bg: "rgba(239,68,68,0.06)",  text: "#dc2626", border: "rgba(239,68,68,0.2)"  },
+                            };
+                            const c = colorMap[kp.category] ?? colorMap["Important"];
+                            return (
+                              <div key={i} className="flex gap-3 items-start rounded-xl px-4 py-3" style={{ background: c.bg }}>
+                                <span className="text-[9px] font-bold uppercase tracking-widest shrink-0 mt-0.5 px-2 py-0.5 rounded-full whitespace-nowrap" style={{ background: c.border, color: c.text }}>
+                                  {kp.category}
+                                </span>
+                                <p className="text-sm text-[#333] leading-relaxed">{kp.point}</p>
+                              </div>
+                            );
+                          })}
+                          <button onClick={generateYtKeyPoints} className="text-xs text-[#bbb] hover:text-[#888] transition-colors pt-1">Regenerate</button>
+                        </div>
+                      ) : (
+                        <div className="h-full flex flex-col items-center justify-center gap-4">
+                          <p className="text-sm text-[#aaa]">Extract and highlight all key points from this video.</p>
+                          <button onClick={generateYtKeyPoints} className="text-sm font-semibold px-5 py-2.5 rounded-full" style={{ background: "#2563eb", color: "white" }}>
+                            Extract Key Points
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   )}
 
-                  {/* Quiz — inline */}
+                  {/* Quiz */}
                   {ytActiveTab === "quiz" && (
-                    ytInlineQuizLoading ? (
-                      <div className="flex items-center gap-2 py-12 justify-center">
-                        <Loader2 size={16} className="animate-spin text-[#555]" />
-                        <span className="text-sm text-[#555]">Generating quiz…</span>
-                      </div>
-                    ) : ytInlineQuiz ? (
-                      <div className="space-y-3">
-                        {ytInlineQuiz.map((q: any, i: number) => {
-                          const revealed = ytQuizRevealed.has(i);
-                          return (
-                            <div key={i} className="rounded-xl border overflow-hidden"
-                              style={{ borderColor: revealed ? "#2563eb" : "rgba(0,0,0,0.08)" }}>
-                              <div className="px-4 py-3 text-sm font-medium text-[#111110]"
-                                style={{ background: revealed ? "rgba(37,99,235,0.05)" : "rgba(0,0,0,0.02)" }}>
-                                <span className="text-[#2563eb] font-bold mr-2">Q{i + 1}.</span>{q.question}
+                    <div className="absolute inset-0 overflow-y-auto p-6">
+                      {ytInlineQuizLoading ? (
+                        <div className="h-full flex flex-col items-center justify-center gap-3">
+                          <Loader2 size={18} className="animate-spin text-[#bbb]" />
+                          <span className="text-sm text-[#aaa]">Generating quiz…</span>
+                        </div>
+                      ) : ytInlineQuiz ? (
+                        <div className="space-y-3">
+                          {ytInlineQuiz.map((q: any, i: number) => {
+                            const revealed = ytQuizRevealed.has(i);
+                            return (
+                              <div key={i} className="rounded-xl border overflow-hidden" style={{ borderColor: revealed ? "rgba(37,99,235,0.3)" : "rgba(0,0,0,0.07)" }}>
+                                <div className="px-4 py-3 text-sm font-medium text-[#111110]" style={{ background: revealed ? "rgba(37,99,235,0.04)" : "rgba(0,0,0,0.02)" }}>
+                                  <span className="text-[#2563eb] font-bold mr-2">Q{i + 1}.</span>{q.question}
+                                </div>
+                                <div className="px-4 pb-3 pt-2 space-y-1.5 bg-white">
+                                  {(q.options ?? []).map((opt: string, j: number) => {
+                                    const letter = ["A","B","C","D"][j];
+                                    const isCorrect = revealed && letter === q.answer;
+                                    return (
+                                      <div key={j} className="text-sm px-3 py-2 rounded-lg flex items-center gap-2"
+                                        style={{ background: isCorrect ? "rgba(16,185,129,0.08)" : "rgba(0,0,0,0.025)", color: isCorrect ? "#059669" : "#555", fontWeight: isCorrect ? 600 : 400 }}>
+                                        {isCorrect && <CheckCircle size={12} className="shrink-0" />}
+                                        {opt}
+                                      </div>
+                                    );
+                                  })}
+                                  {revealed && q.explanation && (
+                                    <p className="text-xs text-[#888] mt-2 px-1 leading-relaxed">{q.explanation}</p>
+                                  )}
+                                  {!revealed && (
+                                    <button onClick={() => setYtQuizRevealed(p => { const s = new Set(p); s.add(i); return s; })}
+                                      className="text-xs font-semibold text-[#2563eb] mt-1 px-1 hover:opacity-70 transition-opacity">
+                                      Reveal answer →
+                                    </button>
+                                  )}
+                                </div>
                               </div>
-                              <div className="px-4 pb-3 pt-2 space-y-1.5 bg-white">
-                                {(q.options ?? []).map((opt: string, j: number) => {
-                                  const letter = ["A","B","C","D"][j];
-                                  const isCorrect = revealed && letter === q.answer;
-                                  return (
-                                    <div key={j} className="text-sm px-3 py-2 rounded-lg flex items-center gap-2"
-                                      style={{
-                                        background: isCorrect ? "rgba(16,185,129,0.1)" : "rgba(0,0,0,0.03)",
-                                        color: isCorrect ? "#059669" : "#555",
-                                        fontWeight: isCorrect ? 600 : 400,
-                                      }}>
-                                      {isCorrect && <CheckCircle size={12} className="shrink-0" />}
-                                      {opt}
-                                    </div>
-                                  );
-                                })}
-                                {revealed && q.explanation && (
-                                  <p className="text-xs text-[#666] mt-1.5 px-1 leading-relaxed italic">{q.explanation}</p>
-                                )}
-                                {!revealed && (
-                                  <button onClick={() => setYtQuizRevealed(p => { const s = new Set(p); s.add(i); return s; })}
-                                    className="text-xs font-semibold text-[#2563eb] mt-1 px-1 hover:opacity-70 transition-opacity">
-                                    Reveal answer →
-                                  </button>
-                                )}
-                              </div>
-                            </div>
-                          );
-                        })}
-                        <button onClick={generateYtInlineQuiz} className="text-xs text-[#555] hover:text-[#111110] transition-colors pt-1">Regenerate</button>
-                      </div>
-                    ) : (
-                      <div className="py-12 text-center space-y-4">
-                        <p className="text-sm text-[#555]">Generate quiz questions from this video.</p>
-                        <button onClick={generateYtInlineQuiz} className="text-sm font-semibold px-5 py-2.5 rounded-full transition-opacity" style={{ background: "#2563eb", color: "white" }}>
-                          Generate Quiz
-                        </button>
-                      </div>
-                    )
+                            );
+                          })}
+                          <button onClick={generateYtInlineQuiz} className="text-xs text-[#bbb] hover:text-[#888] transition-colors pt-1">Regenerate</button>
+                        </div>
+                      ) : (
+                        <div className="h-full flex flex-col items-center justify-center gap-4">
+                          <p className="text-sm text-[#aaa]">Generate quiz questions from this video.</p>
+                          <button onClick={generateYtInlineQuiz} className="text-sm font-semibold px-5 py-2.5 rounded-full" style={{ background: "#2563eb", color: "white" }}>
+                            Generate Quiz
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   )}
 
                   {/* Flashcards */}
                   {ytActiveTab === "flashcards" && (
-                    ytFlashcardsLoading ? (
-                      <div className="flex items-center gap-2 py-12 justify-center">
-                        <Loader2 size={16} className="animate-spin text-[#555]" />
-                        <span className="text-sm text-[#555]">Generating flashcards…</span>
-                      </div>
-                    ) : ytFlashcards ? (
-                      <div className="space-y-4">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          {ytFlashcards.map((fc: any, i: number) => (
-                            <div key={i} onClick={() => setYtFlipped(p => { const s = new Set(p); s.has(i) ? s.delete(i) : s.add(i); return s; })}
-                              className="cursor-pointer rounded-xl p-4 min-h-[110px] flex flex-col items-center justify-center text-center transition-all"
-                              style={{
-                                background: ytFlipped.has(i) ? "rgba(37,99,235,0.08)" : "white",
-                                border: `1.5px solid ${ytFlipped.has(i) ? "#3b82f6" : "rgba(0,0,0,0.08)"}`,
-                              }}>
-                              <div className="text-[10px] uppercase tracking-widest mb-2" style={{ color: ytFlipped.has(i) ? "#2563eb" : "#999" }}>{ytFlipped.has(i) ? "Answer" : "Question"}</div>
-                              <p className="text-sm leading-relaxed" style={{ color: ytFlipped.has(i) ? "#1e3a8a" : "#555" }}>{ytFlipped.has(i) ? fc.back : fc.front}</p>
-                            </div>
-                          ))}
+                    <div className="absolute inset-0 overflow-y-auto p-6">
+                      {ytFlashcardsLoading ? (
+                        <div className="h-full flex flex-col items-center justify-center gap-3">
+                          <Loader2 size={18} className="animate-spin text-[#bbb]" />
+                          <span className="text-sm text-[#aaa]">Generating flashcards…</span>
                         </div>
-                        <button onClick={generateYtFlashcards} className="text-xs text-[#555] hover:text-[#555] transition-colors">Regenerate</button>
-                      </div>
-                    ) : (
-                      <div className="py-12 text-center space-y-4">
-                        <p className="text-sm text-[#555]">Create flashcards from key concepts in the video.</p>
-                        <button onClick={generateYtFlashcards} className="text-sm font-semibold px-5 py-2.5 rounded-full transition-opacity" style={{ background: "#2563eb", color: "white" }}>
-                          Generate Flashcards
-                        </button>
-                      </div>
-                    )
+                      ) : ytFlashcards ? (
+                        <div className="space-y-4">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            {ytFlashcards.map((fc: any, i: number) => (
+                              <div key={i} onClick={() => setYtFlipped(p => { const s = new Set(p); s.has(i) ? s.delete(i) : s.add(i); return s; })}
+                                className="cursor-pointer rounded-xl p-4 min-h-[100px] flex flex-col items-center justify-center text-center transition-all select-none"
+                                style={{ background: ytFlipped.has(i) ? "rgba(37,99,235,0.06)" : "rgba(0,0,0,0.02)", border: `1px solid ${ytFlipped.has(i) ? "rgba(37,99,235,0.25)" : "rgba(0,0,0,0.07)"}` }}>
+                                <div className="text-[10px] uppercase tracking-widest mb-2" style={{ color: ytFlipped.has(i) ? "#2563eb" : "#bbb" }}>{ytFlipped.has(i) ? "Answer" : "Question"}</div>
+                                <p className="text-sm leading-relaxed" style={{ color: ytFlipped.has(i) ? "#1e3a8a" : "#555" }}>{ytFlipped.has(i) ? fc.back : fc.front}</p>
+                              </div>
+                            ))}
+                          </div>
+                          <button onClick={generateYtFlashcards} className="text-xs text-[#bbb] hover:text-[#888] transition-colors">Regenerate</button>
+                        </div>
+                      ) : (
+                        <div className="h-full flex flex-col items-center justify-center gap-4">
+                          <p className="text-sm text-[#aaa]">Create flashcards from key concepts in this video.</p>
+                          <button onClick={generateYtFlashcards} className="text-sm font-semibold px-5 py-2.5 rounded-full" style={{ background: "#2563eb", color: "white" }}>
+                            Generate Flashcards
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   )}
 
                   {/* Take Note */}
                   {ytActiveTab === "note" && (
-                    <div className="space-y-4">
-                      <p className="text-sm text-[#555]">Jot down your notes. Save to send them to your notes board.</p>
+                    <div className="absolute inset-0 flex flex-col p-6 gap-3">
                       <textarea
                         value={ytNote}
                         onChange={e => { setYtNote(e.target.value); setYtNoteNaming(false); }}
-                        rows={10}
                         placeholder="Start typing your notes…"
-                        className="w-full bg-white border border-[rgba(0,0,0,0.08)] focus:border-[rgba(0,0,0,0.1)] rounded-xl px-4 py-3 text-sm text-[#555] placeholder-[rgba(0,0,0,0.3)] outline-none resize-none leading-relaxed"
+                        className="flex-1 w-full bg-transparent text-sm text-[#444] placeholder-[rgba(0,0,0,0.25)] outline-none resize-none leading-[1.85]"
                       />
-                      {ytNoteSaved && (
-                        <div className="flex items-center gap-2 text-sm text-green-600">
-                          <CheckCircle size={14} /> Saved!
-                        </div>
-                      )}
-                      {ytNoteNaming ? (
-                        <div className="flex gap-2">
-                          <input
-                            autoFocus
-                            value={ytNoteName}
-                            onChange={e => setYtNoteName(e.target.value)}
-                            onKeyDown={e => e.key === "Enter" && saveYtNote(ytNoteName)}
-                            placeholder="Name this note…"
-                            className="flex-1 bg-white border border-[rgba(0,0,0,0.08)] focus:border-[rgba(0,0,0,0.1)] rounded-xl px-4 py-2.5 text-sm text-[#111110] placeholder-[rgba(0,0,0,0.3)] outline-none"
-                          />
-                          <button onClick={() => saveYtNote(ytNoteName)} disabled={!ytNoteName.trim()}
-                            className="text-sm font-semibold px-5 py-2.5 rounded-xl transition-opacity disabled:opacity-40 shrink-0" style={{ background: "#2563eb", color: "white" }}>
-                            Save
+                      <div className="flex items-center gap-2 shrink-0 pt-2 border-t border-[rgba(0,0,0,0.06)]">
+                        {ytNoteSaved ? (
+                          <div className="flex items-center gap-1.5 text-sm text-green-600"><CheckCircle size={13} /> Saved!</div>
+                        ) : ytNoteNaming ? (
+                          <>
+                            <input autoFocus value={ytNoteName} onChange={e => setYtNoteName(e.target.value)}
+                              onKeyDown={e => e.key === "Enter" && saveYtNote(ytNoteName)}
+                              placeholder="Name this note…"
+                              className="flex-1 bg-[rgba(0,0,0,0.03)] border border-[rgba(0,0,0,0.08)] focus:border-[rgba(0,0,0,0.15)] rounded-lg px-3 py-2 text-sm text-[#111110] placeholder-[rgba(0,0,0,0.3)] outline-none" />
+                            <button onClick={() => saveYtNote(ytNoteName)} disabled={!ytNoteName.trim()}
+                              className="text-sm font-semibold px-4 py-2 rounded-lg disabled:opacity-40" style={{ background: "#2563eb", color: "white" }}>Save</button>
+                            <button onClick={() => { setYtNoteNaming(false); setYtNoteName(""); }} className="text-sm text-[#999] hover:text-[#555] px-2 py-2 transition-colors">Cancel</button>
+                          </>
+                        ) : (
+                          <button onClick={() => setYtNoteNaming(true)} disabled={!ytNote.trim()}
+                            className="text-sm font-semibold px-4 py-2 rounded-lg disabled:opacity-40" style={{ background: "#2563eb", color: "white" }}>
+                            Save to Notes
                           </button>
-                          <button onClick={() => { setYtNoteNaming(false); setYtNoteName(""); }}
-                            className="text-sm text-[#555] hover:text-[#111110] px-3 py-2.5 transition-colors shrink-0">
-                            Cancel
-                          </button>
-                        </div>
-                      ) : (
-                        <button onClick={() => setYtNoteNaming(true)} disabled={!ytNote.trim()}
-                          className="text-sm font-semibold px-5 py-2.5 rounded-full transition-opacity disabled:opacity-40" style={{ background: "#2563eb", color: "white" }}>
-                          Save to Notes
-                        </button>
-                      )}
+                        )}
+                      </div>
                     </div>
                   )}
 
                   {/* Chatbot */}
                   {ytActiveTab === "chatbot" && (
-                    <div className="flex flex-col gap-4" style={{ minHeight: 300 }}>
-                      <p className="text-sm text-[#555]">Ask anything about this video.</p>
-                      <div className="flex-1 space-y-3 max-h-64 overflow-y-auto">
+                    <div className="absolute inset-0 flex flex-col">
+                      <div className="flex-1 overflow-y-auto px-6 pt-5 pb-3 space-y-3">
+                        {ytMessages.length === 0 && !ytChatLoading && (
+                          <div className="h-full flex flex-col items-center justify-center gap-2 py-12">
+                            <p className="text-sm text-[#bbb]">Ask anything about this video.</p>
+                          </div>
+                        )}
                         {ytMessages.map((m, i) => (
                           <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
-                            <span className="text-sm px-4 py-2.5 rounded-xl max-w-[85%] leading-relaxed"
-                              style={m.role === "user"
-                                ? { background: "#2563eb", color: "white" }
-                                : { background: "#f3f4f6", color: "#374151" }
-                              }>{m.content}</span>
+                            <span className="text-sm px-4 py-2.5 max-w-[85%] leading-relaxed"
+                              style={{
+                                background: m.role === "user" ? "#2563eb" : "rgba(0,0,0,0.04)",
+                                color: m.role === "user" ? "white" : "#333",
+                                borderRadius: m.role === "user" ? "18px 18px 4px 18px" : "18px 18px 18px 4px",
+                              }}>{m.content}</span>
                           </div>
                         ))}
                         {ytChatLoading && (
                           <div className="flex justify-start">
-                            <span className="text-sm px-4 py-2.5 rounded-xl bg-white text-[#555]">
-                              <Loader2 size={12} className="animate-spin inline" />
+                            <span className="px-4 py-3 rounded-2xl rounded-bl-sm" style={{ background: "rgba(0,0,0,0.04)" }}>
+                              <Loader2 size={13} className="animate-spin text-[#bbb]" />
                             </span>
                           </div>
                         )}
                       </div>
-                      <div className="flex gap-2 pt-3 border-t border-[rgba(0,0,0,0.08)]">
+                      <div className="flex gap-2 px-4 pb-4 pt-3 border-t border-[rgba(0,0,0,0.06)] shrink-0">
                         <input
                           value={ytChatInput}
                           onChange={e => setYtChatInput(e.target.value)}
                           onKeyDown={e => e.key === "Enter" && !e.shiftKey && sendYtChat()}
                           placeholder="Ask a question…"
-                          className="flex-1 bg-white border border-[rgba(0,0,0,0.08)] focus:border-[rgba(0,0,0,0.1)] rounded-xl px-4 py-3 text-sm text-[#555] placeholder-[rgba(0,0,0,0.3)] outline-none"
+                          className="flex-1 bg-[rgba(0,0,0,0.03)] border border-[rgba(0,0,0,0.08)] focus:border-[rgba(0,0,0,0.15)] rounded-xl px-4 py-2.5 text-sm text-[#333] placeholder-[rgba(0,0,0,0.3)] outline-none"
                         />
                         <button onClick={sendYtChat} disabled={!ytChatInput.trim() || ytChatLoading}
-                          className="text-sm font-semibold px-4 py-3 rounded-xl transition-opacity disabled:opacity-40" style={{ background: "#2563eb", color: "white" }}>
+                          className="text-sm font-semibold px-4 py-2.5 rounded-xl disabled:opacity-40" style={{ background: "#2563eb", color: "white" }}>
                           Send
                         </button>
                       </div>
