@@ -15,7 +15,6 @@
     "@tiptap/extension-placeholder": "^3.22.5",
     "@tiptap/react": "^3.22.5",
     "@tiptap/starter-kit": "^3.22.5",
-    "@types/three": "^0.184.1",
     "axios": "^1.7.7",
     "date-fns": "^4.1.0",
     "katex": "^0.16.45",
@@ -27,8 +26,7 @@
     "react-markdown": "^10.1.0",
     "rehype-katex": "^7.0.1",
     "remark-math": "^6.0.0",
-    "swr": "^2.2.5",
-    "three": "^0.184.0"
+    "swr": "^2.2.5"
   },
   "devDependencies": {
     "@tailwindcss/typography": "^0.5.19",

@@ -16,7 +16,6 @@ import { PricingSection } from "@/components/PricingSection";
 import { ScrollReveal } from "@/components/ScrollReveal";
 import { YoutubeFeatureDemo } from "@/components/YoutubeFeatureDemo";
 import { FilesFeatureDemo } from "@/components/FilesFeatureDemo";
-import { HeroSphere } from "@/components/HeroSphere";
 
 export default async function LandingPage() {
   const { userId } = await auth();
@@ -88,13 +87,6 @@ export default async function LandingPage() {
           </Link>
         </div>
         <span className="text-sm" style={{ color: "rgba(255,255,255,0.4)" }}>Free to start · No credit card needed</span>
-      </div>
-
-      {/* 3D Hero Sphere */}
-      <div style={{ position: "relative", zIndex: 1, width: "100%", maxWidth: 520, margin: "0 auto", height: 420 }}>
-        <HeroSphere />
-        {/* centre glow */}
-        <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse at 50% 50%, rgba(37,99,235,0.18) 0%, transparent 70%)", pointerEvents: "none" }} />
       </div>
 
       {/* Wave divider */}
