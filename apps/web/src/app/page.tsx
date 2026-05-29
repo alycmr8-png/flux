@@ -16,8 +16,7 @@ import { PricingSection } from "@/components/PricingSection";
 import { ScrollReveal } from "@/components/ScrollReveal";
 import { YoutubeFeatureDemo } from "@/components/YoutubeFeatureDemo";
 import { FilesFeatureDemo } from "@/components/FilesFeatureDemo";
-import dynamicImport from "next/dynamic";
-const HeroSphere = dynamicImport(() => import("@/components/HeroSphere").then(m => ({ default: m.HeroSphere })), { ssr: false });
+import { HeroSphere } from "@/components/HeroSphere";
 
 export default async function LandingPage() {
   const { userId } = await auth();
