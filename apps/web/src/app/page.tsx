@@ -74,7 +74,7 @@ export default async function LandingPage() {
           </span>
         </div>
         <h1 className="text-5xl md:text-7xl mb-6 leading-[1.05]" style={{ fontFamily: "’Plus Jakarta Sans’, sans-serif", fontWeight: 800, color: "white", letterSpacing: "-0.03em" }}>
-          Record the lecture.<br /><span style={{ color: "#3b82f6" }}>Get the A.</span>
+          Everything to<br /><span style={{ color: "#3b82f6" }}>ace the semester.</span>
         </h1>
         <p className="text-base md:text-lg mb-10 leading-relaxed max-w-xl" style={{ color: "rgba(255,255,255,0.65)" }}>
           Flux turns your lecture recordings into cheat sheets, quizzes, and study books — automatically.
