@@ -103,7 +103,16 @@ export default async function LandingPage() {
       </ScrollReveal>
 
       {/* Recording animation demo */}
-      <ScrollReveal className="flex justify-center px-4 md:px-12 pb-20" delay={150}>
+      <ScrollReveal className="flex flex-col items-center px-4 md:px-12 pb-20 gap-8" delay={150}>
+        <div className="text-center max-w-2xl">
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: "#3b82f6", marginBottom: 14 }}>What you get</div>
+          <h2 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: "clamp(30px, 5vw, 52px)", color: "white", letterSpacing: "-0.03em", lineHeight: 1.1, marginBottom: 16 }}>
+            Everything to ace the semester.
+          </h2>
+          <p style={{ fontSize: 18, color: "rgba(255,255,255,0.5)", lineHeight: 1.65 }}>
+            One recording. Cheat sheets, quizzes, study books — generated instantly.
+          </p>
+        </div>
         <RecordingDemo />
       </ScrollReveal>
 

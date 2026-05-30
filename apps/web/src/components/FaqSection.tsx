@@ -33,11 +33,11 @@ export function FaqSection() {
               onClick={() => setOpen(open === i ? null : i)}
               className="w-full flex items-center justify-between px-6 py-4 text-left gap-4"
             >
-              <span style={{ fontSize: 15, fontWeight: 500, color: "white" }}>{item.q}</span>
+              <span style={{ fontSize: 18, fontWeight: 600, color: "white" }}>{item.q}</span>
               <ChevronDown size={16} style={{ color: "rgba(255,255,255,0.4)", flexShrink: 0, transform: open === i ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }} />
             </button>
             {open === i && (
-              <div className="px-6 pb-5" style={{ fontSize: 14, color: "rgba(255,255,255,0.6)", lineHeight: 1.7 }}>
+              <div className="px-6 pb-5" style={{ fontSize: 16, color: "rgba(255,255,255,0.6)", lineHeight: 1.75 }}>
                 {item.a}
               </div>
             )}

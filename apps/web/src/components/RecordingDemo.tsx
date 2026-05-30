@@ -81,7 +81,7 @@ export function RecordingDemo() {
   const fmt = (s: number) => `00:0${Math.min(s, 9)}`;
 
   return (
-    <div className="w-full select-none" style={{ maxWidth: 680 }}>
+    <div className="w-full select-none" style={{ maxWidth: 900 }}>
 
       <div
         className="rounded-2xl overflow-hidden"
