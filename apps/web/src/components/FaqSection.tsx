@@ -20,7 +20,7 @@ export function FaqSection() {
     <section id="faq" className="px-6 md:px-16 py-20 md:py-28 max-w-3xl mx-auto">
       <div className="text-center mb-12">
         <div className="text-sm uppercase tracking-[0.2em] font-semibold mb-3" style={{ color: "#3b82f6" }}>FAQ</div>
-        <h2 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: "clamp(28px, 5vw, 42px)", color: "white", letterSpacing: "-0.02em" }}>
+        <h2 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: "clamp(36px, 6vw, 56px)", color: "white", letterSpacing: "-0.03em" }}>
           Frequently asked questions
         </h2>
       </div>

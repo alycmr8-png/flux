@@ -197,7 +197,7 @@ function ClassList({ onSelect, onCreate }: { onSelect: (c: any) => void; onCreat
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {courses.map((c) => (
             <div key={c.id} className="relative group/card">
               {confirmDeleteId === c.id ? (
@@ -1316,7 +1316,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
 
   return (
     <div className="w-full min-h-full flex justify-center">
-    <div className="w-full max-w-5xl px-6 py-8">
+    <div className="w-full max-w-5xl px-3 py-5 md:px-6 md:py-8">
       {/* Header */}
       <div className="mb-8">
         <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "#3b82f6", marginBottom: 14 }}>

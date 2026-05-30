@@ -99,10 +99,10 @@ export default function DashboardHome() {
   }
 
   return (
-    <div className="flex gap-8 h-full">
+    <div className="flex flex-col lg:flex-row gap-8 h-full">
 
       {/* LEFT — main content */}
-      <div className="flex-1 min-w-0 py-9 pl-10 pr-0">
+      <div className="flex-1 min-w-0 py-6 px-0 md:py-9 md:pl-10 md:pr-0">
 
         {/* Header */}
         <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "#3b82f6", marginBottom: 6 }}>Overview</div>
@@ -111,7 +111,7 @@ export default function DashboardHome() {
         </h1>
 
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
           {[
             { label: "Lectures recorded", value: isLoading ? "..." : (p?.lectureCount ?? "0") },
             { label: "Avg quiz score",    value: isLoading ? "..." : (p?.avgScore ? `${p.avgScore}%` : "—") },
@@ -251,7 +251,7 @@ export default function DashboardHome() {
 
         {/* Quick actions */}
         <p className="text-xs uppercase tracking-widest mb-3" style={{ color: "#3b82f6" }}>Quick actions</p>
-        <div className="grid grid-cols-4 gap-3 mb-8">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
           {ACTIONS.map(({ icon: Icon, label, href, color }) => (
             <Link
               key={label}
@@ -271,7 +271,7 @@ export default function DashboardHome() {
         {recentVideos.length > 0 && (
           <>
             <p className="text-xs uppercase tracking-widest mb-3" style={{ color: "#3b82f6" }}>Recent Videos</p>
-            <div className="grid grid-cols-4 gap-3 mb-8">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
               {recentVideos.slice(0, 8).map((v: any) => (
                 <div key={v.videoId ?? v.title} className="relative group/card">
                 {v.lectureId && (
@@ -345,9 +345,9 @@ export default function DashboardHome() {
         )}
       </div>
 
-      {/* RIGHT — upcoming events panel */}
+      {/* RIGHT — upcoming events panel (hidden on mobile) */}
       <div
-        className="w-80 shrink-0 flex flex-col py-9 pr-8"
+        className="hidden lg:flex w-80 shrink-0 flex-col py-9 pr-8"
         style={{ borderLeft: "1px solid rgba(255,255,255,0.07)" }}
       >
         {/* Panel header */}
