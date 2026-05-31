@@ -3,10 +3,58 @@ import { useState } from "react";
 import useSWR from "swr";
 import { useApiSWRFetcher, useApiFetch } from "@/lib/apiFetch";
 import { format } from "date-fns";
-import { Pencil, Check, X, ChevronDown, ChevronRight } from "lucide-react";
+import { Pencil, Check, X, ChevronDown, ChevronRight, Flame, BookOpen, Mic2, TrendingUp } from "lucide-react";
 
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
+// ── Circular progress ring ────────────────────────────────────────────────────
+function RingChart({ value, size = 96, stroke = 8 }: { value: number; size?: number; stroke?: number }) {
+  const r = (size - stroke) / 2;
+  const circ = 2 * Math.PI * r;
+  const offset = circ * (1 - Math.min(value, 100) / 100);
+  const color = value >= 70 ? "#22c55e" : value >= 50 ? "#f97316" : "#ef4444";
+
+  return (
+    <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
+      <svg width={size} height={size} style={{ transform: "rotate(-90deg)" }}>
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth={stroke} />
+        <circle
+          cx={size / 2} cy={size / 2} r={r} fill="none"
+          stroke={color} strokeWidth={stroke}
+          strokeDasharray={circ} strokeDashoffset={offset}
+          strokeLinecap="round"
+          style={{ transition: "stroke-dashoffset 1s cubic-bezier(0.4,0,0.2,1)" }}
+        />
+      </svg>
+      <div className="absolute flex flex-col items-center">
+        <span style={{ fontSize: 22, fontWeight: 800, color: "white", lineHeight: 1 }}>{value}%</span>
+      </div>
+    </div>
+  );
+}
+
+// ── Horizontal bar ─────────────────────────────────────────────────────────────
+function RetentionBar({ name, code, avg }: { name: string; code: string; avg: number }) {
+  const color = avg >= 70 ? "#22c55e" : avg >= 50 ? "#f97316" : "#ef4444";
+  const bg    = avg >= 70 ? "rgba(34,197,94,0.12)" : avg >= 50 ? "rgba(249,115,22,0.12)" : "rgba(239,68,68,0.12)";
+
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded" style={{ background: bg, color }}>{code}</span>
+          <span className="text-sm" style={{ color: "rgba(255,255,255,0.7)" }}>{name}</span>
+        </div>
+        <span className="text-sm font-bold tabular-nums" style={{ color }}>{avg}%</span>
+      </div>
+      <div className="h-2 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.07)" }}>
+        <div className="h-2 rounded-full transition-all duration-1000 ease-out" style={{ width: `${avg}%`, background: `linear-gradient(90deg, ${color}88, ${color})` }} />
+      </div>
+    </div>
+  );
+}
+
+// ── Lecture row ───────────────────────────────────────────────────────────────
 function LectureRow({ lecture, onRename }: { lecture: any; onRename: (id: string, title: string) => Promise<void> }) {
   const [editing, setEditing] = useState(false);
   const [val, setVal] = useState(lecture.title);
@@ -21,34 +69,34 @@ function LectureRow({ lecture, onRename }: { lecture: any; onRename: (id: string
   }
 
   return (
-    <div className="flex items-center justify-between py-2.5 border-b last:border-0 group" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
-      <div className="flex-1 min-w-0 mr-3">
-        {editing ? (
-          <input
-            autoFocus value={val}
-            onChange={e => setVal(e.target.value)}
-            onKeyDown={e => { if (e.key === "Enter") save(); if (e.key === "Escape") setEditing(false); }}
-            className="w-full rounded-lg px-2 py-1 text-sm outline-none border"
-            style={{ background: "rgba(255,255,255,0.06)", borderColor: "rgba(255,255,255,0.12)", color: "white" }}
-          />
-        ) : (
-          <div className="text-sm truncate" style={{ color: "white" }}>{lecture.title}</div>
-        )}
-        <div className="flex items-center gap-2 mt-0.5">
-          <span className="text-xs capitalize" style={{ color: "rgba(255,255,255,0.35)" }}>{lecture.status}</span>
-          <span className="text-xs" style={{ color: "rgba(255,255,255,0.2)" }}>·</span>
-          <span className="text-xs" style={{ color: "rgba(255,255,255,0.35)" }}>{format(new Date(lecture.recordedAt), "MMM d, yyyy")}</span>
+    <div className="flex items-center justify-between py-2.5 border-b last:border-0 group" style={{ borderColor: "rgba(255,255,255,0.05)" }}>
+      <div className="flex items-center gap-3 flex-1 min-w-0 mr-3">
+        <div className="w-6 h-6 rounded-md flex items-center justify-center shrink-0" style={{ background: "rgba(255,255,255,0.07)" }}>
+          <Mic2 size={11} style={{ color: "rgba(255,255,255,0.4)" }} />
+        </div>
+        <div className="flex-1 min-w-0">
+          {editing ? (
+            <input autoFocus value={val} onChange={e => setVal(e.target.value)}
+              onKeyDown={e => { if (e.key === "Enter") save(); if (e.key === "Escape") setEditing(false); }}
+              className="w-full rounded-lg px-2 py-1 text-sm outline-none border"
+              style={{ background: "rgba(255,255,255,0.06)", borderColor: "rgba(255,255,255,0.12)", color: "white" }} />
+          ) : (
+            <div className="text-sm truncate" style={{ color: "white" }}>{lecture.title}</div>
+          )}
+          <div className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.3)" }}>
+            {format(new Date(lecture.recordedAt), "MMM d, yyyy")}
+          </div>
         </div>
       </div>
       <div className="flex items-center gap-1 shrink-0">
         {editing ? (
           <>
-            <button onClick={save} disabled={saving} className="p-1.5 transition-colors" style={{ color: "white" }}><Check size={13} /></button>
-            <button onClick={() => { setEditing(false); setVal(lecture.title); }} className="p-1.5 transition-colors" style={{ color: "rgba(255,255,255,0.4)" }}><X size={13} /></button>
+            <button onClick={save} disabled={saving} className="p-1.5" style={{ color: "#22c55e" }}><Check size={13} /></button>
+            <button onClick={() => { setEditing(false); setVal(lecture.title); }} className="p-1.5" style={{ color: "rgba(255,255,255,0.4)" }}><X size={13} /></button>
           </>
         ) : (
           <button onClick={() => setEditing(true)} className="p-1.5 opacity-0 group-hover:opacity-100 transition-all" style={{ color: "rgba(255,255,255,0.3)" }}>
-            <Pencil size={13} />
+            <Pencil size={12} />
           </button>
         )}
       </div>
@@ -56,22 +104,27 @@ function LectureRow({ lecture, onRename }: { lecture: any; onRename: (id: string
   );
 }
 
+// ── Class accordion ───────────────────────────────────────────────────────────
 function ClassSection({ cls, onRename }: { cls: any; onRename: (id: string, title: string) => Promise<void> }) {
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
+  const count = cls.lectures.length;
+
   return (
-    <div className="rounded-2xl overflow-hidden mb-3 border" style={{ background: "rgba(255,255,255,0.06)", borderColor: "rgba(255,255,255,0.08)" }}>
-      <button onClick={() => setOpen(!open)} className="w-full flex items-center justify-between px-5 py-4 transition-colors hover:bg-white/5">
+    <div className="rounded-2xl overflow-hidden border" style={{ background: "rgba(255,255,255,0.04)", borderColor: "rgba(255,255,255,0.07)" }}>
+      <button onClick={() => setOpen(!open)} className="w-full flex items-center justify-between px-5 py-4 hover:bg-white/5 transition-colors">
         <div className="flex items-center gap-3">
           {open ? <ChevronDown size={14} style={{ color: "rgba(255,255,255,0.4)" }} /> : <ChevronRight size={14} style={{ color: "rgba(255,255,255,0.4)" }} />}
           <span className="text-sm font-medium" style={{ color: "white" }}>{cls.name}</span>
-          <span className="text-[10px] rounded-full px-2 py-0.5" style={{ background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.4)" }}>{cls.lectures.length}</span>
+          <span className="text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full" style={{ background: "rgba(37,99,235,0.15)", color: "#60a5fa" }}>
+            {count} {count === 1 ? "lecture" : "lectures"}
+          </span>
         </div>
-        <span className="text-xs" style={{ color: "rgba(255,255,255,0.3)" }}>{cls.code}</span>
+        <span className="text-xs font-mono" style={{ color: "rgba(255,255,255,0.25)" }}>{cls.code}</span>
       </button>
       {open && (
-        <div className="px-5 pb-3 border-t" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
-          {cls.lectures.length === 0
-            ? <p className="text-xs py-3" style={{ color: "rgba(255,255,255,0.35)" }}>No recordings yet.</p>
+        <div className="px-5 pb-3 border-t" style={{ borderColor: "rgba(255,255,255,0.05)" }}>
+          {count === 0
+            ? <p className="text-xs py-3" style={{ color: "rgba(255,255,255,0.3)" }}>No recordings yet.</p>
             : cls.lectures.map((l: any) => <LectureRow key={l.id} lecture={l} onRename={onRename} />)
           }
         </div>
@@ -80,6 +133,7 @@ function ClassSection({ cls, onRename }: { cls: any; onRename: (id: string, titl
   );
 }
 
+// ── Main page ─────────────────────────────────────────────────────────────────
 export default function ProgressPage() {
   const fetcher = useApiSWRFetcher();
   const apiFetch = useApiFetch();
@@ -91,51 +145,124 @@ export default function ProgressPage() {
     await mutate();
   }
 
-  return (
-    <div className="p-8 max-w-2xl">
-      <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: 6 }}>Analytics</div>
-      <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 30, color: "white", marginBottom: 28 }}>Progress</h1>
+  const avgScore   = p?.avgScore ?? 0;
+  const streak     = p?.streak ?? 0;
+  const lectures   = p?.lectureCount ?? 0;
+  const retention: any[] = p?.courseRetention ?? [];
 
-      <div className="grid grid-cols-3 gap-4 mb-8">
-        {[
-          { label: "Lectures recorded", value: p?.lectureCount ?? "—" },
-          { label: "Avg quiz score",    value: p?.avgScore ? `${p.avgScore}%` : "—" },
-          { label: "Day streak",        value: p?.streak ?? "—" },
-        ].map((s) => (
-          <div key={s.label} className="rounded-2xl p-5 border" style={{ background: "rgba(255,255,255,0.06)", borderColor: "rgba(255,255,255,0.08)" }}>
-            <div className="font-serif text-4xl mb-1" style={{ color: "white" }}>{isLoading ? "—" : s.value}</div>
-            <div className="text-xs" style={{ color: "rgba(255,255,255,0.35)" }}>{s.label}</div>
-          </div>
-        ))}
+  return (
+    <div style={{ color: "white", maxWidth: 780 }}>
+      {/* Header */}
+      <div className="mb-8">
+        <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "#3b82f6", marginBottom: 6 }}>Analytics</div>
+        <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 30, color: "white" }}>Progress</h1>
       </div>
 
-      <p className="text-xs uppercase tracking-widest mb-4" style={{ color: "rgba(255,255,255,0.3)" }}>Recordings by class</p>
-      {isLoading && <p className="text-sm" style={{ color: "rgba(255,255,255,0.4)" }}>Loading…</p>}
-      {!isLoading && !p?.lecturesByClass?.length && (
-        <p className="text-sm" style={{ color: "rgba(255,255,255,0.4)" }}>No classes yet. Create one in the Workspace.</p>
-      )}
-      {p?.lecturesByClass?.map((cls: any) => (
-        <ClassSection key={cls.id} cls={cls} onRename={handleRename} />
-      ))}
+      {/* ── Top stat cards ── */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
 
-      {p?.courseRetention?.length > 0 && (
-        <div className="rounded-2xl p-6 mt-6 border" style={{ background: "rgba(255,255,255,0.06)", borderColor: "rgba(255,255,255,0.08)" }}>
-          <p className="text-xs uppercase tracking-widest mb-5" style={{ color: "rgba(255,255,255,0.3)" }}>Retention by course</p>
-          <div className="space-y-4">
-            {p.courseRetention.map((c: any) => (
-              <div key={c.code}>
-                <div className="flex justify-between mb-1.5">
-                  <span className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>{c.code} — {c.name}</span>
-                  <span className="text-xs" style={{ color: "white" }}>{c.avg}%</span>
-                </div>
-                <div className="h-0.5 rounded" style={{ background: "rgba(255,255,255,0.08)" }}>
-                  <div className="h-0.5 rounded" style={{ width: `${c.avg}%`, background: "rgba(255,255,255,0.5)" }} />
-                </div>
+        {/* Lectures recorded */}
+        <div className="rounded-2xl p-5 flex items-center gap-4 border" style={{ background: "rgba(37,99,235,0.1)", borderColor: "rgba(37,99,235,0.25)" }}>
+          <div className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0" style={{ background: "rgba(37,99,235,0.2)" }}>
+            <Mic2 size={20} style={{ color: "#60a5fa" }} />
+          </div>
+          <div>
+            <div style={{ fontSize: 36, fontWeight: 800, color: "white", lineHeight: 1 }}>{isLoading ? "—" : lectures}</div>
+            <div style={{ fontSize: 11, color: "rgba(255,255,255,0.45)", marginTop: 3 }}>Lectures recorded</div>
+          </div>
+        </div>
+
+        {/* Quiz average — ring chart */}
+        <div className="rounded-2xl p-5 flex items-center gap-4 border" style={{
+          background: avgScore >= 70 ? "rgba(34,197,94,0.08)" : avgScore >= 50 ? "rgba(249,115,22,0.08)" : "rgba(239,68,68,0.08)",
+          borderColor: avgScore >= 70 ? "rgba(34,197,94,0.25)" : avgScore >= 50 ? "rgba(249,115,22,0.25)" : "rgba(239,68,68,0.25)",
+        }}>
+          {isLoading ? (
+            <div className="w-24 h-24 rounded-full animate-pulse" style={{ background: "rgba(255,255,255,0.08)" }} />
+          ) : (
+            <RingChart value={avgScore} />
+          )}
+          <div>
+            <div style={{ fontSize: 14, fontWeight: 600, color: "white" }}>Avg Quiz Score</div>
+            <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", marginTop: 3 }}>
+              {avgScore >= 70 ? "Great work!" : avgScore >= 50 ? "Keep studying" : "Needs attention"}
+            </div>
+            <div className="flex items-center gap-1 mt-2">
+              <TrendingUp size={11} style={{ color: avgScore >= 70 ? "#22c55e" : "#f97316" }} />
+              <span style={{ fontSize: 10, color: avgScore >= 70 ? "#22c55e" : "#f97316" }}>
+                {avgScore >= 70 ? "Above average" : "Below average"}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Streak */}
+        <div className="rounded-2xl p-5 flex items-center gap-4 border" style={{ background: "rgba(249,115,22,0.08)", borderColor: "rgba(249,115,22,0.25)" }}>
+          <div className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 text-3xl" style={{ background: "rgba(249,115,22,0.15)" }}>
+            🔥
+          </div>
+          <div>
+            <div style={{ fontSize: 36, fontWeight: 800, color: "white", lineHeight: 1 }}>{isLoading ? "—" : streak}</div>
+            <div style={{ fontSize: 11, color: "rgba(255,255,255,0.45)", marginTop: 3 }}>Day streak</div>
+            {streak >= 3 && <div style={{ fontSize: 10, color: "#f97316", marginTop: 4 }}>🔥 On fire!</div>}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Retention chart ── */}
+      {retention.length > 0 && (
+        <div className="rounded-2xl p-6 mb-6 border" style={{ background: "rgba(255,255,255,0.04)", borderColor: "rgba(255,255,255,0.08)" }}>
+          <div className="flex items-center gap-2 mb-6">
+            <BookOpen size={14} style={{ color: "#3b82f6" }} />
+            <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.4)" }}>
+              Quiz retention by course
+            </p>
+          </div>
+          <div className="space-y-5">
+            {retention.map((c: any) => (
+              <RetentionBar key={c.code} name={c.name} code={c.code} avg={c.avg} />
+            ))}
+          </div>
+          {/* Legend */}
+          <div className="flex items-center gap-5 mt-6 pt-4 border-t" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
+            {[{ label: "Strong (≥70%)", color: "#22c55e" }, { label: "Average (50–70%)", color: "#f97316" }, { label: "Needs work (<50%)", color: "#ef4444" }].map(l => (
+              <div key={l.label} className="flex items-center gap-1.5">
+                <div className="w-2.5 h-2.5 rounded-full" style={{ background: l.color }} />
+                <span style={{ fontSize: 10, color: "rgba(255,255,255,0.35)" }}>{l.label}</span>
               </div>
             ))}
           </div>
         </div>
       )}
+
+      {/* ── Recordings by class ── */}
+      <div className="mb-2 flex items-center gap-2">
+        <Mic2 size={13} style={{ color: "rgba(255,255,255,0.3)" }} />
+        <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)" }}>
+          Recordings by class
+        </p>
+      </div>
+
+      {isLoading && (
+        <div className="space-y-3">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="rounded-2xl h-14 animate-pulse border" style={{ background: "rgba(255,255,255,0.04)", borderColor: "rgba(255,255,255,0.07)" }} />
+          ))}
+        </div>
+      )}
+
+      {!isLoading && !p?.lecturesByClass?.length && (
+        <div className="rounded-2xl p-8 text-center border" style={{ background: "rgba(255,255,255,0.03)", borderColor: "rgba(255,255,255,0.07)", borderStyle: "dashed" }}>
+          <Mic2 size={28} className="mx-auto mb-3" style={{ color: "rgba(255,255,255,0.15)" }} />
+          <p style={{ fontSize: 13, color: "rgba(255,255,255,0.35)" }}>No classes yet. Create one in the Workspace.</p>
+        </div>
+      )}
+
+      <div className="space-y-2">
+        {p?.lecturesByClass?.map((cls: any) => (
+          <ClassSection key={cls.id} cls={cls} onRename={handleRename} />
+        ))}
+      </div>
     </div>
   );
 }

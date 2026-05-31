@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useUser } from "@clerk/nextjs";
+import { useT } from "@/lib/useT";
 import Link from "next/link";
 import useSWR from "swr";
 import Image from "next/image";
@@ -31,16 +32,17 @@ const ACTIONS = [
   { icon: Calendar, label: "Calendar",  href: "/dashboard/calendar",  color: "#f97316" },
 ];
 
-function greeting() {
+function greetingKey(): "goodMorning" | "goodAfternoon" | "goodEvening" {
   const h = new Date().getHours();
-  if (h < 12) return "Good morning";
-  if (h < 18) return "Good afternoon";
-  return "Good evening";
+  if (h < 12) return "goodMorning";
+  if (h < 18) return "goodAfternoon";
+  return "goodEvening";
 }
 
 export default function DashboardHome() {
   const { user } = useUser();
   const firstName = user?.firstName ?? user?.username ?? "";
+  const t = useT();
   const fetcher = useApiSWRFetcher();
   const apiFetch = useApiFetch();
   const { data: progressData, isLoading } = useSWR(`${BASE}/api/progress`, fetcher);
@@ -105,17 +107,17 @@ export default function DashboardHome() {
       <div className="flex-1 min-w-0 py-6 px-0 md:py-9 md:pl-10 md:pr-0">
 
         {/* Header */}
-        <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "#3b82f6", marginBottom: 6 }}>Overview</div>
+        <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "#3b82f6", marginBottom: 6 }}>{t.home.overview}</div>
         <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 30, color: "white", marginBottom: 28 }}>
-          {greeting()}{firstName ? `, ${firstName}` : ""}.
+          {t.home[greetingKey()]}{firstName ? `, ${firstName}` : ""}.
         </h1>
 
         {/* Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
           {[
-            { label: "Lectures recorded", value: isLoading ? "..." : (p?.lectureCount ?? "0") },
-            { label: "Avg quiz score",    value: isLoading ? "..." : (p?.avgScore ? `${p.avgScore}%` : "—") },
-            { label: "Day streak",        value: isLoading ? "..." : (p?.streak ?? "0") },
+            { label: t.home.lecturesRecorded, value: isLoading ? "..." : (p?.lectureCount ?? "0") },
+            { label: t.home.avgQuizScore,    value: isLoading ? "..." : (p?.avgScore ? `${p.avgScore}%` : "—") },
+            { label: t.home.dayStreak,        value: isLoading ? "..." : (p?.streak ?? "0") },
           ].map((s) => (
             <div
               key={s.label}
@@ -129,7 +131,7 @@ export default function DashboardHome() {
         </div>
 
         {/* Coming up */}
-        <p className="text-xs uppercase tracking-widest mb-3" style={{ color: "#3b82f6" }}>Coming up</p>
+        <p className="text-xs uppercase tracking-widest mb-3" style={{ color: "#3b82f6" }}>{t.home.comingUp}</p>
         <div className="flex flex-col gap-2 mb-8">
           {eventsLoading ? (
             [...Array(2)].map((_, i) => (
@@ -181,7 +183,7 @@ export default function DashboardHome() {
         </div>
 
         {/* My classes */}
-        <p className="text-xs uppercase tracking-widest mb-3" style={{ color: "#3b82f6" }}>My classes</p>
+        <p className="text-xs uppercase tracking-widest mb-3" style={{ color: "#3b82f6" }}>{t.home.myClasses}</p>
         <div className="space-y-2 mb-8">
           {isLoading ? (
             [...Array(2)].map((_, i) => (
@@ -250,7 +252,7 @@ export default function DashboardHome() {
         </div>
 
         {/* Quick actions */}
-        <p className="text-xs uppercase tracking-widest mb-3" style={{ color: "#3b82f6" }}>Quick actions</p>
+        <p className="text-xs uppercase tracking-widest mb-3" style={{ color: "#3b82f6" }}>{t.home.quickActions}</p>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
           {ACTIONS.map(({ icon: Icon, label, href, color }) => (
             <Link
@@ -270,7 +272,7 @@ export default function DashboardHome() {
         {/* Recent Videos */}
         {recentVideos.length > 0 && (
           <>
-            <p className="text-xs uppercase tracking-widest mb-3" style={{ color: "#3b82f6" }}>Recent Videos</p>
+            <p className="text-xs uppercase tracking-widest mb-3" style={{ color: "#3b82f6" }}>{t.home.recentVideos}</p>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
               {recentVideos.slice(0, 8).map((v: any) => (
                 <div key={v.videoId ?? v.title} className="relative group/card">
@@ -279,7 +281,7 @@ export default function DashboardHome() {
                     onClick={() => archiveVideo(v.lectureId)}
                     className="absolute top-2 right-2 z-10 w-6 h-6 rounded-full flex items-center justify-center opacity-0 group-hover/card:opacity-100 transition-opacity"
                     style={{ background: "rgba(0,0,0,0.6)" }}
-                    title="Remove from Home"
+                    title={t.home.removeFromHome}
                   >
                     <X size={11} style={{ color: "white" }} />
                   </button>
@@ -323,7 +325,7 @@ export default function DashboardHome() {
         {/* Saved notes */}
         {notes.length > 0 && (
           <>
-            <p className="text-xs uppercase tracking-widest mb-3" style={{ color: "#3b82f6" }}>Saved notes</p>
+            <p className="text-xs uppercase tracking-widest mb-3" style={{ color: "#3b82f6" }}>{t.home.savedNotes}</p>
             <div className="space-y-2">
               {notes.map((cs: any) => (
                 <Link

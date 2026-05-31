@@ -8,6 +8,7 @@ import {
 import { useState } from "react";
 import { ChevronLeft, ChevronRight, X, Plus, Trash2, Pencil, AlertCircle, Clock } from "lucide-react";
 import { useApiSWRFetcher, useApiFetch } from "@/lib/apiFetch";
+import { useT } from "@/lib/useT";
 
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
@@ -51,6 +52,7 @@ function formatHour(h: number) {
 const todayStart = startOfDay(new Date());
 
 export default function CalendarPage() {
+  const t = useT();
   const fetcher = useApiSWRFetcher();
   const apiFetch = useApiFetch();
 
@@ -133,8 +135,18 @@ export default function CalendarPage() {
   async function saveEvent() {
     if (!title.trim() || !date) return;
     setSaving(true); setSaveError("");
+
+    // Build a safe ISO date from date + time inputs
+    const safeTime = eventTime?.match(/^\d{2}:\d{2}$/) ? eventTime : "09:00";
+    const parsed = new Date(`${date}T${safeTime}:00`);
+    if (isNaN(parsed.getTime())) {
+      setSaveError("Invalid date or time — please check and try again.");
+      setSaving(false);
+      return;
+    }
+    const dateWithTime = parsed.toISOString();
+
     try {
-      const dateWithTime = new Date(`${date}T${eventTime}:00`).toISOString();
       if (editingEvent) {
         await apiFetch(`/api/events/${editingEvent.id}`, {
           method: "PATCH",
@@ -148,10 +160,15 @@ export default function CalendarPage() {
           body: JSON.stringify({ title: title.trim(), date: dateWithTime, type, courseId: courseId || undefined, description: description.trim() || undefined }),
         });
       }
-      mutate();
+      await mutate();
       setShowModal(false);
     } catch (e: any) {
-      setSaveError(e?.message ?? "Failed to save event");
+      const msg = e?.message ?? "";
+      if (msg.toLowerCase().includes("failed to fetch")) {
+        setSaveError("Could not reach the server. Check your connection and try again.");
+      } else {
+        setSaveError(msg || "Failed to save event");
+      }
     } finally {
       setSaving(false);
     }
@@ -178,8 +195,8 @@ export default function CalendarPage() {
       {/* Header */}
       <div className="flex items-start justify-between mb-6">
         <div>
-          <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 28 }}>Calendar</h1>
-          <p style={{ color: "rgba(255,255,255,0.4)", fontSize: 13, marginTop: 2 }}>Plan your week and track deadlines</p>
+          <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 28 }}>{t.calendar.title}</h1>
+          <p style={{ color: "rgba(255,255,255,0.4)", fontSize: 13, marginTop: 2 }}>{t.calendar.subtitle}</p>
         </div>
         {/* View toggle */}
         <div className="flex gap-1 p-1 rounded-xl" style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)" }}>
@@ -187,7 +204,7 @@ export default function CalendarPage() {
             <button key={v} onClick={() => setView(v)}
               className="px-4 py-1.5 rounded-lg text-sm font-medium transition-all capitalize"
               style={{ background: view === v ? "rgba(255,255,255,0.15)" : "transparent", color: view === v ? "white" : "rgba(255,255,255,0.4)" }}>
-              {v}
+              {v === "month" ? t.calendar.month : t.calendar.week}
             </button>
           ))}
         </div>
@@ -289,9 +306,9 @@ export default function CalendarPage() {
             )}
 
             <div className="rounded-2xl p-4" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)" }}>
-              <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: 12 }}>Upcoming</p>
+              <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: 12 }}>{t.calendar.upcoming}</p>
               {upcoming.length === 0 ? (
-                <p style={{ fontSize: 12, color: "rgba(255,255,255,0.35)" }}>No upcoming events.</p>
+                <p style={{ fontSize: 12, color: "rgba(255,255,255,0.35)" }}>{t.calendar.noEvents}</p>
               ) : (
                 <div className="flex flex-col gap-2">
                   {upcoming.slice(0, 8).map(e => {
@@ -401,7 +418,7 @@ export default function CalendarPage() {
 
           {/* Week hint */}
           <div className="px-5 py-3 text-center" style={{ borderTop: "1px solid rgba(255,255,255,0.06)", fontSize: 11, color: "rgba(255,255,255,0.25)" }}>
-            Click any time slot to add a study session or event
+            {t.calendar.hint}
           </div>
         </div>
       )}
@@ -413,7 +430,7 @@ export default function CalendarPage() {
           onClick={e => { if (e.target === e.currentTarget) setShowModal(false); }}>
           <div className="w-full max-w-sm rounded-2xl p-6" style={{ background: "#1a1a18", border: "1px solid rgba(255,255,255,0.12)" }}>
             <div className="flex items-center justify-between mb-5">
-              <span style={{ fontSize: 16, fontWeight: 500 }}>{editingEvent ? "Edit event" : "Add event"}</span>
+              <span style={{ fontSize: 16, fontWeight: 500 }}>{editingEvent ? t.calendar.editEventTitle : t.calendar.addEventTitle}</span>
               <button onClick={() => setShowModal(false)} style={{ color: "rgba(255,255,255,0.4)" }}><X size={16} /></button>
             </div>
 

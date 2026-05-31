@@ -5,21 +5,24 @@ import { UserButton } from "@clerk/nextjs";
 import { Home, Layers, HelpCircle, Calendar, BarChart2, CreditCard, Archive } from "lucide-react";
 import { LanguageSwitcher } from "@/components/I18nProvider";
 import { useState, useEffect } from "react";
+import { useT } from "@/lib/useT";
 
-const nav = [
-  { href: "/dashboard",          icon: Home,        label: "Home"      },
-  { href: "/dashboard/record",   icon: Layers,      label: "Workspace" },
-  { href: "/dashboard/calendar", icon: Calendar,    label: "Calendar"  },
-  { href: "/dashboard/progress", icon: BarChart2,   label: "Progress"  },
-  { href: "/dashboard/archive",  icon: Archive,     label: "Archive"   },
-  { href: "/dashboard/billing",  icon: CreditCard,  label: "Billing"   },
-  { href: "/dashboard/help",     icon: HelpCircle,  label: "Help"      },
-];
+// nav labels are translated inside the component via useT()
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
+  const t = useT();
+  const nav = [
+    { href: "/dashboard",          icon: Home,        label: t.nav.home      },
+    { href: "/dashboard/record",   icon: Layers,      label: t.nav.workspace },
+    { href: "/dashboard/calendar", icon: Calendar,    label: t.nav.calendar  },
+    { href: "/dashboard/progress", icon: BarChart2,   label: t.nav.progress  },
+    { href: "/dashboard/archive",  icon: Archive,     label: t.nav.archive   },
+    { href: "/dashboard/billing",  icon: CreditCard,  label: t.nav.billing   },
+    { href: "/dashboard/help",     icon: HelpCircle,  label: t.nav.help      },
+  ];
 
   return (
     <div className="flex flex-col md:flex-row h-screen overflow-hidden" style={{ background: "#111110" }}>
@@ -49,7 +52,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {/* Nav */}
         <nav className="flex-1 px-3 pt-2 flex flex-col gap-1">
           <div style={{ fontSize: 9, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(255,255,255,0.25)", padding: "8px 10px 6px" }}>
-            Menu
+            {t.nav.menu}
           </div>
           {nav.map(({ href, icon: Icon, label }) => {
             const active = pathname === href || (href !== "/dashboard" && pathname.startsWith(href));
@@ -107,7 +110,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         })}
         <div className="flex flex-col items-center gap-0.5 px-2 py-1.5">
           {mounted && <UserButton appearance={{ elements: { avatarBox: "w-5 h-5" } }} />}
-          <span className="text-[9px] font-medium" style={{ color: "rgba(255,255,255,0.38)" }}>Account</span>
+          <span className="text-[9px] font-medium" style={{ color: "rgba(255,255,255,0.38)" }}>{t.nav.account}</span>
         </div>
       </nav>
     </div>

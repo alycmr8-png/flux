@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { useApiFetch, useApiSWRFetcher } from "@/lib/apiFetch";
 import { useAuth } from "@clerk/nextjs";
+import { useT } from "@/lib/useT";
 import useSWR from "swr";
 import Link from "next/link";
 import { format } from "date-fns";
@@ -144,6 +145,7 @@ function CreateClassPage({ onBack, onCreate }: { onBack: () => void; onCreate: (
 
 // ─── Class list (home) ────────────────────────────────────────────────────────
 function ClassList({ onSelect, onCreate }: { onSelect: (c: any) => void; onCreate: () => void }) {
+  const t = useT();
   const { userId } = useAuth();
   const fetcher = useApiSWRFetcher();
   const apiFetch = useApiFetch();
@@ -167,14 +169,14 @@ function ClassList({ onSelect, onCreate }: { onSelect: (c: any) => void; onCreat
     <div className="w-full">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="font-serif italic text-3xl mb-1">Workspace</h1>
-          <p className="text-[#555] text-sm">Your classes, lectures, and quizzes</p>
+          <h1 className="font-serif italic text-3xl mb-1">{t.workspace.title}</h1>
+          <p className="text-[#555] text-sm">{t.workspace.subtitle}</p>
         </div>
         <button
           onClick={onCreate}
           className="flex items-center gap-2 bg-white text-[#111110] text-sm font-medium px-4 py-2 rounded-full hover:bg-[#eee] transition-colors"
         >
-          <Plus size={14} /> New Class
+          <Plus size={14} /> {t.workspace.newClass}
         </button>
       </div>
 
@@ -252,6 +254,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
   course: any; allCourses: any[]; onSelect: (c: any) => void; onBack: () => void;
   initialTab?: string; initialYtState?: InitialYtState;
 }) {
+  const t = useT();
   const apiFetch = useApiFetch();
   const fetcher = useApiSWRFetcher();
   const { userId } = useAuth();
@@ -1306,12 +1309,12 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
   }
 
   const TABS = [
-    { key: "record",    label: "Record",        icon: Mic2          },
-    { key: "files",     label: "Upload Files",  icon: FileText      },
-    { key: "quizzes",   label: "Quizzes",       icon: BookOpen      },
-    { key: "video",     label: "Upload Video",  icon: Youtube       },
-    { key: "studybook", label: "Study Book",    icon: BookMarked    },
-    { key: "note",      label: "Take Note",     icon: PenLine       },
+    { key: "record",    label: t.workspace.tabs.record,    icon: Mic2     },
+    { key: "files",     label: t.workspace.tabs.files,     icon: FileText },
+    { key: "quizzes",   label: t.workspace.tabs.quizzes,   icon: BookOpen },
+    { key: "video",     label: t.workspace.tabs.video,     icon: Youtube  },
+    { key: "studybook", label: t.workspace.tabs.studybook, icon: BookMarked },
+    { key: "note",      label: t.workspace.tabs.note,      icon: PenLine  },
   ] as const;
 
   return (
