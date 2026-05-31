@@ -1,5 +1,5 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, useState, useRef } from "react";
 import { initI18n, LANGUAGES, type Language } from "@/lib/i18nConfig";
 
 export function I18nProvider({ children }: { children: React.ReactNode }) {
@@ -11,7 +11,22 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
 }
 
 export function LanguageSwitcher() {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const current = typeof window !== "undefined" ? localStorage.getItem("lang") ?? "en" : "en";
+
+  // Close when clicking outside
+  useEffect(() => {
+    if (!open) return;
+    function handle(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", handle);
+    return () => document.removeEventListener("mousedown", handle);
+  }, [open]);
+
   async function change(lang: Language) {
+    setOpen(false);
     localStorage.setItem("lang", lang);
     try {
       await fetch("/api/settings/language", {
@@ -23,28 +38,34 @@ export function LanguageSwitcher() {
     window.location.reload();
   }
 
-  const current = typeof window !== "undefined" ? localStorage.getItem("lang") ?? "en" : "en";
-
   return (
-    <div className="relative group">
-      <button className="flex items-center gap-1.5 text-xs text-[#555] hover:text-white transition-colors px-3 py-2 rounded-xl border border-[#1a1a1a] hover:border-[#333]">
-        <span>{LANGUAGES.find((l) => l.code === current)?.flag}</span>
-        <span>{LANGUAGES.find((l) => l.code === current)?.label}</span>
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-xl border transition-colors"
+        style={{ color: "rgba(255,255,255,0.45)", borderColor: "rgba(255,255,255,0.1)", background: open ? "rgba(255,255,255,0.07)" : "transparent" }}
+      >
+        <span>{LANGUAGES.find(l => l.code === current)?.flag}</span>
+        <span>{LANGUAGES.find(l => l.code === current)?.label}</span>
       </button>
-      <div className="absolute bottom-full mb-2 left-0 bg-[#111] border border-[#222] rounded-xl overflow-hidden hidden group-hover:block w-36 z-50">
-        {LANGUAGES.map((lang) => (
-          <button
-            key={lang.code}
-            onClick={() => change(lang.code as Language)}
-            className={`w-full flex items-center gap-2 px-3 py-2 text-xs hover:bg-[#1a1a1a] transition-colors ${
-              lang.code === current ? "text-white" : "text-[#555]"
-            }`}
-          >
-            <span>{lang.flag}</span>
-            <span>{lang.label}</span>
-          </button>
-        ))}
-      </div>
+
+      {open && (
+        <div className="absolute bottom-full mb-2 left-0 rounded-xl overflow-hidden z-50 w-40"
+          style={{ background: "#161616", border: "1px solid rgba(255,255,255,0.12)", boxShadow: "0 8px 24px rgba(0,0,0,0.5)" }}>
+          {LANGUAGES.map(lang => (
+            <button
+              key={lang.code}
+              onClick={() => change(lang.code as Language)}
+              className="w-full flex items-center gap-2.5 px-3 py-2.5 text-xs transition-colors hover:bg-white/10"
+              style={{ color: lang.code === current ? "white" : "rgba(255,255,255,0.5)" }}
+            >
+              <span className="text-base">{lang.flag}</span>
+              <span>{lang.label}</span>
+              {lang.code === current && <span className="ml-auto text-[#3b82f6]">✓</span>}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
