@@ -2574,10 +2574,16 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
                 {/* Material selector */}
                 {!showMaterials ? (
                   <div className="flex items-center justify-between mb-4">
-                    <p className="text-xs text-[#6b6b69]">
-                      Uses all recordings, files & notes
-                      {lectures.filter((l: any) => l.status === "ready").length > 0 && ` (${lectures.filter((l: any) => l.status === "ready").length} recording${lectures.filter((l: any) => l.status === "ready").length !== 1 ? "s" : ""}${notes.length > 0 ? `, ${notes.length} note${notes.length !== 1 ? "s" : ""}` : ""})`}
-                    </p>
+                    <div className="text-xs text-[#6b6b69] space-y-0.5">
+                      <p className="font-medium text-[#444]">Uses all class materials:</p>
+                      <p>
+                        {[
+                          lectures.filter((l: any) => l.status === "ready").length > 0 && `${lectures.filter((l: any) => l.status === "ready").length} recording${lectures.filter((l: any) => l.status === "ready").length !== 1 ? "s" : ""}`,
+                          sheets.filter((s: any) => !s.title?.startsWith("Study Book:")).length > 0 && `${sheets.filter((s: any) => !s.title?.startsWith("Study Book:")).length} uploaded file${sheets.filter((s: any) => !s.title?.startsWith("Study Book:")).length !== 1 ? "s" : ""}`,
+                          notes.length > 0 && `${notes.length} note${notes.length !== 1 ? "s" : ""}`,
+                        ].filter(Boolean).join(" · ") || "No materials yet"}
+                      </p>
+                    </div>
                     <button onClick={openMaterialPicker} className="text-[10px] font-medium text-[#555] hover:text-[#111110] border border-[rgba(0,0,0,0.1)] px-2.5 py-1 rounded-full transition-colors shrink-0 ml-3">
                       Choose
                     </button>

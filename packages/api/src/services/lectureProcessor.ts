@@ -38,6 +38,40 @@ export async function processLecture(lectureId: string, userId: string) {
 
     if (!transcript.trim()) throw new Error("Whisper returned empty transcript");
 
+    // ── Extract slide text and append to transcript (non-fatal) ──
+    if (lecture.slidesUrl && fs.existsSync(lecture.slidesUrl)) {
+      try {
+        const ext = require("path").extname(lecture.slidesUrl).toLowerCase();
+        let slideText = "";
+
+        if (ext === ".pptx") {
+          const AdmZip = require("adm-zip");
+          const zip = new AdmZip(lecture.slidesUrl);
+          const entries: any[] = zip.getEntries();
+          const slideEntries = entries
+            .filter((e: any) => /^ppt\/slides\/slide\d+\.xml$/.test(e.entryName))
+            .sort((a: any, b: any) => a.entryName.localeCompare(b.entryName));
+          slideText = slideEntries.map((e: any) => {
+            const xml: string = e.getData().toString("utf-8");
+            return [...xml.matchAll(/<a:t[^>]*>([^<]*)<\/a:t>/g)]
+              .map(m => m[1].trim()).filter(Boolean).join(" ");
+          }).filter(Boolean).join("\n");
+        } else if (ext === ".pdf") {
+          const pdfParse = require("pdf-parse/lib/pdf-parse.js");
+          const buf = fs.readFileSync(lecture.slidesUrl);
+          const parsed = await pdfParse(buf);
+          slideText = parsed.text ?? "";
+        }
+
+        if (slideText.trim()) {
+          transcript = `${transcript}\n\n[SLIDES]\n${slideText}`;
+          console.log(`[processLecture] appended slide text (${slideText.length} chars)`);
+        }
+      } catch (slideErr) {
+        console.error("[processLecture] slide text extraction failed (non-fatal):", (slideErr as any)?.message);
+      }
+    }
+
     await safeStatusUpdate(lectureId, { transcript, status: "generating" });
 
     const user = await prisma.user.findUnique({ where: { id: userId }, include: { googleTokens: true } });

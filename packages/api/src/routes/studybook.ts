@@ -428,9 +428,32 @@ router.post("/generate-from-course", async (req, res) => {
     return res.status(400).json({ error: "No materials found yet. Record a lecture, upload a file, or save a note first." });
   }
 
+  // Uploaded files — cheat sheets from documents (not Study Books, not lecture cheat sheets)
+  const uploadedFileSheets = await prisma.cheatSheet.findMany({
+    where: {
+      userId: user.id,
+      title: { not: { startsWith: "Study Book:" } },
+      lecture: { courseId, userId: user.id },
+    },
+    include: { lecture: { select: { id: true, title: true, audioUrl: true } } },
+  });
+  // Only keep sheets from uploaded documents (no audioUrl = uploaded file, not recording)
+  const docSheets = uploadedFileSheets.filter(
+    s => !s.lecture?.audioUrl && !s.title.includes("— Cheat Sheet")
+  );
+
   const parts: string[] = [];
   for (const l of lectures) {
-    if (l.transcript?.trim()) parts.push(`[${l.title}]\n${l.transcript}`);
+    if (l.transcript?.trim()) parts.push(`[Recording: ${l.title}]\n${l.transcript}`);
+  }
+  for (const s of docSheets) {
+    const c = s.content as any;
+    const text = [
+      c?.summary ?? "",
+      ...(c?.sections ?? []).flatMap((sec: any) => [sec.heading, ...(sec.bullets ?? [])]),
+      ...(c?.keyTerms ?? []).map((kt: any) => `${kt.term}: ${kt.definition}`),
+    ].filter(Boolean).join("\n");
+    if (text.trim()) parts.push(`[Uploaded file: ${s.title}]\n${text}`);
   }
   for (const n of dbNotes) {
     if (n.text?.trim()) parts.push(`[Note: ${n.name}]\n${n.text}`);

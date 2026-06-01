@@ -261,12 +261,22 @@ export default function CalendarPage() {
                   const isUrgent = urgentDays.has(format(day, "yyyy-MM-dd"));
                   return (
                     <button key={day.toISOString()} onClick={() => setSelectedDay(isSelected ? null : day)}
-                      className={`relative flex flex-col items-center py-1.5 rounded-xl transition-all${isUrgent ? " urgent-pulse" : ""}`}
-                      style={{ background: isSelected ? "rgba(255,255,255,0.15)" : today ? "rgba(255,255,255,0.1)" : "transparent", outline: today ? "1px solid rgba(255,255,255,0.3)" : "none", opacity: past ? 0.4 : 1 }}>
-                      <span style={{ fontSize: 12, fontWeight: today ? 600 : 400, color: today ? "white" : "rgba(255,255,255,0.7)" }}>{format(day, "d")}</span>
+                      className={`relative flex flex-col items-start w-full px-1 pt-1.5 pb-1 rounded-xl transition-all${isUrgent ? " urgent-pulse" : ""}`}
+                      style={{ background: isSelected ? "rgba(255,255,255,0.12)" : today ? "rgba(255,255,255,0.08)" : "transparent", outline: today ? "1px solid rgba(255,255,255,0.25)" : "none", opacity: past ? 0.4 : 1, minHeight: 52 }}>
+                      {/* Day number */}
+                      <span className="w-full text-center mb-0.5" style={{ fontSize: 12, fontWeight: today ? 700 : 400, color: today ? "white" : "rgba(255,255,255,0.65)" }}>{format(day, "d")}</span>
+                      {/* Event pills */}
                       {de.length > 0 && (
-                        <div className="flex gap-0.5 mt-0.5 flex-wrap justify-center">
-                          {de.slice(0, 3).map((e, i) => <span key={i} style={{ width: 4, height: 4, borderRadius: "50%", background: eventColor(e.type), display: "inline-block" }} />)}
+                        <div className="w-full space-y-0.5">
+                          {de.slice(0, 2).map((e, i) => (
+                            <div key={i} className="w-full truncate text-left px-1.5 rounded"
+                              style={{ fontSize: 9, fontWeight: 600, lineHeight: "16px", background: `${eventColor(e.type)}28`, color: eventColor(e.type) }}>
+                              {e.title}
+                            </div>
+                          ))}
+                          {de.length > 2 && (
+                            <div style={{ fontSize: 9, color: "rgba(255,255,255,0.3)", paddingLeft: 4 }}>+{de.length - 2} more</div>
+                          )}
                         </div>
                       )}
                     </button>
