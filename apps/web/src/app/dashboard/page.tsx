@@ -45,13 +45,15 @@ export default function DashboardHome() {
   const t = useT();
   const fetcher = useApiSWRFetcher();
   const apiFetch = useApiFetch();
-  const { data: progressData, isLoading } = useSWR(`${BASE}/api/progress`, fetcher);
-  const { data: sheetsData } = useSWR(`${BASE}/api/cheatsheets`, fetcher);
+  const SWR_OPTS = { revalidateOnFocus: false, dedupingInterval: 60000 } as const;
+
+  const { data: progressData, isLoading } = useSWR(`${BASE}/api/progress`, fetcher, SWR_OPTS);
+  const { data: sheetsData } = useSWR(`${BASE}/api/cheatsheets`, fetcher, SWR_OPTS);
   // Stable date range — must not be computed inline or the SWR key changes every render
   const [eventsFrom] = useState(() => startOfDay(new Date()).toISOString());
   const [eventsTo] = useState(() => new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString());
 
-  const { data: recentVideosData, mutate: mutateVideos } = useSWR(`${BASE}/api/studybook/recent-videos`, fetcher);
+  const { data: recentVideosData, mutate: mutateVideos } = useSWR(`${BASE}/api/studybook/recent-videos`, fetcher, SWR_OPTS);
   const recentVideos: any[] = recentVideosData?.data ?? [];
 
   async function archiveVideo(lectureId: string) {
@@ -61,7 +63,8 @@ export default function DashboardHome() {
 
   const { data: eventsData, isLoading: eventsLoading } = useSWR(
     `${BASE}/api/events?from=${eventsFrom}&to=${eventsTo}`,
-    fetcher
+    fetcher,
+    SWR_OPTS
   );
 
   const [activeFilter, setActiveFilter] = useState<string>("all");
