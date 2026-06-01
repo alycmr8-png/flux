@@ -1313,7 +1313,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
     { key: "files",     label: t.workspace.tabs.files,     icon: FileText },
     { key: "quizzes",   label: t.workspace.tabs.quizzes,   icon: BookOpen },
     { key: "video",     label: t.workspace.tabs.video,     icon: Youtube  },
-    { key: "studybook", label: t.workspace.tabs.studybook, icon: BookMarked },
+    { key: "studybook", label: "Review", icon: BookMarked },
     { key: "note",      label: t.workspace.tabs.note,      icon: PenLine  },
   ] as const;
 
@@ -2723,390 +2723,115 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
 
       {tab === "studybook" && sbView === "detail" && activeSb && (() => {
         const c = activeSb.content as any;
-        const isStudybookType = c?._type === "studybook";
-        const sbTitle = activeSb.title?.replace(/^Study Book:\s*/, "") ?? "Untitled";
-        const chapters: any[] = c?.chapters ?? [];
-        const sections: any[] = c?.sections ?? [];
-        const glossary: any[] = c?.glossary ?? [];
-        const keyTerms: any[] = c?.keyTerms ?? [];
-        const glossaryMap = new Map<string, { definition: string; highYield?: boolean }>(
-          [...glossary.map((g: any) => [g.term?.toLowerCase(), { definition: g.definition, highYield: g.highYield }] as [string, any]),
-           ...keyTerms.map((kt: any) => [kt.term?.toLowerCase(), { definition: kt.definition }] as [string, any])]
-        );
-        const allFlashcards: any[] = isStudybookType
-          ? chapters.flatMap((ch: any) => (ch.flashcards ?? []).map((fc: any) => ({ ...fc, chapter: ch.title })))
-          : [];
-        const allExamQ: any[] = isStudybookType
-          ? chapters.flatMap((ch: any) => (ch.examQuestions ?? []))
-          : (c?.practiceQuestions ?? []).map((pq: any) => ({ type: "short", question: pq.question, correctAnswer: pq.answer, options: null, explanation: "" }));
+        const sbTitle = activeSb.title?.replace(/^Study Book:s*/, '') ?? 'Untitled';
+        const summary: string = c?.summary ?? c?.executiveSummary ?? '';
+        const takeaways: string[] = c?.keyTakeaways ?? (c?.chapters ?? []).flatMap((ch: any) => ch.keyPoints ?? []);
+        const keyTerms: any[] = c?.keyTerms ?? c?.glossary ?? [];
+        const questions: any[] = c?.practiceQuestions ?? (c?.chapters ?? []).flatMap((ch: any) => ch.examQuestions ?? []);
+        const openQ = expandedChapters;
+        const setOpenQ = (fn: (p: Set<number>) => Set<number>) => setExpandedChapters(fn(expandedChapters));
         return (
-          <div className="space-y-5">
+          <div className="space-y-4">
             {/* Header */}
-            <div className="flex items-start gap-3">
-              <button onClick={closeSb} className="text-[#555] hover:text-[#111110] transition-colors mt-0.5">
+            <div className="flex items-center gap-3">
+              <button onClick={closeSb} className="text-[#555] hover:text-[#111110] transition-colors">
                 <ArrowLeft size={15} />
               </button>
               <div className="flex-1 min-w-0">
-                <div className="text-base font-medium text-[#111110] mb-0.5 truncate">{sbTitle}</div>
-                <div className="text-[10px] text-[#555]">{format(new Date(activeSb.createdAt), "MMM d, yyyy")}</div>
+                <div className="text-base font-medium text-[#111110] truncate">{sbTitle}</div>
+                <div className="text-[10px] text-[#555]">{format(new Date(activeSb.createdAt), 'MMM d, yyyy')}</div>
               </div>
-              <div className="flex items-center gap-2 shrink-0">
-                {!sbEditMode && !sbQuizMode && (
-                  <>
-                    {!sbQuizDone ? (
-                      <button
-                        onClick={() => setSbQuizMode(true)}
-                        className="text-xs text-[#555] hover:text-[#111110] border border-[rgba(0,0,0,0.08)] hover:border-[#444] px-3 py-1.5 rounded-full transition-colors"
-                      >
-                        Generate Quiz
-                      </button>
-                    ) : (
-                      <div className="flex items-center gap-1 text-xs text-green-500">
-                        <CheckCircle size={10} /> Quiz created
-                      </div>
-                    )}
-                    <button
-                      onClick={enterSbEditMode}
-                      className="text-xs text-[#555] hover:text-[#111110] border border-[rgba(0,0,0,0.08)] hover:border-[#444] px-3 py-1.5 rounded-full transition-colors"
-                    >
-                      Edit
-                    </button>
-                  </>
-                )}
-                {sbEditMode && (
-                  <>
-                    <button onClick={() => setSbEditMode(false)} className="text-xs text-[#555] hover:text-[#111110] border border-[rgba(0,0,0,0.08)] px-3 py-1.5 rounded-full transition-colors">
-                      Cancel
-                    </button>
-                    <button
-                      onClick={saveSbEdit}
-                      disabled={sbSaving}
-                      className="text-xs bg-white text-[#111110] px-3 py-1.5 rounded-full font-medium hover:bg-[#eee] transition-colors disabled:opacity-40 flex items-center gap-1"
-                    >
-                      {sbSaving ? <><Loader2 size={10} className="animate-spin" /> Saving…</> : "Save"}
-                    </button>
-                  </>
-                )}
-              </div>
+              {!sbQuizDone ? (
+                <button onClick={() => setSbQuizMode(true)}
+                  className="text-xs text-[#555] hover:text-[#111110] border border-[rgba(0,0,0,0.08)] hover:border-[#444] px-3 py-1.5 rounded-full transition-colors shrink-0">
+                  Generate Quiz
+                </button>
+              ) : (
+                <div className="flex items-center gap-1 text-xs text-green-500"><CheckCircle size={10} /> Quiz created</div>
+              )}
             </div>
 
-            {/* Generate Quiz inline */}
+            {/* Generate Quiz modal */}
             {sbQuizMode && (
               <div className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl p-5 space-y-3">
                 <p className="text-[10px] text-[#555] uppercase tracking-widest">Name your quiz</p>
-                <input
-                  autoFocus
-                  value={sbQuizName}
-                  onChange={e => setSbQuizName(e.target.value)}
-                  onKeyDown={e => e.key === "Enter" && generateSbQuiz()}
-                  placeholder={`Quiz — ${sbTitle}`}
-                  className="w-full bg-white border border-[rgba(0,0,0,0.08)] focus:border-[rgba(0,0,0,0.1)] rounded-xl px-4 py-2.5 text-sm text-[#111110] placeholder-[rgba(0,0,0,0.3)] outline-none"
-                />
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={generateSbQuiz}
-                    disabled={!sbQuizName.trim() || sbQuizGenerating}
-                    className="flex items-center gap-1.5 text-xs bg-white text-[#111110] px-4 py-2 rounded-full font-medium hover:bg-[#eee] transition-colors disabled:opacity-40"
-                  >
-                    {sbQuizGenerating ? <><Loader2 size={10} className="animate-spin" /> Generating…</> : "Generate"}
+                <input autoFocus value={sbQuizName} onChange={e => setSbQuizName(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && generateSbQuiz()}
+                  placeholder={'Quiz — ' + sbTitle}
+                  className="w-full bg-white border border-[rgba(0,0,0,0.08)] rounded-xl px-4 py-2.5 text-sm text-[#111110] placeholder-[rgba(0,0,0,0.3)] outline-none" />
+                <div className="flex gap-2">
+                  <button onClick={generateSbQuiz} disabled={!sbQuizName.trim() || sbQuizGenerating}
+                    className="flex items-center gap-1.5 text-xs bg-white text-[#111110] px-4 py-2 rounded-full font-medium hover:bg-[#eee] transition-colors disabled:opacity-40">
+                    {sbQuizGenerating ? <><Loader2 size={10} className="animate-spin" /> Generating…</> : 'Generate'}
                   </button>
-                  <button onClick={() => setSbQuizMode(false)} className="text-xs text-[#555] hover:text-[#555] transition-colors">
-                    Cancel
-                  </button>
+                  <button onClick={() => setSbQuizMode(false)} className="text-xs text-[#555]">Cancel</button>
                 </div>
               </div>
             )}
 
-            {/* Edit mode */}
-            {sbEditMode ? (
-              <div className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl p-5 space-y-5">
-                <div>
-                  <div className="text-[10px] text-[#555] uppercase tracking-widest mb-1.5">
-                    {isStudybookType ? "Executive Summary" : "Summary"}
-                  </div>
-                  <textarea
-                    value={sbEditSummary}
-                    onChange={e => setSbEditSummary(e.target.value)}
-                    rows={4}
-                    className="w-full bg-white border border-[rgba(0,0,0,0.08)] rounded-xl px-4 py-3 text-sm text-[#555] outline-none focus:border-[rgba(0,0,0,0.1)] resize-none leading-relaxed"
-                  />
-                </div>
-                {sbEditSections.map((sec, i) => (
-                  <div key={i}>
-                    <input
-                      value={sec.heading}
-                      onChange={e => setSbEditSections(prev => prev.map((s, j) => j === i ? { ...s, heading: e.target.value } : s))}
-                      className="w-full bg-transparent border-b border-[rgba(0,0,0,0.08)] pb-1 mb-2 text-[10px] text-[#555] uppercase tracking-widest outline-none focus:border-[#444]"
-                    />
-                    <textarea
-                      value={sec.bullets}
-                      onChange={e => setSbEditSections(prev => prev.map((s, j) => j === i ? { ...s, bullets: e.target.value } : s))}
-                      rows={Math.max(3, sec.bullets.split("\n").length)}
-                      className="w-full bg-white border border-[rgba(0,0,0,0.08)] rounded-xl px-4 py-3 text-xs text-[#555] outline-none focus:border-[rgba(0,0,0,0.1)] resize-none leading-relaxed"
-                      placeholder="One point per line"
-                    />
-                  </div>
-                ))}
-                <div>
-                  <div className="text-[10px] text-[#555] uppercase tracking-widest mb-1.5">
-                    {isStudybookType ? "Glossary (Term: Definition per line)" : "Key Terms (Term: Definition per line)"}
-                  </div>
-                  <textarea
-                    value={sbEditKeyTerms}
-                    onChange={e => setSbEditKeyTerms(e.target.value)}
-                    rows={Math.max(3, sbEditKeyTerms.split("\n").length)}
-                    className="w-full bg-white border border-[rgba(0,0,0,0.08)] rounded-xl px-4 py-3 text-xs text-[#555] outline-none focus:border-[rgba(0,0,0,0.1)] resize-none leading-relaxed"
-                    placeholder="Term: Definition"
-                  />
+            {/* Summary */}
+            {summary && (
+              <div className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl p-5">
+                <div className="text-[10px] font-bold uppercase tracking-widest text-[#555] mb-2">Overview</div>
+                <p className="text-sm text-[#444] leading-relaxed">{summary}</p>
+              </div>
+            )}
+
+            {/* Key Takeaways */}
+            {takeaways.length > 0 && (
+              <div className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl p-5">
+                <div className="text-[10px] font-bold uppercase tracking-widest text-[#555] mb-3">Key Takeaways · {takeaways.length}</div>
+                <div className="space-y-2">
+                  {takeaways.map((pt: string, i: number) => (
+                    <div key={i} className="flex gap-2.5 text-sm text-[#444] leading-relaxed">
+                      <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[#2563eb] shrink-0" />
+                      {pt}
+                    </div>
+                  ))}
                 </div>
               </div>
-            ) : (
-              /* Read-only collapsible content */
-              <div className="space-y-3">
-                {/* Executive summary / summary — always visible */}
-                {(isStudybookType ? c?.executiveSummary : c?.summary) && (
-                  <div className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl p-5">
-                    <div className="text-[10px] text-[#555] font-bold uppercase tracking-widest mb-2">
-                      {isStudybookType ? "Executive Summary" : "Summary"}
-                    </div>
-                    <p className="text-sm text-[#555] leading-relaxed">
-                      {isStudybookType ? c.executiveSummary : c.summary}
-                    </p>
-                  </div>
-                )}
+            )}
 
-                {/* Chapters — collapsible (studybook type) */}
-                {isStudybookType && chapters.length > 0 && (
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div className="text-[10px] text-[#555] font-bold uppercase tracking-widest">
-                        Chapters · {chapters.length}
-                      </div>
-                      <div className="flex gap-3">
-                        <button
-                          onClick={() => setExpandedChapters(new Set(chapters.map((_: any, i: number) => i)))}
-                          className="text-[10px] text-[#555] hover:text-[#555] transition-colors"
-                        >
-                          Expand all
-                        </button>
-                        <button
-                          onClick={() => setExpandedChapters(new Set())}
-                          className="text-[10px] text-[#555] hover:text-[#555] transition-colors"
-                        >
-                          Collapse all
-                        </button>
-                      </div>
+            {/* Key Terms */}
+            {keyTerms.length > 0 && (
+              <div className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl p-5">
+                <div className="text-[10px] font-bold uppercase tracking-widest text-[#555] mb-3">Key Terms · {keyTerms.length}</div>
+                <div className="space-y-2.5">
+                  {keyTerms.map((kt: any, i: number) => (
+                    <div key={i} className="flex gap-2 text-sm">
+                      <span className="font-semibold text-[#111110] shrink-0">{kt.term}:</span>
+                      <span className="text-[#555]">{kt.definition}</span>
                     </div>
-                    {chapters.map((ch: any, i: number) => {
-                      const open = expandedChapters.has(i);
-                      const fcCount = (ch.flashcards ?? []).length;
-                      const eqCount = (ch.examQuestions ?? []).length;
-                      return (
-                        <div key={i} className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl overflow-hidden">
-                          <button
-                            onClick={() => toggleChapter(i)}
-                            className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-white/[0.02] transition-colors"
-                          >
-                            <div className="min-w-0">
-                              <div className="text-sm font-medium text-[#111110] truncate">{i + 1}. {ch.title}</div>
-                              {!open && (
-                                <div className="text-[10px] text-[#555] mt-0.5">
-                                  {(ch.keyPoints ?? []).length} key points
-                                  {fcCount > 0 && ` · ${fcCount} flashcards`}
-                                  {eqCount > 0 && ` · ${eqCount} exam Q`}
-                                </div>
-                              )}
-                            </div>
-                            <ChevronDown size={13} className={`text-[#555] shrink-0 ml-3 transition-transform ${open ? "rotate-180" : ""}`} />
-                          </button>
-                          {open && (
-                            <div className="border-t border-[rgba(0,0,0,0.08)] px-5 pb-5 pt-4 space-y-4">
-                              {ch.explanation && (
-                                <p className="text-xs text-[#555] leading-relaxed">{ch.explanation}</p>
-                              )}
-                              {(ch.keyPoints ?? []).length > 0 && (
-                                <div className="space-y-1.5">
-                                  <div className="text-[9px] text-[#555] uppercase tracking-widest">Key Points</div>
-                                  {ch.keyPoints.map((kp: string, j: number) => (
-                                    <div key={j} className="flex gap-2 text-xs text-[#555]">
-                                      <span className="shrink-0 mt-1.5 w-1 h-1 rounded-full bg-[#2a2a2a]" />
-                                      <TextWithTerms text={kp} glossaryMap={glossaryMap} />
-                                    </div>
-                                  ))}
-                                </div>
-                              )}
-                              {(ch.keyTerms ?? []).length > 0 && (
-                                <div className="space-y-1">
-                                  <div className="text-[9px] text-[#555] uppercase tracking-widest">Terms</div>
-                                  {ch.keyTerms.map((kt: any, j: number) => (
-                                    <div key={j} className="text-xs">
-                                      <span className="text-[#111110] font-medium">{kt.term}</span>
-                                      <span className="text-[#555]"> — {kt.definition}</span>
-                                    </div>
-                                  ))}
-                                </div>
-                              )}
-                              {ch.analogy && (
-                                <div className="bg-white border border-[rgba(0,0,0,0.08)] rounded-xl p-3">
-                                  <div className="text-[9px] text-[#555] uppercase tracking-widest mb-1">Analogy — {ch.analogy.concept}</div>
-                                  <div className="text-xs text-[#555] leading-relaxed">{ch.analogy.analogy}</div>
-                                </div>
-                              )}
-                              {fcCount > 0 && (
-                                <div className="space-y-1.5">
-                                  <div className="text-[9px] text-[#555] uppercase tracking-widest">Flashcards · {fcCount}</div>
-                                  {ch.flashcards.map((fc: any, j: number) => (
-                                    <div key={j} className="bg-white rounded-xl p-3">
-                                      <div className="text-xs text-[#6b6b69] font-medium mb-1">{fc.front}</div>
-                                      <div className="text-xs text-[#555]">{fc.back}</div>
-                                    </div>
-                                  ))}
-                                </div>
-                              )}
-                              {eqCount > 0 && (
-                                <div className="space-y-2">
-                                  <div className="text-[9px] text-[#555] uppercase tracking-widest">Exam Questions</div>
-                                  {ch.examQuestions.map((eq: any, j: number) => (
-                                    <div key={j} className="bg-white rounded-xl p-3 space-y-1.5">
-                                      <div className="text-xs text-[#6b6b69]">{eq.question}</div>
-                                      {eq.options && (
-                                        <div className="space-y-0.5">
-                                          {eq.options.map((opt: string, k: number) => (
-                                            <div key={k} className={`text-xs ${opt.startsWith(eq.correctAnswer + ".") ? "text-green-500" : "text-[#555]"}`}>{opt}</div>
-                                          ))}
-                                        </div>
-                                      )}
-                                      {!eq.options && <div className="text-xs text-[#555] italic">{eq.correctAnswer}</div>}
-                                      {eq.explanation && <div className="text-[10px] text-[#555] leading-relaxed">{eq.explanation}</div>}
-                                    </div>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-                          )}
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Practice Questions */}
+            {questions.length > 0 && (
+              <div className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl p-5">
+                <div className="text-[10px] font-bold uppercase tracking-widest text-[#555] mb-3">Practice Questions · {questions.length}</div>
+                <div className="space-y-3">
+                  {questions.map((q: any, i: number) => {
+                    const revealed = openQ.has(i);
+                    const answer = q.answer ?? q.correctAnswer ?? '';
+                    return (
+                      <div key={i} className="rounded-xl border overflow-hidden" style={{ borderColor: revealed ? 'rgba(37,99,235,0.25)' : 'rgba(0,0,0,0.07)' }}>
+                        <div className="px-4 py-3 text-sm font-medium text-[#111110]" style={{ background: revealed ? 'rgba(37,99,235,0.04)' : 'rgba(0,0,0,0.02)' }}>
+                          <span className="text-[#2563eb] font-bold mr-2">Q{i + 1}.</span>{q.question}
                         </div>
-                      );
-                    })}
-                  </div>
-                )}
-
-                {/* Sections — collapsible (document type) */}
-                {!isStudybookType && sections.length > 0 && (
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div className="text-[10px] text-[#555] font-bold uppercase tracking-widest">
-                        Sections · {sections.length}
-                      </div>
-                      <div className="flex gap-3">
-                        <button onClick={() => setExpandedChapters(new Set(sections.map((_: any, i: number) => i)))} className="text-[10px] text-[#555] hover:text-[#555] transition-colors">Expand all</button>
-                        <button onClick={() => setExpandedChapters(new Set())} className="text-[10px] text-[#555] hover:text-[#555] transition-colors">Collapse all</button>
-                      </div>
-                    </div>
-                    {sections.map((s: any, i: number) => {
-                      const open = expandedChapters.has(i);
-                      return (
-                        <div key={i} className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl overflow-hidden">
-                          <button
-                            onClick={() => toggleChapter(i)}
-                            className="w-full flex items-center justify-between px-5 py-3.5 text-left hover:bg-white/[0.02] transition-colors"
-                          >
-                            <div className="min-w-0">
-                              <div className="text-xs font-medium text-[#111110] truncate">{s.heading}</div>
-                              {!open && <div className="text-[10px] text-[#555] mt-0.5">{(s.bullets ?? []).length} points</div>}
-                            </div>
-                            <ChevronDown size={13} className={`text-[#555] shrink-0 ml-3 transition-transform ${open ? "rotate-180" : ""}`} />
+                        {revealed ? (
+                          <div className="px-4 py-3 bg-white text-sm text-[#444] leading-relaxed border-t border-[rgba(0,0,0,0.06)]">{answer}</div>
+                        ) : (
+                          <button onClick={() => setOpenQ(p => { const s = new Set(p); s.add(i); return s; })}
+                            className="w-full text-left px-4 py-2 text-xs font-semibold text-[#2563eb] hover:opacity-70 transition-opacity bg-white border-t border-[rgba(0,0,0,0.06)]">
+                            Reveal answer →
                           </button>
-                          {open && (
-                            <div className="border-t border-[rgba(0,0,0,0.08)] px-5 pb-4 pt-3 space-y-1.5">
-                              {(s.bullets ?? []).map((b: string, j: number) => (
-                                <div key={j} className="flex gap-2 text-xs text-[#555]">
-                                  <span className="shrink-0 mt-1.5 w-1 h-1 rounded-full bg-[#2a2a2a]" />
-                                  {b}
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-
-                {/* Glossary / Key Terms — collapsible */}
-                {(isStudybookType ? glossary : keyTerms).length > 0 && (
-                  <div className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl overflow-hidden">
-                    <button
-                      onClick={() => setExpandedSbSections(p => ({ ...p, glossary: !p.glossary }))}
-                      className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-white/[0.02] transition-colors"
-                    >
-                      <div className="text-[10px] text-[#555] font-bold uppercase tracking-widest">
-                        {isStudybookType ? `Glossary · ${glossary.length} terms` : `Key Terms · ${keyTerms.length}`}
+                        )}
                       </div>
-                      <ChevronDown size={13} className={`text-[#555] shrink-0 transition-transform ${expandedSbSections.glossary ? "rotate-180" : ""}`} />
-                    </button>
-                    {expandedSbSections.glossary && (
-                      <div className="border-t border-[rgba(0,0,0,0.08)] px-5 pb-4 pt-3 space-y-2">
-                        {(isStudybookType ? glossary : keyTerms).map((g: any, i: number) => (
-                          <div key={i} className="flex items-start gap-2 py-1 border-b last:border-0 border-[rgba(0,0,0,0.05)]">
-                            {isStudybookType && g.highYield && <span className="text-yellow-500 shrink-0 text-xs">★</span>}
-                            <TermTooltip term={g.term} definition={g.definition} highYield={g.highYield} />
-                            <span className="text-xs text-[#555] leading-relaxed"> — {g.definition}</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Practice Questions — collapsible (document type) */}
-                {!isStudybookType && (c?.practiceQuestions ?? []).length > 0 && (
-                  <div className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl overflow-hidden">
-                    <button
-                      onClick={() => setExpandedSbSections(p => ({ ...p, practiceQ: !p.practiceQ }))}
-                      className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-white/[0.02] transition-colors"
-                    >
-                      <div className="text-[10px] text-[#555] font-bold uppercase tracking-widest">
-                        Practice Questions · {c.practiceQuestions.length}
-                      </div>
-                      <ChevronDown size={13} className={`text-[#555] shrink-0 transition-transform ${expandedSbSections.practiceQ ? "rotate-180" : ""}`} />
-                    </button>
-                    {expandedSbSections.practiceQ && (
-                      <div className="border-t border-[rgba(0,0,0,0.08)] px-5 pb-4 pt-3 space-y-3">
-                        {c.practiceQuestions.map((pq: any, i: number) => (
-                          <div key={i} className="bg-white rounded-xl p-3">
-                            <div className="text-xs text-[#6b6b69] mb-1">{pq.question}</div>
-                            <div className="text-[10px] text-[#555] italic">{pq.answer}</div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Exam Tips — collapsible (document type) */}
-                {!isStudybookType && (c?.examTips ?? []).length > 0 && (
-                  <div className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl overflow-hidden">
-                    <button
-                      onClick={() => setExpandedSbSections(p => ({ ...p, tips: !p.tips }))}
-                      className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-white/[0.02] transition-colors"
-                    >
-                      <div className="text-[10px] text-[#555] font-bold uppercase tracking-widest">
-                        Exam Tips · {c.examTips.length}
-                      </div>
-                      <ChevronDown size={13} className={`text-[#555] shrink-0 transition-transform ${expandedSbSections.tips ? "rotate-180" : ""}`} />
-                    </button>
-                    {expandedSbSections.tips && (
-                      <div className="border-t border-[rgba(0,0,0,0.08)] px-5 pb-4 pt-3 space-y-1.5">
-                        {c.examTips.map((tip: string, i: number) => (
-                          <div key={i} className="flex gap-2 text-xs text-[#555]">
-                            <span className="shrink-0 mt-1.5 w-1 h-1 rounded-full bg-[#2a2a2a]" />
-                            {tip}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
+                    );
+                  })}
+                </div>
               </div>
             )}
           </div>

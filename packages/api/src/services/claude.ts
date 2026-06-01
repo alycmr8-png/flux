@@ -227,92 +227,55 @@ Be thorough. The "summary" field must be exactly 7 sentences. Include 4-6 sectio
 
 export async function generateStudyBook(transcript: string, lectureTitle: string, language = "en") {
   const langName = LANG_NAMES[language] ?? "English";
-  // If still very large after condensing, do a second-pass condensation
-  let transcriptInput = transcript;
-  if (transcriptInput.length > 80000) {
-    transcriptInput = await condenseTranscript(transcriptInput, [], lectureTitle, language);
-  }
-  transcriptInput = transcriptInput.slice(0, 80000);
-  const len = transcriptInput.length;
-
-  // Scale depth and token budget to actual content length
-  const tier: "short" | "medium" | "long" =
-    len < 8000 ? "short" : len < 30000 ? "medium" : "long";
-
-  const depth = {
-    short:  { maxTokens: 7000,  chapters: "3",   explanation: "2",   keyPoints: "3-4",  flashcards: "2",   glossary: "6-8"  },
-    medium: { maxTokens: 10000, chapters: "4-5", explanation: "2-3", keyPoints: "4-5",  flashcards: "2-3", glossary: "8-12" },
-    long:   { maxTokens: 14000, chapters: "6-7", explanation: "3",   keyPoints: "5-6",  flashcards: "3",   glossary: "12-16"},
-  }[tier];
+  const transcriptInput = transcript.slice(0, 80000);
 
   const msg = await createWithRetry({
     model: "gpt-4o",
-    max_tokens: depth.maxTokens,
-    system: `You are an expert Instructional Designer creating comprehensive study materials.
-Your primary goal: if the speaker explains something in depth, YOU explain it in depth too. Never summarise what can be detailed.
+    max_tokens: 3500,
+    system: `You are a study coach creating a focused review session from class materials.
 Write ALL text in ${langName}.
 Return ONLY valid JSON — no markdown, no commentary.
 
-Schema (output fields in THIS exact order):
+Schema:
 {
-  "_type": "studybook",
-  "chapters": [{
-    "number": number,
-    "title": string,
-    "timestamp": string,
-    "explanation": string,
-    "keyPoints": string[],
-    "keyTerms": [{ "term": string, "definition": string }],
-    "analogy": { "concept": string, "analogy": string },
-    "flashcards": [{ "front": string, "back": string }],
-    "examQuestions": [{
-      "type": "mcq" | "short",
-      "question": string,
-      "options": string[] | null,
-      "correctAnswer": string,
-      "explanation": string
-    }]
-  }],
-  "glossary": [{ "term": string, "definition": string, "highYield": boolean }],
-  "tableOfContents": [{ "chapter": number, "title": string, "timestamp": string }],
-  "executiveSummary": string
+  "_type": "review",
+  "summary": string,
+  "keyTakeaways": string[],
+  "keyTerms": [{ "term": string, "definition": string }],
+  "practiceQuestions": [{
+    "question": string,
+    "type": "mcq" | "short",
+    "options": string[] | null,
+    "answer": string
+  }]
 }
 
-DEPTH REQUIREMENTS:
-- Chapters: ${depth.chapters} chapters, one per distinct topic. Do not merge unrelated topics.
-- explanation: ${depth.explanation} detailed paragraphs. Include examples, reasoning, elaborations.
-- keyPoints: ${depth.keyPoints} complete sentences, each a standalone learning statement.
-- keyTerms: 2-4 terms per chapter with clear 1-2 sentence definitions.
-- analogy: one vivid everyday analogy per chapter.
-- flashcards: ${depth.flashcards} per chapter. Specific fronts; complete, detailed backs.
-- examQuestions: 1 MCQ + 1 short-answer per chapter.
-- glossary: ${depth.glossary} terms across the full lecture.
-- executiveSummary: 3-5 sentences covering only the most important points. Be concise — no filler, no restating the obvious.
-
 Rules:
-- MCQ options = ["A. ...", "B. ...", "C. ...", "D. ..."], correctAnswer = "A"/"B"/"C"/"D"
-- Short answer: options = null, correctAnswer = thorough model answer (2-4 sentences)
-- highYield = true for terms most likely on exams
-- Timestamps in MM:SS format (estimate if not in transcript)`,
+- summary: 2-3 sentences. What was covered and why it matters. No filler.
+- keyTakeaways: 6-10 bullet points. Each a complete, standalone insight from the material.
+- keyTerms: 6-12 important terms with clear 1-sentence definitions.
+- practiceQuestions: 4-6 questions. Mix MCQ and short-answer. MCQ options = ["A. ...", "B. ...", "C. ...", "D. ..."], answer = "A"/"B"/"C"/"D". Short-answer: options = null, answer = 1-2 sentence model answer.
+- Be concise. This is a review session, not a textbook.`,
     messages: [{
       role: "user",
-      content: `Lecture: "${lectureTitle}"\n\nTranscript:\n${transcriptInput}`,
+      content: `Class: "${lectureTitle}"\n\nMaterials:\n${transcriptInput}`,
     }],
   });
+
   const raw = extractText(msg);
   const json = raw.match(/\{[\s\S]*\}/)?.[0] ?? "{}";
   let parsed: any = {};
   try {
     parsed = JSON.parse(json);
   } catch {
-    // JSON was cut off — try to recover partial output
-    const partial = json.replace(/,?\s*[\[{][^{}\[\]]*$/, "") + "]}]}";
-    try { parsed = JSON.parse(partial); } catch { /* unrecoverable */ }
+    try { parsed = JSON.parse(json.replace(/,?\s*[\[{][^{}\[\]]*$/, "") + "]}"); } catch { /* unrecoverable */ }
   }
-  if (!parsed.chapters?.length) {
-    console.error("[generateStudyBook] no chapters in response, raw:", raw.slice(0, 500));
-    throw new Error("Study book generation failed — please try again.");
+  if (!parsed.summary && !parsed.keyTakeaways?.length) {
+    console.error("[generateStudyBook] empty response, raw:", raw.slice(0, 300));
+    throw new Error("Review session generation failed — please try again.");
   }
+  // Ensure _type is set for display routing
+  parsed._type = "review";
   return parsed;
 }
 
