@@ -442,9 +442,12 @@ router.post("/generate-from-course", async (req, res) => {
     s => !s.lecture?.audioUrl && !s.title.includes("— Cheat Sheet")
   );
 
-  const parts: string[] = [];
+  // ── Separate recordings (long, need condensing) from notes/files (short, keep verbatim) ──
+  const transcriptParts: string[] = [];
+  const verbatimParts: string[] = [];
+
   for (const l of lectures) {
-    if (l.transcript?.trim()) parts.push(`[Recording: ${l.title}]\n${l.transcript}`);
+    if (l.transcript?.trim()) transcriptParts.push(`[Recording: ${l.title}]\n${l.transcript}`);
   }
   for (const s of docSheets) {
     const c = s.content as any;
@@ -453,18 +456,20 @@ router.post("/generate-from-course", async (req, res) => {
       ...(c?.sections ?? []).flatMap((sec: any) => [sec.heading, ...(sec.bullets ?? [])]),
       ...(c?.keyTerms ?? []).map((kt: any) => `${kt.term}: ${kt.definition}`),
     ].filter(Boolean).join("\n");
-    if (text.trim()) parts.push(`[Uploaded file: ${s.title}]\n${text}`);
+    if (text.trim()) verbatimParts.push(`[Uploaded file: ${s.title}]\n${text}`);
   }
+  // Notes always verbatim — never truncated
+  const seenNoteIds = new Set<string>();
   for (const n of dbNotes) {
-    if (n.text?.trim()) parts.push(`[Note: ${n.name}]\n${n.text}`);
+    if (n.text?.trim()) { seenNoteIds.add(n.id); verbatimParts.push(`[Note: ${n.name}]\n${n.text}`); }
   }
   for (const n of inlineNotes) {
-    parts.push(`[Note: ${n.name}]\n${n.text}`);
+    if (n.text?.trim()) verbatimParts.push(`[Note: ${n.name}]\n${n.text}`);
   }
 
-  const combined = parts.join("\n\n---\n\n");
-
-  if (!combined.trim()) return res.status(400).json({ error: "No content found for this class." });
+  if (!transcriptParts.length && !verbatimParts.length) {
+    return res.status(400).json({ error: "No content found for this class." });
+  }
 
   const bookTitle = title?.trim() || `${course.name} — Study Book`;
   const jobId = `cb_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
@@ -477,14 +482,25 @@ router.post("/generate-from-course", async (req, res) => {
 
   (async () => {
     try {
-      const source = await condenseTranscript(combined, [], bookTitle, user.language ?? "en");
+      // Condense only the recording transcripts (the long content)
+      const transcriptCombined = transcriptParts.join("\n\n---\n\n");
+      const condensedTranscripts = transcriptCombined
+        ? await condenseTranscript(transcriptCombined, [], bookTitle, user.language ?? "en")
+        : "";
+
+      // Notes and files are appended verbatim AFTER condensing — never truncated
+      const source = [condensedTranscripts, ...verbatimParts]
+        .filter(Boolean)
+        .join("\n\n===\n\n")
+        .slice(0, 100000);
+
       const book = await generateStudyBook(source, bookTitle, user.language ?? "en");
 
       // Need a lectureId — create a placeholder lecture if none exist for this course
       let saveLectureId = lectures[0]?.id;
       if (!saveLectureId) {
         const placeholder = await prisma.lecture.create({
-          data: { userId: user.id, courseId, title: bookTitle, transcript: combined, status: "ready" },
+          data: { userId: user.id, courseId, title: bookTitle, transcript: source, status: "ready" },
         });
         saveLectureId = placeholder.id;
       }
