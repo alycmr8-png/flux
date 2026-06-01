@@ -262,11 +262,29 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
     (initialTab as any) ?? "record"
   );
 
-  const { data: lecturesData, mutate: mutateLectures } = useSWR(`${BASE}/api/lectures?courseId=${course.id}`, fetcher);
+  // Track which tabs have been visited so we only fetch data on demand
+  const [visitedTabs, setVisitedTabs] = useState<Set<string>>(() => new Set([initialTab ?? "record"]));
+  function switchTab(next: typeof tab) {
+    setVisitedTabs(prev => new Set([...prev, next]));
+    switchTab(next);
+  }
+
+  // Lectures always fetch — needed for Record tab (primary tab)
+  const { data: lecturesData, mutate: mutateLectures } = useSWR(
+    `${BASE}/api/lectures?courseId=${course.id}`,
+    fetcher,
+    { revalidateOnFocus: false }
+  );
   const lectures: any[] = lecturesData?.data ?? [];
   const audioLectures: any[] = lectures.filter((l: any) => l.audioUrl);
 
-  const { data: sheetsData, mutate: mutateSheets } = useSWR(`${BASE}/api/cheatsheets?courseId=${course.id}`, fetcher);
+  // Sheets — only fetch when Files or Review tab visited
+  const needsSheets = visitedTabs.has("files") || visitedTabs.has("studybook");
+  const { data: sheetsData, mutate: mutateSheets } = useSWR(
+    needsSheets ? `${BASE}/api/cheatsheets?courseId=${course.id}` : null,
+    fetcher,
+    { revalidateOnFocus: false }
+  );
   const sheets: any[] = (sheetsData?.data ?? []).filter((s: any) => !s.title?.startsWith("Study Book:"));
   const studyBooks: any[] = (sheetsData?.data ?? []).filter((s: any) => s.title?.startsWith("Study Book:"));
 
@@ -311,7 +329,11 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
     setExpandedChapters(prev => { const n = new Set(prev); n.has(i) ? n.delete(i) : n.add(i); return n; });
   }
 
-  const { data: quizzesData, mutate: mutateQuizzes } = useSWR(`${BASE}/api/quizzes?courseId=${course.id}`, fetcher);
+  const { data: quizzesData, mutate: mutateQuizzes } = useSWR(
+    visitedTabs.has("quizzes") ? `${BASE}/api/quizzes?courseId=${course.id}` : null,
+    fetcher,
+    { revalidateOnFocus: false }
+  );
   const quizzes: any[] = quizzesData?.data ?? [];
 
   // ── record ──
@@ -1100,7 +1122,11 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
 
   // ── notes (database) ──
   type NoteEntry = { id: string; name: string; text: string; updatedAt: string };
-  const { data: notesData, mutate: mutateNotes } = useSWR(`${BASE}/api/notes?courseId=${course.id}`, fetcher);
+  const { data: notesData, mutate: mutateNotes } = useSWR(
+    visitedTabs.has("note") || visitedTabs.has("studybook") ? `${BASE}/api/notes?courseId=${course.id}` : null,
+    fetcher,
+    { revalidateOnFocus: false }
+  );
   const notes: NoteEntry[] = notesData?.data ?? [];
   const [noteView, setNoteView] = useState<"list" | "create" | "edit">("list");
   const [activeNote, setActiveNote] = useState<NoteEntry | null>(null);
@@ -1264,7 +1290,11 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
 
   // ── archive ──
   const [confirmArchiveId, setConfirmArchiveId] = useState<string | null>(null);
-  const { data: archivedData, mutate: mutateArchived } = useSWR(`${BASE}/api/lectures?courseId=${course.id}&archived=true`, fetcher);
+  const { data: archivedData, mutate: mutateArchived } = useSWR(
+    visitedTabs.has("record") && openLectureId === null ? `${BASE}/api/lectures?courseId=${course.id}&archived=true` : null,
+    fetcher,
+    { revalidateOnFocus: false }
+  );
   const archivedLectures: any[] = archivedData?.data ?? [];
 
   async function archiveLecture(id: string) {
@@ -1355,7 +1385,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
         {TABS.map(({ key, label, icon: Icon }) => (
           <button
             key={key}
-            onClick={() => setTab(key)}
+            onClick={() => switchTab(key)}
             className="flex items-center gap-2 whitespace-nowrap transition-all"
             style={{
               padding: "10px 20px",
