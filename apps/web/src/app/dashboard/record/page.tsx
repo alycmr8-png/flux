@@ -266,7 +266,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
   const [visitedTabs, setVisitedTabs] = useState<Set<string>>(() => new Set([initialTab ?? "record"]));
   function switchTab(next: typeof tab) {
     setVisitedTabs(prev => new Set([...prev, next]));
-    switchTab(next);
+    setTab(next);
   }
 
   // Lectures always fetch — needed for Record tab (primary tab)
