@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { UserButton } from "@clerk/nextjs";
-import { Home, Layers, HelpCircle, Calendar, BarChart2, CreditCard, Archive } from "lucide-react";
+import { Home, Layers, HelpCircle, Calendar, CreditCard, Archive } from "lucide-react";
 import { LanguageSwitcher } from "@/components/I18nProvider";
 import { useState, useEffect } from "react";
 import { useT } from "@/lib/useT";
@@ -18,7 +18,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     { href: "/dashboard",          icon: Home,        label: t.nav.home      },
     { href: "/dashboard/record",   icon: Layers,      label: t.nav.workspace },
     { href: "/dashboard/calendar", icon: Calendar,    label: t.nav.calendar  },
-    { href: "/dashboard/progress", icon: BarChart2,   label: t.nav.progress  },
     { href: "/dashboard/archive",  icon: Archive,     label: t.nav.archive   },
     { href: "/dashboard/billing",  icon: CreditCard,  label: t.nav.billing   },
     { href: "/dashboard/help",     icon: HelpCircle,  label: t.nav.help      },

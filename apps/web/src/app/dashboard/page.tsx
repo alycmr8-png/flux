@@ -47,8 +47,9 @@ export default function DashboardHome() {
   const apiFetch = useApiFetch();
   const SWR_OPTS = { revalidateOnFocus: false, dedupingInterval: 60000 } as const;
 
-  const { data: progressData, isLoading } = useSWR(`${BASE}/api/progress`, fetcher, SWR_OPTS);
   const { data: sheetsData } = useSWR(`${BASE}/api/cheatsheets`, fetcher, SWR_OPTS);
+  const { data: coursesData, isLoading: coursesLoading } = useSWR(`${BASE}/api/courses`, fetcher, SWR_OPTS);
+  const courses: any[] = coursesData?.data ?? [];
   // Stable date range — must not be computed inline or the SWR key changes every render
   const [eventsFrom] = useState(() => startOfDay(new Date()).toISOString());
   const [eventsTo] = useState(() => new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString());
@@ -70,7 +71,6 @@ export default function DashboardHome() {
   const [activeFilter, setActiveFilter] = useState<string>("all");
   const [expandedEvent, setExpandedEvent] = useState<string | null>(null);
 
-  const p = progressData?.data;
   const notes = sheetsData?.data?.slice(0, 3) ?? [];
 
   const today = startOfDay(new Date());
@@ -114,24 +114,6 @@ export default function DashboardHome() {
         <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 30, color: "white", marginBottom: 28 }}>
           {t.home[greetingKey()]}{firstName ? `, ${firstName}` : ""}.
         </h1>
-
-        {/* Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-          {[
-            { label: t.home.lecturesRecorded, value: isLoading ? "..." : (p?.lectureCount ?? "0") },
-            { label: t.home.avgQuizScore,    value: isLoading ? "..." : (p?.avgScore ? `${p.avgScore}%` : "—") },
-            { label: t.home.dayStreak,        value: isLoading ? "..." : (p?.streak ?? "0") },
-          ].map((s) => (
-            <div
-              key={s.label}
-              className="rounded-2xl p-4 border transition-all duration-200 cursor-default"
-              style={{ background: "rgba(37,99,235,0.08)", borderColor: "rgba(37,99,235,0.2)" }}
-            >
-              <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 28, fontWeight: 700, color: "#60a5fa", lineHeight: 1, marginBottom: 4 }}>{s.value}</div>
-              <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)" }}>{s.label}</div>
-            </div>
-          ))}
-        </div>
 
         {/* Coming up */}
         <p className="text-xs uppercase tracking-widest mb-3" style={{ color: "#3b82f6" }}>{t.home.comingUp}</p>
@@ -188,11 +170,11 @@ export default function DashboardHome() {
         {/* My classes */}
         <p className="text-xs uppercase tracking-widest mb-3" style={{ color: "#3b82f6" }}>{t.home.myClasses}</p>
         <div className="space-y-2 mb-8">
-          {isLoading ? (
+          {coursesLoading ? (
             [...Array(2)].map((_, i) => (
               <div key={i} className="rounded-2xl px-5 py-4 border animate-pulse" style={{ background: "rgba(255,255,255,0.06)", borderColor: "rgba(255,255,255,0.08)", height: 64 }} />
             ))
-          ) : (p?.lecturesByClass ?? []).length === 0 ? (
+          ) : courses.length === 0 ? (
             <Link href="/dashboard/record"
               className="flex items-center gap-3 rounded-2xl px-5 py-4 border transition-all hover:border-white/20 hover:bg-white/10"
               style={{ background: "rgba(255,255,255,0.04)", borderColor: "rgba(255,255,255,0.08)", borderStyle: "dashed" }}>
@@ -200,57 +182,20 @@ export default function DashboardHome() {
               <span className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>Add your first class</span>
             </Link>
           ) : (
-            (p.lecturesByClass as any[]).map((cls: any) => {
-              const retention = (p.courseRetention as any[])?.find((r: any) => r.name === cls.name);
-              const count = cls.lectures.length;
-              const lastLecture = cls.lectures[0];
-              const lastDate = lastLecture?.recordedAt
-                ? differenceInCalendarDays(today, new Date(lastLecture.recordedAt)) === 0
-                  ? "today"
-                  : `${differenceInCalendarDays(today, new Date(lastLecture.recordedAt))}d ago`
-                : null;
-              const totalSecs: number = cls.lectures.reduce((acc: number, l: any) => acc + (l.durationSeconds ?? 0), 0);
-              const hours = Math.floor(totalSecs / 3600);
-              const mins = Math.floor((totalSecs % 3600) / 60);
-              const studyTime = hours > 0 ? `${hours}h ${mins}m` : mins > 0 ? `${mins}m` : null;
-
-              return (
-                <Link key={cls.id} href="/dashboard/record"
-                  className="flex items-center gap-4 rounded-2xl px-5 py-4 border transition-all duration-200 hover:border-white/20 hover:bg-white/10"
-                  style={{ background: "rgba(255,255,255,0.06)", borderColor: "rgba(255,255,255,0.08)" }}>
-                  <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "rgba(255,255,255,0.08)" }}>
-                    <Layers size={15} style={{ color: "rgba(255,255,255,0.45)" }} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium truncate" style={{ color: "white" }}>{cls.name}</div>
-                    <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                      <span className="text-[11px]" style={{ color: "rgba(255,255,255,0.35)" }}>
-                        {count} lecture{count !== 1 ? "s" : ""}
-                      </span>
-                      {studyTime && (
-                        <span className="text-[11px]" style={{ color: "rgba(255,255,255,0.2)" }}>· {studyTime} recorded</span>
-                      )}
-                      {lastDate && (
-                        <span className="text-[11px]" style={{ color: "rgba(255,255,255,0.2)" }}>· Last activity {lastDate}</span>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 shrink-0">
-                    {retention ? (
-                      <div className="text-right">
-                        <div className="text-sm font-semibold" style={{ color: retention.avg >= 70 ? "#22c55e" : retention.avg >= 50 ? "#f97316" : "#ef4444" }}>
-                          {retention.avg}%
-                        </div>
-                        <div className="text-[9px] uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.25)" }}>quiz avg</div>
-                      </div>
-                    ) : count === 0 ? (
-                      <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: "rgba(255,255,255,0.07)", color: "rgba(255,255,255,0.3)" }}>empty</span>
-                    ) : null}
-                    <ChevronRight size={13} style={{ color: "rgba(255,255,255,0.2)" }} />
-                  </div>
-                </Link>
-              );
-            })
+            courses.map((cls: any) => (
+              <Link key={cls.id} href="/dashboard/record"
+                className="flex items-center gap-4 rounded-2xl px-5 py-4 border transition-all duration-200 hover:border-white/20 hover:bg-white/10"
+                style={{ background: "rgba(255,255,255,0.06)", borderColor: "rgba(255,255,255,0.08)" }}>
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "rgba(255,255,255,0.08)" }}>
+                  <Layers size={15} style={{ color: "rgba(255,255,255,0.45)" }} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-medium truncate" style={{ color: "white" }}>{cls.name}</div>
+                  <div className="text-[11px] mt-0.5" style={{ color: "rgba(255,255,255,0.35)" }}>{cls.code}</div>
+                </div>
+                <ChevronRight size={13} style={{ color: "rgba(255,255,255,0.2)" }} />
+              </Link>
+            ))
           )}
         </div>
 
