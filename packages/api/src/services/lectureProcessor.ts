@@ -1,7 +1,7 @@
 import fs from "fs";
 import { prisma } from "../lib/prisma";
 import { transcribeAudio } from "./whisper";
-import { condenseTranscript, generateCheatSheet, generateQuiz } from "./claude";
+import { condenseTranscript, generateCheatSheet, generateQuiz, correctTranscript } from "./claude";
 import { syncToDrive } from "./google";
 import { scheduleSpacedRepetition } from "./spaced-repetition";
 
@@ -37,6 +37,14 @@ export async function processLecture(lectureId: string, userId: string) {
     segments = result.segments;
 
     if (!transcript.trim()) throw new Error("Whisper returned empty transcript");
+
+    // ── Correct speech-to-text errors (punctuation, homophones, split words) ──
+    try {
+      transcript = await correctTranscript(transcript);
+      console.log(`[processLecture] transcript corrected (${transcript.length} chars)`);
+    } catch (corrErr) {
+      console.error("[processLecture] correction failed (non-fatal):", (corrErr as any)?.message);
+    }
 
     // ── Extract slide text and append to transcript (non-fatal) ──
     if (lecture.slidesUrl && fs.existsSync(lecture.slidesUrl)) {
@@ -125,8 +133,10 @@ export async function processLecture(lectureId: string, userId: string) {
     }
 
     await safeStatusUpdate(lectureId, { status: "ready" });
-  } catch (err) {
-    console.error("Processing failed for lecture", lectureId, err);
-    await safeStatusUpdate(lectureId, { status: "error" });
+  } catch (err: any) {
+    const msg = err?.message ?? String(err);
+    console.error("[processLecture] failed for", lectureId, msg);
+    // Store error reason in transcript so the frontend can display it
+    await safeStatusUpdate(lectureId, { status: "error", transcript: `[ERROR] ${msg}` });
   }
 }

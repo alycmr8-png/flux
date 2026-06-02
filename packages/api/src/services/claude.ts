@@ -484,3 +484,57 @@ export async function answerVideoQuestion(
   });
   return extractText(msg);
 }
+
+// ─── Transcript corrector ─────────────────────────────────────────────────────
+// Fixes speech-to-text errors: punctuation, homophones, split words, run-ons.
+// Uses gpt-4o-mini (cheap) in 4 000-char chunks so long lectures are covered.
+
+async function correctChunk(text: string): Promise<string> {
+  const msg = await createWithRetry({
+    model: "gpt-4o-mini",
+    max_tokens: Math.min(Math.ceil(text.length / 3) + 600, 4096),
+    system: `You are correcting a university lecture transcript produced by speech recognition.
+Rules:
+- Fix spelling mistakes, run-on sentences, and missing punctuation.
+- Correct homophones (e.g. "their/there/they're", "to/too/two").
+- Rejoin words that were split incorrectly (e.g. "mito chondria" → "mitochondria").
+- Preserve all technical, scientific, and academic vocabulary.
+- Do NOT add, remove, or change the meaning of any content.
+- Return ONLY the corrected transcript — no explanations, no preamble.`,
+    messages: [{ role: "user", content: text }],
+  });
+  return extractText(msg).trim() || text;
+}
+
+export async function correctTranscript(transcript: string): Promise<string> {
+  if (!transcript.trim() || transcript.length < 100) return transcript;
+
+  const CHUNK = 4000;
+  if (transcript.length <= CHUNK) {
+    try { return await correctChunk(transcript); } catch { return transcript; }
+  }
+
+  // Split at sentence boundaries to avoid cutting words mid-sentence
+  const sentences = transcript.split(/(?<=[.!?])\s+/);
+  const chunks: string[] = [];
+  let current = "";
+  for (const s of sentences) {
+    if (current.length + s.length > CHUNK && current) {
+      chunks.push(current);
+      current = s;
+    } else {
+      current += (current ? " " : "") + s;
+    }
+  }
+  if (current) chunks.push(current);
+
+  try {
+    const corrected = await batchPromises(
+      chunks.map(c => () => correctChunk(c)),
+      3
+    );
+    return corrected.join(" ");
+  } catch {
+    return transcript;
+  }
+}

@@ -401,7 +401,8 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
         if (status === "ready" || status === "error") {
           if (pollRef.current) clearInterval(pollRef.current);
           if (status === "error") {
-            setProcessingError("Processing failed. Check that your API keys are set in Railway and try again.");
+            const errorMessage = res.data?.errorMessage;
+            setProcessingError(errorMessage || "Processing failed. Check your internet connection and try again.");
             setProcessingId(null);
             setRecStep("saved");
             return;

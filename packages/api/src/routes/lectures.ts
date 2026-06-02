@@ -99,10 +99,13 @@ lectureRouter.get("/:id/status", async (req, res) => {
   const user = (req as any).user;
   const lecture = await prisma.lecture.findFirst({
     where: { id: req.params.id, userId: user.id },
-    select: { id: true, status: true, title: true },
+    select: { id: true, status: true, title: true, transcript: true },
   });
   if (!lecture) return res.status(404).json({ error: "Not found" });
-  res.json({ data: lecture });
+  const errorMessage = lecture.status === "error" && lecture.transcript?.startsWith("[ERROR]")
+    ? lecture.transcript.replace("[ERROR] ", "")
+    : null;
+  res.json({ data: { id: lecture.id, status: lecture.status, title: lecture.title, errorMessage } });
 });
 
 lectureRouter.patch("/:id", async (req, res) => {

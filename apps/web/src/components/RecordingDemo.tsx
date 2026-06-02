@@ -1,234 +1,294 @@
 "use client";
-import { useState, useEffect } from "react";
-import { Mic, Square, FileText, BookOpen, AlignLeft, CheckCircle } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import {
+  Mic, Mic2, Square, Pause, Play, FileUp, BookOpen, BookMarked,
+  PenLine, Youtube, CheckCircle, Loader2, Sparkles, Home,
+  Layers, Calendar, Archive, CreditCard, HelpCircle,
+} from "lucide-react";
 
-const LECTURE_TITLE = "Cognitive Psychology - Week 4";
+const TITLE = "Cognitive Psychology — Week 4";
+type Phase = "idle" | "typing" | "recording" | "paused" | "processing" | "done" | "hold";
 
-type Phase = "idle" | "typing" | "recording" | "processing" | "results" | "hold";
-
-const CARDS = [
-  { icon: FileText,  label: "Cheat Sheet", desc: "12 key concepts extracted",  color: "#3b82f6", delay: 0    },
-  { icon: BookOpen,  label: "Quiz",        desc: "8 practice questions ready", color: "#a855f7", delay: 500  },
-  { icon: AlignLeft, label: "Summary",     desc: "2-min read overview",        color: "#22c55e", delay: 1000 },
+const NAV = [
+  { icon: Home,       label: "Home"      },
+  { icon: Layers,     label: "Workspace" },
+  { icon: Calendar,   label: "Calendar"  },
+  { icon: Archive,    label: "Archive"   },
+  { icon: CreditCard, label: "Billing"   },
+  { icon: HelpCircle, label: "Help"      },
 ];
 
-export function RecordingDemo() {
-  const [phase, setPhase]          = useState<Phase>("idle");
-  const [typed, setTyped]          = useState("");
-  const [seconds, setSeconds]      = useState(0);
-  const [progress, setProgress]    = useState(0);
-  const [visibleCards, setVisible] = useState(0);
+const TABS = [
+  { icon: Mic2,      label: "Record"         },
+  { icon: FileUp,    label: "Upload Files"   },
+  { icon: BookOpen,  label: "Quizzes"        },
+  { icon: Youtube,   label: "Upload Video"   },
+  { icon: BookMarked,label: "Review"         },
+  { icon: PenLine,   label: "Take Note"      },
+];
 
+const WAVE_HEIGHTS = Array.from({ length: 20 }, () => 0.35 + Math.random() * 0.65);
+const WAVE_DURATIONS = Array.from({ length: 20 }, () => 0.4 + Math.random() * 0.7);
+
+const RESULT_CARDS = [
+  { label: "Transcript",  color: "#3b82f6", desc: "Full text ready"         },
+  { label: "Summary",     color: "#a855f7", desc: "Key concepts extracted"  },
+  { label: "Key Points",  color: "#f97316", desc: "15 points identified"    },
+  { label: "Quiz",        color: "#22c55e", desc: "8 questions generated"   },
+];
+
+function fmt(s: number) {
+  return `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
+}
+
+export function RecordingDemo() {
+  const [phase, setPhase]   = useState<Phase>("idle");
+  const [typed, setTyped]   = useState("");
+  const [seconds, setSeconds] = useState(0);
+  const [visibleCards, setVisible] = useState(0);
+  const phaseRef = useRef(phase);
+  phaseRef.current = phase;
+
+  // Main phase sequencer
   useEffect(() => {
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    const schedule = (fn: () => void, ms: number) => { const t = setTimeout(fn, ms); timers.push(t); return t; };
+
     if (phase === "idle") {
-      const t = setTimeout(() => setPhase("typing"), 800);
-      return () => clearTimeout(t);
+      schedule(() => setPhase("typing"), 900);
     }
-    if (phase === "recording" && seconds >= 6) {
-      const t = setTimeout(() => { setPhase("processing"); setSeconds(0); }, 400);
-      return () => clearTimeout(t);
+    if (phase === "recording") {
+      schedule(() => setPhase("processing"), 5800);
     }
-    if (phase === "processing" && progress >= 100) {
-      const t = setTimeout(() => { setPhase("results"); setProgress(0); }, 300);
-      return () => clearTimeout(t);
+    if (phase === "processing") {
+      schedule(() => { setPhase("done"); setVisible(0); }, 3000);
     }
-    if (phase === "results" && visibleCards >= 3) {
-      const t = setTimeout(() => setPhase("hold"), 600);
-      return () => clearTimeout(t);
+    if (phase === "done") {
+      schedule(() => setPhase("hold"), 4500);
     }
     if (phase === "hold") {
-      const t = setTimeout(() => {
-        setPhase("idle");
-        setTyped("");
-        setSeconds(0);
-        setProgress(0);
-        setVisible(0);
-      }, 2800);
-      return () => clearTimeout(t);
+      schedule(() => { setPhase("idle"); setTyped(""); setSeconds(0); setVisible(0); }, 1200);
     }
-  }, [phase, seconds, progress, visibleCards]);
+    return () => timers.forEach(clearTimeout);
+  }, [phase]);
 
+  // Typing animation
   useEffect(() => {
     if (phase !== "typing") return;
-    if (typed.length < LECTURE_TITLE.length) {
-      const t = setTimeout(() => setTyped(LECTURE_TITLE.slice(0, typed.length + 1)), 65);
+    if (typed.length < TITLE.length) {
+      const t = setTimeout(() => setTyped(TITLE.slice(0, typed.length + 1)), 55);
       return () => clearTimeout(t);
     } else {
-      const t = setTimeout(() => setPhase("recording"), 500);
+      const t = setTimeout(() => setPhase("recording"), 600);
       return () => clearTimeout(t);
     }
   }, [phase, typed]);
 
+  // Timer
   useEffect(() => {
     if (phase !== "recording") return;
-    const t = setInterval(() => setSeconds(s => s + 1), 700);
+    const t = setInterval(() => setSeconds(s => s + 1), 1000);
     return () => clearInterval(t);
   }, [phase]);
 
+  // Result cards stagger
   useEffect(() => {
-    if (phase !== "processing") return;
-    const t = setInterval(() => setProgress(p => Math.min(p + 4, 100)), 70);
-    return () => clearInterval(t);
-  }, [phase]);
-
-  useEffect(() => {
-    if (phase !== "results") return;
-    if (visibleCards >= 3) return;
-    const t = setTimeout(() => setVisible(v => v + 1), visibleCards === 0 ? 200 : 500);
+    if (phase !== "done") return;
+    if (visibleCards >= RESULT_CARDS.length) return;
+    const t = setTimeout(() => setVisible(v => v + 1), visibleCards === 0 ? 300 : 400);
     return () => clearTimeout(t);
   }, [phase, visibleCards]);
 
-  const fmt = (s: number) => `00:0${Math.min(s, 9)}`;
-
   return (
     <div className="w-full select-none" style={{ maxWidth: 900 }}>
+      <style>{`
+        @keyframes rdBlink { 0%,100%{opacity:1} 50%{opacity:0} }
+        @keyframes rdPulse  { 0%,100%{opacity:1} 50%{opacity:0.25} }
+        @keyframes rdWave   { 0%,100%{transform:scaleY(0.25)} 50%{transform:scaleY(1)} }
+        @keyframes rdFade   { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes rdRing   { 0%{transform:scale(1);opacity:0.5} 100%{transform:scale(2.4);opacity:0} }
+        @keyframes rdSpin   { to{transform:rotate(360deg)} }
+      `}</style>
 
-      <div
-        className="rounded-2xl overflow-hidden"
-        style={{ background: "#111110", border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 32px 80px rgba(0,0,0,0.6)" }}
-      >
-        <div className="flex items-center gap-2 px-5 py-3.5" style={{ background: "rgba(255,255,255,0.04)", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+      <div className="rounded-2xl overflow-hidden shadow-2xl" style={{ background: "#111110", border: "1px solid rgba(255,255,255,0.1)" }}>
+
+        {/* Title bar */}
+        <div className="flex items-center gap-2 px-5 py-3" style={{ background: "rgba(255,255,255,0.04)", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
           <span className="w-3 h-3 rounded-full" style={{ background: "#ff5f57" }} />
           <span className="w-3 h-3 rounded-full" style={{ background: "#febc2e" }} />
           <span className="w-3 h-3 rounded-full" style={{ background: "#28c840" }} />
-          <span className="mx-auto text-xs" style={{ color: "rgba(255,255,255,0.25)", fontFamily: "'Plus Jakarta Sans', sans-serif", fontStyle: "italic" }}>
-            Flux &mdash; Workspace
-          </span>
+          <span className="mx-auto text-xs" style={{ color: "rgba(255,255,255,0.25)", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Flux — Workspace</span>
         </div>
 
-        <div className="p-8" style={{ minHeight: 340 }}>
+        <div className="flex" style={{ height: 420 }}>
 
-          <div
-            className="flex items-center gap-3 rounded-xl px-4 py-3 mb-6"
-            style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)" }}
-          >
-            <Mic size={14} style={{ color: "rgba(255,255,255,0.3)", flexShrink: 0 }} />
-            <span style={{ fontSize: 14, color: typed ? "white" : "rgba(255,255,255,0.25)" }}>
-              {typed || "Lecture title..."}
-            </span>
-            {(phase === "typing" || phase === "idle") && (
-              <span style={{ display: "inline-block", width: 2, height: 16, background: "white", marginLeft: 1, animation: "demoBlink 1s infinite" }} />
-            )}
+          {/* Sidebar */}
+          <div className="hidden sm:flex w-44 shrink-0 flex-col py-5" style={{ background: "rgba(255,255,255,0.03)", borderRight: "1px solid rgba(255,255,255,0.07)" }}>
+            <div className="px-4 pb-4 mb-2" style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+              <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 17, color: "white" }}>Flux</div>
+              <div style={{ fontSize: 7.5, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginTop: 1 }}>Study Assistant</div>
+            </div>
+            <div className="flex-1 px-2">
+              <div style={{ fontSize: 8, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(255,255,255,0.25)", padding: "6px 8px 4px" }}>Menu</div>
+              {NAV.map(({ icon: Icon, label }) => (
+                <div key={label} className="flex items-center gap-2 px-2.5 py-2 rounded-lg"
+                  style={{ background: label === "Workspace" ? "rgba(37,99,235,0.18)" : "transparent", color: label === "Workspace" ? "#60a5fa" : "rgba(255,255,255,0.4)" }}>
+                  <Icon size={11} />
+                  <span style={{ fontSize: 10, fontWeight: label === "Workspace" ? 600 : 400 }}>{label}</span>
+                </div>
+              ))}
+            </div>
           </div>
 
-          {phase === "recording" && (
-            <div className="flex flex-col items-center py-6" style={{ animation: "demoFadeIn 0.3s ease" }}>
-              <div
-                className="w-20 h-20 rounded-full flex items-center justify-center mb-5"
-                style={{ background: "rgba(239,68,68,0.15)", border: "2px solid rgba(239,68,68,0.4)", animation: "demoPulseRing 1.5s infinite" }}
-              >
-                <div className="w-14 h-14 rounded-full flex items-center justify-center" style={{ background: "#ef4444" }}>
-                  <Square size={18} color="white" />
-                </div>
-              </div>
-              <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 44, fontWeight: 300, color: "white", letterSpacing: -1, fontVariantNumeric: "tabular-nums", lineHeight: 1 }}>
-                {fmt(seconds)}
-              </div>
-              <div className="flex items-center gap-2 mt-3">
-                <span className="w-2 h-2 rounded-full" style={{ background: "#ef4444", animation: "demoPulse 1s infinite" }} />
-                <span style={{ fontSize: 12, color: "rgba(255,255,255,0.45)" }}>Recording &mdash; {typed}</span>
+          {/* Main content */}
+          <div className="flex-1 flex flex-col overflow-hidden">
+
+            {/* Class pills + workspace label */}
+            <div className="px-5 pt-4 pb-0">
+              <div style={{ fontSize: 8, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "#3b82f6", marginBottom: 8 }}>Workspace</div>
+              <div className="flex gap-1.5 flex-wrap">
+                {["Cognitive Psych", "Biology 101", "Econ 202"].map((c, i) => (
+                  <div key={c} className="px-3 py-1 rounded-full" style={{
+                    fontSize: 10, fontWeight: i === 0 ? 700 : 400,
+                    background: i === 0 ? "#2563eb" : "rgba(255,255,255,0.06)",
+                    color: i === 0 ? "white" : "rgba(255,255,255,0.45)",
+                    border: i === 0 ? "none" : "1px solid rgba(255,255,255,0.08)",
+                  }}>{c}</div>
+                ))}
               </div>
             </div>
-          )}
 
-          {phase === "processing" && (
-            <div className="flex flex-col items-center py-8" style={{ animation: "demoFadeIn 0.3s ease" }}>
-              <div
-                className="w-12 h-12 rounded-full border-2 mb-5"
-                style={{ borderColor: "rgba(255,255,255,0.15)", borderTopColor: "white", animation: "demoSpin 0.8s linear infinite" }}
-              />
-              <div style={{ fontSize: 15, color: "white", fontWeight: 500, marginBottom: 6 }}>Processing your lecture...</div>
-              <div style={{ fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 20 }}>Transcribing &middot; Summarising &middot; Generating</div>
-              <div className="w-56 h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.1)" }}>
-                <div
-                  className="h-full rounded-full transition-all duration-75"
-                  style={{ width: `${progress}%`, background: "white" }}
-                />
+            {/* Feature tabs */}
+            <div className="px-5 pt-3 pb-0">
+              <div className="flex gap-0.5 p-0.5 rounded-xl w-fit" style={{ background: "rgba(37,99,235,0.1)", border: "1px solid rgba(37,99,235,0.15)" }}>
+                {TABS.map(({ icon: Icon, label }, i) => (
+                  <div key={label} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg"
+                    style={{ background: i === 0 ? "#2563eb" : "transparent", color: i === 0 ? "white" : "rgba(255,255,255,0.4)", fontSize: 9 }}>
+                    <Icon size={9} />{label}
+                  </div>
+                ))}
               </div>
-              <div style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", marginTop: 8 }}>{progress}%</div>
             </div>
-          )}
 
-          {(phase === "results" || phase === "hold") && (
-            <div style={{ animation: "demoFadeIn 0.3s ease" }}>
-              <div className="flex items-center gap-2 mb-5">
-                <CheckCircle size={14} style={{ color: "#22c55e" }} />
-                <span style={{ fontSize: 13, color: "rgba(255,255,255,0.6)" }}>Lecture processed &mdash; your materials are ready</span>
-              </div>
-              <div className="grid grid-cols-3 gap-3">
-                {CARDS.map((card, i) => {
-                  const Icon = card.icon;
-                  const visible = visibleCards > i;
-                  return (
-                    <div
-                      key={card.label}
-                      className="rounded-2xl p-5 flex flex-col gap-3"
-                      style={{
-                        background: "rgba(255,255,255,0.06)",
-                        border: "1px solid rgba(255,255,255,0.09)",
-                        opacity: visible ? 1 : 0,
-                        transform: visible ? "translateY(0)" : "translateY(12px)",
-                        transition: "opacity 0.4s ease, transform 0.4s ease",
-                      }}
-                    >
-                      <div
-                        className="w-9 h-9 rounded-xl flex items-center justify-center"
-                        style={{ background: `${card.color}20` }}
-                      >
-                        <Icon size={15} style={{ color: card.color }} />
-                      </div>
-                      <div>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: "white", marginBottom: 3 }}>{card.label}</div>
-                        <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", lineHeight: 1.4 }}>{card.desc}</div>
-                      </div>
-                      <div
-                        className="mt-auto text-xs font-medium px-3 py-1.5 rounded-lg text-center"
-                        style={{ background: `${card.color}18`, color: card.color }}
-                      >
-                        Open &rarr;
-                      </div>
+            {/* Record tab content */}
+            <div className="flex-1 flex flex-col items-center justify-center px-6 py-4">
+
+              {/* Name step */}
+              {(phase === "idle" || phase === "typing") && (
+                <div className="w-full max-w-xs flex flex-col items-center gap-4" style={{ animation: "rdFade 0.3s ease" }}>
+                  <div className="w-full">
+                    <div style={{ fontSize: 8, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(255,255,255,0.4)", marginBottom: 6 }}>Recording Name</div>
+                    <div className="w-full rounded-xl px-4 py-2.5 flex items-center" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", fontSize: 12, color: typed ? "white" : "rgba(255,255,255,0.25)" }}>
+                      {typed || "e.g. Lecture 3 — Cell Division"}
+                      {phase === "typing" && <span style={{ display: "inline-block", width: 1.5, height: 13, background: "white", marginLeft: 2, animation: "rdBlink 0.9s infinite" }} />}
                     </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
+                  </div>
+                  <div className="w-14 h-14 rounded-full flex items-center justify-center" style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)" }}>
+                    <Mic size={20} style={{ color: "rgba(255,255,255,0.5)" }} />
+                  </div>
+                  <div style={{ fontSize: 10, color: "rgba(255,255,255,0.3)" }}>Tap to start recording</div>
+                </div>
+              )}
 
-          {(phase === "idle" || phase === "typing") && typed.length === 0 && (
-            <div className="flex flex-col items-center py-10" style={{ animation: "demoFadeIn 0.3s ease" }}>
-              <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}>
-                <Mic size={24} style={{ color: "rgba(255,255,255,0.3)" }} />
-              </div>
-              <div style={{ fontSize: 13, color: "rgba(255,255,255,0.3)" }}>Ready to record your lecture</div>
-            </div>
-          )}
+              {/* Recording step */}
+              {phase === "recording" && (
+                <div className="w-full max-w-xs flex flex-col items-center gap-3" style={{ animation: "rdFade 0.3s ease" }}>
+                  <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 52, fontWeight: 300, color: "white", letterSpacing: -2, fontVariantNumeric: "tabular-nums", lineHeight: 1 }}>
+                    {fmt(seconds)}
+                  </div>
+                  {/* Waveform */}
+                  <div className="flex items-end gap-0.5 h-10">
+                    {WAVE_HEIGHTS.map((h, i) => (
+                      <div key={i} style={{
+                        width: 3, height: 40, borderRadius: 2,
+                        background: "rgba(255,255,255,0.7)",
+                        transformOrigin: "center",
+                        animation: `rdWave ${WAVE_DURATIONS[i]}s ease-in-out infinite`,
+                        animationDelay: `${i * 0.04}s`,
+                      }} />
+                    ))}
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-2 h-2 rounded-full" style={{ background: "#ef4444", animation: "rdPulse 1s infinite" }} />
+                    <span style={{ fontSize: 10, color: "rgba(255,255,255,0.5)" }}>Recording — {TITLE}</span>
+                  </div>
+                  <div className="flex gap-2 w-full mt-1">
+                    <div className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl" style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)", fontSize: 10, color: "rgba(255,255,255,0.6)" }}>
+                      <Pause size={12} /> Pause
+                    </div>
+                    <div className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl" style={{ background: "#111110", fontSize: 10, color: "white" }}>
+                      <Square size={12} /> Stop
+                    </div>
+                  </div>
+                </div>
+              )}
 
+              {/* Processing step */}
+              {phase === "processing" && (
+                <div className="flex flex-col items-center gap-4" style={{ animation: "rdFade 0.3s ease" }}>
+                  <div className="relative flex items-center justify-center w-20 h-20">
+                    {[0, 1, 2].map(i => (
+                      <div key={i} className="absolute rounded-full border" style={{
+                        width: 30 + i * 18, height: 30 + i * 18,
+                        borderColor: "rgba(255,255,255,0.12)",
+                        animation: `rdRing 2s ease-out ${i * 0.45}s infinite`,
+                      }} />
+                    ))}
+                    <div className="relative z-10 w-5 h-5 rounded-full border-2" style={{ borderColor: "rgba(255,255,255,0.2)", borderTopColor: "white", animation: "rdSpin 0.8s linear infinite" }} />
+                  </div>
+                  <div className="text-center">
+                    <div style={{ fontSize: 14, fontWeight: 500, color: "white", marginBottom: 4 }}>Processing your audio…</div>
+                    <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)" }}>Transcribing · Summarising · Generating</div>
+                  </div>
+                </div>
+              )}
+
+              {/* Done step */}
+              {(phase === "done" || phase === "hold") && (
+                <div className="w-full" style={{ animation: "rdFade 0.4s ease" }}>
+                  <div className="flex items-center gap-2 mb-4">
+                    <CheckCircle size={14} style={{ color: "#22c55e" }} />
+                    <span style={{ fontSize: 12, color: "rgba(255,255,255,0.6)" }}>Processing complete! Your recording is ready.</span>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    {RESULT_CARDS.map((card, i) => (
+                      <div key={card.label} className="rounded-xl p-3 flex flex-col gap-2"
+                        style={{
+                          background: "rgba(255,255,255,0.05)",
+                          border: "1px solid rgba(255,255,255,0.08)",
+                          opacity: visibleCards > i ? 1 : 0,
+                          transform: visibleCards > i ? "translateY(0)" : "translateY(10px)",
+                          transition: "opacity 0.35s ease, transform 0.35s ease",
+                        }}>
+                        <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: `${card.color}20` }}>
+                          <Sparkles size={12} style={{ color: card.color }} />
+                        </div>
+                        <div>
+                          <div style={{ fontSize: 11, fontWeight: 600, color: "white", marginBottom: 2 }}>{card.label}</div>
+                          <div style={{ fontSize: 9, color: "rgba(255,255,255,0.35)" }}>{card.desc}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="flex items-center justify-center gap-2 mt-5">
-        {(["typing", "recording", "processing", "results"] as Phase[]).map(p => (
-          <div
-            key={p}
-            className="rounded-full transition-all duration-500"
+      {/* Dots */}
+      <div className="flex items-center justify-center gap-2 mt-4">
+        {(["typing", "recording", "processing", "done"] as Phase[]).map(p => (
+          <div key={p} className="rounded-full transition-all duration-500"
             style={{
-              width:  phase === p || (phase === "hold" && p === "results") ? 24 : 6,
+              width: (phase === p || (phase === "hold" && p === "done")) ? 20 : 6,
               height: 6,
-              background: phase === p || (phase === "hold" && p === "results")
-                ? "rgba(255,255,255,0.6)"
-                : "rgba(255,255,255,0.12)",
-            }}
-          />
+              background: (phase === p || (phase === "hold" && p === "done")) ? "#2563eb" : "rgba(255,255,255,0.15)",
+            }} />
         ))}
       </div>
-
-      <style>{`
-        @keyframes demoBlink    { 0%,100%{opacity:1} 50%{opacity:0} }
-        @keyframes demoPulse    { 0%,100%{opacity:1} 50%{opacity:0.3} }
-        @keyframes demoPulseRing{ 0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,0.3)} 50%{box-shadow:0 0 0 12px rgba(239,68,68,0)} }
-        @keyframes demoSpin     { to{transform:rotate(360deg)} }
-        @keyframes demoFadeIn   { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
-      `}</style>
     </div>
   );
 }
