@@ -257,7 +257,7 @@ router.post("/save", async (req, res) => {
         data: { userId: user.id, lectureId: lecture.id, title: `Study Book: ${title}`, content },
       });
 
-  res.json({ data: cheatSheet });
+  res.json({ data: cheatSheet, lectureId: lecture.id });
 });
 
 // POST /api/documents/quick-save — save file titles as lecture records without AI processing

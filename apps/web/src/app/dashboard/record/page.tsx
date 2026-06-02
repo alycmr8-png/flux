@@ -349,7 +349,10 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
   const [recordAction, setRecordAction] = useState<"transcribe" | "summarize" | null>(null);
   const [recStep, setRecStep] = useState<"name" | "recording" | "saved" | "processing" | "done">("name");
   const [openLectureId, setOpenLectureId] = useState<string | null>(null);
-  const [openTab, setOpenTab] = useState<"transcript" | "summary" | "keypoints">("transcript");
+  const [openTab, setOpenTab] = useState<"transcript" | "summary" | "keypoints" | "chatbot">("transcript");
+  const [openChatMessages, setOpenChatMessages] = useState<{ role: "user" | "assistant"; content: string }[]>([]);
+  const [openChatInput, setOpenChatInput] = useState("");
+  const [openChatLoading, setOpenChatLoading] = useState(false);
   const [openLectureKeyPoints, setOpenLectureKeyPoints] = useState<any[] | null>(null);
   const [openLectureKeyPointsLoading, setOpenLectureKeyPointsLoading] = useState(false);
   const [openLectureData, setOpenLectureData] = useState<{ transcript: string; sheet: any | null; audioUrl: string | null } | null>(null);
@@ -662,6 +665,8 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
     setOpenLectureData(null);
     setOpenTab("transcript");
     setOpenLectureKeyPoints(null);
+    setOpenChatMessages([]);
+    setOpenChatInput("");
   }
 
   async function generateOpenLectureKeyPoints() {
@@ -676,6 +681,25 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
       setOpenLectureKeyPoints(res.data.points ?? []);
     } catch { /* silent */ } finally {
       setOpenLectureKeyPointsLoading(false);
+    }
+  }
+
+  async function sendOpenChat() {
+    if (!openChatInput.trim() || openChatLoading || !openLectureId) return;
+    const userMsg = { role: "user" as const, content: openChatInput.trim() };
+    const next = [...openChatMessages, userMsg];
+    setOpenChatMessages(next);
+    setOpenChatInput("");
+    setOpenChatLoading(true);
+    try {
+      const res = await apiFetch("/api/studybook/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ lectureId: openLectureId, messages: next }),
+      });
+      setOpenChatMessages([...next, { role: "assistant", content: res.data.reply }]);
+    } catch { /* silent */ } finally {
+      setOpenChatLoading(false);
     }
   }
 
@@ -697,6 +721,10 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
   const [docFlipped, setDocFlipped] = useState<Set<number>>(new Set());
   const [docSaving, setDocSaving] = useState(false);
   const [docSaved, setDocSaved] = useState(false);
+  const [docLectureId, setDocLectureId] = useState<string | null>(null);
+  const [docChatMessages, setDocChatMessages] = useState<{ role: "user" | "assistant"; content: string }[]>([]);
+  const [docChatInput, setDocChatInput] = useState("");
+  const [docChatLoading, setDocChatLoading] = useState(false);
   const [docRegenerating, setDocRegenerating] = useState(false);
   const [docSaveChoice, setDocSaveChoice] = useState<"none" | "choosing" | "existing">("none");
   const [editSummary, setEditSummary] = useState("");
@@ -826,11 +854,12 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
   async function saveDocument(content = docResult) {
     setDocSaving(true);
     try {
-      await apiFetch("/api/documents/save", {
+      const saveRes = await apiFetch("/api/documents/save", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ title: docName, content, courseId: course.id, docId }),
       });
+      if (saveRes.lectureId) { setDocLectureId(saveRes.lectureId); setDocChatMessages([]); }
       setDocSaved(true);
       setDocSaveChoice("none");
       mutateSheets();
@@ -905,6 +934,25 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
     })));
     setEditDocKeyTerms((docResult?.keyTerms ?? []).map((kt: any) => `${kt.term}: ${kt.definition}`).join("\n"));
     setDocView("editing");
+  }
+
+  async function sendDocChat() {
+    if (!docChatInput.trim() || docChatLoading || !docLectureId) return;
+    const userMsg = { role: "user" as const, content: docChatInput.trim() };
+    const next = [...docChatMessages, userMsg];
+    setDocChatMessages(next);
+    setDocChatInput("");
+    setDocChatLoading(true);
+    try {
+      const res = await apiFetch("/api/studybook/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ lectureId: docLectureId, messages: next }),
+      });
+      setDocChatMessages([...next, { role: "assistant", content: res.data.reply }]);
+    } catch { /* silent */ } finally {
+      setDocChatLoading(false);
+    }
   }
 
   function saveEditedDocument() {
@@ -1473,6 +1521,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
                       { key: "transcript" as const, label: "Transcript" },
                       { key: "summary" as const,    label: "Summary"    },
                       { key: "keypoints" as const,  label: "Key Points" },
+                      { key: "chatbot" as const,    label: "Ask AI"     },
                     ])).map(({ key, label }) => (
                       <button
                         key={key}
@@ -1569,6 +1618,53 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
                         ) : (
                           <div className="h-full flex items-center justify-center text-sm text-[#aaa]">Summary not available.</div>
                         )}
+                      </div>
+                    )}
+
+                    {openTab === "chatbot" && (
+                      <div className="absolute inset-0 flex flex-col">
+                        <div className="flex-1 overflow-y-auto px-6 pt-5 pb-3 space-y-3">
+                          {openChatMessages.length === 0 && !openChatLoading && (
+                            <div className="h-full flex flex-col items-center justify-center gap-3 py-10">
+                              <p className="text-sm text-[#aaa] text-center max-w-xs">Ask anything about this lecture — definitions, explanations, key concepts.</p>
+                              <div className="flex flex-wrap gap-2 justify-center">
+                                {["Summarize the main points", "What are the key terms?", "Quiz me on this lecture"].map(s => (
+                                  <button key={s} onClick={() => { setOpenChatInput(s); }}
+                                    className="text-xs px-3 py-1.5 rounded-full border border-[rgba(37,99,235,0.3)] text-[#2563eb] hover:bg-[rgba(37,99,235,0.06)] transition-colors">
+                                    {s}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          {openChatMessages.map((m, i) => (
+                            <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+                              <span className="text-sm max-w-[85%] leading-relaxed px-4 py-2.5"
+                                style={{
+                                  background: m.role === "user" ? "#2563eb" : "rgba(0,0,0,0.04)",
+                                  color: m.role === "user" ? "white" : "#333",
+                                  borderRadius: m.role === "user" ? "18px 18px 4px 18px" : "18px 18px 18px 4px",
+                                }}>{m.content}</span>
+                            </div>
+                          ))}
+                          {openChatLoading && (
+                            <div className="flex justify-start">
+                              <span className="px-4 py-3 rounded-2xl rounded-bl-sm" style={{ background: "rgba(0,0,0,0.04)" }}>
+                                <Loader2 size={13} className="animate-spin text-[#bbb]" />
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex gap-2 px-4 pb-4 pt-3 border-t border-[rgba(0,0,0,0.06)] shrink-0">
+                          <input value={openChatInput} onChange={e => setOpenChatInput(e.target.value)}
+                            onKeyDown={e => e.key === "Enter" && !e.shiftKey && sendOpenChat()}
+                            placeholder="Ask about this lecture…"
+                            className="flex-1 bg-[rgba(0,0,0,0.03)] border border-[rgba(0,0,0,0.08)] focus:border-[rgba(0,0,0,0.15)] rounded-xl px-4 py-2.5 text-sm text-[#333] placeholder-[rgba(0,0,0,0.3)] outline-none" />
+                          <button onClick={sendOpenChat} disabled={!openChatInput.trim() || openChatLoading}
+                            className="text-sm font-semibold px-4 py-2.5 rounded-xl disabled:opacity-40" style={{ background: "#2563eb", color: "white" }}>
+                            Send
+                          </button>
+                        </div>
                       </div>
                     )}
 
@@ -2119,6 +2215,59 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
                   </div>
                 )}
               </div>
+
+              {/* AI Chatbot — shown after saving */}
+              {docLectureId && (
+                <div className="border-t border-[rgba(0,0,0,0.08)]">
+                  <div className="px-6 py-3 flex items-center gap-2" style={{ background: "rgba(37,99,235,0.04)" }}>
+                    <div className="text-[10px] font-bold uppercase tracking-widest text-[#2563eb]">Ask AI about this document</div>
+                  </div>
+                  <div className="relative overflow-hidden" style={{ height: 260 }}>
+                    <div className="absolute inset-0 overflow-y-auto px-6 pt-4 pb-3 space-y-3">
+                      {docChatMessages.length === 0 && !docChatLoading && (
+                        <div className="flex flex-col items-center gap-3 py-4">
+                          <p className="text-xs text-[#aaa] text-center">Ask anything about this document.</p>
+                          <div className="flex flex-wrap gap-1.5 justify-center">
+                            {["Summarize this document", "What are the key terms?", "Quiz me on this"].map(s => (
+                              <button key={s} onClick={() => setDocChatInput(s)}
+                                className="text-[11px] px-2.5 py-1 rounded-full border border-[rgba(37,99,235,0.25)] text-[#2563eb] hover:bg-[rgba(37,99,235,0.05)] transition-colors">
+                                {s}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {docChatMessages.map((m, i) => (
+                        <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+                          <span className="text-sm max-w-[85%] leading-relaxed px-3 py-2"
+                            style={{
+                              background: m.role === "user" ? "#2563eb" : "rgba(0,0,0,0.04)",
+                              color: m.role === "user" ? "white" : "#333",
+                              borderRadius: m.role === "user" ? "14px 14px 3px 14px" : "14px 14px 14px 3px",
+                            }}>{m.content}</span>
+                        </div>
+                      ))}
+                      {docChatLoading && (
+                        <div className="flex justify-start">
+                          <span className="px-3 py-2.5 rounded-2xl rounded-bl-sm" style={{ background: "rgba(0,0,0,0.04)" }}>
+                            <Loader2 size={12} className="animate-spin text-[#bbb]" />
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex gap-2 px-4 pb-4 pt-2 border-t border-[rgba(0,0,0,0.06)]">
+                    <input value={docChatInput} onChange={e => setDocChatInput(e.target.value)}
+                      onKeyDown={e => e.key === "Enter" && !e.shiftKey && sendDocChat()}
+                      placeholder="Ask about this document…"
+                      className="flex-1 bg-[rgba(0,0,0,0.03)] border border-[rgba(0,0,0,0.08)] focus:border-[rgba(0,0,0,0.15)] rounded-xl px-4 py-2.5 text-sm text-[#333] placeholder-[rgba(0,0,0,0.3)] outline-none" />
+                    <button onClick={sendDocChat} disabled={!docChatInput.trim() || docChatLoading}
+                      className="text-sm font-semibold px-4 py-2.5 rounded-xl disabled:opacity-40" style={{ background: "#2563eb", color: "white" }}>
+                      Send
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
