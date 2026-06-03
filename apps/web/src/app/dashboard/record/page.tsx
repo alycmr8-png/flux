@@ -4,7 +4,7 @@ import { useSearchParams } from "next/navigation";
 import {
   Mic, Square, FileUp, CheckCircle, Loader2, Plus, Pause, Play, StopCircle,
   BookOpen, Calendar, X, Mic2, FileText, ArrowLeft, Layers, BookMarked, Youtube,
-  ChevronDown, PenLine, Trash2, RotateCcw, Sparkles, FileText as FileTextIcon, MessageSquare,
+  ChevronDown, ChevronRight, PenLine, Trash2, RotateCcw, Sparkles, FileText as FileTextIcon, MessageSquare,
 } from "lucide-react";
 import { useApiFetch, useApiSWRFetcher } from "@/lib/apiFetch";
 import { useAuth } from "@clerk/nextjs";
@@ -826,6 +826,22 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
       setDocResult(res.data);
       setDocId(res.docId);
       setDocView("result");
+      // Auto-save so the file is always persisted — user never loses their work
+      try {
+        const saveRes = await apiFetch("/api/documents/save", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title: docName.trim() || docFile.name.replace(/\.[^.]+$/, ""),
+            content: res.data,
+            courseId: course.id,
+            docId: res.docId,
+          }),
+        });
+        if (saveRes.lectureId) { setDocLectureId(saveRes.lectureId); setDocChatMessages([]); }
+        setDocSaved(true);
+        mutateSheets();
+      } catch { /* non-fatal — user can still save manually */ }
     } catch (e: any) {
       setDocError(e?.message ?? "Failed to generate");
       setDocView("naming");
@@ -2241,6 +2257,43 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
                   </div>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Previously saved files */}
+          {docView !== "processing" && docView !== "editing" && sheets.filter((s: any) => !s.title?.endsWith("— Cheat Sheet")).length > 0 && (
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-[rgba(255,255,255,0.3)] mb-3">Saved Files</p>
+              <div className="space-y-2">
+                {sheets.filter((s: any) => !s.title?.endsWith("— Cheat Sheet")).map((s: any) => (
+                  <button key={s.id} onClick={() => {
+                    setDocResult(s.content);
+                    setDocName(s.title?.replace(/^Study Book:\s*/, "") ?? "Document");
+                    setDocView("result");
+                    setDocSaved(true);
+                    setDocSaveChoice("none");
+                    setDocTab("summary");
+                    setDocFlipped(new Set());
+                    setDocLectureId(s.lectureId ?? null);
+                    setDocChatMessages([]);
+                    setDocId(null);
+                  }}
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border text-left transition-all hover:border-[rgba(255,255,255,0.2)] hover:bg-[rgba(255,255,255,0.05)]"
+                    style={{ background: "rgba(255,255,255,0.03)", borderColor: "rgba(255,255,255,0.08)" }}>
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "rgba(37,99,235,0.15)" }}>
+                      <FileText size={13} style={{ color: "#60a5fa" }} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium text-white truncate">{s.title?.replace(/^Study Book:\s*/, "")}</div>
+                      <div className="text-[10px] text-[rgba(255,255,255,0.35)] mt-0.5">
+                        {s.lecture?.title && s.lecture.title !== s.title ? s.lecture.title : "Uploaded document"}
+                        {s.createdAt ? ` · ${new Date(s.createdAt).toLocaleDateString()}` : ""}
+                      </div>
+                    </div>
+                    <ChevronRight size={13} style={{ color: "rgba(255,255,255,0.2)" }} />
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 
