@@ -1871,13 +1871,13 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
 
           {/* upload area — always visible unless processing/done */}
           {(docView === "idle" || docView === "staging") && !batchProgress && batchResults.length === 0 && (
-            <div className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl overflow-hidden">
+            <div className="rounded-2xl overflow-hidden border border-[rgba(255,255,255,0.08)]" style={{ background: "rgba(255,255,255,0.03)" }}>
               {/* Drop zone */}
-              <label className="flex flex-col items-center gap-3 border-2 border-dashed border-[rgba(0,0,0,0.08)] rounded-2xl m-4 p-10 cursor-pointer transition-colors hover:border-[rgba(0,0,0,0.15)] text-[#555] hover:text-[#111110]">
+              <label className="flex flex-col items-center gap-3 border-2 border-dashed border-[rgba(255,255,255,0.1)] rounded-2xl m-4 p-10 cursor-pointer transition-colors hover:border-[rgba(37,99,235,0.4)] hover:bg-[rgba(37,99,235,0.04)] text-[rgba(255,255,255,0.4)] hover:text-white">
                 <FileUp size={28} />
                 <div className="text-center">
                   <div className="text-sm font-medium mb-0.5">Click to add documents</div>
-                  <div className="text-xs text-[#555]">PDF, Word, PowerPoint, Excel, OpenDocument, images, TXT — add as many as you need</div>
+                  <div className="text-xs text-[rgba(255,255,255,0.35)]">PDF, Word, PowerPoint, Excel, OpenDocument, images, TXT — add as many as you need</div>
                 </div>
                 <input type="file" accept=".pdf,.txt,.md,.csv,.docx,.doc,.pptx,.ppt,.xlsx,.xls,.odt,.odp,.ods,.jpg,.jpeg,.png,.webp,.gif,.heic,.heif" className="hidden" multiple
                   onChange={e => {
@@ -1890,34 +1890,29 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
               {/* File list */}
               {docQueue.length > 0 && (
                 <>
-                  <div className="divide-y divide-[rgba(0,0,0,0.06)] mx-4">
+                  <div className="divide-y divide-[rgba(255,255,255,0.06)] mx-4">
                     {docQueue.map((item, i) => (
                       <div key={i} className="flex items-center gap-3 py-3">
-                        <FileText size={13} className="text-[#555] shrink-0" />
-                        <span className="flex-1 text-sm text-[#111110] truncate">{item.file.name}</span>
-                        <span className="text-[10px] text-[#555] shrink-0">{(item.file.size / 1024).toFixed(0)} KB</span>
-                        <button onClick={() => setDocQueue(q => q.filter((_, j) => j !== i))} className="text-[#555] hover:text-red-400 transition-colors shrink-0 p-1">
+                        <FileText size={13} className="text-[rgba(255,255,255,0.4)] shrink-0" />
+                        <span className="flex-1 text-sm text-white truncate">{item.file.name}</span>
+                        <span className="text-[10px] text-[rgba(255,255,255,0.35)] shrink-0">{(item.file.size / 1024).toFixed(0)} KB</span>
+                        <button onClick={() => setDocQueue(q => q.filter((_, j) => j !== i))} className="text-[rgba(255,255,255,0.3)] hover:text-red-400 transition-colors shrink-0 p-1">
                           <X size={13} />
                         </button>
                       </div>
                     ))}
                   </div>
-                  <div className="px-4 py-4 border-t border-[rgba(0,0,0,0.06)] flex items-center gap-3">
-                    <button
-                      onClick={saveFiles}
-                      disabled={batchProcessing}
-                      className="flex items-center gap-2 bg-[#111110] text-white text-sm font-medium px-5 py-2.5 rounded-full hover:bg-[#222] transition-colors disabled:opacity-40"
-                    >
+                  <div className="px-4 py-4 border-t border-[rgba(255,255,255,0.06)] flex items-center gap-3">
+                    <button onClick={saveFiles} disabled={batchProcessing}
+                      className="flex items-center gap-2 text-white text-sm font-medium px-5 py-2.5 rounded-full disabled:opacity-40 transition-colors"
+                      style={{ background: "#2563eb" }}>
                       Save ({docQueue.length})
                     </button>
-                    <button
-                      onClick={generateBatch}
-                      disabled={batchProcessing}
-                      className="flex items-center gap-2 border border-[rgba(0,0,0,0.12)] text-[#111110] text-sm font-medium px-5 py-2.5 rounded-full hover:bg-[rgba(0,0,0,0.04)] transition-colors disabled:opacity-40"
-                    >
+                    <button onClick={generateBatch} disabled={batchProcessing}
+                      className="flex items-center gap-2 border border-[rgba(255,255,255,0.15)] text-[rgba(255,255,255,0.7)] text-sm font-medium px-5 py-2.5 rounded-full hover:bg-[rgba(255,255,255,0.06)] transition-colors disabled:opacity-40">
                       Process files
                     </button>
-                    <button onClick={() => { setDocQueue([]); setDocView("idle"); }} className="text-xs text-[#555] hover:text-[#111110] transition-colors ml-auto">
+                    <button onClick={() => { setDocQueue([]); setDocView("idle"); }} className="text-xs text-[rgba(255,255,255,0.35)] hover:text-white transition-colors ml-auto">
                       Clear
                     </button>
                   </div>
@@ -1928,40 +1923,38 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
 
           {/* batch processing */}
           {batchProgress && (
-            <div className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl p-12 text-center">
-              <Loader2 size={28} className="mx-auto mb-4 animate-spin text-[#555]" />
-              <div className="text-sm font-medium text-[#111110] mb-1">Processing {batchProgress.current} of {batchProgress.total}</div>
-              <div className="text-xs text-[#555]">Generating "{batchProgress.name}"…</div>
-              <div className="mt-4 h-1 rounded-full bg-[rgba(0,0,0,0.06)] overflow-hidden">
-                <div className="h-1 rounded-full bg-[#111110] transition-all" style={{ width: `${(batchProgress.current / batchProgress.total) * 100}%` }} />
+            <div className="rounded-2xl border border-[rgba(255,255,255,0.08)] p-12 text-center" style={{ background: "rgba(255,255,255,0.03)" }}>
+              <Loader2 size={28} className="mx-auto mb-4 animate-spin text-[rgba(255,255,255,0.4)]" />
+              <div className="text-sm font-medium text-white mb-1">Processing {batchProgress.current} of {batchProgress.total}</div>
+              <div className="text-xs text-[rgba(255,255,255,0.4)]">Generating "{batchProgress.name}"…</div>
+              <div className="mt-4 h-1 rounded-full bg-[rgba(255,255,255,0.08)] overflow-hidden">
+                <div className="h-1 rounded-full bg-[#2563eb] transition-all" style={{ width: `${(batchProgress.current / batchProgress.total) * 100}%` }} />
               </div>
             </div>
           )}
 
           {/* batch results */}
           {batchResults.length > 0 && !batchProgress && (
-            <div className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl overflow-hidden">
-              <div className="px-6 py-5 border-b border-[rgba(0,0,0,0.08)]">
-                <div className="text-sm font-medium text-[#111110]">
+            <div className="rounded-2xl border border-[rgba(255,255,255,0.08)] overflow-hidden" style={{ background: "rgba(255,255,255,0.03)" }}>
+              <div className="px-6 py-5 border-b border-[rgba(255,255,255,0.07)]">
+                <div className="text-sm font-medium text-white">
                   {batchResults.filter(r => r.status === "done").length} of {batchResults.length} generated
                 </div>
               </div>
-              <div className="divide-y divide-[rgba(0,0,0,0.06)]">
+              <div className="divide-y divide-[rgba(255,255,255,0.06)]">
                 {batchResults.map((r, i) => (
                   <div key={i} className="flex items-center gap-3 px-6 py-3">
                     {r.status === "done"
-                      ? <CheckCircle size={14} className="text-green-500 shrink-0" />
+                      ? <CheckCircle size={14} className="text-green-400 shrink-0" />
                       : <X size={14} className="text-red-400 shrink-0" />}
-                    <span className="text-sm text-[#111110] flex-1 truncate">{r.title}</span>
-                    <span className="text-xs text-[#555]">{r.status === "done" ? "Saved" : r.error}</span>
+                    <span className="text-sm text-white flex-1 truncate">{r.title}</span>
+                    <span className="text-xs text-[rgba(255,255,255,0.35)]">{r.status === "done" ? "Saved" : r.error}</span>
                   </div>
                 ))}
               </div>
-              <div className="px-6 py-4 border-t border-[rgba(0,0,0,0.06)]">
-                <button
-                  onClick={() => { setDocView("idle"); setDocQueue([]); setBatchResults([]); }}
-                  className="text-xs text-[#555] hover:text-[#111110] transition-colors"
-                >
+              <div className="px-6 py-4 border-t border-[rgba(255,255,255,0.07)]">
+                <button onClick={() => { setDocView("idle"); setDocQueue([]); setBatchResults([]); }}
+                  className="text-xs text-[rgba(255,255,255,0.4)] hover:text-white transition-colors">
                   Upload more
                 </button>
               </div>
@@ -1970,30 +1963,25 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
 
           {/* naming — ask for file name */}
           {docView === "naming" && (
-            <div className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl p-8 max-w-lg">
-              <button onClick={() => setDocView("idle")} className="flex items-center gap-2 text-[#555] hover:text-[#111110] text-sm mb-6 transition-colors">
+            <div className="rounded-2xl border border-[rgba(255,255,255,0.08)] p-8 max-w-lg" style={{ background: "rgba(255,255,255,0.03)" }}>
+              <button onClick={() => setDocView("idle")} className="flex items-center gap-2 text-[rgba(255,255,255,0.4)] hover:text-white text-sm mb-6 transition-colors">
                 <ArrowLeft size={13} /> Back
               </button>
-              <h2 className="font-serif italic text-2xl mb-1">Name your file</h2>
-              <p className="text-[#555] text-sm mb-6">Give this document a name before generating.</p>
-              <div className="flex items-center gap-2 bg-white border border-[rgba(0,0,0,0.08)] rounded-xl px-3 py-1.5 mb-2">
-                <FileText size={13} className="text-[#555] shrink-0" />
-                <span className="text-xs text-[#555] truncate">{docFile?.name}</span>
+              <h2 className="text-white font-semibold text-xl mb-1">Name your file</h2>
+              <p className="text-[rgba(255,255,255,0.4)] text-sm mb-6">Give this document a name before generating.</p>
+              <div className="flex items-center gap-2 border border-[rgba(255,255,255,0.08)] rounded-xl px-3 py-1.5 mb-2" style={{ background: "rgba(255,255,255,0.05)" }}>
+                <FileText size={13} className="text-[rgba(255,255,255,0.4)] shrink-0" />
+                <span className="text-xs text-[rgba(255,255,255,0.4)] truncate">{docFile?.name}</span>
               </div>
-              <input
-                autoFocus
-                value={docName}
-                onChange={e => setDocName(e.target.value)}
+              <input autoFocus value={docName} onChange={e => setDocName(e.target.value)}
                 onKeyDown={e => e.key === "Enter" && docName.trim() && generateDocument()}
                 placeholder="e.g. Chapter 3 — Thermodynamics"
-                className="w-full bg-white border border-[rgba(0,0,0,0.08)] focus:border-[rgba(0,0,0,0.1)] rounded-xl px-4 py-3 text-sm text-[#111110] placeholder-[rgba(0,0,0,0.3)] outline-none mb-4"
-              />
+                className="w-full border border-[rgba(255,255,255,0.1)] focus:border-[rgba(37,99,235,0.5)] rounded-xl px-4 py-3 text-sm text-white placeholder-[rgba(255,255,255,0.25)] outline-none mb-4"
+                style={{ background: "rgba(255,255,255,0.06)" }} />
               {docError && <p className="text-xs text-red-400 mb-3">{docError}</p>}
-              <button
-                onClick={generateDocument}
-                disabled={!docName.trim()}
-                className="w-full bg-white text-[#111110] rounded-xl py-3 text-sm font-medium disabled:opacity-40 hover:bg-[#eee] transition-colors"
-              >
+              <button onClick={generateDocument} disabled={!docName.trim()}
+                className="w-full rounded-xl py-3 text-sm font-semibold text-white disabled:opacity-40 transition-colors"
+                style={{ background: "#2563eb" }}>
                 Generate
               </button>
             </div>
@@ -2001,42 +1989,42 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
 
           {/* processing */}
           {docView === "processing" && (
-            <div className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl p-12 text-center">
-              <Loader2 size={28} className="mx-auto mb-4 animate-spin text-[#555]" />
-              <div className="text-sm text-[#111110] font-medium mb-1">Analysing "{docName}"</div>
-              <div className="text-xs text-[#555]">Generating your structured learning file…</div>
+            <div className="rounded-2xl border border-[rgba(255,255,255,0.08)] p-12 text-center" style={{ background: "rgba(255,255,255,0.03)" }}>
+              <Loader2 size={28} className="mx-auto mb-4 animate-spin text-[rgba(255,255,255,0.4)]" />
+              <div className="text-sm text-white font-medium mb-1">Analysing "{docName}"</div>
+              <div className="text-xs text-[rgba(255,255,255,0.4)]">Generating your structured learning file…</div>
             </div>
           )}
 
           {/* result */}
           {docView === "result" && docResult && (
-            <div className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl overflow-hidden">
+            <div className="rounded-2xl border border-[rgba(255,255,255,0.08)] overflow-hidden" style={{ background: "rgba(255,255,255,0.03)" }}>
               {/* Header */}
-              <div className="px-6 py-5 border-b border-[rgba(0,0,0,0.08)] flex items-start justify-between gap-4">
+              <div className="px-6 py-5 border-b border-[rgba(255,255,255,0.07)] flex items-start justify-between gap-4">
                 <div>
-                  <div className="text-base font-medium text-[#111110] mb-0.5">{docName}</div>
-                  <div className="text-[10px] text-[#555] uppercase tracking-widest">
+                  <div className="text-base font-semibold text-white mb-0.5">{docName}</div>
+                  <div className="text-[10px] text-[rgba(255,255,255,0.35)] uppercase tracking-widest">
                     {(docResult.sections ?? []).length} sections · {(docResult.keyTerms ?? []).length} key terms
                   </div>
                 </div>
                 {docSaved && (
-                  <div className="flex items-center gap-1.5 text-[10px] text-green-500 shrink-0 mt-1">
-                    <CheckCircle size={11} /> Saved to Study Book
+                  <div className="flex items-center gap-1.5 text-[10px] text-green-400 shrink-0 mt-1">
+                    <CheckCircle size={11} /> Saved
                   </div>
                 )}
               </div>
 
               {/* Tabs */}
-              <div className="flex gap-1 px-4 pt-4 pb-0">
+              <div className="flex gap-1 px-4 pt-4 pb-0 overflow-x-auto">
                 {(["summary","sections","terms","quiz","tips"] as const).map(t => {
                   const labels: Record<string, string> = { summary: "Summary", sections: "Sections", terms: "Key Terms", quiz: "Practice Q&A", tips: "Exam Tips" };
                   return (
                     <button key={t} onClick={() => { setDocTab(t); setDocQuizSelected(null); }}
-                      className="px-5 py-2.5 rounded-full text-sm font-medium transition-all"
+                      className="px-4 py-2 rounded-full text-xs font-medium transition-all whitespace-nowrap"
                       style={{
-                        background: docTab === t ? "#2563eb" : "rgba(37,99,235,0.07)",
-                        color: docTab === t ? "white" : "rgba(0,0,0,0.45)",
-                        border: `1px solid ${docTab === t ? "#2563eb" : "rgba(37,99,235,0.15)"}`,
+                        background: docTab === t ? "#2563eb" : "rgba(255,255,255,0.07)",
+                        color: docTab === t ? "white" : "rgba(255,255,255,0.45)",
+                        border: `1px solid ${docTab === t ? "#2563eb" : "rgba(255,255,255,0.1)"}`,
                       }}>
                       {labels[t]}
                     </button>
@@ -2050,14 +2038,14 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
                 {docTab === "summary" && (
                   <div className="space-y-3">
                     {docResult.summary && (
-                      <p className="text-sm text-[#555] leading-relaxed">{docResult.summary}</p>
+                      <p className="text-sm text-[rgba(255,255,255,0.65)] leading-relaxed">{docResult.summary}</p>
                     )}
                     {(docResult.formulas ?? []).length > 0 && (
                       <div>
-                        <div className="text-[10px] text-[#555] font-bold uppercase tracking-widest mb-2">Formulas</div>
+                        <div className="text-[10px] text-[rgba(255,255,255,0.35)] font-bold uppercase tracking-widest mb-2">Formulas</div>
                         <div className="space-y-1">
                           {(docResult.formulas ?? []).map((f: string, i: number) => (
-                            <div key={i} className="text-xs font-mono bg-[rgba(0,0,0,0.04)] rounded-lg px-3 py-2 text-[#111110]">{f}</div>
+                            <div key={i} className="text-xs font-mono rounded-lg px-3 py-2 text-[rgba(255,255,255,0.8)]" style={{ background: "rgba(255,255,255,0.06)" }}>{f}</div>
                           ))}
                         </div>
                       </div>
@@ -2069,10 +2057,10 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
                   <div className="space-y-5">
                     {(docResult.sections ?? []).map((s: any, i: number) => (
                       <div key={i}>
-                        <div className="text-xs font-bold text-[#111110] mb-2">{s.heading}</div>
+                        <div className="text-xs font-bold text-white mb-2">{s.heading}</div>
                         <div className="space-y-1.5">
                           {(s.bullets ?? []).map((b: string, j: number) => (
-                            <div key={j} className="flex gap-2 text-sm text-[#555]">
+                            <div key={j} className="flex gap-2 text-sm text-[rgba(255,255,255,0.6)]">
                               <span className="shrink-0 mt-2 w-1.5 h-1.5 rounded-full bg-[#2563eb]" />
                               {b}
                             </div>
@@ -2084,31 +2072,31 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
                 )}
 
                 {docTab === "terms" && (
-                  <div className="space-y-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {(docResult.keyTerms ?? []).map((kt: any, i: number) => (
-                      <div key={i} className="rounded-xl border border-[rgba(0,0,0,0.07)] px-4 py-3">
-                        <div className="text-sm font-semibold text-[#111110] mb-0.5">{kt.term}</div>
-                        <div className="text-xs text-[#555] leading-relaxed">{kt.definition}</div>
+                      <div key={i} className="rounded-xl border border-[rgba(255,255,255,0.07)] px-4 py-3" style={{ background: "rgba(255,255,255,0.04)" }}>
+                        <div className="text-xs font-bold text-[#60a5fa] mb-1">{kt.term}</div>
+                        <div className="text-xs text-[rgba(255,255,255,0.5)] leading-relaxed">{kt.definition}</div>
                       </div>
                     ))}
                   </div>
                 )}
 
                 {docTab === "quiz" && (
-                  <div className="space-y-4">
+                  <div className="space-y-3">
                     {(docResult.practiceQuestions ?? []).map((pq: any, i: number) => (
                       <div key={i}
                         onClick={() => setDocFlipped(p => { const s = new Set(p); s.has(i) ? s.delete(i) : s.add(i); return s; })}
                         className="cursor-pointer rounded-xl border px-4 py-3 transition-all"
                         style={{
-                          background: docFlipped.has(i) ? "rgba(37,99,235,0.06)" : "white",
-                          borderColor: docFlipped.has(i) ? "#3b82f6" : "rgba(0,0,0,0.08)",
+                          background: docFlipped.has(i) ? "rgba(37,99,235,0.1)" : "rgba(255,255,255,0.04)",
+                          borderColor: docFlipped.has(i) ? "rgba(37,99,235,0.35)" : "rgba(255,255,255,0.08)",
                         }}>
-                        <div className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: docFlipped.has(i) ? "#3b82f6" : "rgba(0,0,0,0.35)" }}>
+                        <div className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: docFlipped.has(i) ? "#60a5fa" : "rgba(255,255,255,0.3)" }}>
                           {docFlipped.has(i) ? "Answer" : `Q${i + 1}`}
                         </div>
-                        <div className="text-sm text-[#111110]">{docFlipped.has(i) ? pq.answer : pq.question}</div>
-                        {!docFlipped.has(i) && <div className="text-[10px] text-[#555] mt-2">Tap to reveal answer</div>}
+                        <div className="text-sm text-white">{docFlipped.has(i) ? pq.answer : pq.question}</div>
+                        {!docFlipped.has(i) && <div className="text-[10px] text-[rgba(255,255,255,0.3)] mt-2">Tap to reveal answer</div>}
                       </div>
                     ))}
                   </div>
@@ -2117,7 +2105,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
                 {docTab === "tips" && (
                   <div className="space-y-2">
                     {(docResult.examTips ?? []).map((tip: string, i: number) => (
-                      <div key={i} className="flex gap-3 text-sm text-[#555] rounded-xl border border-[rgba(0,0,0,0.07)] px-4 py-3">
+                      <div key={i} className="flex gap-3 text-sm text-[rgba(255,255,255,0.6)] rounded-xl border border-[rgba(255,255,255,0.07)] px-4 py-3" style={{ background: "rgba(255,255,255,0.04)" }}>
                         <span className="shrink-0 font-bold text-[#2563eb]">{i + 1}.</span>
                         {tip}
                       </div>
@@ -2129,108 +2117,92 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
 
               {/* Actions */}
               {docError && <div className="px-6 pb-3 text-xs text-red-400">{docError}</div>}
-              <div className="px-6 py-4 border-t border-[rgba(0,0,0,0.08)] space-y-3">
-                {/* Save choice UI */}
+              <div className="px-6 py-4 border-t border-[rgba(255,255,255,0.07)] space-y-3">
                 {!docSaved ? (
                   docSaveChoice === "none" ? (
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => setDocSaveChoice("choosing")}
-                        disabled={docSaving}
-                        className="flex items-center gap-1.5 text-xs bg-white text-[#111110] px-4 py-2 rounded-full font-medium hover:bg-[#eee] transition-colors disabled:opacity-40"
-                      >
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <button onClick={() => setDocSaveChoice("choosing")} disabled={docSaving}
+                        className="flex items-center gap-1.5 text-xs text-white px-4 py-2 rounded-full font-semibold disabled:opacity-40 transition-colors"
+                        style={{ background: "#2563eb" }}>
                         Save to Study Book
                       </button>
-                      <button
-                        onClick={enterEditMode}
-                        className="text-xs text-[#555] hover:text-[#111110] border border-[rgba(0,0,0,0.08)] hover:border-[#444] px-4 py-2 rounded-full transition-colors"
-                      >
+                      <button onClick={enterEditMode}
+                        className="text-xs text-[rgba(255,255,255,0.5)] hover:text-white border border-[rgba(255,255,255,0.12)] hover:border-[rgba(255,255,255,0.3)] px-4 py-2 rounded-full transition-colors">
                         Edit
                       </button>
-                      <button
-                        onClick={regenerateDocument}
-                        disabled={docRegenerating}
-                        className="text-xs text-[#555] hover:text-[#111110] border border-[rgba(0,0,0,0.08)] hover:border-[#444] px-4 py-2 rounded-full transition-colors disabled:opacity-40 flex items-center gap-1.5"
-                      >
+                      <button onClick={regenerateDocument} disabled={docRegenerating}
+                        className="text-xs text-[rgba(255,255,255,0.5)] hover:text-white border border-[rgba(255,255,255,0.12)] hover:border-[rgba(255,255,255,0.3)] px-4 py-2 rounded-full transition-colors disabled:opacity-40 flex items-center gap-1.5">
                         {docRegenerating ? <><Loader2 size={10} className="animate-spin" /> Regenerating…</> : "Regenerate"}
                       </button>
                       <button onClick={() => { setDocView("idle"); setDocFile(null); setDocResult(null); setDocSaved(false); setDocSaveChoice("none"); setDocTab("summary"); setDocFlipped(new Set()); setDocQuizSelected(null); }}
-                        className="ml-auto text-xs text-[#555] hover:text-[#555] transition-colors">
+                        className="ml-auto text-xs text-[rgba(255,255,255,0.3)] hover:text-[rgba(255,255,255,0.6)] transition-colors">
                         Upload another
                       </button>
                     </div>
                   ) : docSaveChoice === "choosing" ? (
                     <div className="space-y-2">
-                      <p className="text-[10px] text-[#555] uppercase tracking-widest">Where to save?</p>
+                      <p className="text-[10px] text-[rgba(255,255,255,0.35)] uppercase tracking-widest">Where to save?</p>
                       <div className="flex flex-wrap gap-2">
-                        <button
-                          onClick={() => saveDocument()}
-                          disabled={docSaving}
-                          className="flex items-center gap-1.5 text-xs bg-white text-[#111110] px-4 py-2 rounded-full font-medium hover:bg-[#eee] transition-colors disabled:opacity-40"
-                        >
+                        <button onClick={() => saveDocument()} disabled={docSaving}
+                          className="flex items-center gap-1.5 text-xs text-white px-4 py-2 rounded-full font-semibold disabled:opacity-40 transition-colors"
+                          style={{ background: "#2563eb" }}>
                           {docSaving ? <><Loader2 size={10} className="animate-spin" /> Saving…</> : "Create New Study Book"}
                         </button>
                         {studyBooks.length > 0 && (
-                          <button
-                            onClick={() => setDocSaveChoice("existing")}
-                            className="text-xs text-[#555] hover:text-[#111110] border border-[rgba(0,0,0,0.08)] hover:border-[#444] px-4 py-2 rounded-full transition-colors"
-                          >
+                          <button onClick={() => setDocSaveChoice("existing")}
+                            className="text-xs text-[rgba(255,255,255,0.5)] hover:text-white border border-[rgba(255,255,255,0.12)] px-4 py-2 rounded-full transition-colors">
                             Add to Existing
                           </button>
                         )}
-                        <button onClick={() => setDocSaveChoice("none")} className="text-xs text-[#555] hover:text-[#555] transition-colors px-2">
+                        <button onClick={() => setDocSaveChoice("none")} className="text-xs text-[rgba(255,255,255,0.35)] hover:text-white transition-colors px-2">
                           Cancel
                         </button>
                       </div>
                     </div>
                   ) : (
                     <div className="space-y-2">
-                      <p className="text-[10px] text-[#555] uppercase tracking-widest">Select a study book</p>
+                      <p className="text-[10px] text-[rgba(255,255,255,0.35)] uppercase tracking-widest">Select a study book</p>
                       <div className="space-y-1.5 max-h-48 overflow-y-auto">
                         {studyBooks.map((sb: any) => (
-                          <button
-                            key={sb.id}
-                            onClick={() => saveToExistingStudyBook(sb.id)}
-                            disabled={docSaving}
-                            className="w-full text-left px-3 py-2.5 rounded-xl border border-[rgba(0,0,0,0.08)] hover:border-[#444] text-sm text-[#111110] hover:bg-white/[0.02] transition-colors disabled:opacity-40"
-                          >
+                          <button key={sb.id} onClick={() => saveToExistingStudyBook(sb.id)} disabled={docSaving}
+                            className="w-full text-left px-3 py-2.5 rounded-xl border border-[rgba(255,255,255,0.08)] hover:border-[rgba(255,255,255,0.2)] text-sm text-white hover:bg-[rgba(255,255,255,0.05)] transition-colors disabled:opacity-40">
                             {sb.title?.replace(/^Study Book:\s*/, "") ?? "Untitled"}
                           </button>
                         ))}
                       </div>
-                      <button onClick={() => setDocSaveChoice("choosing")} className="text-xs text-[#555] hover:text-[#555] transition-colors">
+                      <button onClick={() => setDocSaveChoice("choosing")} className="text-xs text-[rgba(255,255,255,0.35)] hover:text-white transition-colors">
                         ← Back
                       </button>
                     </div>
                   )
                 ) : (
                   <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-1.5 text-xs text-green-500">
+                    <div className="flex items-center gap-1.5 text-xs text-green-400">
                       <CheckCircle size={11} /> Saved to Study Book
                     </div>
                     <button onClick={() => { setDocView("idle"); setDocFile(null); setDocResult(null); setDocSaved(false); setDocSaveChoice("none"); setDocTab("summary"); setDocFlipped(new Set()); setDocQuizSelected(null); }}
-                      className="ml-auto text-xs text-[#555] hover:text-[#555] transition-colors">
+                      className="ml-auto text-xs text-[rgba(255,255,255,0.35)] hover:text-white transition-colors">
                       Upload another
                     </button>
                   </div>
                 )}
               </div>
 
-              {/* AI Chatbot — shown after saving */}
+              {/* AI Chatbot */}
               {docLectureId && (
-                <div className="border-t border-[rgba(0,0,0,0.08)]">
-                  <div className="px-6 py-3 flex items-center gap-2" style={{ background: "rgba(37,99,235,0.04)" }}>
-                    <div className="text-[10px] font-bold uppercase tracking-widest text-[#2563eb]">Ask AI about this document</div>
+                <div className="border-t border-[rgba(255,255,255,0.07)]">
+                  <div className="px-6 py-3" style={{ background: "rgba(37,99,235,0.08)", borderBottom: "1px solid rgba(37,99,235,0.15)" }}>
+                    <div className="text-[10px] font-bold uppercase tracking-widest text-[#60a5fa]">Ask AI about this document</div>
                   </div>
                   <div className="relative overflow-hidden" style={{ height: 260 }}>
                     <div className="absolute inset-0 overflow-y-auto px-6 pt-4 pb-3 space-y-3">
                       {docChatMessages.length === 0 && !docChatLoading && (
                         <div className="flex flex-col items-center gap-3 py-4">
-                          <p className="text-xs text-[#aaa] text-center">Ask anything about this document.</p>
+                          <p className="text-xs text-[rgba(255,255,255,0.35)] text-center">Ask anything about this document.</p>
                           <div className="flex flex-wrap gap-1.5 justify-center">
                             {["Summarize this document", "What are the key terms?", "Quiz me on this"].map(s => (
                               <button key={s} onClick={() => setDocChatInput(s)}
-                                className="text-[11px] px-2.5 py-1 rounded-full border border-[rgba(37,99,235,0.25)] text-[#2563eb] hover:bg-[rgba(37,99,235,0.05)] transition-colors">
+                                className="text-[11px] px-2.5 py-1 rounded-full border border-[rgba(37,99,235,0.3)] text-[#60a5fa] hover:bg-[rgba(37,99,235,0.1)] transition-colors">
                                 {s}
                               </button>
                             ))}
@@ -2241,26 +2213,27 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
                         <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
                           <span className="text-sm max-w-[85%] leading-relaxed px-3 py-2"
                             style={{
-                              background: m.role === "user" ? "#2563eb" : "rgba(0,0,0,0.04)",
-                              color: m.role === "user" ? "white" : "#333",
+                              background: m.role === "user" ? "#2563eb" : "rgba(255,255,255,0.07)",
+                              color: m.role === "user" ? "white" : "rgba(255,255,255,0.75)",
                               borderRadius: m.role === "user" ? "14px 14px 3px 14px" : "14px 14px 14px 3px",
                             }}>{m.content}</span>
                         </div>
                       ))}
                       {docChatLoading && (
                         <div className="flex justify-start">
-                          <span className="px-3 py-2.5 rounded-2xl rounded-bl-sm" style={{ background: "rgba(0,0,0,0.04)" }}>
-                            <Loader2 size={12} className="animate-spin text-[#bbb]" />
+                          <span className="px-3 py-2.5 rounded-2xl rounded-bl-sm" style={{ background: "rgba(255,255,255,0.07)" }}>
+                            <Loader2 size={12} className="animate-spin text-[rgba(255,255,255,0.4)]" />
                           </span>
                         </div>
                       )}
                     </div>
                   </div>
-                  <div className="flex gap-2 px-4 pb-4 pt-2 border-t border-[rgba(0,0,0,0.06)]">
+                  <div className="flex gap-2 px-4 pb-4 pt-2 border-t border-[rgba(255,255,255,0.07)]">
                     <input value={docChatInput} onChange={e => setDocChatInput(e.target.value)}
                       onKeyDown={e => e.key === "Enter" && !e.shiftKey && sendDocChat()}
                       placeholder="Ask about this document…"
-                      className="flex-1 bg-[rgba(0,0,0,0.03)] border border-[rgba(0,0,0,0.08)] focus:border-[rgba(0,0,0,0.15)] rounded-xl px-4 py-2.5 text-sm text-[#333] placeholder-[rgba(0,0,0,0.3)] outline-none" />
+                      className="flex-1 border border-[rgba(255,255,255,0.1)] focus:border-[rgba(37,99,235,0.5)] rounded-xl px-4 py-2.5 text-sm text-white placeholder-[rgba(255,255,255,0.25)] outline-none"
+                      style={{ background: "rgba(255,255,255,0.06)" }} />
                     <button onClick={sendDocChat} disabled={!docChatInput.trim() || docChatLoading}
                       className="text-sm font-semibold px-4 py-2.5 rounded-xl disabled:opacity-40" style={{ background: "#2563eb", color: "white" }}>
                       Send
