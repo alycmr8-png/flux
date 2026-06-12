@@ -6,6 +6,7 @@ import path from "path";
 import { prisma } from "../lib/prisma";
 import { generateStudyBook, condenseTranscript, summarizeTranscript, generateFlashcardsFromTranscript, answerVideoQuestion, generateInlineQuiz, generateKeyPoints } from "../services/claude";
 import { transcribeAudio } from "../services/whisper";
+import { indexSource } from "../services/memory";
 
 const router = Router();
 
@@ -333,7 +334,7 @@ router.post("/fetch-transcript", async (req, res) => {
     }
 
     // ── Not cached — fetch from YouTube ──
-    const { text: transcript } = await fetchYouTubeTranscript(videoId);
+    const { text: transcript, segments } = await fetchYouTubeTranscript(videoId);
     const title = await getVideoTitle(videoId);
 
     let course: any;
@@ -349,6 +350,11 @@ router.post("/fetch-transcript", async (req, res) => {
     } else {
       await prisma.lecture.update({ where: { id: lecture.id }, data: { transcript, status: "ready", audioUrl: ytAudioUrl } });
     }
+
+    // Index into course memory (non-fatal)
+    try {
+      await indexSource({ userId: user.id, courseId: course.id, sourceType: "video", sourceId: lecture.id, sourceTitle: title, text: transcript, segments });
+    } catch (e: any) { console.error("[fetch-transcript] indexing failed:", e?.message); }
 
     res.json({ data: { lectureId: lecture.id, title, transcript } });
   } catch (err: any) {
@@ -571,6 +577,11 @@ router.post("/from-youtube", async (req, res) => {
       } else {
         await prisma.lecture.update({ where: { id: lecture.id }, data: { transcript, status: "ready", audioUrl: ytAudioUrl } });
       }
+
+      // Index into course memory (non-fatal)
+      try {
+        await indexSource({ userId: user.id, courseId: course.id, sourceType: "video", sourceId: lecture.id, sourceTitle: title, text: transcript, segments });
+      } catch (e: any) { console.error("[studybook] indexing failed:", e?.message); }
 
       console.log(`[studybook] condensing transcript…`);
       const source = await condenseTranscript(transcript, segments, title, user.language ?? "en");

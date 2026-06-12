@@ -5,6 +5,7 @@ import os from "os";
 import path from "path";
 import { prisma } from "../lib/prisma";
 import { generateStructuredLearningFile } from "../services/claude";
+import { indexSource } from "../services/memory";
 import OpenAI from "openai";
 
 const pdfParse = require("pdf-parse/lib/pdf-parse.js") as (buf: Buffer) => Promise<{ text: string }>;
@@ -256,6 +257,18 @@ router.post("/save", async (req, res) => {
     : await prisma.cheatSheet.create({
         data: { userId: user.id, lectureId: lecture.id, title: `Study Book: ${title}`, content },
       });
+
+  // Index into course memory (non-fatal) — prefer the raw extracted text over the generated summary
+  try {
+    const memoryText = transcript || [
+      content?.summary ?? "",
+      ...(content?.sections ?? []).flatMap((s: any) => [s.heading, ...(s.bullets ?? [])]),
+      ...(content?.keyTerms ?? []).map((kt: any) => `${kt.term}: ${kt.definition}`),
+    ].filter(Boolean).join("\n");
+    if (memoryText.trim()) {
+      await indexSource({ userId: user.id, courseId: course.id, sourceType: "file", sourceId: lecture.id, sourceTitle: title, text: memoryText });
+    }
+  } catch (e: any) { console.error("[documents/save] indexing failed:", e?.message); }
 
   res.json({ data: cheatSheet, lectureId: lecture.id });
 });

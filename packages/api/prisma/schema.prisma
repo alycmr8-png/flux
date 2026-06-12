@@ -169,6 +169,22 @@ enum LectureStatus {
   error
 }
 
+model MemoryChunk {
+  id          String   @id @default(cuid())
+  userId      String
+  courseId    String
+  sourceType  String   // lecture | video | file | note
+  sourceId    String
+  sourceTitle String
+  content     String   @db.Text
+  meta        Json?    // { startSec?, endSec?, week? }
+  embedding   Json     // float[] from text-embedding-3-small
+  createdAt   DateTime @default(now())
+
+  @@index([courseId, userId])
+  @@index([sourceId])
+}
+
 model CheatSheet {
   id        String   @id @default(cuid())
   lectureId String

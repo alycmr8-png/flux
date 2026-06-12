@@ -3,7 +3,7 @@ import { useState, useRef, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   Mic, Square, FileUp, CheckCircle, Loader2, Plus, Pause, Play, StopCircle,
-  BookOpen, Calendar, X, Mic2, FileText, ArrowLeft, Layers, BookMarked, Youtube,
+  Calendar, X, Mic2, FileText, ArrowLeft, Layers, BookMarked, Youtube,
   ChevronDown, ChevronRight, PenLine, Trash2, RotateCcw, Sparkles, FileText as FileTextIcon, MessageSquare,
 } from "lucide-react";
 import { useApiFetch, useApiSWRFetcher } from "@/lib/apiFetch";
@@ -258,7 +258,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
   const apiFetch = useApiFetch();
   const fetcher = useApiSWRFetcher();
   const { userId } = useAuth();
-  const [tab, setTab] = useState<"record" | "files" | "quizzes" | "video" | "studybook" | "note">(
+  const [tab, setTab] = useState<"record" | "files" | "video" | "studybook" | "note" | "ask">(
     (initialTab as any) ?? "record"
   );
 
@@ -296,10 +296,6 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
   const [sbEditSections, setSbEditSections] = useState<{ heading: string; bullets: string }[]>([]);
   const [sbEditKeyTerms, setSbEditKeyTerms] = useState("");
   const [sbSaving, setSbSaving] = useState(false);
-  const [sbQuizMode, setSbQuizMode] = useState(false);
-  const [sbQuizName, setSbQuizName] = useState("");
-  const [sbQuizGenerating, setSbQuizGenerating] = useState(false);
-  const [sbQuizDone, setSbQuizDone] = useState(false);
   const [generateBookName, setGenerateBookName] = useState("");
   const [generatingBook, setGeneratingBook] = useState(false);
   const [generateBookError, setGenerateBookError] = useState("");
@@ -328,13 +324,6 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
   function toggleChapter(i: number) {
     setExpandedChapters(prev => { const n = new Set(prev); n.has(i) ? n.delete(i) : n.add(i); return n; });
   }
-
-  const { data: quizzesData, mutate: mutateQuizzes } = useSWR(
-    visitedTabs.has("quizzes") ? `${BASE}/api/quizzes?courseId=${course.id}` : null,
-    fetcher,
-    { revalidateOnFocus: false }
-  );
-  const quizzes: any[] = quizzesData?.data ?? [];
 
   // ── record ──
   const [recording, setRecording] = useState(false);
@@ -1079,7 +1068,6 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ lectureId: lid, title: ytQuizName.trim() }),
       });
-      await mutateQuizzes();
       setYtQuizSaved(true);
     } catch (e: any) {
       setYtError(e?.message ?? "Failed to generate quiz");
@@ -1253,9 +1241,6 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
     setActiveSb(sb);
     setSbView("detail");
     setSbEditMode(false);
-    setSbQuizMode(false);
-    setSbQuizDone(false);
-    setSbQuizName("");
     setExpandedChapters(new Set());
     setExpandedSbSections({ glossary: false, flashcards: false, examQ: false, tips: false, practiceQ: false });
   }
@@ -1264,8 +1249,6 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
     setSbView("list");
     setActiveSb(null);
     setSbEditMode(false);
-    setSbQuizMode(false);
-    setSbQuizDone(false);
   }
 
   function enterSbEditMode() {
@@ -1334,25 +1317,6 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
     }
   }
 
-  async function generateSbQuiz() {
-    if (!activeSb?.lectureId || !sbQuizName.trim()) return;
-    setSbQuizGenerating(true);
-    try {
-      await apiFetch("/api/quizzes/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ lectureId: activeSb.lectureId, title: sbQuizName.trim() }),
-      });
-      await mutateQuizzes();
-      setSbQuizDone(true);
-      setSbQuizMode(false);
-    } catch (e: any) {
-      alert("Failed: " + (e?.message ?? String(e)));
-    } finally {
-      setSbQuizGenerating(false);
-    }
-  }
-
   // ── archive ──
   const [confirmArchiveId, setConfirmArchiveId] = useState<string | null>(null);
   const { data: archivedData, mutate: mutateArchived } = useSWR(
@@ -1380,33 +1344,66 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
     mutateArchived();
   }
 
-  // ── quiz generate ──
-  const [selectedLecture, setSelectedLecture] = useState<string | null>(null);
-  const [generatingQuiz, setGeneratingQuiz] = useState(false);
-  const [quizDone, setQuizDone] = useState(false);
+  // ── ask your course (RAG chat over everything captured) ──
+  const { data: askStatusData, mutate: mutateAskStatus } = useSWR(
+    visitedTabs.has("ask") ? `${BASE}/api/ask/status?courseId=${course.id}` : null,
+    fetcher,
+    { revalidateOnFocus: false }
+  );
+  const askStatus = askStatusData?.data;
+  const [askMessages, setAskMessages] = useState<{ role: "user" | "assistant"; content: string; citations?: any[] }[]>([]);
+  const [askInput, setAskInput] = useState("");
+  const [askLoading, setAskLoading] = useState(false);
+  const [askIndexing, setAskIndexing] = useState(false);
+  const askAutoIndexed = useRef(false);
 
-  async function generateQuiz() {
-    if (!selectedLecture) return;
-    setGeneratingQuiz(true);
+  async function rebuildAskMemory() {
+    setAskIndexing(true);
     try {
-      await apiFetch("/api/quizzes/generate", {
+      await apiFetch("/api/ask/index", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ lectureId: selectedLecture }),
+        body: JSON.stringify({ courseId: course.id }),
       });
-      await mutateQuizzes();
-      setQuizDone(true);
+      await mutateAskStatus();
+    } catch { /* non-fatal */ }
+    setAskIndexing(false);
+  }
+
+  // First visit with content but no memory yet — build it automatically
+  useEffect(() => {
+    if (!askStatusData || askAutoIndexed.current) return;
+    if ((askStatusData.data?.chunkCount ?? 0) > 0) return;
+    if (!lectures.length && !notes.length) return;
+    askAutoIndexed.current = true;
+    rebuildAskMemory();
+  }, [askStatusData]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function sendAsk(text?: string) {
+    const q = (text ?? askInput).trim();
+    if (!q || askLoading) return;
+    const history = [...askMessages.map(m => ({ role: m.role, content: m.content })), { role: "user" as const, content: q }];
+    setAskMessages(prev => [...prev, { role: "user", content: q }]);
+    setAskInput("");
+    setAskLoading(true);
+    try {
+      const res = await apiFetch("/api/ask", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ courseId: course.id, messages: history }),
+      });
+      setAskMessages(prev => [...prev, { role: "assistant", content: res.data.reply, citations: res.data.citations ?? [] }]);
     } catch (e: any) {
-      alert("Failed: " + (e?.message ?? String(e)));
+      setAskMessages(prev => [...prev, { role: "assistant", content: e?.message ?? "Something went wrong — try again." }]);
     } finally {
-      setGeneratingQuiz(false);
+      setAskLoading(false);
     }
   }
 
   const TABS = [
+    { key: "ask",       label: t.workspace.tabs.ask,       icon: Sparkles },
     { key: "record",    label: t.workspace.tabs.record,    icon: Mic2     },
     { key: "files",     label: t.workspace.tabs.files,     icon: FileText },
-    { key: "quizzes",   label: t.workspace.tabs.quizzes,   icon: BookOpen },
     { key: "video",     label: t.workspace.tabs.video,     icon: Youtube  },
     { key: "studybook", label: "Review", icon: BookMarked },
     { key: "note",      label: t.workspace.tabs.note,      icon: PenLine  },
@@ -1468,6 +1465,109 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
           </button>
         ))}
       </div>
+
+      {/* ── ASK YOUR COURSE ── */}
+      {tab === "ask" && (
+        <div className="rounded-2xl flex flex-col overflow-hidden"
+          style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", height: "calc(100vh - 270px)", minHeight: 440 }}>
+
+          {/* Header */}
+          <div className="px-5 py-4 flex items-center gap-3 shrink-0" style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "rgba(37,99,235,0.18)" }}>
+              <Sparkles size={16} style={{ color: "#60a5fa" }} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-semibold text-white">{t.workspace.ask.title}</div>
+              <div className="text-[11px]" style={{ color: "rgba(255,255,255,0.4)" }}>
+                {askIndexing
+                  ? t.workspace.ask.building
+                  : askStatus
+                    ? `${t.workspace.ask.memoryLine}: ${askStatus.sources?.length ?? 0} ${(askStatus.sources?.length ?? 0) === 1 ? "source" : "sources"} · ${askStatus.chunkCount ?? 0} chunks`
+                    : t.workspace.ask.subtitle}
+              </div>
+            </div>
+            <button onClick={rebuildAskMemory} disabled={askIndexing}
+              className="flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-full transition-colors disabled:opacity-40"
+              style={{ color: "rgba(255,255,255,0.5)", border: "1px solid rgba(255,255,255,0.12)" }}>
+              {askIndexing ? <Loader2 size={11} className="animate-spin" /> : <RotateCcw size={11} />}
+              {t.workspace.ask.refresh}
+            </button>
+          </div>
+
+          {/* Messages */}
+          <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+            {askIndexing && askMessages.length === 0 && (
+              <div className="flex flex-col items-center justify-center h-full gap-3 text-center px-6">
+                <Loader2 size={22} className="animate-spin" style={{ color: "#60a5fa" }} />
+                <div className="text-sm" style={{ color: "rgba(255,255,255,0.6)" }}>{t.workspace.ask.building}</div>
+                <div className="text-xs" style={{ color: "rgba(255,255,255,0.35)" }}>{t.workspace.ask.buildingHint}</div>
+              </div>
+            )}
+            {!askIndexing && askMessages.length === 0 && (
+              <div className="flex flex-col items-center justify-center h-full gap-4 text-center px-6">
+                {(askStatus?.chunkCount ?? 0) === 0 ? (
+                  <div className="text-sm max-w-sm" style={{ color: "rgba(255,255,255,0.45)" }}>{t.workspace.ask.empty}</div>
+                ) : (
+                  <>
+                    <div className="text-sm" style={{ color: "rgba(255,255,255,0.45)" }}>{t.workspace.ask.subtitle}</div>
+                    <div className="flex flex-wrap justify-center gap-2">
+                      {t.workspace.ask.quickPrompts.map(p => (
+                        <button key={p} onClick={() => sendAsk(p)}
+                          className="text-xs px-3.5 py-2 rounded-full transition-colors hover:bg-white/10"
+                          style={{ color: "rgba(255,255,255,0.6)", border: "1px solid rgba(255,255,255,0.12)" }}>
+                          {p}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+            {askMessages.map((m, i) => (
+              <div key={i} className={`flex flex-col ${m.role === "user" ? "items-end" : "items-start"}`}>
+                <span className="text-sm max-w-[85%] leading-relaxed px-4 py-2.5 whitespace-pre-wrap"
+                  style={{
+                    background: m.role === "user" ? "#2563eb" : "rgba(255,255,255,0.06)",
+                    color: m.role === "user" ? "white" : "rgba(255,255,255,0.85)",
+                    borderRadius: m.role === "user" ? "18px 18px 4px 18px" : "18px 18px 18px 4px",
+                  }}>{m.content}</span>
+                {m.role === "assistant" && (m.citations?.length ?? 0) > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mt-2 max-w-[85%]">
+                    {m.citations!.map((c: any) => (
+                      <span key={c.n} title={c.snippet}
+                        className="inline-flex items-center gap-1 text-[10px] px-2.5 py-1 rounded-full"
+                        style={{ background: "rgba(37,99,235,0.12)", color: "#60a5fa", border: "1px solid rgba(37,99,235,0.25)" }}>
+                        <span className="font-bold">[{c.n}]</span> {c.label}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+            {askLoading && (
+              <div className="flex justify-start">
+                <span className="px-4 py-3" style={{ background: "rgba(255,255,255,0.06)", borderRadius: "18px 18px 18px 4px" }}>
+                  <Loader2 size={13} className="animate-spin" style={{ color: "rgba(255,255,255,0.4)" }} />
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Input */}
+          <div className="flex gap-2 px-4 pb-4 pt-3 shrink-0" style={{ borderTop: "1px solid rgba(255,255,255,0.07)" }}>
+            <input value={askInput} onChange={e => setAskInput(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && !e.shiftKey && sendAsk()}
+              placeholder={t.workspace.ask.placeholder}
+              className="flex-1 rounded-xl px-4 py-2.5 text-sm outline-none"
+              style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "white" }} />
+            <button onClick={() => sendAsk()} disabled={!askInput.trim() || askLoading}
+              className="text-sm font-semibold px-4 py-2.5 rounded-xl disabled:opacity-40"
+              style={{ background: "#2563eb", color: "white" }}>
+              {t.workspace.ask.send}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ── RECORD ── */}
       {tab === "record" && (
@@ -2355,70 +2455,6 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
         </div>
       )}
 
-      {/* ── QUIZZES ── */}
-      {tab === "quizzes" && (
-        <div className="space-y-4">
-          {!quizDone ? (
-            <div className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl p-6">
-              <p className="text-xs text-[#555] uppercase tracking-widest mb-4">Generate a quiz</p>
-              {lectures.filter(l => l.status === "ready").length === 0 ? (
-                <p className="text-sm text-[#555]">No quiz generated yet.</p>
-              ) : (
-                <>
-                  <div className="space-y-2 mb-4">
-                    {lectures.filter(l => l.status === "ready").map(l => (
-                      <button
-                        key={l.id}
-                        onClick={() => setSelectedLecture(l.id)}
-                        className={`w-full text-left px-4 py-3 rounded-xl border transition-colors ${
-                          selectedLecture === l.id ? "border-white bg-white/5 text-[#111110]" : "border-[rgba(0,0,0,0.08)] text-[#555] hover:border-[rgba(0,0,0,0.1)] hover:text-[#111110]"
-                        }`}
-                      >
-                        <div className="text-sm font-medium">{l.title}</div>
-                        <div className="text-xs opacity-50 mt-0.5">{format(new Date(l.recordedAt), "MMM d")}</div>
-                      </button>
-                    ))}
-                  </div>
-                  <button
-                    onClick={generateQuiz}
-                    disabled={!selectedLecture || generatingQuiz}
-                    className="w-full bg-[rgba(255,255,255,0.15)] text-[#111110] rounded-xl py-2.5 text-sm font-medium disabled:opacity-40 flex items-center justify-center gap-2 hover:opacity-80 transition-opacity"
-                  >
-                    {generatingQuiz ? <><Loader2 size={14} className="animate-spin" /> Generating…</> : "Generate Quiz"}
-                  </button>
-                </>
-              )}
-            </div>
-          ) : (
-            <div className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl p-6 text-center">
-              <CheckCircle size={28} className="mx-auto mb-2 text-[#111110]" />
-              <div className="text-sm font-medium mb-3">Quiz generated</div>
-              <button onClick={() => { setQuizDone(false); setSelectedLecture(null); }} className="text-xs text-[#555] hover:text-[#111110] transition-colors">
-                Generate another
-              </button>
-            </div>
-          )}
-
-          {quizzes.length > 0 && (
-            <div>
-              <p className="text-xs text-[#555] uppercase tracking-widest mb-3">Quizzes in this class</p>
-              <div className="space-y-2">
-                {quizzes.map(q => (
-                  <Link
-                    key={q.id}
-                    href={`/dashboard/quizzes/${q.id}`}
-                    className="bg-white border border-[rgba(0,0,0,0.08)] rounded-xl px-4 py-3 flex items-center justify-between hover:border-[rgba(0,0,0,0.1)] transition-colors block"
-                  >
-                    <div className="text-sm text-[#111110]">{q.title}</div>
-                    <div className="text-xs text-[#555]">{q._count?.questions} questions</div>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
       {/* ── UPLOAD VIDEO ── */}
       {tab === "video" && (
         <div className="space-y-4">
@@ -2947,33 +2983,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
                 <div className="text-base font-medium text-[#111110] truncate">{sbTitle}</div>
                 <div className="text-[10px] text-[#555]">{format(new Date(activeSb.createdAt), 'MMM d, yyyy')}</div>
               </div>
-              {!sbQuizDone ? (
-                <button onClick={() => setSbQuizMode(true)}
-                  className="text-xs text-[#555] hover:text-[#111110] border border-[rgba(0,0,0,0.08)] hover:border-[#444] px-3 py-1.5 rounded-full transition-colors shrink-0">
-                  Generate Quiz
-                </button>
-              ) : (
-                <div className="flex items-center gap-1 text-xs text-green-500"><CheckCircle size={10} /> Quiz created</div>
-              )}
             </div>
-
-            {/* Generate Quiz modal */}
-            {sbQuizMode && (
-              <div className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl p-5 space-y-3">
-                <p className="text-[10px] text-[#555] uppercase tracking-widest">Name your quiz</p>
-                <input autoFocus value={sbQuizName} onChange={e => setSbQuizName(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && generateSbQuiz()}
-                  placeholder={'Quiz — ' + sbTitle}
-                  className="w-full bg-white border border-[rgba(0,0,0,0.08)] rounded-xl px-4 py-2.5 text-sm text-[#111110] placeholder-[rgba(0,0,0,0.3)] outline-none" />
-                <div className="flex gap-2">
-                  <button onClick={generateSbQuiz} disabled={!sbQuizName.trim() || sbQuizGenerating}
-                    className="flex items-center gap-1.5 text-xs bg-white text-[#111110] px-4 py-2 rounded-full font-medium hover:bg-[#eee] transition-colors disabled:opacity-40">
-                    {sbQuizGenerating ? <><Loader2 size={10} className="animate-spin" /> Generating…</> : 'Generate'}
-                  </button>
-                  <button onClick={() => setSbQuizMode(false)} className="text-xs text-[#555]">Cancel</button>
-                </div>
-              </div>
-            )}
 
             {/* Summary */}
             {summary && (

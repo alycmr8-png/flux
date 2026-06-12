@@ -4,6 +4,7 @@ import { transcribeAudio } from "./whisper";
 import { condenseTranscript, generateCheatSheet, generateQuiz, correctTranscript } from "./claude";
 import { syncToDrive } from "./google";
 import { scheduleSpacedRepetition } from "./spaced-repetition";
+import { indexSource } from "./memory";
 
 async function safeStatusUpdate(lectureId: string, data: object) {
   try {
@@ -47,6 +48,7 @@ export async function processLecture(lectureId: string, userId: string) {
     }
 
     // ── Extract slide text and append to transcript (non-fatal) ──
+    let extractedSlideText = "";
     if (lecture.slidesUrl && fs.existsSync(lecture.slidesUrl)) {
       try {
         const ext = require("path").extname(lecture.slidesUrl).toLowerCase();
@@ -72,6 +74,7 @@ export async function processLecture(lectureId: string, userId: string) {
         }
 
         if (slideText.trim()) {
+          extractedSlideText = slideText;
           transcript = `${transcript}\n\n[SLIDES]\n${slideText}`;
           console.log(`[processLecture] appended slide text (${slideText.length} chars)`);
         }
@@ -81,6 +84,32 @@ export async function processLecture(lectureId: string, userId: string) {
     }
 
     await safeStatusUpdate(lectureId, { transcript, status: "generating" });
+
+    // ── Index into course memory for "Ask your course" (non-fatal) ──
+    try {
+      const count = await indexSource({
+        userId,
+        courseId: lecture.courseId,
+        sourceType: "lecture",
+        sourceId: lectureId,
+        sourceTitle: lecture.title,
+        text: transcript,
+        segments,
+      });
+      console.log(`[processLecture] indexed ${count} memory chunks`);
+      if (extractedSlideText.trim()) {
+        await indexSource({
+          userId,
+          courseId: lecture.courseId,
+          sourceType: "file",
+          sourceId: `${lectureId}_slides`,
+          sourceTitle: `${lecture.title} — slides`,
+          text: extractedSlideText,
+        });
+      }
+    } catch (memErr) {
+      console.error("[processLecture] memory indexing failed (non-fatal):", (memErr as any)?.message);
+    }
 
     const user = await prisma.user.findUnique({ where: { id: userId }, include: { googleTokens: true } });
     const language = user?.language ?? "en";

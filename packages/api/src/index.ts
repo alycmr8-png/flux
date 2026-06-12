@@ -20,6 +20,7 @@ import { documentRouter } from "./routes/documents";
 import { noteRouter } from "./routes/notes";
 import { eventRouter } from "./routes/events";
 import { networkRouter } from "./routes/network";
+import { askRouter } from "./routes/ask";
 import { errorHandler } from "./middleware/errorHandler";
 import { requireAuth } from "./middleware/requireAuth";
 
@@ -49,6 +50,7 @@ app.use("/api/events", eventRouter);
 app.use("/api/billing", billingRouter);
 app.use("/api/studybook", studyBookRouter);
 app.use("/api/network", networkRouter);
+app.use("/api/ask", askRouter);
 
 app.use(errorHandler);
 

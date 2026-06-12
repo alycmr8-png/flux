@@ -485,6 +485,36 @@ export async function answerVideoQuestion(
   return extractText(msg);
 }
 
+// ─── Course memory Q&A ("Ask your course") ──────────────────────────────────
+
+export async function answerCourseQuestion(
+  courseName: string,
+  sources: { n: number; label: string; content: string }[],
+  messages: { role: "user" | "assistant"; content: string }[],
+  language = "en"
+): Promise<string> {
+  const langName = LANG_NAMES[language] ?? "English";
+  const sourceBlock = sources
+    .map(s => `[${s.n}] ${s.label}\n${s.content}`)
+    .join("\n\n---\n\n");
+
+  const msg = await createWithRetry({
+    model: "gpt-4o",
+    max_tokens: 1024,
+    system: `You are the course memory for "${courseName}" — you attended every lecture and read every file the student captured. Answer in ${langName}.
+
+Rules:
+- Answer ONLY from the numbered sources below. If the answer isn't in them, say you don't have that in this course's materials yet.
+- After every claim, cite the source(s) it came from using bracket markers like [1] or [2][4]. Citations are mandatory.
+- Be clear and direct, like a sharp study partner. No filler.
+
+SOURCES:
+${sourceBlock}`,
+    messages,
+  });
+  return extractText(msg);
+}
+
 // ─── Transcript corrector ─────────────────────────────────────────────────────
 // Fixes speech-to-text errors: punctuation, homophones, split words, run-ons.
 // Uses gpt-4o-mini (cheap) in 4 000-char chunks so long lectures are covered.
