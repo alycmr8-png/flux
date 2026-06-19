@@ -84,14 +84,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 overflow-y-auto px-4 py-5 md:px-10 md:py-9 pb-24 md:pb-9">
+      <main className="flex-1 overflow-y-auto px-4 py-5 md:px-10 md:py-9 pb-28 md:pb-9">
         {children}
       </main>
 
       {/* Bottom tab bar — mobile only */}
       <nav
-        className="md:hidden fixed bottom-0 left-0 right-0 flex items-center justify-around px-1 py-2 z-50"
-        style={{ background: "#111110", borderTop: "1px solid rgba(255,255,255,0.08)" }}
+        className="md:hidden fixed bottom-0 left-0 right-0 flex items-center justify-around px-1 pt-2 z-50 safe-bottom"
+        style={{ background: "#111110", borderTop: "1px solid rgba(255,255,255,0.08)", paddingBottom: "calc(env(safe-area-inset-bottom) + 8px)" }}
       >
         {nav.map(({ href, icon: Icon, label }) => {
           const active = pathname === href || (href !== "/dashboard" && pathname.startsWith(href));

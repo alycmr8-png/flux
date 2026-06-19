@@ -3,14 +3,44 @@
 @tailwind utilities;
 @import 'katex/dist/katex.min.css';
 
-html { scroll-behavior: smooth; }
+html {
+  scroll-behavior: smooth;
+  /* Don't let iOS/Android silently bump up font sizes on rotate */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
 * { box-sizing: border-box; }
 
 body {
   font-family: 'Jost', system-ui, sans-serif;
   background: #111110;
   color: white;
+  /* No accidental sideways scroll on phones */
+  overflow-x: hidden;
+  /* Kill the grey flash when tapping links/buttons on mobile */
+  -webkit-tap-highlight-color: transparent;
 }
+
+/* Stop iOS Safari from zooming in when a form field is focused
+   (it auto-zooms whenever the field font-size is under 16px). */
+@media (max-width: 767px) {
+  input,
+  textarea,
+  select {
+    font-size: 16px;
+  }
+}
+
+/* Smooth, momentum scrolling inside scroll containers on iOS */
+.overflow-y-auto,
+.overflow-x-auto,
+.overflow-auto {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Respect the iPhone home-indicator / notch where we opt in */
+.safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+.safe-top { padding-top: env(safe-area-inset-top); }
 
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
@@ -26,3 +56,47 @@ body {
   animation: marquee 28s linear infinite;
 }
 .animate-marquee:hover { animation-play-state: paused; }
+
+/* ── Craft details ─────────────────────────────────────────────────────────
+   The small things that make software feel hand-built. */
+
+/* Branded text selection instead of the OS default */
+::selection { background: rgba(37,99,235,0.35); color: #fff; }
+
+/* Keyboard focus rings — visible for tab users, never for mouse clicks.
+   Accessibility that good engineers ship and templates skip. */
+:focus-visible {
+  outline: 2px solid rgba(96,165,250,0.7);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+:focus:not(:focus-visible) { outline: none; }
+
+/* Tactile press feedback on anything clickable */
+button:active, a:active, [role="button"]:active { transform: scale(0.985); }
+button, a, [role="button"] { transition: transform 0.08s ease; }
+
+/* Feedback (toast / dialog) motion */
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(12px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes toast-out {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to   { opacity: 0; transform: translateY(8px) scale(0.96); }
+}
+@keyframes dialog-in {
+  from { opacity: 0; transform: translateY(14px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes overlay-in { from { opacity: 0; } to { opacity: 1; } }
+
+/* Respect users who ask for less motion — disable non-essential animation */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -1,11 +1,20 @@
-﻿import type { Metadata } from "next";
+﻿import type { Metadata, Viewport } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
 import { I18nProvider } from "@/components/I18nProvider";
+import { FeedbackProvider } from "@/components/Feedback";
 import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Flux",
-  description: "Record lectures. AI generates your cheat sheets and quizzes.",
+  description: "The AI that went to every one of your classes. Capture lectures, videos, files and notes — then ask your course anything, with sources.",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  // Keep pinch-zoom available for accessibility (no maximumScale lock)
+  themeColor: "#111110",
+  viewportFit: "cover", // draw under the notch / use safe-area insets
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -20,7 +29,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             rel="stylesheet"
           />
         </head>
-        <body className="text-black antialiased" style={{ background: "#a8b9a3" }}><I18nProvider>{children}</I18nProvider></body>
+        <body className="antialiased"><I18nProvider><FeedbackProvider>{children}</FeedbackProvider></I18nProvider></body>
       </html>
     </ClerkProvider>
   );

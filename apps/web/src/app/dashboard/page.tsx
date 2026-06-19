@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { useUser } from "@clerk/nextjs";
+import { useUser, useAuth } from "@clerk/nextjs";
 import { useT } from "@/lib/useT";
 import Link from "next/link";
 import useSWR from "swr";
@@ -41,20 +41,25 @@ function greetingKey(): "goodMorning" | "goodAfternoon" | "goodEvening" {
 
 export default function DashboardHome() {
   const { user } = useUser();
+  const { userId, isLoaded: authLoaded } = useAuth();
   const firstName = user?.firstName ?? user?.username ?? "";
   const t = useT();
   const fetcher = useApiSWRFetcher();
   const apiFetch = useApiFetch();
   const SWR_OPTS = { revalidateOnFocus: false, dedupingInterval: 60000 } as const;
+  // Only fetch once Clerk has resolved the user id — otherwise the first
+  // request goes out with an empty auth header, gets a 401, and SWR waits on
+  // its error-retry timer (~5s) before recovering, making the page feel slow.
+  const ready = authLoaded && !!userId;
 
-  const { data: sheetsData } = useSWR(`${BASE}/api/cheatsheets`, fetcher, SWR_OPTS);
-  const { data: coursesData, isLoading: coursesLoading } = useSWR(`${BASE}/api/courses`, fetcher, SWR_OPTS);
+  const { data: sheetsData } = useSWR(ready ? `${BASE}/api/cheatsheets` : null, fetcher, SWR_OPTS);
+  const { data: coursesData, isLoading: coursesLoading } = useSWR(ready ? `${BASE}/api/courses` : null, fetcher, SWR_OPTS);
   const courses: any[] = coursesData?.data ?? [];
   // Stable date range — must not be computed inline or the SWR key changes every render
   const [eventsFrom] = useState(() => startOfDay(new Date()).toISOString());
   const [eventsTo] = useState(() => new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString());
 
-  const { data: recentVideosData, mutate: mutateVideos } = useSWR(`${BASE}/api/studybook/recent-videos`, fetcher, SWR_OPTS);
+  const { data: recentVideosData, mutate: mutateVideos } = useSWR(ready ? `${BASE}/api/studybook/recent-videos` : null, fetcher, SWR_OPTS);
   const recentVideos: any[] = recentVideosData?.data ?? [];
 
   async function archiveVideo(lectureId: string) {
@@ -63,7 +68,7 @@ export default function DashboardHome() {
   }
 
   const { data: eventsData, isLoading: eventsLoading } = useSWR(
-    `${BASE}/api/events?from=${eventsFrom}&to=${eventsTo}`,
+    ready ? `${BASE}/api/events?from=${eventsFrom}&to=${eventsTo}` : null,
     fetcher,
     SWR_OPTS
   );
@@ -118,7 +123,7 @@ export default function DashboardHome() {
         {/* Coming up */}
         <p className="text-xs uppercase tracking-widest mb-3" style={{ color: "#3b82f6" }}>{t.home.comingUp}</p>
         <div className="flex flex-col gap-2 mb-8">
-          {eventsLoading ? (
+          {!ready || eventsLoading ? (
             [...Array(2)].map((_, i) => (
               <div key={i} className="rounded-2xl px-4 py-3 border animate-pulse" style={{ background: "rgba(255,255,255,0.05)", borderColor: "rgba(255,255,255,0.08)", height: 58 }} />
             ))
@@ -170,7 +175,7 @@ export default function DashboardHome() {
         {/* My classes */}
         <p className="text-xs uppercase tracking-widest mb-3" style={{ color: "#3b82f6" }}>{t.home.myClasses}</p>
         <div className="space-y-2 mb-8">
-          {coursesLoading ? (
+          {!ready || coursesLoading ? (
             [...Array(2)].map((_, i) => (
               <div key={i} className="rounded-2xl px-5 py-4 border animate-pulse" style={{ background: "rgba(255,255,255,0.06)", borderColor: "rgba(255,255,255,0.08)", height: 64 }} />
             ))

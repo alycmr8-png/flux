@@ -7,6 +7,7 @@ import {
   ChevronDown, ChevronRight, PenLine, Trash2, RotateCcw, Sparkles, FileText as FileTextIcon, MessageSquare,
 } from "lucide-react";
 import { useApiFetch, useApiSWRFetcher } from "@/lib/apiFetch";
+import { useToast, useConfirm } from "@/components/Feedback";
 import { useAuth } from "@clerk/nextjs";
 import { useT } from "@/lib/useT";
 import useSWR from "swr";
@@ -58,6 +59,7 @@ function TextWithTerms({ text, glossaryMap }: { text: string; glossaryMap: Map<s
 // ─── Create Class Mini-Page ───────────────────────────────────────────────────
 function CreateClassPage({ onBack, onCreate }: { onBack: () => void; onCreate: (c: any) => void }) {
   const apiFetch = useApiFetch();
+  const toast = useToast();
   const [name, setName] = useState("");
   const [semester, setSemester] = useState("Fall");
   const [year, setYear] = useState(new Date().getFullYear().toString());
@@ -75,9 +77,10 @@ function CreateClassPage({ onBack, onCreate }: { onBack: () => void; onCreate: (
       });
       const course = res.data;
 
+      toast(`${course.name} is ready`, "success");
       onCreate(course);
     } catch (e: any) {
-      alert(e?.message ?? "Could not create class. Is the API running?");
+      toast(e?.message ?? "Couldn't create the class. Check that you're online and try again.", "error");
     } finally {
       setLoading(false);
     }
@@ -257,6 +260,8 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
   const t = useT();
   const apiFetch = useApiFetch();
   const fetcher = useApiSWRFetcher();
+  const toast = useToast();
+  const confirm = useConfirm();
   const { userId } = useAuth();
   const [tab, setTab] = useState<"record" | "files" | "video" | "studybook" | "note" | "ask">(
     (initialTab as any) ?? "record"
@@ -504,7 +509,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
       setSavedBlob(null);
       setSavedAudioUrl(null);
     } catch (e: any) {
-      alert(e?.message ?? "Upload failed");
+      toast(e?.message ?? "Upload failed — your recording is still here, give it another try.", "error");
       setRecStep("saved");
     } finally {
       setUploading(false);
@@ -1231,9 +1236,14 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
   }
 
   async function deleteNote(id: string) {
-    await apiFetch(`/api/notes/${id}`, { method: "DELETE" });
-    mutateNotes();
-    if (activeNote?.id === id) { setActiveNote(null); setNoteView("list"); }
+    try {
+      await apiFetch(`/api/notes/${id}`, { method: "DELETE" });
+      mutateNotes();
+      if (activeNote?.id === id) { setActiveNote(null); setNoteView("list"); }
+      toast("Note deleted", "success");
+    } catch (e: any) {
+      toast(e?.message ?? "Couldn't delete the note — try again.", "error");
+    }
   }
 
   // ── study book helpers ──
@@ -1310,8 +1320,9 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
       setActiveSb((prev: any) => ({ ...prev, content: updatedContent }));
       setSbEditMode(false);
       mutateSheets();
+      toast("Changes saved", "success");
     } catch (e: any) {
-      alert(e?.message ?? "Failed to save");
+      toast(e?.message ?? "Couldn't save your changes — try again.", "error");
     } finally {
       setSbSaving(false);
     }
@@ -1469,7 +1480,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
       {/* ── ASK YOUR COURSE ── */}
       {tab === "ask" && (
         <div className="rounded-2xl flex flex-col overflow-hidden"
-          style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", height: "calc(100vh - 270px)", minHeight: 440 }}>
+          style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", height: "calc(100dvh - 300px)", minHeight: 440 }}>
 
           {/* Header */}
           <div className="px-5 py-4 flex items-center gap-3 shrink-0" style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
@@ -3153,8 +3164,19 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
                 Save
               </button>
             </div>
-            <button onClick={() => { if (window.confirm(`Delete "${activeNote.name}"?`)) deleteNote(activeNote.id); }}
-              className="text-[#555] hover:text-red-400 transition-colors">
+            <button
+              onClick={async () => {
+                const ok = await confirm({
+                  title: `Delete "${activeNote.name}"?`,
+                  message: "This note will be permanently removed and dropped from your course memory. This can't be undone.",
+                  confirmLabel: "Delete note",
+                  danger: true,
+                });
+                if (ok) deleteNote(activeNote.id);
+              }}
+              className="text-[#555] hover:text-red-400 transition-colors"
+              aria-label="Delete note"
+            >
               <Trash2 size={13} />
             </button>
           </div>

@@ -438,7 +438,7 @@ export default function CalendarPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
           style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)" }}
           onClick={e => { if (e.target === e.currentTarget) setShowModal(false); }}>
-          <div className="w-full max-w-sm rounded-2xl p-6" style={{ background: "#1a1a18", border: "1px solid rgba(255,255,255,0.12)" }}>
+          <div className="w-full max-w-sm rounded-2xl p-6 max-h-[90dvh] overflow-y-auto" style={{ background: "#1a1a18", border: "1px solid rgba(255,255,255,0.12)" }}>
             <div className="flex items-center justify-between mb-5">
               <span style={{ fontSize: 16, fontWeight: 500 }}>{editingEvent ? t.calendar.editEventTitle : t.calendar.addEventTitle}</span>
               <button onClick={() => setShowModal(false)} style={{ color: "rgba(255,255,255,0.4)" }}><X size={16} /></button>
