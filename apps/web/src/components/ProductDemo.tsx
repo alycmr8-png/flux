@@ -1,9 +1,9 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import {
-  Home, Layers, FileText, Calendar, BarChart2, CreditCard, Archive,
-  Mic, Mic2, BookOpen, BookMarked, FileUp, PenLine, Youtube,
-  Square, Plus, MessageSquare, Zap,
+  Home, Layers, Calendar, CreditCard, Archive, HelpCircle,
+  Mic, Mic2, BookMarked, FileUp, PenLine, Youtube,
+  Square, Plus, Zap, Sparkles,
 } from "lucide-react";
 
 // ── Steps: what the demo cycles through ────────────────────────────────────
@@ -13,8 +13,8 @@ const STEPS = [
   { view: "class",   tab: "record",    phase: "done",      dur: 800  },
   { view: "class",   tab: "video",     phase: "idle",      dur: 900  },
   { view: "class",   tab: "video",     phase: "keypoints", dur: 1300 },
-  { view: "class",   tab: "video",     phase: "chatbot",   dur: 1300 },
-  { view: "class",   tab: "quizzes",   phase: "done",      dur: 1100 },
+  { view: "class",   tab: "ask",       phase: "question",  dur: 1100 },
+  { view: "class",   tab: "ask",       phase: "answer",    dur: 2200 },
   { view: "class",   tab: "studybook", phase: "done",      dur: 1100 },
 ] as const;
 
@@ -22,18 +22,18 @@ const NAV = [
   { key: "home",   icon: Home,       label: "Home"      },
   { key: "record", icon: Layers,     label: "Workspace" },
   { key: "cal",    icon: Calendar,   label: "Calendar"  },
-  { key: "prog",   icon: BarChart2,  label: "Progress"  },
   { key: "arch",   icon: Archive,    label: "Archive"   },
   { key: "bill",   icon: CreditCard, label: "Billing"   },
+  { key: "help",   icon: HelpCircle, label: "Help"      },
 ];
 
 const CLASS_TABS = [
-  { key: "record",    label: "Record",        icon: Mic2      },
-  { key: "files",     label: "Upload Files",  icon: FileUp    },
-  { key: "quizzes",   label: "Quizzes",       icon: BookOpen  },
-  { key: "video",     label: "Upload Video",  icon: Youtube   },
-  { key: "studybook", label: "Study Book",    icon: BookMarked },
-  { key: "note",      label: "Take Note",     icon: PenLine   },
+  { key: "ask",       label: "Ask",          icon: Sparkles  },
+  { key: "record",    label: "Record",       icon: Mic2      },
+  { key: "files",     label: "Upload Files", icon: FileUp    },
+  { key: "video",     label: "Upload Video", icon: Youtube   },
+  { key: "studybook", label: "Study Book",   icon: BookMarked },
+  { key: "note",      label: "Take Note",    icon: PenLine   },
 ] as const;
 
 const COURSES = [
@@ -56,9 +56,11 @@ const KEY_POINTS = [
   { cat: "Warning",    text: "Correlation ≠ causation — a common error in psychology research", color: "#ef4444", bg: "rgba(239,68,68,0.08)" },
 ];
 
-const CHAT = [
-  { role: "user", text: "What's the main idea of this lecture?" },
-  { role: "ai",   text: "The lecture covers how cognitive dissonance drives attitude change — when beliefs conflict, people adjust one to restore balance." },
+const ASK_QUESTION = "What did the professor say about cognitive dissonance?";
+const ASK_ANSWER = "She defined it as the mental discomfort from holding contradictory beliefs [1], and stressed it will be on the midterm — people resolve it by changing one belief or adding new ones [1][2].";
+const ASK_CITATIONS = [
+  { n: 1, label: "Lecture: Week 4 — Social Psychology · 32:10" },
+  { n: 2, label: "File: Week 4 slides" },
 ];
 
 const STUDY_BOOKS = [
@@ -70,11 +72,11 @@ const STUDY_BOOKS = [
 const LABELS: Record<string, string> = {
   "classes-record-idle":      "Browse your classes",
   "class-record-recording":   "Recording your lecture live…",
-  "class-record-done":        "Lecture transcribed & ready",
+  "class-record-done":        "Lecture transcribed & remembered",
   "class-video-idle":         "Paste any YouTube lecture link",
   "class-video-keypoints":    "AI extracts key points instantly",
-  "class-video-chatbot":      "Ask your AI tutor anything",
-  "class-quizzes-done":       "Quiz generated from your lecture",
+  "class-ask-question":       "Ask your course anything…",
+  "class-ask-answer":         "Answers from everything you captured — with sources",
   "class-studybook-done":     "Full study book — auto-generated",
 };
 
@@ -184,7 +186,7 @@ function ClassView({ tab, phase, refs }: {
                   <div className="w-6 h-6 rounded-md flex items-center justify-center shrink-0" style={{ background: "rgba(255,255,255,0.08)" }}><Mic2 size={10} style={{ color: "rgba(255,255,255,0.5)" }} /></div>
                   <div className="flex-1 min-w-0">
                     <div style={{ fontSize: 10, color: "white" }}>{title}</div>
-                    <div style={{ fontSize: 8, color: "#60a5fa" }}>Transcript · Summary · Quiz</div>
+                    <div style={{ fontSize: 8, color: "#60a5fa" }}>Transcript · Summary · Key Points · Ask AI</div>
                   </div>
                   <div className="px-2 py-0.5 rounded-full" style={{ background: "rgba(37,99,235,0.15)", color: "#60a5fa", fontSize: 8 }}>Open</div>
                 </div>
@@ -207,7 +209,7 @@ function ClassView({ tab, phase, refs }: {
               <Youtube size={28} style={{ color: "rgba(255,255,255,0.2)" }} />
             </div>
             <div className="flex gap-1 p-0.5 rounded-lg" style={{ background: "rgba(37,99,235,0.1)", border: "1px solid rgba(37,99,235,0.15)" }}>
-              {["Transcript","Summary","Key Points","Quiz","Flashcards","Chatbot"].map(t => (
+              {["Transcript","Summary","Key Points","Flashcards","Chatbot"].map(t => (
                 <div key={t} className="flex-1 text-center py-1.5 rounded-md" style={{ fontSize: 8, color: "rgba(255,255,255,0.4)" }}>{t}</div>
               ))}
             </div>
@@ -228,40 +230,54 @@ function ClassView({ tab, phase, refs }: {
           </div>
         )}
 
-        {tab === "video" && phase === "chatbot" && (
-          <div className="flex flex-col gap-3" style={{ maxWidth: 420 }}>
-            <div style={{ fontSize: 8, textTransform: "uppercase", letterSpacing: "0.1em", color: "#3b82f6" }}>AI Chatbot</div>
-            {CHAT.map((m, i) => (
-              <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
-                <div className="px-3 py-2 text-xs max-w-[85%] leading-relaxed"
-                  style={{
-                    background: m.role === "user" ? "#2563eb" : "rgba(255,255,255,0.07)",
-                    color: m.role === "user" ? "white" : "rgba(255,255,255,0.75)",
-                    borderRadius: m.role === "user" ? "14px 14px 3px 14px" : "14px 14px 14px 3px",
-                    fontSize: 10,
-                  }}>{m.text}</div>
-              </div>
-            ))}
-            <div className="flex gap-2 mt-1">
-              <div className="flex-1 px-3 py-2 rounded-xl" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", fontSize: 9, color: "rgba(255,255,255,0.25)" }}>Ask a question about this lecture…</div>
-              <div className="px-3 py-2 rounded-xl" style={{ background: "#2563eb", color: "white", fontSize: 9 }}>Send</div>
+        {/* ASK TAB — the hero feature */}
+        {tab === "ask" && (
+          <div className="flex flex-col gap-2.5" style={{ maxWidth: 440 }}>
+            <div className="flex items-center gap-1.5">
+              <Sparkles size={10} style={{ color: "#3b82f6" }} />
+              <span style={{ fontSize: 8, textTransform: "uppercase", letterSpacing: "0.1em", color: "#3b82f6" }}>Ask your course</span>
+              <span style={{ fontSize: 8, color: "rgba(255,255,255,0.3)", marginLeft: "auto" }}>In memory: 12 lectures · 8 files · 5 notes</span>
             </div>
-          </div>
-        )}
 
-        {/* QUIZ TAB */}
-        {tab === "quizzes" && (
-          <div style={{ maxWidth: 420 }}>
-            <div className="rounded-xl p-4" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}>
-              <div style={{ fontSize: 8, textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(255,255,255,0.3)", marginBottom: 6 }}>Question 1 of 6</div>
-              <div style={{ fontSize: 12, fontWeight: 500, color: "white", marginBottom: 12, lineHeight: 1.5 }}>What is cognitive dissonance?</div>
-              {["Mental conflict from contradictory beliefs","Long-term memory storage","Selective attention bias","Unconscious behavior repetition"].map((opt, i) => (
-                <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-xl mb-1.5"
-                  style={{ border: `1px solid ${i === 0 ? "#2563eb" : "rgba(255,255,255,0.07)"}`, background: i === 0 ? "rgba(37,99,235,0.15)" : "rgba(255,255,255,0.03)" }}>
-                  <div className="w-2 h-2 rounded-full shrink-0" style={{ background: i === 0 ? "#3b82f6" : "rgba(255,255,255,0.2)" }} />
-                  <span style={{ fontSize: 10, color: i === 0 ? "white" : "rgba(255,255,255,0.45)" }}>{opt}</span>
+            {/* User question */}
+            <div className="flex justify-end">
+              <div className="px-3 py-2 max-w-[85%]" style={{ background: "#2563eb", color: "white", borderRadius: "14px 14px 3px 14px", fontSize: 10, lineHeight: 1.5 }}>
+                {ASK_QUESTION}
+              </div>
+            </div>
+
+            {phase === "question" ? (
+              /* Thinking dots */
+              <div className="flex justify-start">
+                <div className="px-3 py-2.5 flex items-center gap-1" style={{ background: "rgba(255,255,255,0.07)", borderRadius: "14px 14px 14px 3px" }}>
+                  {[0, 1, 2].map(i => (
+                    <div key={i} className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: "rgba(255,255,255,0.4)", animationDelay: `${i * 0.2}s` }} />
+                  ))}
                 </div>
-              ))}
+              </div>
+            ) : (
+              <>
+                {/* AI answer */}
+                <div className="flex justify-start">
+                  <div className="px-3 py-2 max-w-[90%]" style={{ background: "rgba(255,255,255,0.07)", color: "rgba(255,255,255,0.8)", borderRadius: "14px 14px 14px 3px", fontSize: 10, lineHeight: 1.6 }}>
+                    {ASK_ANSWER}
+                  </div>
+                </div>
+                {/* Citation chips */}
+                <div className="flex flex-wrap gap-1.5">
+                  {ASK_CITATIONS.map(c => (
+                    <span key={c.n} className="inline-flex items-center gap-1 px-2 py-1 rounded-full"
+                      style={{ background: "rgba(37,99,235,0.12)", color: "#60a5fa", border: "1px solid rgba(37,99,235,0.25)", fontSize: 8 }}>
+                      <span style={{ fontWeight: 700 }}>[{c.n}]</span> {c.label}
+                    </span>
+                  ))}
+                </div>
+              </>
+            )}
+
+            <div className="flex gap-2 mt-1">
+              <div className="flex-1 px-3 py-2 rounded-xl" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", fontSize: 9, color: "rgba(255,255,255,0.25)" }}>Ask anything about this course…</div>
+              <div className="px-3 py-2 rounded-xl" style={{ background: "#2563eb", color: "white", fontSize: 9 }}>Send</div>
             </div>
           </div>
         )}
@@ -308,9 +324,9 @@ export function ProductDemo() {
   const bodyRef      = useRef<HTMLDivElement>(null);
   const classCardRef = useRef<HTMLDivElement>(null);
   const refs = {
+    ask:       useRef<HTMLDivElement>(null),
     record:    useRef<HTMLDivElement>(null),
     files:     useRef<HTMLDivElement>(null),
-    quizzes:   useRef<HTMLDivElement>(null),
     video:     useRef<HTMLDivElement>(null),
     studybook: useRef<HTMLDivElement>(null),
     note:      useRef<HTMLDivElement>(null),
@@ -332,8 +348,8 @@ export function ProductDemo() {
     "class-record-done":        refs.record,
     "class-video-idle":         refs.video,
     "class-video-keypoints":    refs.video,
-    "class-video-chatbot":      refs.video,
-    "class-quizzes-done":       refs.quizzes,
+    "class-ask-question":       refs.ask,
+    "class-ask-answer":         refs.ask,
     "class-studybook-done":     refs.studybook,
   };
 
