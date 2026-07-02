@@ -24,19 +24,19 @@ function UniLabel({ name, style, size }: { name: string; style: string; size: st
   const base: React.CSSProperties = { fontSize: size, lineHeight: 1, whiteSpace: "nowrap", cursor: "default" };
 
   if (style === "serif-italic") return (
-    <span style={{ ...base, fontFamily: "'Plus Jakarta Sans', sans-serif", fontStyle: "italic", fontWeight: 500, color: "rgba(255,255,255,0.88)", letterSpacing: "-0.5px" }}>
+    <span style={{ ...base, fontFamily: "'Plus Jakarta Sans', sans-serif", fontStyle: "italic", fontWeight: 500, color: "rgba(0,0,0,0.88)", letterSpacing: "-0.5px" }}>
       {name}
     </span>
   );
 
   if (style === "bold-caps") return (
-    <span style={{ ...base, fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif", fontWeight: 900, textTransform: "uppercase", color: "white", letterSpacing: "-1px" }}>
+    <span style={{ ...base, fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif", fontWeight: 900, textTransform: "uppercase", color: "#0f1115", letterSpacing: "-1px" }}>
       {name}
     </span>
   );
 
   if (style === "condensed-caps") return (
-    <span style={{ ...base, fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.08em", color: "rgba(255,255,255,0.82)" }}>
+    <span style={{ ...base, fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.08em", color: "rgba(0,0,0,0.82)" }}>
       {name}
     </span>
   );
@@ -46,7 +46,7 @@ function UniLabel({ name, style, size }: { name: string; style: string; size: st
   const prefix = parts[0];
   const rest = parts.slice(1).join(" ");
   return (
-    <span style={{ ...base, fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif", color: "white" }}>
+    <span style={{ ...base, fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif", color: "#0f1115" }}>
       <span style={{ fontWeight: 300, letterSpacing: "0.05em" }}>{prefix} </span>
       <span style={{ fontWeight: 900, letterSpacing: "-0.5px" }}>{rest}</span>
     </span>
@@ -56,20 +56,20 @@ function UniLabel({ name, style, size }: { name: string; style: string; size: st
 export function UniversityTicker() {
   return (
     <div className="w-full py-14">
-      <p className="text-center text-sm font-bold uppercase tracking-[0.22em] mb-8" style={{ color: "rgba(255,255,255,0.8)" }}>
+      <p className="text-center text-sm font-bold uppercase tracking-[0.22em] mb-8" style={{ color: "rgba(0,0,0,0.8)" }}>
         Trusted by students at
       </p>
 
       <div className="relative overflow-hidden">
         {/* fade edges */}
-        <div className="absolute inset-y-0 left-0 w-40 z-10 pointer-events-none" style={{ background: "linear-gradient(to right, #0a0a0a, transparent)" }} />
-        <div className="absolute inset-y-0 right-0 w-40 z-10 pointer-events-none" style={{ background: "linear-gradient(to left, #0a0a0a, transparent)" }} />
+        <div className="absolute inset-y-0 left-0 w-40 z-10 pointer-events-none" style={{ background: "linear-gradient(to right, #ffffff, transparent)" }} />
+        <div className="absolute inset-y-0 right-0 w-40 z-10 pointer-events-none" style={{ background: "linear-gradient(to left, #ffffff, transparent)" }} />
 
         <div className="animate-marquee flex items-center">
           {ITEMS.map((u, i) => (
             <span key={i} className="inline-flex items-center shrink-0" style={{ gap: "3rem", paddingRight: "3rem" }}>
               <UniLabel {...u} />
-              <span style={{ width: 5, height: 5, borderRadius: "50%", background: "rgba(255,255,255,0.2)", flexShrink: 0, display: "inline-block" }} />
+              <span style={{ width: 5, height: 5, borderRadius: "50%", background: "rgba(0,0,0,0.2)", flexShrink: 0, display: "inline-block" }} />
             </span>
           ))}
         </div>

@@ -1,0 +1,9 @@
+# Netlify config — deploys the Next.js web app from this npm-workspaces monorepo.
+# Netlify detects the workspace root automatically when `base` points at the package.
+[build]
+  base = "apps/web"
+  command = "npm run build"
+  publish = ".next"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"

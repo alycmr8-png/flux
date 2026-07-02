@@ -6,7 +6,7 @@ import Link from "next/link";
 import useSWR from "swr";
 import Image from "next/image";
 import { useApiSWRFetcher, useApiFetch } from "@/lib/apiFetch";
-import { Mic, FileText, BookOpen, Calendar, ChevronRight, Plus, Clock, Layers, Youtube, X } from "lucide-react";
+import { FileText, Calendar, ChevronRight, Plus, Clock, Layers, Youtube, X } from "lucide-react";
 import { startOfDay, format, differenceInCalendarDays } from "date-fns";
 
 const TYPE_COLOR: Record<string, string> = {
@@ -24,13 +24,6 @@ const TYPE_LABEL: Record<string, string> = {
 };
 
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
-
-const ACTIONS = [
-  { icon: Mic,      label: "Record",    href: "/dashboard/record",    color: "#3b82f6" },
-  { icon: FileText, label: "Summaries", href: "/dashboard/summaries", color: "#22c55e" },
-  { icon: BookOpen, label: "Quizzes",   href: "/dashboard/quizzes",   color: "#a855f7" },
-  { icon: Calendar, label: "Calendar",  href: "/dashboard/calendar",  color: "#f97316" },
-];
 
 function greetingKey(): "goodMorning" | "goodAfternoon" | "goodEvening" {
   const h = new Date().getHours();
@@ -202,24 +195,6 @@ export default function DashboardHome() {
               </Link>
             ))
           )}
-        </div>
-
-        {/* Quick actions */}
-        <p className="text-xs uppercase tracking-widest mb-3" style={{ color: "#3b82f6" }}>{t.home.quickActions}</p>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
-          {ACTIONS.map(({ icon: Icon, label, href, color }) => (
-            <Link
-              key={label}
-              href={href}
-              className="rounded-2xl p-4 flex flex-col items-center gap-2 border transition-all duration-200 hover:scale-105 hover:border-white/20"
-              style={{ background: "rgba(255,255,255,0.06)", borderColor: "rgba(255,255,255,0.08)" }}
-            >
-              <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: `${color}18` }}>
-                <Icon size={15} style={{ color }} />
-              </div>
-              <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.45)" }}>{label}</span>
-            </Link>
-          ))}
         </div>
 
         {/* Recent Videos */}

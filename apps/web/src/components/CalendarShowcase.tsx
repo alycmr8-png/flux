@@ -98,7 +98,7 @@ export function CalendarShowcase() {
     .slice(0, 5);
 
   return (
-    <section className="relative py-28 px-6 overflow-hidden" style={{ background: "#0e0e0d" }}>
+    <section className="relative py-28 px-6 overflow-hidden" style={{ background: "#ffffff" }}>
       {/* Background glow */}
       <div className="absolute inset-0 pointer-events-none" style={{
         background: "radial-gradient(ellipse 60% 50% at 50% 60%, rgba(139,92,246,0.08) 0%, transparent 70%)",
@@ -110,10 +110,10 @@ export function CalendarShowcase() {
           <div className="text-sm uppercase tracking-[0.2em] mb-4 font-semibold" style={{ color: "#3b82f6" }}>
             Stay ahead
           </div>
-          <h2 className="text-4xl md:text-5xl mb-4" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, color: "white", lineHeight: 1.1, letterSpacing: "-0.02em" }}>
+          <h2 className="text-4xl md:text-5xl mb-4" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, color: "#0f1115", lineHeight: 1.1, letterSpacing: "-0.02em" }}>
             Never miss an exam<br />or deadline again.
           </h2>
-          <p className="text-base md:text-lg max-w-xl mx-auto" style={{ color: "rgba(255,255,255,0.5)" }}>
+          <p className="text-base md:text-lg max-w-xl mx-auto" style={{ color: "rgba(0,0,0,0.5)" }}>
             Schedule exams, assignments and deadlines.<br />Color-coded, always visible.
           </p>
         </div>
@@ -121,24 +121,24 @@ export function CalendarShowcase() {
         {/* Calendar UI */}
         <div
           className="relative rounded-3xl overflow-hidden"
-          style={{ background: "#111110", border: "1px solid rgba(255,255,255,0.09)", boxShadow: "0 40px 120px rgba(0,0,0,0.6)" }}
+          style={{ background: "#ffffff", border: "1px solid rgba(0,0,0,0.1)", boxShadow: "0 24px 60px rgba(0,0,0,0.12)" }}
         >
           {/* Window chrome */}
-          <div className="flex items-center gap-2 px-5 py-4" style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+          <div className="flex items-center gap-2 px-5 py-4" style={{ borderBottom: "1px solid rgba(0,0,0,0.07)" }}>
             <span className="w-3 h-3 rounded-full" style={{ background: "#ff5f57" }} />
             <span className="w-3 h-3 rounded-full" style={{ background: "#febc2e" }} />
             <span className="w-3 h-3 rounded-full" style={{ background: "#28c840" }} />
-            <span className="ml-4 text-xs" style={{ color: "rgba(255,255,255,0.3)" }}>Flux — Calendar</span>
+            <span className="ml-4 text-xs" style={{ color: "rgba(0,0,0,0.3)" }}>Flux — Calendar</span>
           </div>
 
           <div className="flex" style={{ minHeight: 480 }}>
             {/* Calendar grid */}
             <div className="flex-1 p-8">
               <div className="flex items-center justify-between mb-6">
-                <span style={{ fontSize: 18, fontWeight: 500, color: "white" }}>May 2026</span>
+                <span style={{ fontSize: 18, fontWeight: 500, color: "#0f1115" }}>May 2026</span>
                 <button
                   className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium"
-                  style={{ background: "white", color: "#111110" }}
+                  style={{ background: "#2563eb", color: "white" }}
                 >
                   <Plus size={13} /> Add event
                 </button>
@@ -147,7 +147,7 @@ export function CalendarShowcase() {
               {/* Day headers */}
               <div className="grid grid-cols-7 mb-3">
                 {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map(d => (
-                  <div key={d} style={{ textAlign: "center", fontSize: 11, color: "rgba(255,255,255,0.25)", paddingBottom: 8 }}>{d}</div>
+                  <div key={d} style={{ textAlign: "center", fontSize: 11, color: "rgba(0,0,0,0.25)", paddingBottom: 8 }}>{d}</div>
                 ))}
               </div>
 
@@ -165,18 +165,18 @@ export function CalendarShowcase() {
                       className="relative flex flex-col items-center py-2 rounded-xl"
                       style={{
                         background: isSelected
-                          ? "rgba(255,255,255,0.15)"
+                          ? "rgba(37,99,235,0.12)"
                           : isToday
-                          ? "rgba(255,255,255,0.08)"
+                          ? "rgba(0,0,0,0.05)"
                           : "transparent",
-                        outline: isToday && !isSelected ? "1px solid rgba(255,255,255,0.2)" : "none",
+                        outline: isSelected ? "1px solid #2563eb" : isToday ? "1px solid rgba(0,0,0,0.15)" : "none",
                         transition: "background 0.3s",
                       }}
                     >
                       <span style={{
                         fontSize: 13,
                         fontWeight: isSelected || isToday ? 600 : 400,
-                        color: isSelected ? "white" : isToday ? "white" : "rgba(255,255,255,0.6)",
+                        color: isSelected ? "#2563eb" : isToday ? "#0f1115" : "rgba(0,0,0,0.6)",
                       }}>
                         {d}
                       </span>
@@ -205,7 +205,7 @@ export function CalendarShowcase() {
                 {Object.entries(TYPE_COLOR).map(([type, color]) => (
                   <div key={type} className="flex items-center gap-1.5">
                     <span style={{ width: 7, height: 7, borderRadius: "50%", background: color, display: "inline-block" }} />
-                    <span style={{ fontSize: 10, color: "rgba(255,255,255,0.35)", textTransform: "capitalize" }}>{type}</span>
+                    <span style={{ fontSize: 10, color: "rgba(0,0,0,0.35)", textTransform: "capitalize" }}>{type}</span>
                   </div>
                 ))}
               </div>
@@ -214,24 +214,24 @@ export function CalendarShowcase() {
             {/* Right panel */}
             <div
               className="w-72 flex flex-col gap-4 p-6"
-              style={{ borderLeft: "1px solid rgba(255,255,255,0.07)" }}
+              style={{ borderLeft: "1px solid rgba(0,0,0,0.07)" }}
             >
               {/* Selected day */}
               <div
                 className="rounded-2xl p-4"
-                style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}
+                style={{ background: "rgba(0,0,0,0.05)", border: "1px solid rgba(0,0,0,0.08)" }}
               >
                 <div className="flex items-center justify-between mb-3">
-                  <span style={{ fontSize: 13, fontWeight: 500, color: "white" }}>May {selectedDay}</span>
+                  <span style={{ fontSize: 13, fontWeight: 500, color: "#0f1115" }}>May {selectedDay}</span>
                   <span
                     className="px-2.5 py-1 rounded-full text-xs"
-                    style={{ background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.5)" }}
+                    style={{ background: "rgba(0,0,0,0.08)", color: "rgba(0,0,0,0.5)" }}
                   >
                     {selectedEvents.length} event{selectedEvents.length !== 1 ? "s" : ""}
                   </span>
                 </div>
                 {selectedEvents.length === 0 ? (
-                  <p style={{ fontSize: 12, color: "rgba(255,255,255,0.3)" }}>No events scheduled.</p>
+                  <p style={{ fontSize: 12, color: "rgba(0,0,0,0.3)" }}>No events scheduled.</p>
                 ) : (
                   <div className="flex flex-col gap-2">
                     {selectedEvents.map((e, i) => (
@@ -240,12 +240,12 @@ export function CalendarShowcase() {
                         className="rounded-xl px-3 py-2.5"
                         style={{
                           borderLeft: `3px solid ${TYPE_COLOR[e.type] ?? "#6b7280"}`,
-                          background: "rgba(255,255,255,0.04)",
+                          background: "rgba(0,0,0,0.04)",
                           animation: "fadeSlide 0.35s ease",
                         }}
                       >
-                        <div style={{ fontSize: 13, fontWeight: 500, color: "white" }}>{e.label}</div>
-                        <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", marginTop: 2, textTransform: "capitalize" }}>
+                        <div style={{ fontSize: 13, fontWeight: 500, color: "#0f1115" }}>{e.label}</div>
+                        <div style={{ fontSize: 11, color: "rgba(0,0,0,0.4)", marginTop: 2, textTransform: "capitalize" }}>
                           {e.type} · {e.course}
                         </div>
                       </div>
@@ -257,24 +257,24 @@ export function CalendarShowcase() {
               {/* Upcoming */}
               <div
                 className="rounded-2xl p-4 flex-1"
-                style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}
+                style={{ background: "rgba(0,0,0,0.05)", border: "1px solid rgba(0,0,0,0.08)" }}
               >
-                <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.28)", marginBottom: 12 }}>
+                <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(0,0,0,0.28)", marginBottom: 12 }}>
                   Upcoming
                 </p>
                 <div className="flex flex-col gap-2.5">
                   {upcoming.map((e, i) => (
                     <div key={i} className="flex items-center gap-3">
                       <div style={{ textAlign: "right", minWidth: 28 }}>
-                        <div style={{ fontSize: 14, fontWeight: 600, color: "white", lineHeight: 1 }}>{e.day}</div>
-                        <div style={{ fontSize: 9, color: "rgba(255,255,255,0.3)", textTransform: "uppercase" }}>May</div>
+                        <div style={{ fontSize: 14, fontWeight: 600, color: "#0f1115", lineHeight: 1 }}>{e.day}</div>
+                        <div style={{ fontSize: 9, color: "rgba(0,0,0,0.3)", textTransform: "uppercase" }}>May</div>
                       </div>
                       <div
                         className="flex-1 rounded-lg px-2.5 py-1.5"
-                        style={{ borderLeft: `2px solid ${TYPE_COLOR[e.type] ?? "#6b7280"}`, background: "rgba(255,255,255,0.03)" }}
+                        style={{ borderLeft: `2px solid ${TYPE_COLOR[e.type] ?? "#6b7280"}`, background: "rgba(0,0,0,0.03)" }}
                       >
-                        <div style={{ fontSize: 11, fontWeight: 500, color: "rgba(255,255,255,0.85)" }}>{e.label}</div>
-                        <div style={{ fontSize: 10, color: "rgba(255,255,255,0.35)" }}>{e.course}</div>
+                        <div style={{ fontSize: 11, fontWeight: 500, color: "rgba(0,0,0,0.85)" }}>{e.label}</div>
+                        <div style={{ fontSize: 10, color: "rgba(0,0,0,0.35)" }}>{e.course}</div>
                       </div>
                     </div>
                   ))}
@@ -291,36 +291,36 @@ export function CalendarShowcase() {
             >
               <div
                 className="w-80 rounded-2xl p-6"
-                style={{ background: "#1c1c1a", border: "1px solid rgba(255,255,255,0.12)", animation: "scaleIn 0.25s ease" }}
+                style={{ background: "#ffffff", border: "1px solid rgba(0,0,0,0.12)", animation: "scaleIn 0.25s ease" }}
               >
                 <div className="flex items-center justify-between mb-5">
-                  <span style={{ fontSize: 15, fontWeight: 500, color: "white" }}>Add event</span>
-                  <X size={15} style={{ color: "rgba(255,255,255,0.35)" }} />
+                  <span style={{ fontSize: 15, fontWeight: 500, color: "#0f1115" }}>Add event</span>
+                  <X size={15} style={{ color: "rgba(0,0,0,0.35)" }} />
                 </div>
                 <div className="flex flex-col gap-3">
                   <div>
-                    <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)", marginBottom: 6 }}>Title</div>
+                    <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(0,0,0,0.35)", marginBottom: 6 }}>Title</div>
                     <div
                       className="w-full rounded-xl px-3 py-2.5 text-sm flex items-center"
-                      style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.15)", color: "white", minHeight: 40 }}
+                      style={{ background: "rgba(0,0,0,0.07)", border: "1px solid rgba(0,0,0,0.15)", color: "#0f1115", minHeight: 40 }}
                     >
                       {typedTitle}
-                      <span className="ml-0.5 inline-block w-px h-4 align-middle" style={{ background: "white", animation: "blink 1s infinite" }} />
+                      <span className="ml-0.5 inline-block w-px h-4 align-middle" style={{ background: "#2563eb", animation: "blink 1s infinite" }} />
                     </div>
                   </div>
                   <div className="flex gap-3">
                     <div className="flex-1">
-                      <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)", marginBottom: 6 }}>Type</div>
-                      <div className="rounded-xl px-3 py-2.5 text-sm" style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.15)", color: "rgba(59,130,246,1)" }}>Class</div>
+                      <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(0,0,0,0.35)", marginBottom: 6 }}>Type</div>
+                      <div className="rounded-xl px-3 py-2.5 text-sm" style={{ background: "rgba(0,0,0,0.07)", border: "1px solid rgba(0,0,0,0.15)", color: "rgba(59,130,246,1)" }}>Class</div>
                     </div>
                     <div className="flex-1">
-                      <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)", marginBottom: 6 }}>Date</div>
-                      <div className="rounded-xl px-3 py-2.5 text-sm" style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.7)" }}>May 24</div>
+                      <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(0,0,0,0.35)", marginBottom: 6 }}>Date</div>
+                      <div className="rounded-xl px-3 py-2.5 text-sm" style={{ background: "rgba(0,0,0,0.07)", border: "1px solid rgba(0,0,0,0.15)", color: "rgba(0,0,0,0.7)" }}>May 24</div>
                     </div>
                   </div>
                   <div
                     className="w-full py-2.5 rounded-xl text-sm font-medium text-center mt-1"
-                    style={{ background: "white", color: "#111110" }}
+                    style={{ background: "#2563eb", color: "white" }}
                   >
                     Save event
                   </div>

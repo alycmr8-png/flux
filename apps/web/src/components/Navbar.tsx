@@ -18,11 +18,11 @@ export function Navbar() {
         }}
       >
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2" style={{ textDecoration: "none" }}>
-          <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ background: "#2563eb" }}>
-            <Layers size={13} style={{ color: "white" }} />
+        <Link href="/" className="flex items-center gap-2.5" style={{ textDecoration: "none" }}>
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "#2563eb" }}>
+            <Layers size={17} style={{ color: "white" }} />
           </div>
-          <span style={{ fontSize: 17, fontWeight: 800, color: "#111110", letterSpacing: "-0.4px" }}>
+          <span style={{ fontSize: 22, fontWeight: 800, color: "#111110", letterSpacing: "-0.5px" }}>
             Fl<span style={{ color: "#2563eb" }}>u</span>x
           </span>
         </Link>
@@ -38,7 +38,7 @@ export function Navbar() {
               key={label}
               href={href}
               className="navbar-link"
-              style={{ fontSize: 16, fontWeight: 500, textDecoration: "none" }}
+              style={{ fontSize: 18, fontWeight: 500, textDecoration: "none" }}
             >
               {label}
             </Link>

@@ -43,29 +43,29 @@ export function YoutubeFeatureDemo() {
 
   return (
     <section className="px-6 md:px-16 py-16 md:py-24">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-6xl mx-auto">
 
         {/* Header */}
         <div className="text-center mb-10">
           <div className="text-sm uppercase tracking-[0.2em] font-semibold mb-3" style={{ color: "#3b82f6" }}>
             Upload any video
           </div>
-          <h2 className="text-4xl md:text-5xl" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, color: "white", letterSpacing: "-0.02em" }}>
+          <h2 className="text-4xl md:text-5xl" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, color: "#0f1115", letterSpacing: "-0.02em" }}>
             Paste a YouTube link. <span style={{ color: "#3b82f6" }}>Get everything.</span>
           </h2>
-          <p className="text-base md:text-lg mt-3 max-w-xl mx-auto" style={{ color: "rgba(255,255,255,0.5)" }}>
+          <p className="text-base md:text-lg mt-3 max-w-xl mx-auto" style={{ color: "rgba(0,0,0,0.55)" }}>
             Transcript, summary, key points, flashcards, quiz, and an AI chatbot — all from one link.
           </p>
         </div>
 
-        {/* Demo */}
-        <div className="max-w-2xl mx-auto space-y-4">
+        {/* Demo — dark product panel on the white page */}
+        <div className="max-w-4xl mx-auto space-y-4 rounded-2xl p-5 md:p-6" style={{ background: "#ffffff", border: "1px solid rgba(0,0,0,0.1)", boxShadow: "0 20px 50px rgba(0,0,0,0.18)" }}>
 
           {/* URL bar */}
           <div className="flex gap-2">
             <div className="flex-1 flex items-center gap-2 px-4 py-3 rounded-xl" style={{ background: "rgba(37,99,235,0.08)", border: "1px solid rgba(37,99,235,0.25)" }}>
               <Youtube size={14} style={{ color: "#3b82f6" }} />
-              <span className="text-sm" style={{ color: "rgba(255,255,255,0.4)" }}>youtube.com/watch?v=vo4pMVb0R6M</span>
+              <span className="text-sm" style={{ color: "rgba(0,0,0,0.4)" }}>youtube.com/watch?v=vo4pMVb0R6M</span>
             </div>
             <div className="px-5 py-3 rounded-xl text-sm font-semibold shrink-0 cursor-pointer" style={{ background: "#2563eb", color: "white" }}>Load</div>
           </div>
@@ -87,7 +87,7 @@ export function YoutubeFeatureDemo() {
                 className="flex-1 py-2.5 px-3 rounded-lg text-sm font-medium transition-all whitespace-nowrap"
                 style={{
                   background: vtab === t.toLowerCase().replace(" ", "-") ? "#2563eb" : "transparent",
-                  color: vtab === t.toLowerCase().replace(" ", "-") ? "white" : "rgba(255,255,255,0.45)",
+                  color: vtab === t.toLowerCase().replace(" ", "-") ? "white" : "rgba(0,0,0,0.45)",
                 }}>
                 {t}
               </button>
@@ -95,12 +95,12 @@ export function YoutubeFeatureDemo() {
           </div>
 
           {/* Tab content */}
-          <div className="rounded-2xl p-5" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(37,99,235,0.15)", minHeight: 260 }}>
+          <div className="rounded-2xl p-5" style={{ background: "rgba(0,0,0,0.04)", border: "1px solid rgba(37,99,235,0.15)", minHeight: 260 }}>
 
             {vtab === "summary" && (
               <div className="space-y-4">
-                <div className="text-sm font-semibold" style={{ color: "white" }}>Intro to Psychology — Crash Course #1</div>
-                <p className="text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.65)" }}>
+                <div className="text-sm font-semibold" style={{ color: "#0f1115" }}>Intro to Psychology — Crash Course #1</div>
+                <p className="text-sm leading-relaxed" style={{ color: "rgba(0,0,0,0.65)" }}>
                   Psychology is the scientific study of mind and behavior. This episode traces its roots from Wilhelm Wundt&apos;s first lab in 1879 to the modern cognitive revolution, covering the major schools of thought that shaped the field.
                 </p>
                 <div className="space-y-2">
@@ -110,7 +110,7 @@ export function YoutubeFeatureDemo() {
                     "Behaviorism (Watson, Skinner) studied only observable behavior, not the inner mind",
                     "The cognitive revolution (1950s–70s) shifted focus back to memory and reasoning",
                   ].map((b, i) => (
-                    <div key={i} className="flex items-start gap-2 text-sm" style={{ color: "rgba(255,255,255,0.65)" }}>
+                    <div key={i} className="flex items-start gap-2 text-sm" style={{ color: "rgba(0,0,0,0.65)" }}>
                       <span className="mt-1.5 w-1.5 h-1.5 rounded-full shrink-0" style={{ background: "#3b82f6" }} />
                       {b}
                     </div>
@@ -130,8 +130,8 @@ export function YoutubeFeatureDemo() {
                   ["03:30", "The cognitive revolution in the 1950s–70s brought the mind back into focus."],
                 ].map(([t, line]) => (
                   <div key={t} className="flex gap-3 text-sm">
-                    <span className="shrink-0 font-mono text-xs pt-0.5" style={{ color: "#60a5fa", minWidth: 36 }}>{t}</span>
-                    <span style={{ color: "rgba(255,255,255,0.65)", lineHeight: 1.6 }}>{line}</span>
+                    <span className="shrink-0 font-mono text-xs pt-0.5" style={{ color: "#2563eb", minWidth: 36 }}>{t}</span>
+                    <span style={{ color: "rgba(0,0,0,0.65)", lineHeight: 1.6 }}>{line}</span>
                   </div>
                 ))}
               </div>
@@ -147,7 +147,7 @@ export function YoutubeFeatureDemo() {
                       <span className="text-[9px] font-bold uppercase tracking-widest mt-0.5 shrink-0 px-1.5 py-0.5 rounded" style={{ color: c.text, background: c.pill }}>
                         {kp.category}
                       </span>
-                      <span className="text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.8)" }}>{kp.point}</span>
+                      <span className="text-sm leading-relaxed" style={{ color: "rgba(0,0,0,0.8)" }}>{kp.point}</span>
                     </div>
                   );
                 })}
@@ -163,14 +163,14 @@ export function YoutubeFeatureDemo() {
                       onClick={() => setFlipped(p => { const s = new Set(p); s.has(i) ? s.delete(i) : s.add(i); return s; })}
                       className="cursor-pointer rounded-xl p-4 flex flex-col justify-center transition-all"
                       style={{
-                        background: flipped.has(i) ? "rgba(37,99,235,0.15)" : "rgba(255,255,255,0.04)",
-                        border: `1px solid ${flipped.has(i) ? "#3b82f6" : "rgba(255,255,255,0.1)"}`,
+                        background: flipped.has(i) ? "rgba(37,99,235,0.15)" : "rgba(0,0,0,0.04)",
+                        border: `1px solid ${flipped.has(i) ? "#3b82f6" : "rgba(0,0,0,0.1)"}`,
                         minHeight: 90,
                       }}>
-                      <div className="text-[10px] uppercase tracking-widest mb-2" style={{ color: flipped.has(i) ? "#60a5fa" : "rgba(255,255,255,0.35)" }}>
+                      <div className="text-[10px] uppercase tracking-widest mb-2" style={{ color: flipped.has(i) ? "#2563eb" : "rgba(0,0,0,0.35)" }}>
                         {flipped.has(i) ? "Answer" : "Question"}
                       </div>
-                      <p className="text-sm leading-relaxed" style={{ color: flipped.has(i) ? "white" : "rgba(255,255,255,0.7)" }}>
+                      <p className="text-sm leading-relaxed" style={{ color: flipped.has(i) ? "#0f1115" : "rgba(0,0,0,0.7)" }}>
                         {flipped.has(i) ? fc.a : fc.q}
                       </p>
                     </div>
@@ -182,7 +182,7 @@ export function YoutubeFeatureDemo() {
             {vtab === "quiz" && (
               <div className="space-y-4">
                 <div className="text-xs font-semibold uppercase tracking-widest" style={{ color: "#3b82f6" }}>Question 1 of 5</div>
-                <div className="text-sm font-medium leading-relaxed" style={{ color: "white" }}>
+                <div className="text-sm font-medium leading-relaxed" style={{ color: "#0f1115" }}>
                   Which school of thought argued that psychology should only study observable behavior?
                 </div>
                 <div className="space-y-2">
@@ -192,12 +192,12 @@ export function YoutubeFeatureDemo() {
                       <button key={i} onClick={() => setQuizSelected(i)}
                         className="w-full text-left flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-all"
                         style={{
-                          border: `1px solid ${picked ? "#2563eb" : "rgba(255,255,255,0.1)"}`,
-                          background: picked ? "rgba(37,99,235,0.15)" : "rgba(255,255,255,0.04)",
-                          color: picked ? "white" : "rgba(255,255,255,0.65)",
+                          border: `1px solid ${picked ? "#2563eb" : "rgba(0,0,0,0.1)"}`,
+                          background: picked ? "rgba(37,99,235,0.15)" : "rgba(0,0,0,0.04)",
+                          color: picked ? "#0f1115" : "rgba(0,0,0,0.65)",
                         }}>
                         <span className="w-3.5 h-3.5 rounded-full border shrink-0"
-                          style={{ borderColor: picked ? "#3b82f6" : "rgba(255,255,255,0.3)", background: picked ? "#2563eb" : "transparent" }} />
+                          style={{ borderColor: picked ? "#3b82f6" : "rgba(0,0,0,0.3)", background: picked ? "#2563eb" : "transparent" }} />
                         {opt}
                       </button>
                     );
@@ -222,8 +222,8 @@ export function YoutubeFeatureDemo() {
                     <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
                       <div className="max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed"
                         style={{
-                          background: m.role === "user" ? "#2563eb" : "rgba(255,255,255,0.07)",
-                          color: m.role === "user" ? "white" : "rgba(255,255,255,0.8)",
+                          background: m.role === "user" ? "#2563eb" : "rgba(0,0,0,0.07)",
+                          color: m.role === "user" ? "white" : "rgba(0,0,0,0.8)",
                           borderRadius: m.role === "user" ? "18px 18px 4px 18px" : "18px 18px 18px 4px",
                         }}>
                         {m.text}
@@ -233,7 +233,7 @@ export function YoutubeFeatureDemo() {
                 </div>
                 {/* Fake input */}
                 <div className="flex gap-2 mt-2">
-                  <div className="flex-1 px-4 py-2.5 rounded-xl text-sm" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.25)" }}>
+                  <div className="flex-1 px-4 py-2.5 rounded-xl text-sm" style={{ background: "rgba(0,0,0,0.06)", border: "1px solid rgba(0,0,0,0.1)", color: "rgba(0,0,0,0.25)" }}>
                     Ask a question about this lecture…
                   </div>
                   <div className="px-4 py-2.5 rounded-xl text-sm font-semibold" style={{ background: "#2563eb", color: "white" }}>Send</div>

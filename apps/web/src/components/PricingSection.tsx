@@ -48,18 +48,18 @@ export function PricingSection() {
   const [hoveredPlan, setHoveredPlan] = useState<string | null>(null);
 
   return (
-    <section id="pricing" className="py-28 px-6" style={{ background: "#111110" }}>
+    <section id="pricing" className="py-28 px-6" style={{ background: "#ffffff" }}>
       <div className="max-w-4xl mx-auto">
 
         {/* Header */}
         <div className="text-center mb-14">
-          <div className="text-[10px] uppercase tracking-[0.2em] mb-4 font-semibold" style={{ color: "rgba(255,255,255,0.3)" }}>
+          <div className="text-[10px] uppercase tracking-[0.2em] mb-4 font-semibold" style={{ color: "rgba(0,0,0,0.4)" }}>
             Pricing
           </div>
-          <h2 className="text-4xl md:text-5xl mb-4" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontStyle: "italic", fontWeight: 400, color: "white", lineHeight: 1.15 }}>
+          <h2 className="text-4xl md:text-5xl mb-4" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontStyle: "italic", fontWeight: 400, color: "#0f1115", lineHeight: 1.15 }}>
             Choose your plan to Get started.
           </h2>
-          <p style={{ color: "rgba(255,255,255,0.45)", fontSize: 15 }}>
+          <p style={{ color: "rgba(0,0,0,0.5)", fontSize: 15 }}>
             Start free. Upgrade when you're ready.
           </p>
         </div>
@@ -78,11 +78,12 @@ export function PricingSection() {
                 className="relative flex flex-col rounded-2xl p-7 transition-all duration-200"
                 style={{
                   background: isRecommended
-                    ? "rgba(255,255,255,0.1)"
-                    : "rgba(255,255,255,0.04)",
+                    ? "rgba(37,99,235,0.06)"
+                    : "#ffffff",
                   border: isRecommended
-                    ? "1px solid rgba(255,255,255,0.25)"
-                    : "1px solid rgba(255,255,255,0.08)",
+                    ? "1.5px solid #2563eb"
+                    : "1px solid rgba(0,0,0,0.1)",
+                  boxShadow: isRecommended ? "0 10px 34px rgba(37,99,235,0.14)" : "0 1px 3px rgba(0,0,0,0.06)",
                   transform: isHovered ? "translateY(-4px)" : "translateY(0)",
                 }}
               >
@@ -90,37 +91,37 @@ export function PricingSection() {
                 {plan.badge && (
                   <div
                     className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-xs font-semibold"
-                    style={{ background: isRecommended ? "white" : "rgba(255,255,255,0.15)", color: isRecommended ? "#111110" : "white", whiteSpace: "nowrap" }}
+                    style={{ background: isRecommended ? "#2563eb" : "rgba(0,0,0,0.08)", color: isRecommended ? "white" : "#0f1115", whiteSpace: "nowrap" }}
                   >
                     {isRecommended && <span className="mr-1">Recommended · </span>}{plan.badge}
                   </div>
                 )}
 
                 {/* Plan name */}
-                <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.45)", marginBottom: 16 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(0,0,0,0.5)", marginBottom: 16 }}>
                   {plan.label}
                 </div>
 
                 {/* Price */}
                 <div className="flex items-end gap-1 mb-1">
-                  <span style={{ fontSize: 42, fontWeight: 700, color: "white", lineHeight: 1 }}>
+                  <span style={{ fontSize: 42, fontWeight: 700, color: "#0f1115", lineHeight: 1 }}>
                     ${plan.price.toFixed(2)}
                   </span>
-                  <span style={{ fontSize: 14, color: "rgba(255,255,255,0.4)", marginBottom: 6 }}>/month</span>
+                  <span style={{ fontSize: 14, color: "rgba(0,0,0,0.4)", marginBottom: 6 }}>/month</span>
                 </div>
-                <p style={{ fontSize: 12, color: "rgba(255,255,255,0.35)", marginBottom: 28 }}>
+                <p style={{ fontSize: 12, color: "rgba(0,0,0,0.4)", marginBottom: 28 }}>
                   {plan.billing}
                 </p>
 
                 {/* Divider */}
-                <div style={{ height: 1, background: "rgba(255,255,255,0.08)", marginBottom: 24 }} />
+                <div style={{ height: 1, background: "rgba(0,0,0,0.08)", marginBottom: 24 }} />
 
                 {/* Features */}
                 <ul className="flex flex-col gap-3 flex-1 mb-8">
                   {FEATURES.map(f => (
                     <li key={f} className="flex items-center gap-3">
-                      <Check size={13} style={{ color: isRecommended ? "white" : "rgba(255,255,255,0.5)", flexShrink: 0 }} />
-                      <span style={{ fontSize: 13, color: "rgba(255,255,255,0.7)" }}>{f}</span>
+                      <Check size={13} style={{ color: isRecommended ? "#2563eb" : "rgba(0,0,0,0.45)", flexShrink: 0 }} />
+                      <span style={{ fontSize: 13, color: "rgba(0,0,0,0.7)" }}>{f}</span>
                     </li>
                   ))}
                 </ul>
@@ -130,9 +131,9 @@ export function PricingSection() {
                   href="/sign-up"
                   className="w-full py-3 rounded-xl font-medium text-sm transition-all text-center block"
                   style={{
-                    background: isRecommended ? "white" : "rgba(255,255,255,0.1)",
-                    color: isRecommended ? "#111110" : "white",
-                    border: isRecommended ? "none" : "1px solid rgba(255,255,255,0.12)",
+                    background: isRecommended ? "#2563eb" : "rgba(0,0,0,0.05)",
+                    color: isRecommended ? "white" : "#0f1115",
+                    border: isRecommended ? "none" : "1px solid rgba(0,0,0,0.12)",
                   }}
                 >
                   Get Started
@@ -143,7 +144,7 @@ export function PricingSection() {
         </div>
 
         {/* Footer note */}
-        <p className="text-center mt-10" style={{ fontSize: 12, color: "rgba(255,255,255,0.25)" }}>
+        <p className="text-center mt-10" style={{ fontSize: 12, color: "rgba(0,0,0,0.35)" }}>
           No credit card required to start · Cancel anytime
         </p>
       </div>

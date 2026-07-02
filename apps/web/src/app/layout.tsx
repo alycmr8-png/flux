@@ -13,7 +13,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   // Keep pinch-zoom available for accessibility (no maximumScale lock)
-  themeColor: "#111110",
+  themeColor: "#243744",
   viewportFit: "cover", // draw under the notch / use safe-area insets
 };
 

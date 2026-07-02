@@ -20,7 +20,7 @@ export function FaqSection() {
     <section id="faq" className="px-6 md:px-16 py-20 md:py-28 max-w-3xl mx-auto">
       <div className="text-center mb-12">
         <div className="text-sm uppercase tracking-[0.2em] font-semibold mb-3" style={{ color: "#3b82f6" }}>FAQ</div>
-        <h2 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: "clamp(36px, 6vw, 56px)", color: "white", letterSpacing: "-0.03em" }}>
+        <h2 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: "clamp(36px, 6vw, 56px)", color: "#0f1115", letterSpacing: "-0.03em" }}>
           Frequently asked questions
         </h2>
       </div>
@@ -28,16 +28,16 @@ export function FaqSection() {
       <div className="space-y-2">
         {FAQS.map((item, i) => (
           <div key={i} className="rounded-2xl overflow-hidden transition-all"
-            style={{ background: open === i ? "rgba(37,99,235,0.08)" : "rgba(255,255,255,0.04)", border: `1px solid ${open === i ? "rgba(37,99,235,0.25)" : "rgba(255,255,255,0.08)"}` }}>
+            style={{ background: open === i ? "rgba(37,99,235,0.08)" : "rgba(0,0,0,0.04)", border: `1px solid ${open === i ? "rgba(37,99,235,0.25)" : "rgba(0,0,0,0.08)"}` }}>
             <button
               onClick={() => setOpen(open === i ? null : i)}
               className="w-full flex items-center justify-between px-6 py-4 text-left gap-4"
             >
-              <span style={{ fontSize: 18, fontWeight: 600, color: "white" }}>{item.q}</span>
-              <ChevronDown size={16} style={{ color: "rgba(255,255,255,0.4)", flexShrink: 0, transform: open === i ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }} />
+              <span style={{ fontSize: 18, fontWeight: 600, color: "#0f1115" }}>{item.q}</span>
+              <ChevronDown size={16} style={{ color: "rgba(0,0,0,0.4)", flexShrink: 0, transform: open === i ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }} />
             </button>
             {open === i && (
-              <div className="px-6 pb-5" style={{ fontSize: 16, color: "rgba(255,255,255,0.6)", lineHeight: 1.75 }}>
+              <div className="px-6 pb-5" style={{ fontSize: 16, color: "rgba(0,0,0,0.6)", lineHeight: 1.75 }}>
                 {item.a}
               </div>
             )}

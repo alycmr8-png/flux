@@ -262,7 +262,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
   const fetcher = useApiSWRFetcher();
   const toast = useToast();
   const confirm = useConfirm();
-  const { userId } = useAuth();
+  const { userId, getToken } = useAuth();
   const [tab, setTab] = useState<"record" | "files" | "video" | "studybook" | "note" | "ask">(
     (initialTab as any) ?? "record"
   );
@@ -281,7 +281,13 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
     { revalidateOnFocus: false }
   );
   const lectures: any[] = lecturesData?.data ?? [];
-  const audioLectures: any[] = lectures.filter((l: any) => l.audioUrl);
+  // YouTube videos are stored as lectures whose audioUrl holds the video link.
+  // Split them out so Record = direct recordings only, Upload Video = videos.
+  const isYoutubeUrl = (u?: string | null) => !!u && /youtube\.com|youtu\.be/.test(u);
+  const ytIdFromUrl = (u?: string | null) =>
+    u?.match(/(?:youtube\.com\/(?:watch\?v=|shorts\/)|youtu\.be\/)([^&?\s/]+)/)?.[1] ?? null;
+  const audioLectures: any[] = lectures.filter((l: any) => l.audioUrl && !isYoutubeUrl(l.audioUrl));
+  const videoLectures: any[] = lectures.filter((l: any) => isYoutubeUrl(l.audioUrl));
 
   // Sheets — only fetch when Files or Review tab visited
   const needsSheets = visitedTabs.has("files") || visitedTabs.has("studybook");
@@ -634,8 +640,9 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
     let audioUrl: string | null = localAudioUrlsRef.current.get(lecture.id) ?? null;
     if (!audioUrl) {
       try {
+        const token = await getToken();
         const r = await fetch(`${BASE}/api/lectures/${lecture.id}/audio`, {
-          headers: { "x-clerk-user-id": userId ?? "" },
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
         if (r.ok) {
           const blob = await r.blob();
@@ -762,15 +769,18 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
     const titles = docQueue.map(item => item.title || item.file.name.replace(/\.[^.]+$/, ""));
     const results: BatchResult[] = [];
     try {
-      await apiFetch("/api/documents/quick-save", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ titles, courseId: course.id }),
-      });
+      // Send the actual files so their content is stored & indexed — not just titles.
+      const fd = new FormData();
+      docQueue.forEach(item => fd.append("documents", item.file));
+      fd.append("titles", JSON.stringify(titles));
+      fd.append("courseId", course.id);
+      await apiFetch("/api/documents/quick-save", { method: "POST", body: fd });
       titles.forEach(title => results.push({ title, status: "done" }));
-      await mutateLectures();
+      await Promise.all([mutateSheets(), mutateLectures()]);
+      toast(titles.length === 1 ? "File saved" : `${titles.length} files saved`, "success");
     } catch (e: any) {
       titles.forEach(title => results.push({ title, status: "error", error: e?.message ?? "Failed" }));
+      toast(e?.message ?? "Couldn't save your files — try again.", "error");
     }
     setBatchResults(results);
     setBatchProcessing(false);
@@ -1034,6 +1044,20 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
     setYtVideoId(null);
     setYtTranscript(""); setYtLectureId(null); setYtQuizName(""); setYtQuizSaved(false);
     setYtTitle(""); setYtSummary(""); setYtFlashcards(null); setYtMessages([]); setYtNote(""); setYtError("");
+  }
+
+  // Reopen a previously saved YouTube video — reuse its lecture, don't refetch.
+  function openSavedVideo(l: any) {
+    setYtDraft("");
+    setYtUrl(l.audioUrl ?? "");
+    setYtVideoId(ytIdFromUrl(l.audioUrl));
+    setYtLectureId(l.id);
+    setYtTitle(l.title ?? "");
+    setYtTranscript(l.transcript ?? "");
+    setYtActiveTab("transcript");
+    setYtQuizName(""); setYtQuizSaved(false); setYtSummary(""); setYtFlashcards(null);
+    setYtMessages([]); setYtNote(""); setYtError(""); setYtInlineQuiz(null);
+    setYtQuizRevealed(new Set()); setYtKeyPoints(null);
   }
 
   async function ensureLecture(): Promise<string | null> {
@@ -1422,7 +1446,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
 
   return (
     <div className="w-full min-h-full flex justify-center">
-    <div className="w-full max-w-5xl px-3 py-5 md:px-6 md:py-8">
+    <div className="w-full max-w-7xl px-3 py-5 md:px-8 md:py-8">
       {/* Header */}
       <div className="mb-8">
         <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "#3b82f6", marginBottom: 14 }}>
@@ -1436,8 +1460,8 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
               onClick={() => onSelect(c)}
               className="whitespace-nowrap transition-all"
               style={c.id === course.id
-                ? { padding: "10px 22px", borderRadius: 999, fontSize: 15, fontWeight: 700, background: "#2563eb", color: "white", border: "none" }
-                : { padding: "10px 22px", borderRadius: 999, fontSize: 15, fontWeight: 500, background: "rgba(255,255,255,0.07)", color: "rgba(255,255,255,0.55)", border: "1px solid rgba(255,255,255,0.12)" }
+                ? { padding: "8px 16px", borderRadius: 999, fontSize: 13.5, fontWeight: 600, background: "#2563EB", color: "white", border: "1px solid #2563EB", boxShadow: "0 4px 16px rgba(37,99,235,0.35)" }
+                : { padding: "8px 16px", borderRadius: 999, fontSize: 13.5, fontWeight: 500, background: "transparent", color: "rgba(255,255,255,0.6)", border: "1px solid rgba(255,255,255,0.12)" }
               }
             >
               {c.name}
@@ -1446,7 +1470,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
           <button
             onClick={onBack}
             className="whitespace-nowrap transition-all"
-            style={{ padding: "10px 18px", borderRadius: 999, fontSize: 14, fontWeight: 500, background: "transparent", color: "rgba(255,255,255,0.3)", border: "1px solid rgba(255,255,255,0.1)" }}
+            style={{ padding: "8px 15px", borderRadius: 999, fontSize: 13.5, fontWeight: 500, background: "transparent", color: "rgba(255,255,255,0.45)", border: "1px solid rgba(255,255,255,0.1)" }}
           >
             ← All classes
           </button>
@@ -1461,14 +1485,14 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
             onClick={() => switchTab(key)}
             className="flex items-center gap-2 whitespace-nowrap transition-all"
             style={{
-              padding: "10px 20px",
+              padding: "8px 15px",
               borderRadius: 999,
-              fontSize: 15,
-              fontWeight: tab === key ? 700 : 500,
-              background: tab === key ? "#2563eb" : "rgba(255,255,255,0.07)",
-              color: tab === key ? "white" : "rgba(255,255,255,0.5)",
-              border: tab === key ? "none" : "1px solid rgba(255,255,255,0.1)",
-              letterSpacing: "-0.01em",
+              fontSize: 13.5,
+              fontWeight: tab === key ? 600 : 500,
+              background: tab === key ? "#2563EB" : "transparent",
+              color: tab === key ? "white" : "rgba(255,255,255,0.6)",
+              border: tab === key ? "1px solid #2563EB" : "1px solid rgba(255,255,255,0.12)",
+              boxShadow: tab === key ? "0 4px 16px rgba(37,99,235,0.35)" : "none",
             }}
           >
             <Icon size={14} />
@@ -1479,11 +1503,11 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
 
       {/* ── ASK YOUR COURSE ── */}
       {tab === "ask" && (
-        <div className="rounded-2xl flex flex-col overflow-hidden"
-          style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", height: "calc(100dvh - 300px)", minHeight: 440 }}>
+        <div className="flex flex-col overflow-hidden"
+          style={{ background: "linear-gradient(180deg,rgba(255,255,255,0.045),rgba(255,255,255,0.025))", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 24, height: "calc(100dvh - 300px)", minHeight: 440 }}>
 
           {/* Header */}
-          <div className="px-5 py-4 flex items-center gap-3 shrink-0" style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+          <div className="px-5 py-4 flex items-center gap-3 shrink-0" style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
             <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "rgba(37,99,235,0.18)" }}>
               <Sparkles size={16} style={{ color: "#60a5fa" }} />
             </div>
@@ -2065,7 +2089,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
             <div className="rounded-2xl border border-[rgba(255,255,255,0.08)] overflow-hidden" style={{ background: "rgba(255,255,255,0.03)" }}>
               <div className="px-6 py-5 border-b border-[rgba(255,255,255,0.07)]">
                 <div className="text-sm font-medium text-white">
-                  {batchResults.filter(r => r.status === "done").length} of {batchResults.length} generated
+                  {batchResults.filter(r => r.status === "done").length} of {batchResults.length} saved
                 </div>
               </div>
               <div className="divide-y divide-[rgba(255,255,255,0.06)]">
@@ -2499,6 +2523,66 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
           </div>
 
           {ytError && <p className="text-xs text-red-400 px-1">{ytError}</p>}
+
+          {/* ── Saved videos — small video cards, only when nothing is open ── */}
+          {!ytVideoId && !ytLectureId && videoLectures.length > 0 && (
+            <div>
+              <p className="text-xs text-[#555] uppercase tracking-widest mb-3">Your videos</p>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {videoLectures.map((l: any) => {
+                  const vid = ytIdFromUrl(l.audioUrl);
+                  return (
+                    <div key={l.id} className="relative group/vid">
+                      <button
+                        onClick={() => openSavedVideo(l)}
+                        className="block w-full text-left bg-white border border-[rgba(0,0,0,0.08)] rounded-xl overflow-hidden hover:border-[rgba(0,0,0,0.2)] transition-all"
+                      >
+                        <div className="relative w-full bg-black" style={{ aspectRatio: "16/9" }}>
+                          {vid ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={`https://img.youtube.com/vi/${vid}/mqdefault.jpg`} alt={l.title} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center"><Youtube size={20} style={{ color: "rgba(255,255,255,0.4)" }} /></div>
+                          )}
+                          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/vid:opacity-100 transition-opacity" style={{ background: "rgba(0,0,0,0.35)" }}>
+                            <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: "#2563eb" }}>
+                              <Play size={14} style={{ color: "white", marginLeft: 1 }} />
+                            </div>
+                          </div>
+                          {l.status !== "ready" && (
+                            <span className="absolute top-1.5 left-1.5 text-[9px] font-semibold px-1.5 py-0.5 rounded-full flex items-center gap-1" style={{ background: "rgba(0,0,0,0.7)", color: "white" }}>
+                              <Loader2 size={8} className="animate-spin" /> Processing
+                            </span>
+                          )}
+                        </div>
+                        <div className="px-3 py-2">
+                          <div className="text-xs font-medium text-[#111110] truncate">{l.title}</div>
+                          <div className="text-[10px] text-[#888] mt-0.5">{format(new Date(l.recordedAt), "MMM d, yyyy")}</div>
+                        </div>
+                      </button>
+                      <button
+                        onClick={async () => {
+                          const ok = await confirm({
+                            title: `Remove "${l.title}"?`,
+                            message: "This video will be removed from this class and from your course memory.",
+                            confirmLabel: "Remove video",
+                            danger: true,
+                          });
+                          if (ok) { await archiveLecture(l.id); toast("Video removed", "success"); }
+                        }}
+                        className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full flex items-center justify-center opacity-0 group-hover/vid:opacity-100 transition-opacity"
+                        style={{ background: "rgba(0,0,0,0.7)" }}
+                        title="Remove video"
+                        aria-label="Remove video"
+                      >
+                        <Trash2 size={11} style={{ color: "white" }} />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {(ytVideoId || ytLectureId) && (
             <>
