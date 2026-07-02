@@ -88,27 +88,15 @@ async function parseOfficeFile(buffer: Buffer, originalName: string): Promise<st
     console.error("[gpt4o-file] failed:", err?.message);
   }
 
-  throw new Error("Could not read this file. Try saving it as .pptx or PDF and re-uploading.");
+  throw new Error("Couldn't read this file. Old .ppt/.doc/.xls files aren't supported — open it and use File → Save As to make a .pptx/.docx/.xlsx or PDF, then re-upload.");
 }
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 const IMAGE_MIMES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif", "image/heic", "image/heif"]);
 
-const router = Router();
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } });
-
-// Temp store for extracted text (for regeneration without re-uploading)
-const docStore = new Map<string, { text: string; title: string; userId: string }>();
-
-// POST /api/documents — parse + generate, no DB save
-router.post("/", upload.single("document"), async (req, res) => {
-  const user = (req as any).user;
-  const file = req.file;
-  const title = (req.body.title as string)?.trim() || file?.originalname?.replace(/\.[^.]+$/, "") || "Uploaded Document";
-
-  if (!file) return res.status(400).json({ error: "No file uploaded" });
-
+// Extract plain text from any supported upload. Throws a user-friendly Error on failure.
+async function extractTextFromFile(file: Express.Multer.File, title: string): Promise<string> {
   let text = "";
 
   if (file.mimetype === "application/pdf") {
@@ -140,8 +128,8 @@ router.post("/", upload.single("document"), async (req, res) => {
         } finally {
           openai.files.del(uploaded.id).catch(() => {});
         }
-      } catch (err: any) {
-        return res.status(400).json({ error: "Could not read this PDF. If it is scanned, try uploading a photo of it instead." });
+      } catch {
+        throw new Error("Could not read this PDF. If it is scanned, try uploading a photo of it instead.");
       }
     }
   } else if (
@@ -152,7 +140,7 @@ router.post("/", upload.single("document"), async (req, res) => {
       const result = await mammoth.extractRawText({ buffer: file.buffer });
       text = result.value ?? "";
     } catch {
-      return res.status(400).json({ error: "Could not read this Word document." });
+      throw new Error("Could not read this Word document.");
     }
   } else if (
     /\.(pptx|ppt|xlsx|xls|odt|odp|ods|odg|doc)$/i.test(file.originalname ?? "") ||
@@ -170,7 +158,7 @@ router.post("/", upload.single("document"), async (req, res) => {
     try {
       text = await parseOfficeFile(file.buffer, file.originalname ?? "file.pptx");
     } catch {
-      return res.status(400).json({ error: "Could not read this file. Try saving it as PDF and re-uploading." });
+      throw new Error("Couldn't read this file. Old .ppt/.doc/.xls files aren't supported — open it and use File → Save As to make a .pptx/.docx/.xlsx or PDF, then re-upload.");
     }
   } else if (IMAGE_MIMES.has(file.mimetype) || /\.(jpe?g|png|webp|gif|heic|heif)$/i.test(file.originalname ?? "")) {
     try {
@@ -192,10 +180,35 @@ router.post("/", upload.single("document"), async (req, res) => {
       });
       text = vision.choices[0]?.message?.content ?? "";
     } catch (err: any) {
-      return res.status(400).json({ error: `Could not analyse image: ${err.message}` });
+      throw new Error(`Could not analyse image: ${err.message}`);
     }
   } else {
     text = file.buffer.toString("utf-8");
+  }
+
+  return text;
+}
+
+const router = Router();
+const MAX_UPLOAD_MB = Number(process.env.MAX_UPLOAD_MB) || 100;
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: MAX_UPLOAD_MB * 1024 * 1024 } });
+
+// Temp store for extracted text (for regeneration without re-uploading)
+const docStore = new Map<string, { text: string; title: string; userId: string }>();
+
+// POST /api/documents — parse + generate, no DB save
+router.post("/", upload.single("document"), async (req, res) => {
+  const user = (req as any).user;
+  const file = req.file;
+  const title = (req.body.title as string)?.trim() || file?.originalname?.replace(/\.[^.]+$/, "") || "Uploaded Document";
+
+  if (!file) return res.status(400).json({ error: "No file uploaded" });
+
+  let text = "";
+  try {
+    text = await extractTextFromFile(file, title);
+  } catch (err: any) {
+    return res.status(400).json({ error: err?.message ?? "Could not read this file." });
   }
 
   if (!text.trim()) {
@@ -249,13 +262,14 @@ router.post("/save", async (req, res) => {
   });
 
   const existing = await prisma.cheatSheet.findFirst({
-    where: { lectureId: lecture.id, userId: user.id, title: { startsWith: "Study Book:" } },
+    where: { lectureId: lecture.id, userId: user.id },
   });
 
   const cheatSheet = existing
     ? await prisma.cheatSheet.update({ where: { id: existing.id }, data: { content } })
     : await prisma.cheatSheet.create({
-        data: { userId: user.id, lectureId: lecture.id, title: `Study Book: ${title}`, content },
+        // Uploaded files live in the "Upload Files" tab — plain title (no "Study Book:" prefix)
+        data: { userId: user.id, lectureId: lecture.id, title, content: { _type: "file", ...content } },
       });
 
   // Index into course memory (non-fatal) — prefer the raw extracted text over the generated summary
@@ -273,19 +287,65 @@ router.post("/save", async (req, res) => {
   res.json({ data: cheatSheet, lectureId: lecture.id });
 });
 
-// POST /api/documents/quick-save — save file titles as lecture records without AI processing
-router.post("/quick-save", async (req, res) => {
+// POST /api/documents/quick-save — store the uploaded files (text extracted &
+// indexed into course memory) WITHOUT generating AI study materials. Each file
+// becomes a visible "Saved File" in the Upload Files tab.
+router.post("/quick-save", upload.array("documents", 50), async (req, res) => {
   const user = (req as any).user;
-  const { titles, courseId } = req.body as { titles: string[]; courseId: string };
+  const courseId = req.body.courseId as string;
+  const files = (req.files as Express.Multer.File[]) ?? [];
 
-  if (!titles?.length || !courseId) return res.status(400).json({ error: "titles and courseId required" });
+  let titles: string[] = [];
+  try { titles = JSON.parse(req.body.titles ?? "[]"); } catch { /* ignore */ }
+
+  if (!courseId) return res.status(400).json({ error: "courseId required" });
+
+  // Backward-compatible path: titles only, no files attached.
+  if (!files.length) {
+    if (!titles.length) return res.status(400).json({ error: "No files or titles provided" });
+    const saved = [];
+    for (const title of titles) {
+      const lecture = await prisma.lecture.create({ data: { userId: user.id, courseId, title, status: "ready" } });
+      const cs = await prisma.cheatSheet.create({
+        data: { userId: user.id, lectureId: lecture.id, title, content: { _type: "file", summary: "", sections: [], keyTerms: [], rawText: "" } },
+      });
+      saved.push({ id: cs.id, lectureId: lecture.id, title });
+    }
+    return res.json({ data: saved });
+  }
 
   const saved = [];
-  for (const title of titles) {
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    const title = (titles[i] || file.originalname?.replace(/\.[^.]+$/, "") || "Uploaded File").trim();
+
+    // Extract text — but never block the save: store the file even if parsing fails.
+    let text = "";
+    try { text = await extractTextFromFile(file, title); } catch (e: any) { console.error("[quick-save] extract failed:", e?.message); }
+
     const lecture = await prisma.lecture.create({
-      data: { userId: user.id, courseId, title, status: "ready" },
+      data: { userId: user.id, courseId, title, transcript: text || null, status: "ready" },
     });
-    saved.push(lecture);
+
+    const flat = text.replace(/\s+/g, " ").trim();
+    const summary = flat ? flat.slice(0, 400) + (flat.length > 400 ? "…" : "") : "";
+    const cheatSheet = await prisma.cheatSheet.create({
+      data: {
+        userId: user.id,
+        lectureId: lecture.id,
+        title,
+        content: { _type: "file", summary, sections: [], keyTerms: [], rawText: text },
+      },
+    });
+
+    // Feed course memory so "Ask your course" can use the file (non-fatal).
+    if (text.trim()) {
+      try {
+        await indexSource({ userId: user.id, courseId, sourceType: "file", sourceId: lecture.id, sourceTitle: title, text });
+      } catch (e: any) { console.error("[quick-save] indexing failed:", e?.message); }
+    }
+
+    saved.push({ id: cheatSheet.id, lectureId: lecture.id, title });
   }
 
   res.json({ data: saved });

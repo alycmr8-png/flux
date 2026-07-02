@@ -75,6 +75,40 @@ router.post("/index", async (req, res) => {
     }
   }
 
+  // Uploaded files — index their saved content directly (covers files whose
+  // lecture has no transcript, e.g. only generated study content was stored).
+  const fileSheets = await prisma.cheatSheet.findMany({
+    where: { userId: user.id, lecture: { courseId, userId: user.id, audioUrl: null } },
+    include: { lecture: { select: { id: true, title: true, transcript: true } } },
+  });
+  for (const cs of fileSheets) {
+    if (cs.lecture?.transcript?.trim()) continue; // already indexed via the lecture loop
+    const c = cs.content as any;
+    const text =
+      typeof c?.rawText === "string" && c.rawText.trim()
+        ? c.rawText
+        : [
+            c?.summary ?? "",
+            ...(c?.sections ?? []).flatMap((s: any) => [s.heading, ...(s.bullets ?? [])]),
+            ...(c?.keyTerms ?? []).map((kt: any) => `${kt.term}: ${kt.definition}`),
+          ]
+            .filter(Boolean)
+            .join("\n");
+    if (!text.trim()) continue;
+    try {
+      indexed += await indexSource({
+        userId: user.id,
+        courseId,
+        sourceType: "file",
+        sourceId: cs.lecture?.id ?? cs.id,
+        sourceTitle: cs.lecture?.title ?? cs.title,
+        text,
+      });
+    } catch (e: any) {
+      console.error(`[ask/index] file sheet ${cs.id} failed:`, e?.message);
+    }
+  }
+
   const status = await courseMemoryStatus(user.id, courseId);
   res.json({ data: { indexed, ...status } });
 });
@@ -107,16 +141,30 @@ router.post("/", async (req, res) => {
     });
   }
 
-  const sources = chunks.map((c, i) => {
+  // Consolidate retrieved chunks that point to the same source (and timestamp)
+  // so the same lecture/video/file isn't shown as many identical references.
+  const typeLabels: Record<string, string> = { lecture: "Lecture", video: "Video", file: "File", note: "Your note" };
+  const groups = new Map<string, {
+    sourceType: string; sourceId: string; sourceTitle: string; startSec: number | null; contents: string[];
+  }>();
+  for (const c of chunks) {
+    const startSec = c.meta?.startSec ?? null;
+    const key = `${c.sourceId}::${startSec ?? ""}`;
+    const g = groups.get(key);
+    if (g) { g.contents.push(c.content); }
+    else groups.set(key, { sourceType: c.sourceType, sourceId: c.sourceId, sourceTitle: c.sourceTitle, startSec, contents: [c.content] });
+  }
+
+  const sources = [...groups.values()].map((g, i) => {
     const n = i + 1;
-    const time = c.meta?.startSec != null ? ` · ${fmtTime(c.meta.startSec)}` : "";
-    const typeLabel = { lecture: "Lecture", video: "Video", file: "File", note: "Your note" }[c.sourceType] ?? "Source";
-    return { n, chunk: c, label: `${typeLabel}: ${c.sourceTitle}${time}` };
+    const time = g.startSec != null ? ` · ${fmtTime(g.startSec)}` : "";
+    const label = `${typeLabels[g.sourceType] ?? "Source"}: ${g.sourceTitle}${time}`;
+    return { n, ...g, label, content: g.contents.join("\n\n") };
   });
 
   const reply = await answerCourseQuestion(
     course.name,
-    sources.map(s => ({ n: s.n, label: s.label, content: s.chunk.content })),
+    sources.map(s => ({ n: s.n, label: s.label, content: s.content })),
     messages,
     user.language ?? "en"
   );
@@ -128,11 +176,11 @@ router.post("/", async (req, res) => {
     .map(s => ({
       n: s.n,
       label: s.label,
-      sourceType: s.chunk.sourceType,
-      sourceId: s.chunk.sourceId,
-      sourceTitle: s.chunk.sourceTitle,
-      startSec: s.chunk.meta?.startSec ?? null,
-      snippet: s.chunk.content.slice(0, 200),
+      sourceType: s.sourceType,
+      sourceId: s.sourceId,
+      sourceTitle: s.sourceTitle,
+      startSec: s.startSec,
+      snippet: s.contents[0].slice(0, 200),
     }));
 
   res.json({ data: { reply, citations } });

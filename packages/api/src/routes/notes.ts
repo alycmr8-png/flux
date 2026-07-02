@@ -23,7 +23,7 @@ function scheduleNoteIndexing(note: { id: string; userId: string; courseId: stri
         text: fresh.text,
       });
     } catch (e: any) { console.error("[notes] indexing failed:", e?.message); }
-  }, 8000));
+  }, 3000));
 }
 
 router.get("/", async (req, res) => {

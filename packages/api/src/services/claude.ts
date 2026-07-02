@@ -192,12 +192,45 @@ Match the depth the lecturer used — if they elaborated on something, you elabo
   return JSON.parse(json);
 }
 
+// Condense a very long document into dense study notes, chunk by chunk, so the
+// WHOLE file is covered (not just the first pages) before the final generation.
+async function condenseLongDocument(text: string, title: string, langName: string): Promise<string> {
+  const CHUNK = 12000;
+  const MAX_CHUNKS = 60; // ~720k chars (~250+ pages) — generous safety cap on cost
+  const chunks: string[] = [];
+  for (let i = 0; i < text.length && chunks.length < MAX_CHUNKS; i += CHUNK) {
+    chunks.push(text.slice(i, i + CHUNK));
+  }
+
+  const tasks = chunks.map((chunk, idx) => async () => {
+    const m = await createWithRetry({
+      model: "gpt-4o-mini",
+      max_tokens: 1200,
+      system: `Condense this part of a document into dense study notes in ${langName}. Keep every key fact, definition, formula, and example. Use short bullet points. No preamble, no commentary.`,
+      messages: [{ role: "user", content: `"${title}" — part ${idx + 1}/${chunks.length}\n\n${chunk}` }],
+    });
+    return extractText(m).trim();
+  });
+
+  const condensed = await batchPromises(tasks, 5);
+  return condensed.filter(Boolean).join("\n\n");
+}
+
 export async function generateStructuredLearningFile(
   text: string,
   title: string,
   language = "en"
 ) {
   const langName = LANG_NAMES[language] ?? "English";
+  const clean = (text ?? "").trim();
+
+  // Long files: condense the whole document first (map-reduce) so we don't drop
+  // everything past the first few pages. Short files go straight through.
+  const SINGLE_PASS_LIMIT = 45000;
+  const source = clean.length > SINGLE_PASS_LIMIT
+    ? await condenseLongDocument(clean, title, langName)
+    : clean;
+
   const message = await createWithRetry({
     model: "gpt-4o",
     max_tokens: 4096,
@@ -212,11 +245,11 @@ Return ONLY valid JSON — no markdown, no code blocks, no commentary.
   "examTips": string[],
   "practiceQuestions": [{ "question": string, "answer": string }]
 }
-Be thorough. The "summary" field must be exactly 7 sentences. Include 4-6 sections, 5-10 key terms, all formulas, 5 exam tips, 5 practice questions.`,
+Be thorough and cover the ENTIRE document. The "summary" field must be exactly 7 sentences. Include 4-8 sections, 5-12 key terms, all formulas, 5 exam tips, 5 practice questions.`,
     messages: [
       {
         role: "user",
-        content: `Document: "${title}"\n\nContent:\n${text.slice(0, 15000)}`,
+        content: `Document: "${title}"\n\nContent:\n${source.slice(0, 120000)}`,
       },
     ],
   });
@@ -501,11 +534,17 @@ export async function answerCourseQuestion(
   const msg = await createWithRetry({
     model: "gpt-4o",
     max_tokens: 1024,
-    system: `You are the course memory for "${courseName}" — you attended every lecture and read every file the student captured. Answer in ${langName}.
+    system: `You are the course memory for "${courseName}" — you attended every lecture and read every file the student captured. Respond in ${langName}.
+
+You do two kinds of things:
+1) ANSWER questions using the material.
+2) HELP THE STUDENT STUDY when asked — e.g. "test me", "quiz me", "make flashcards", "give me practice questions", "summarize", "explain X simply". For these, actively GENERATE the requested study material (questions, flashcards, a quiz, a summary, etc.) built from the source content below. Do not refuse just because the sources aren't already in question form — your job is to turn the material into study tools.
 
 Rules:
-- Answer ONLY from the numbered sources below. If the answer isn't in them, say you don't have that in this course's materials yet.
-- After every claim, cite the source(s) it came from using bracket markers like [1] or [2][4]. Citations are mandatory.
+- Ground everything in the numbered sources below. Don't invent facts that aren't supported by them.
+- When you write a question, base it on a specific source and cite that source with bracket markers like [1] or [2][4]. When you answer or explain, cite too. Citations are mandatory.
+- When asked to "test me" or "quiz me": write 4–6 questions drawn from the material (mix of recall and understanding). Ask them first; offer to reveal answers, or include an "Answer key" section after. Number the questions.
+- Only say you don't have enough material yet if the sources are genuinely empty or unrelated to the request.
 - Be clear and direct, like a sharp study partner. No filler.
 
 SOURCES:

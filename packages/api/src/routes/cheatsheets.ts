@@ -12,7 +12,7 @@ cheatSheetRouter.get("/", async (req, res) => {
       ...(lectureId ? { lectureId: String(lectureId) } : {}),
       ...(courseId ? { lecture: { courseId: String(courseId) } } : {}),
     },
-    include: { lecture: { select: { title: true, course: true } } },
+    include: { lecture: { select: { title: true, course: true, audioUrl: true } } },
     orderBy: { createdAt: "desc" },
   });
   res.json({ data: cheatSheets });
@@ -22,7 +22,7 @@ cheatSheetRouter.get("/:id", async (req, res) => {
   const user = (req as any).user;
   const cheatSheet = await prisma.cheatSheet.findFirst({
     where: { id: req.params.id, userId: user.id },
-    include: { lecture: { select: { title: true, course: true } } },
+    include: { lecture: { select: { title: true, course: true, audioUrl: true } } },
   });
   if (!cheatSheet) return res.status(404).json({ error: "Not found" });
   res.json({ data: cheatSheet });
