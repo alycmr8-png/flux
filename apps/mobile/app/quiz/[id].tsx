@@ -8,9 +8,9 @@ import { useAuth } from "@clerk/clerk-expo";
 export default function QuizScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { userId } = useAuth();
+  const { getToken } = useAuth();
   const api = useApi();
-  const fetcher = makeApiFetcher(userId);
+  const fetcher = makeApiFetcher(getToken);
   const { data } = useSWR(`/api/quizzes/${id}`, fetcher);
   const [answers, setAnswers] = useState<Record<number, number>>({});
   const [submitted, setSubmitted] = useState(false);

@@ -5,15 +5,16 @@ import { useCallback } from "react";
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
 export function useApiFetch() {
-  const { userId } = useAuth();
+  const { getToken } = useAuth();
 
   return useCallback(
     async (path: string, init?: RequestInit) => {
+      const token = await getToken();
       const res = await fetch(`${BASE}${path}`, {
         ...init,
         headers: {
           ...(init?.headers ?? {}),
-          "x-clerk-user-id": userId ?? "",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
       });
       if (!res.ok) {
@@ -22,18 +23,21 @@ export function useApiFetch() {
       }
       return res.json();
     },
-    [userId]
+    [getToken]
   );
 }
 
 export function useApiSWRFetcher() {
-  const { userId } = useAuth();
+  const { getToken } = useAuth();
   return useCallback(
     async (url: string) => {
-      const r = await fetch(url, { headers: { "x-clerk-user-id": userId ?? "" } });
+      const token = await getToken();
+      const r = await fetch(url, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
       if (!r.ok) throw new Error(`API ${r.status}`);
       return r.json();
     },
-    [userId]
+    [getToken]
   );
 }

@@ -8,18 +8,19 @@ import { useApiSWRFetcher } from "@/lib/apiFetch";
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
 function ScheduleButton({ lectureId }: { lectureId: string }) {
-  const { userId } = useAuth();
+  const { getToken } = useAuth();
   const [state, setState] = useState<"idle" | "loading" | "done" | "error">("idle");
   const [examDate, setExamDate] = useState("");
   const [open, setOpen] = useState(false);
 
   async function schedule() {
-    if (!userId) return;
+    const token = await getToken();
+    if (!token) return;
     setState("loading");
     try {
       const res = await fetch(`${BASE}/api/calendar/schedule/${lectureId}`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", "x-clerk-user-id": userId },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ examDate: examDate || undefined }),
       });
       if (!res.ok) throw new Error(await res.text());

@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
+    "@clerk/backend": "^3.8.4",
     "@distube/ytdl-core": "^4.16.12",
     "@prisma/client": "^6.0.0",
     "@sano/shared": "*",

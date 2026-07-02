@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from "express";
+import { verifyToken } from "@clerk/backend";
 import { prisma } from "../lib/prisma";
 
 async function dbWithRetry<T>(fn: () => Promise<T>, attempts = 4): Promise<T> {
@@ -19,7 +20,18 @@ async function dbWithRetry<T>(fn: () => Promise<T>, attempts = 4): Promise<T> {
 }
 
 export async function requireAuth(req: Request, res: Response, next: NextFunction) {
-  const clerkUserId = req.headers["x-clerk-user-id"] as string;
+  // Verify a real Clerk session token — never trust a client-supplied user id header.
+  const authHeader = (req.headers["authorization"] || req.headers["Authorization"]) as string | undefined;
+  const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7).trim() : null;
+  if (!token) return res.status(401).json({ error: "Unauthorized" });
+
+  let clerkUserId: string;
+  try {
+    const payload = await verifyToken(token, { secretKey: process.env.CLERK_SECRET_KEY! });
+    clerkUserId = payload.sub as string;
+  } catch {
+    return res.status(401).json({ error: "Invalid or expired session" });
+  }
   if (!clerkUserId) return res.status(401).json({ error: "Unauthorized" });
 
   try {

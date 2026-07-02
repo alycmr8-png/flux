@@ -15,8 +15,8 @@ import useSWR from "swr";
 // ─── Class Gate ───────────────────────────────────────────────────────────────
 function ClassGate({ insets, onSelect }: { insets: any; onSelect: (c: any) => void }) {
   const api = useApi();
-  const { userId } = useAuth();
-  const fetcher = makeApiFetcher(userId);
+  const { getToken } = useAuth();
+  const fetcher = makeApiFetcher(getToken);
   const { data, mutate } = useSWR("/api/courses", fetcher);
   const courses: any[] = data?.data ?? [];
   const [name, setName] = useState("");
@@ -84,8 +84,8 @@ function ClassGate({ insets, onSelect }: { insets: any; onSelect: (c: any) => vo
 function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; onBack: () => void }) {
   const api = useApi();
   const router = useRouter();
-  const { userId } = useAuth();
-  const fetcher = makeApiFetcher(userId);
+  const { getToken } = useAuth();
+  const fetcher = makeApiFetcher(getToken);
   const [tab, setTab] = useState<"record" | "files" | "quizzes" | "video" | "studybook" | "note" | "plan">("record");
 
   const { data: lecturesData, mutate: mutateLectures } = useSWR(`/api/lectures?courseId=${course.id}`, fetcher);

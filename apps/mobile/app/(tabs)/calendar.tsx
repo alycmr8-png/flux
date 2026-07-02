@@ -10,9 +10,9 @@ import { Ionicons } from "@expo/vector-icons";
 export default function CalendarScreen() {
   const insets = useSafeAreaInsets();
   const [month, setMonth] = useState(new Date());
-  const { userId } = useAuth();
+  const { getToken } = useAuth();
   const api = useApi();
-  const fetcher = makeApiFetcher(userId);
+  const fetcher = makeApiFetcher(getToken);
   const { data } = useSWR(
     `/api/calendar/sessions?from=${startOfMonth(month).toISOString()}&to=${endOfMonth(month).toISOString()}`,
     fetcher

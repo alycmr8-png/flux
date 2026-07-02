@@ -7,8 +7,8 @@ import { Ionicons } from "@expo/vector-icons";
 
 export default function SummariesScreen() {
   const insets = useSafeAreaInsets();
-  const { userId } = useAuth();
-  const fetcher = makeApiFetcher(userId);
+  const { getToken } = useAuth();
+  const fetcher = makeApiFetcher(getToken);
   const { data, isLoading } = useSWR("/api/cheatsheets", fetcher);
   const cheatSheets = data?.data ?? [];
 

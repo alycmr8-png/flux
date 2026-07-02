@@ -4,21 +4,24 @@ import { useMemo } from "react";
 
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:3001";
 
-function makeInstance(userId: string | null | undefined) {
+type GetToken = () => Promise<string | null>;
+
+function makeInstance(getToken: GetToken) {
   const instance = axios.create({ baseURL: BASE_URL, timeout: 120000 });
-  instance.interceptors.request.use((config) => {
-    config.headers["x-clerk-user-id"] = userId ?? "";
+  instance.interceptors.request.use(async (config) => {
+    const token = await getToken();
+    if (token) config.headers["Authorization"] = `Bearer ${token}`;
     return config;
   });
   return instance;
 }
 
 export function useApi() {
-  const { userId } = useAuth();
-  return useMemo(() => makeInstance(userId), [userId]);
+  const { getToken } = useAuth();
+  return useMemo(() => makeInstance(getToken), [getToken]);
 }
 
-export function makeApiFetcher(userId: string | null | undefined) {
-  const instance = makeInstance(userId);
+export function makeApiFetcher(getToken: GetToken) {
+  const instance = makeInstance(getToken);
   return (url: string) => instance.get(url).then((r) => r.data);
 }

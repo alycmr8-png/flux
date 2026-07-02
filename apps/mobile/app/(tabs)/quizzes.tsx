@@ -9,8 +9,8 @@ import { Ionicons } from "@expo/vector-icons";
 export default function QuizzesScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { userId } = useAuth();
-  const fetcher = makeApiFetcher(userId);
+  const { getToken } = useAuth();
+  const fetcher = makeApiFetcher(getToken);
   const { data, isLoading } = useSWR("/api/quizzes", fetcher);
   const quizzes = data?.data ?? [];
 

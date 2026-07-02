@@ -86,9 +86,9 @@ function ClassSection({ cls, onRename }: { cls: any; onRename: (id: string, titl
 
 export default function ProgressScreen() {
   const insets = useSafeAreaInsets();
-  const { userId, signOut } = useAuth();
+  const { getToken, signOut } = useAuth();
   const api = useApi();
-  const fetcher = makeApiFetcher(userId);
+  const fetcher = makeApiFetcher(getToken);
   const { data, isLoading, mutate } = useSWR("/api/progress", fetcher);
   const p = data?.data;
 

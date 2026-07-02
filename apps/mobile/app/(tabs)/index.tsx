@@ -9,9 +9,9 @@ import { useAuth, useClerk } from "@clerk/clerk-expo";
 export default function HomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { userId } = useAuth();
+  const { getToken } = useAuth();
   const { signOut } = useClerk();
-  const fetcher = makeApiFetcher(userId);
+  const fetcher = makeApiFetcher(getToken);
   const { data: progress, isLoading } = useSWR("/api/progress", fetcher);
   const { data: lectures } = useSWR("/api/lectures", fetcher);
   const { data: cheatSheets } = useSWR("/api/cheatsheets", fetcher);

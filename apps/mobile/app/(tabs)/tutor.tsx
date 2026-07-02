@@ -14,9 +14,9 @@ type Message = { role: "user" | "assistant"; content: string };
 
 export default function TutorScreen() {
   const insets = useSafeAreaInsets();
-  const { userId } = useAuth();
+  const { getToken } = useAuth();
   const api = useApi();
-  const fetcher = makeApiFetcher(userId);
+  const fetcher = makeApiFetcher(getToken);
   const { data } = useSWR("/api/tutor/lectures", fetcher);
   const lectures: any[] = data?.data ?? [];
 
