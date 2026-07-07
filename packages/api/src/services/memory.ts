@@ -37,13 +37,37 @@ export interface RetrievedChunk {
 const TARGET_CHARS = 1100;
 const OVERLAP_CHARS = 150;
 
+/** Converts rich-text/HTML (e.g. Tiptap notes) to clean plain text before
+ *  chunking/embedding — markup in embeddings badly hurts retrieval quality. */
+export function stripHtml(html: string): string {
+  return html
+    .replace(/<(br|\/p|\/div|\/li|\/h[1-6])[^>]*>/gi, "\n")
+    .replace(/<li[^>]*>/gi, "• ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;|&apos;/gi, "'")
+    .replace(/[ \t]+/g, " ")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
 /** Sentence-aware splitter for plain text (no timestamps). */
 export function chunkText(text: string): string[] {
   const clean = text.replace(/\s+/g, " ").trim();
   if (!clean) return [];
   if (clean.length <= TARGET_CHARS) return [clean];
 
-  const sentences = clean.match(/[^.!?]+[.!?]+(\s|$)|[^.!?]+$/g) ?? [clean];
+  const rawSentences = clean.match(/[^.!?]+[.!?]+(\s|$)|[^.!?]+$/g) ?? [clean];
+  // Hard-split "sentences" that blow past the target (lists, markup-heavy text)
+  const sentences: string[] = [];
+  for (const s of rawSentences) {
+    if (s.length <= TARGET_CHARS) { sentences.push(s); continue; }
+    for (let i = 0; i < s.length; i += TARGET_CHARS) sentences.push(s.slice(i, i + TARGET_CHARS));
+  }
   const chunks: string[] = [];
   let current = "";
 

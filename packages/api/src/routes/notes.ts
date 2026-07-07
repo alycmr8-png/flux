@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { prisma } from "../lib/prisma";
-import { indexSource, deleteSource } from "../services/memory";
+import { indexSource, deleteSource, stripHtml } from "../services/memory";
 
 const router = Router();
 
@@ -20,7 +20,7 @@ function scheduleNoteIndexing(note: { id: string; userId: string; courseId: stri
         sourceType: "note",
         sourceId: fresh.id,
         sourceTitle: fresh.name,
-        text: fresh.text,
+        text: stripHtml(fresh.text),
       });
     } catch (e: any) { console.error("[notes] indexing failed:", e?.message); }
   }, 3000));

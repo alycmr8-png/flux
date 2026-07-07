@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { prisma } from "../lib/prisma";
 import { answerCourseQuestion } from "../services/claude";
-import { indexSource, searchCourse, courseMemoryStatus } from "../services/memory";
+import { indexSource, searchCourse, courseMemoryStatus, stripHtml } from "../services/memory";
 
 const router = Router();
 
@@ -68,7 +68,7 @@ router.post("/index", async (req, res) => {
         sourceType: "note",
         sourceId: n.id,
         sourceTitle: n.name,
-        text: n.text,
+        text: stripHtml(n.text),
       });
     } catch (e: any) {
       console.error(`[ask/index] note ${n.id} failed:`, e?.message);
