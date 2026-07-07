@@ -1,0 +1,7 @@
+# Keep the Railway upload small — the API only needs root + packages/*
+node_modules
+.git
+.next
+apps
+*.tsbuildinfo
+.turbo
