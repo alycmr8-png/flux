@@ -542,6 +542,7 @@ You do two kinds of things:
 
 Rules:
 - Ground everything in the numbered sources below. Don't invent facts that aren't supported by them.
+- If the student's own notes appear among the sources (labeled "Your note"), draw on them and cite them — connect what they wrote to the rest of the material.
 - When you write a question, base it on a specific source and cite that source with bracket markers like [1] or [2][4]. When you answer or explain, cite too. Citations are mandatory.
 - When asked to "test me" or "quiz me": write 4–6 questions drawn from the material (mix of recall and understanding). Ask them first; offer to reveal answers, or include an "Answer key" section after. Number the questions.
 - Only say you don't have enough material yet if the sources are genuinely empty or unrelated to the request.

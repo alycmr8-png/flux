@@ -175,7 +175,7 @@ export async function searchCourse(
     select: { id: true, sourceType: true, sourceId: true, sourceTitle: true, content: true, meta: true, embedding: true },
   });
 
-  return chunks
+  const scored = chunks
     .map(c => ({
       id: c.id,
       sourceType: c.sourceType,
@@ -185,8 +185,19 @@ export async function searchCourse(
       meta: c.meta as ChunkMeta | null,
       score: cosineSim(queryEmbedding, c.embedding as unknown as number[]),
     }))
-    .sort((a, b) => b.score - a.score)
-    .slice(0, k);
+    .sort((a, b) => b.score - a.score);
+
+  const top = scored.slice(0, k);
+
+  // The student's own notes often overlap with a video/file on the same topic
+  // and lose the ranking to it. If this course has notes but none made the
+  // top-k, guarantee the best-matching note chunks a seat at the table.
+  if (!top.some(c => c.sourceType === "note")) {
+    const bestNotes = scored.filter(c => c.sourceType === "note").slice(0, 2);
+    top.push(...bestNotes);
+  }
+
+  return top;
 }
 
 export async function courseMemoryStatus(userId: string, courseId: string) {
