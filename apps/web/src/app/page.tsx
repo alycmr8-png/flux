@@ -12,6 +12,7 @@ import { FeaturesShowcase } from "@/components/FeaturesShowcase";
 import { CalendarShowcase } from "@/components/CalendarShowcase";
 import { RecordingDemo } from "@/components/RecordingDemo";
 import { Navbar } from "@/components/Navbar";
+import { RotatingPrompts } from "@/components/RotatingPrompts";
 import { PricingSection } from "@/components/PricingSection";
 import { ScrollReveal } from "@/components/ScrollReveal";
 import { YoutubeFeatureDemo } from "@/components/YoutubeFeatureDemo";
@@ -37,17 +38,17 @@ export default async function LandingPage() {
         {/* Large arc — top left sweeping to bottom right */}
         <path
           d="M -200,800 Q 400,-200 1600,400"
-          fill="none" stroke="rgba(168,162,158,0.6)" strokeWidth="1.5"
+          fill="none" stroke="rgba(168,162,158,0.35)" strokeWidth="1.5"
         />
         {/* Second arc — crossing, top right to bottom left */}
         <path
           d="M 1600,100 Q 800,600 -100,300"
-          fill="none" stroke="rgba(168,162,158,0.45)" strokeWidth="1.25"
+          fill="none" stroke="rgba(168,162,158,0.28)" strokeWidth="1.25"
         />
         {/* Third arc — bottom sweep */}
         <path
           d="M -100,1100 Q 700,200 1600,700"
-          fill="none" stroke="rgba(168,162,158,0.4)" strokeWidth="1"
+          fill="none" stroke="rgba(168,162,158,0.22)" strokeWidth="1"
         />
         {/* Subtle gray haze — top right */}
         <radialGradient id="glowA" cx="75%" cy="15%" r="40%">
@@ -62,26 +63,16 @@ export default async function LandingPage() {
         </radialGradient>
         <rect x="0" y="0" width="100%" height="100%" fill="url(#glowB)" />
 
-        {/* Sidewalk-gray sparkles & dots — scattered around the hero edges */}
-        {/* 4-point sparkles */}
-        <path d="M0,-10 C0,-3 3,0 10,0 C3,0 0,3 0,10 C0,3 -3,0 -10,0 C-3,0 0,-3 0,-10 Z" transform="translate(150,230) scale(1)"   fill="rgba(168,162,158,0.5)" />
-        <path d="M0,-10 C0,-3 3,0 10,0 C3,0 0,3 0,10 C0,3 -3,0 -10,0 C-3,0 0,-3 0,-10 Z" transform="translate(1295,205) scale(1.2)" fill="rgba(168,162,158,0.55)" />
-        <path d="M0,-10 C0,-3 3,0 10,0 C3,0 0,3 0,10 C0,3 -3,0 -10,0 C-3,0 0,-3 0,-10 Z" transform="translate(235,575) scale(0.75)" fill="rgba(168,162,158,0.4)" />
-        <path d="M0,-10 C0,-3 3,0 10,0 C3,0 0,3 0,10 C0,3 -3,0 -10,0 C-3,0 0,-3 0,-10 Z" transform="translate(1205,615) scale(0.95)" fill="rgba(168,162,158,0.45)" />
-        <path d="M0,-10 C0,-3 3,0 10,0 C3,0 0,3 0,10 C0,3 -3,0 -10,0 C-3,0 0,-3 0,-10 Z" transform="translate(95,440) scale(0.6)"  fill="rgba(168,162,158,0.35)" />
-        <path d="M0,-10 C0,-3 3,0 10,0 C3,0 0,3 0,10 C0,3 -3,0 -10,0 C-3,0 0,-3 0,-10 Z" transform="translate(1360,360) scale(0.7)" fill="rgba(168,162,158,0.4)" />
+        {/* Sidewalk-gray sparkles & dots — sparse, understated accents */}
+        <path d="M0,-10 C0,-3 3,0 10,0 C3,0 0,3 0,10 C0,3 -3,0 -10,0 C-3,0 0,-3 0,-10 Z" transform="translate(150,230) scale(0.9)"  fill="rgba(168,162,158,0.28)" />
+        <path d="M0,-10 C0,-3 3,0 10,0 C3,0 0,3 0,10 C0,3 -3,0 -10,0 C-3,0 0,-3 0,-10 Z" transform="translate(1295,205) scale(1)"   fill="rgba(168,162,158,0.3)" />
+        <path d="M0,-10 C0,-3 3,0 10,0 C3,0 0,3 0,10 C0,3 -3,0 -10,0 C-3,0 0,-3 0,-10 Z" transform="translate(1205,615) scale(0.8)" fill="rgba(168,162,158,0.24)" />
 
         {/* Dots */}
-        <circle cx="325" cy="150" r="4" fill="rgba(168,162,158,0.5)" />
-        <circle cx="1120" cy="300" r="5" fill="rgba(168,162,158,0.45)" />
-        <circle cx="180" cy="700" r="3" fill="rgba(168,162,158,0.4)" />
-        <circle cx="1330" cy="480" r="4" fill="rgba(168,162,158,0.5)" />
-        <circle cx="700" cy="105" r="3" fill="rgba(168,162,158,0.4)" />
-        <circle cx="560" cy="660" r="3" fill="rgba(168,162,158,0.35)" />
-
-        {/* Small plus marks */}
-        <path d="M0,-7 V7 M-7,0 H7" transform="translate(1050,160)" stroke="rgba(168,162,158,0.5)" strokeWidth="2" />
-        <path d="M0,-7 V7 M-7,0 H7" transform="translate(270,360)"  stroke="rgba(168,162,158,0.4)" strokeWidth="2" />
+        <circle cx="325" cy="150" r="3" fill="rgba(168,162,158,0.28)" />
+        <circle cx="1120" cy="300" r="4" fill="rgba(168,162,158,0.25)" />
+        <circle cx="180" cy="700" r="3" fill="rgba(168,162,158,0.22)" />
+        <circle cx="1330" cy="480" r="3" fill="rgba(168,162,158,0.28)" />
       </svg>
 
       <Navbar />
@@ -89,16 +80,41 @@ export default async function LandingPage() {
       {/* Hero */}
       <div className="flex flex-col items-center text-center px-6 md:px-16 pt-48 md:pt-64 pb-16" style={{ position: "relative", zIndex: 1 }}>
 
+        {/* hero background — soft blue glow + fading dot grid */}
+        <div
+          aria-hidden="true"
+          className="absolute inset-0"
+          style={{
+            pointerEvents: "none",
+            background:
+              "radial-gradient(58% 48% at 50% 0%, rgba(37,99,235,0.10) 0%, rgba(37,99,235,0.04) 45%, transparent 72%)," +
+              "radial-gradient(34% 30% at 88% 18%, rgba(96,165,250,0.07) 0%, transparent 70%)," +
+              "radial-gradient(40% 34% at 8% 62%, rgba(168,162,158,0.10) 0%, transparent 70%)",
+          }}
+        />
+        <div
+          aria-hidden="true"
+          className="absolute inset-0"
+          style={{
+            pointerEvents: "none",
+            backgroundImage: "radial-gradient(rgba(15,17,21,0.08) 1.2px, transparent 1.2px)",
+            backgroundSize: "24px 24px",
+            WebkitMaskImage: "linear-gradient(to bottom, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.5) 55%, transparent 88%)",
+            maskImage: "linear-gradient(to bottom, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.5) 55%, transparent 88%)",
+          }}
+        />
+
         {/* boxed hero content */}
         <div
           className="flex flex-col items-center text-center w-full"
           style={{
+            position: "relative",
             maxWidth: 1040,
-            background: "#a8a29e",
-            border: "1px solid #a8a29e",
+            background: "linear-gradient(180deg, #ffffff 0%, #faf9f7 100%)",
+            border: "1px solid rgba(168,162,158,0.35)",
             borderRadius: 28,
-            padding: "56px 40px",
-            boxShadow: "0 10px 40px rgba(0,0,0,0.06)",
+            padding: "64px 48px",
+            boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 24px 64px rgba(37,99,235,0.07), 0 16px 48px rgba(0,0,0,0.05)",
           }}
         >
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-10" style={{ background: "rgba(37,99,235,0.15)", border: "1px solid rgba(37,99,235,0.4)" }}>
@@ -110,9 +126,12 @@ export default async function LandingPage() {
           <h1 className="text-5xl md:text-7xl mb-6 leading-[1.05]" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, color: "#0f1115", letterSpacing: "-0.03em" }}>
             The AI that went to<br /><span style={{ color: "#3b82f6" }}>every one of your classes.</span>
           </h1>
-          <p className="text-base md:text-lg mb-10 leading-relaxed max-w-xl" style={{ color: "rgba(0,0,0,0.65)" }}>
+          <p className="text-base md:text-lg mb-7 leading-relaxed max-w-xl" style={{ color: "rgba(0,0,0,0.65)" }}>
             Record lectures, paste videos, drop files, take notes. Flux remembers your whole semester — ask your course anything and get answers with sources.
           </p>
+          <div className="mb-9 px-2 w-full flex justify-center">
+            <RotatingPrompts />
+          </div>
           <div className="flex gap-3 mb-5">
             <Link href="/sign-up" className="font-semibold px-10 py-4 rounded-full text-base transition-all hover:opacity-90" style={{ background: "#2563eb", color: "white" }}>
               Get started free
@@ -126,10 +145,10 @@ export default async function LandingPage() {
       </div>
 
       {/* Demo */}
-      <div className="relative py-24 md:py-36">
-        {/* big sidewalk-gray curve behind the first demo */}
+      <div className="relative py-14 md:py-20">
+        {/* sidewalk-gray curve behind the first demo — thin, understated */}
         <svg aria-hidden="true" className="absolute inset-0" preserveAspectRatio="none" viewBox="0 0 1440 900" xmlns="http://www.w3.org/2000/svg" style={{ width: "100%", height: "100%", pointerEvents: "none", zIndex: 0 }}>
-          <path d="M -200,760 C 420,-40 1020,940 1640,140" fill="none" stroke="rgba(168,162,158,0.6)" strokeWidth="18" vectorEffect="non-scaling-stroke" />
+          <path d="M -200,760 C 420,-40 1020,940 1640,140" fill="none" stroke="rgba(168,162,158,0.4)" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
         </svg>
         <ScrollReveal className="relative z-10 flex justify-center px-4 md:px-12 pb-12" delay={100}>
           <ProductDemo />
@@ -142,14 +161,19 @@ export default async function LandingPage() {
           <div className="text-center mb-12">
             <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: "#3b82f6", marginBottom: 14 }}>How it works</div>
             <h2 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: "clamp(28px, 4.5vw, 44px)", color: "#0f1115", letterSpacing: "-0.03em", lineHeight: 1.1 }}>
-              You capture. Flux remembers.
+              Not a note-taking app.<br />A course memory.
             </h2>
+            <p className="text-base md:text-lg mt-5 max-w-2xl mx-auto leading-relaxed" style={{ color: "rgba(0,0,0,0.55)" }}>
+              Imagine you&apos;re taking Calculus. All semester you record the lectures, drop the PDFs and
+              homework solutions, save the videos your professor recommends, and take your own notes.
+              Flux connects all of it into one knowledge base for that course.
+            </p>
           </div>
           <div className="grid md:grid-cols-3 gap-5">
             {[
-              { n: "01", title: "Capture everything", text: "Record lectures in class, paste YouTube videos, drop slides and PDFs, take notes. Everything lands in the right course automatically — no folders, no filing." },
-              { n: "02", title: "Flux builds your memory", text: "Every recording, file, and note becomes part of your course's memory. By midterms, Flux has heard every lecture and read every page." },
-              { n: "03", title: "Ask anything", text: "One ask box per course. Get answers from everything you've captured — cited back to the exact lecture minute or page it came from." },
+              { n: "01", title: "Capture everything", text: "Record every lecture. Upload every PDF and homework solution. Save the YouTube videos your professor recommends. Write your notes. It all lands in the right course — no folders, no filing." },
+              { n: "02", title: "Flux connects it all", text: "Everything you capture becomes one course memory. By midterms, Flux has heard every lecture and read every page you have." },
+              { n: "03", title: "Ask your course", text: "“Explain the Chain Rule the way my professor did.” Answers come from your actual course materials — not generic AI knowledge — cited to the exact lecture minute or page." },
             ].map(step => (
               <div key={step.n} className="rounded-2xl p-7" style={{ background: "rgba(0,0,0,0.03)", border: "1px solid rgba(0,0,0,0.08)" }}>
                 <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 13, color: "#3b82f6", letterSpacing: "0.1em", marginBottom: 14 }}>{step.n}</div>
