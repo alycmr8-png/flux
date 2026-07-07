@@ -1,7 +1,8 @@
 import * as SecureStore from "expo-secure-store";
-import type { TokenCache } from "@clerk/clerk-expo/dist/cache";
 
-export const tokenCache: TokenCache = {
+// Shape matches Clerk's TokenCache (the dist/cache type export moved in newer
+// @clerk/clerk-expo versions, so we type it structurally).
+export const tokenCache = {
   async getToken(key: string) {
     return SecureStore.getItemAsync(key);
   },

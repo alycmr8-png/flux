@@ -6,6 +6,7 @@
     "version": "1.0.0",
     "scheme": "Flux",
     "orientation": "portrait",
+    "icon": "./assets/icon.png",
     "splash": {
       "backgroundColor": "#000000"
     },

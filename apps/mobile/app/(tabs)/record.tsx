@@ -3,7 +3,6 @@ import {
   View, Text, StyleSheet, TouchableOpacity, Alert,
   StatusBar, ScrollView, TextInput, ActivityIndicator, Animated,
 } from "react-native";
-import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Audio } from "expo-av";
 import * as DocumentPicker from "expo-document-picker";
@@ -83,24 +82,65 @@ function ClassGate({ insets, onSelect }: { insets: any; onSelect: (c: any) => vo
 // ─── Class Workspace ──────────────────────────────────────────────────────────
 function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; onBack: () => void }) {
   const api = useApi();
-  const router = useRouter();
   const { getToken } = useAuth();
   const fetcher = makeApiFetcher(getToken);
-  const [tab, setTab] = useState<"record" | "files" | "quizzes" | "video" | "studybook" | "note" | "plan">("record");
+  const [tab, setTab] = useState<"ask" | "record" | "files" | "video" | "studybook" | "note">("ask");
 
   const { data: lecturesData, mutate: mutateLectures } = useSWR(`/api/lectures?courseId=${course.id}`, fetcher);
   const lectures: any[] = lecturesData?.data ?? [];
   const { data: sheetsData, mutate: mutateSheets } = useSWR(`/api/cheatsheets?courseId=${course.id}`, fetcher);
   const studyBooks: any[] = (sheetsData?.data ?? []).filter((s: any) => s.title?.startsWith("Study Book:"));
   const [expandedBook, setExpandedBook] = useState<string | null>(null);
-  const { data: quizzesData, mutate: mutateQuizzes } = useSWR(`/api/quizzes?courseId=${course.id}`, fetcher);
-  const { data: sessionsData } = useSWR(
-    `/api/calendar/sessions?from=${new Date().toISOString()}&to=${new Date(Date.now() + 30 * 86400000).toISOString()}`,
-    fetcher
-  );
-  const allSessions: any[] = sessionsData?.data ?? [];
-  const sessions = allSessions.filter((s: any) => s.lecture?.course?.id === course.id);
-  const quizzes: any[] = quizzesData?.data ?? [];
+  // ── ask your course (RAG chat over everything captured) ──
+  const { data: askStatusData, mutate: mutateAskStatus } = useSWR(`/api/ask/status?courseId=${course.id}`, fetcher);
+  const askStatus = askStatusData?.data;
+  const [askMessages, setAskMessages] = useState<{ role: "user" | "assistant"; content: string; citations?: any[] }[]>([]);
+  const [askInput, setAskInput] = useState("");
+  const [askLoading, setAskLoading] = useState(false);
+  const [askIndexing, setAskIndexing] = useState(false);
+  const askAutoIndexed = useRef(false);
+
+  async function rebuildAskMemory() {
+    setAskIndexing(true);
+    try {
+      await api.post("/api/ask/index", { courseId: course.id });
+      await mutateAskStatus();
+    } catch (e: any) {
+      Alert.alert("Failed", e?.response?.data?.error ?? e?.message ?? "Could not refresh memory");
+    } finally {
+      setAskIndexing(false);
+    }
+  }
+
+  // First visit with content but empty memory → build it automatically
+  useEffect(() => {
+    if (!askStatusData || askAutoIndexed.current) return;
+    if ((askStatusData.data?.chunkCount ?? 0) > 0) return;
+    if (lectures.length === 0) return;
+    askAutoIndexed.current = true;
+    rebuildAskMemory();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [askStatusData, lectures.length]);
+
+  async function sendAsk(text?: string) {
+    const q = (text ?? askInput).trim();
+    if (!q || askLoading) return;
+    const next = [...askMessages, { role: "user" as const, content: q }];
+    setAskMessages(next);
+    setAskInput("");
+    setAskLoading(true);
+    try {
+      const res = await api.post("/api/ask", {
+        courseId: course.id,
+        messages: next.map(m => ({ role: m.role, content: m.content })),
+      });
+      setAskMessages([...next, { role: "assistant", content: res.data?.data?.reply ?? "", citations: res.data?.data?.citations ?? [] }]);
+    } catch (e: any) {
+      setAskMessages([...next, { role: "assistant", content: e?.response?.data?.error ?? "Something went wrong — try again." }]);
+    } finally {
+      setAskLoading(false);
+    }
+  }
 
   // ── record ──
   const [recording, setRecording] = useState<Audio.Recording | null>(null);
@@ -429,33 +469,13 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
 
   const MATH_SYMBOLS = ["=","≠","+","−","×","÷","±","≤","≥","≈","∞","α","β","γ","δ","π","σ","φ","ω","Δ","Σ","∫","∂","∇","∑","√","²","³","°","∈","∅","ℝ","⊥"];
 
-  // ── quiz ──
-  const [selectedLecture, setSelectedLecture] = useState<string | null>(null);
-  const [generatingQuiz, setGeneratingQuiz] = useState(false);
-  const [quizDone, setQuizDone] = useState(false);
-
-  async function generateQuiz() {
-    if (!selectedLecture) return;
-    setGeneratingQuiz(true);
-    try {
-      await api.post("/api/quizzes/generate", { lectureId: selectedLecture });
-      await mutateQuizzes();
-      setQuizDone(true);
-    } catch (e: any) {
-      Alert.alert("Failed", e?.response?.data?.message ?? e?.message ?? "Unknown error");
-    } finally {
-      setGeneratingQuiz(false);
-    }
-  }
-
   const TABS = [
+    { key: "ask",       icon: "sparkles-outline",      label: "Ask"           },
     { key: "record",    icon: "mic-outline",           label: "Record"        },
-    { key: "files",     icon: "document-text-outline", label: "Files"         },
-    { key: "quizzes",   icon: "book-outline",          label: "Quizzes"       },
+    { key: "files",     icon: "document-text-outline", label: "Upload Files"  },
     { key: "video",     icon: "logo-youtube",          label: "Upload Video"  },
     { key: "studybook", icon: "bookmark-outline",      label: "Study Book"    },
     { key: "note",      icon: "create-outline",        label: "Take Note"     },
-    { key: "plan",      icon: "calendar-outline",      label: "Plan"          },
   ] as const;
 
   return (
@@ -485,6 +505,96 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
           </TouchableOpacity>
         ))}
       </ScrollView>
+
+      {/* ── ASK YOUR COURSE ── */}
+      {tab === "ask" && (
+        <>
+          {/* Memory status header */}
+          <View style={a.headRow}>
+            <View style={a.sparkChip}>
+              <Ionicons name="sparkles" size={12} color="#60A5FA" />
+              <Text style={a.sparkTxt}>Ask your course</Text>
+            </View>
+            <TouchableOpacity onPress={rebuildAskMemory} disabled={askIndexing} style={a.refreshBtn} activeOpacity={0.7}>
+              {askIndexing
+                ? <ActivityIndicator size="small" color="#888" />
+                : <Ionicons name="refresh" size={14} color="#888" />}
+            </TouchableOpacity>
+          </View>
+          <Text style={a.memLine}>
+            {askIndexing
+              ? "Building your course memory…"
+              : askStatus
+                ? `In memory: ${askStatus.sources?.length ?? 0} source${(askStatus.sources?.length ?? 0) === 1 ? "" : "s"} · ${askStatus.chunkCount ?? 0} chunks`
+                : "Loading memory…"}
+          </Text>
+
+          {/* Empty state + quick prompts */}
+          {askMessages.length === 0 && (
+            <View style={a.emptyBox}>
+              <Ionicons name="sparkles-outline" size={26} color="#2563EB" style={{ marginBottom: 10 }} />
+              <Text style={a.emptyTitle}>Ask anything about {course.name}</Text>
+              <Text style={a.emptySub}>Answers come from your lectures, files, videos and notes — with sources.</Text>
+              <View style={a.promptWrap}>
+                {["What did the professor emphasize most?", "Quiz me on this course", "What should I review before the exam?"].map(p => (
+                  <TouchableOpacity key={p} style={a.promptChip} onPress={() => sendAsk(p)} activeOpacity={0.7}>
+                    <Text style={a.promptTxt}>{p}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          )}
+
+          {/* Messages */}
+          {askMessages.map((m, i) => (
+            <View key={i} style={[a.msgRow, m.role === "user" ? a.msgRight : a.msgLeft]}>
+              <View style={[a.bubble, m.role === "user" ? a.bubbleUser : a.bubbleAi]}>
+                <Text style={[a.bubbleTxt, m.role === "user" && { color: "#fff" }]}>{m.content}</Text>
+              </View>
+              {m.role === "assistant" && (m.citations?.length ?? 0) > 0 && (
+                <View style={a.citeWrap}>
+                  {m.citations!.map((c: any) => (
+                    <View key={c.n} style={a.citeChip}>
+                      <Text style={a.citeIdx}>[{c.n}]</Text>
+                      <Text style={a.citeTxt} numberOfLines={1}>{c.label}</Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+            </View>
+          ))}
+          {askLoading && (
+            <View style={[a.msgRow, a.msgLeft]}>
+              <View style={[a.bubble, a.bubbleAi, { flexDirection: "row", gap: 6, alignItems: "center" }]}>
+                <ActivityIndicator size="small" color="#60A5FA" />
+                <Text style={a.bubbleTxt}>Thinking…</Text>
+              </View>
+            </View>
+          )}
+
+          {/* Input */}
+          <View style={a.inputRow}>
+            <TextInput
+              style={a.input}
+              value={askInput}
+              onChangeText={setAskInput}
+              placeholder="Ask anything about this course…"
+              placeholderTextColor="#555"
+              returnKeyType="send"
+              onSubmitEditing={() => sendAsk()}
+              editable={!askLoading}
+            />
+            <TouchableOpacity
+              style={[a.sendBtn, (!askInput.trim() || askLoading) && { opacity: 0.4 }]}
+              onPress={() => sendAsk()}
+              disabled={!askInput.trim() || askLoading}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="arrow-up" size={18} color="#fff" />
+            </TouchableOpacity>
+          </View>
+        </>
+      )}
 
       {/* ── RECORD ── */}
       {tab === "record" && (
@@ -751,71 +861,6 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
                   : <Text style={w.primaryBtnTxt}>Generate Learning File</Text>
                 }
               </TouchableOpacity>
-            </>
-          )}
-        </>
-      )}
-
-      {/* ── QUIZZES ── */}
-      {tab === "quizzes" && (
-        <>
-          {!quizDone ? (
-            <View style={w.card}>
-              <Text style={w.listLbl}>Generate a quiz</Text>
-              {lectures.filter((l) => l.status === "ready").length === 0 ? (
-                <Text style={w.cardDesc}>No processed recordings yet. Record a lecture first.</Text>
-              ) : (
-                <>
-                  {lectures.filter((l) => l.status === "ready").map((l) => (
-                    <TouchableOpacity
-                      key={l.id}
-                      style={[w.listRow, selectedLecture === l.id && w.listRowSelected]}
-                      onPress={() => setSelectedLecture(l.id)}
-                      activeOpacity={0.7}
-                    >
-                      <Text style={[w.listTitle, selectedLecture === l.id && { color: "#fff" }]}>{l.title}</Text>
-                      {selectedLecture === l.id && <Ionicons name="checkmark" size={14} color="#fff" />}
-                    </TouchableOpacity>
-                  ))}
-                  <TouchableOpacity
-                    style={[w.primaryBtn, { marginTop: 12 }, (!selectedLecture || generatingQuiz) && { opacity: 0.4 }]}
-                    onPress={generateQuiz}
-                    disabled={!selectedLecture || generatingQuiz}
-                    activeOpacity={0.8}
-                  >
-                    {generatingQuiz
-                      ? <><ActivityIndicator size="small" color="#000" /><Text style={w.primaryBtnTxt}>  Generating…</Text></>
-                      : <Text style={w.primaryBtnTxt}>Generate Quiz</Text>
-                    }
-                  </TouchableOpacity>
-                </>
-              )}
-            </View>
-          ) : (
-            <View style={w.doneCard}>
-              <View style={w.doneIcon}><Ionicons name="checkmark" size={24} color="#000" /></View>
-              <Text style={w.doneTitle}>Quiz generated</Text>
-              <Text style={w.doneSub}>Find it in the Quizzes tab.</Text>
-              <TouchableOpacity onPress={() => { setQuizDone(false); setSelectedLecture(null); }} style={w.againBtn}>
-                <Text style={w.againTxt}>Generate another</Text>
-              </TouchableOpacity>
-            </View>
-          )}
-
-          {quizzes.length > 0 && (
-            <>
-              <Text style={w.listLbl}>Quizzes in this class</Text>
-              {quizzes.map((q) => (
-                <TouchableOpacity
-                  key={q.id}
-                  style={w.listRow}
-                  onPress={() => router.push(`/quiz/${q.id}` as any)}
-                  activeOpacity={0.7}
-                >
-                  <Text style={w.listTitle}>{q.title}</Text>
-                  <Text style={w.listSub}>{q._count?.questions} questions</Text>
-                </TouchableOpacity>
-              ))}
             </>
           )}
         </>
@@ -1133,34 +1178,6 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
         </>
       )}
 
-      {/* ── STUDY PLAN ── */}
-      {tab === "plan" && (
-        <>
-          {sessions.length === 0 ? (
-            <View style={w.doneCard}>
-              <Ionicons name="calendar-outline" size={28} color="#333" style={{ marginBottom: 12 }} />
-              <Text style={w.doneSub}>No upcoming sessions for {course.name}.</Text>
-              <Text style={[w.doneSub, { marginTop: 4, fontSize: 10, color: "#333" }]}>
-                Record a lecture — AI will auto-schedule spaced reviews.
-              </Text>
-            </View>
-          ) : (
-            sessions.map((s: any) => (
-              <View key={s.id} style={w.sessionRow}>
-                <View style={w.sessionDate}>
-                  <Text style={w.sessionMon}>{new Date(s.scheduledAt).toLocaleString("default", { month: "short" })}</Text>
-                  <Text style={w.sessionDay}>{new Date(s.scheduledAt).getDate()}</Text>
-                </View>
-                <View style={w.sessionDivider} />
-                <View style={{ flex: 1 }}>
-                  <Text style={w.sessionTitle} numberOfLines={1}>{s.lecture?.title}</Text>
-                  <Text style={w.sessionSub}>{s.type} review</Text>
-                </View>
-              </View>
-            ))
-          )}
-        </>
-      )}
     </ScrollView>
   );
 }
@@ -1255,4 +1272,33 @@ const w = StyleSheet.create({
   sessionDivider: { width: 0.5, height: 32, backgroundColor: "#1e1e1e" },
   sessionTitle: { fontSize: 12, color: "#fff", fontWeight: "500" },
   sessionSub: { fontSize: 10, color: "#555", marginTop: 2, textTransform: "capitalize" },
+});
+
+// ─── Ask tab styles ───────────────────────────────────────────────────────────
+const a = StyleSheet.create({
+  headRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 6 },
+  sparkChip: { flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: "rgba(37,99,235,0.16)", borderColor: "rgba(59,130,246,0.25)", borderWidth: 1, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6 },
+  sparkTxt: { color: "#60A5FA", fontSize: 12, fontWeight: "700" },
+  refreshBtn: { padding: 8 },
+  memLine: { fontSize: 11, color: "#666", marginBottom: 14 },
+  emptyBox: { alignItems: "center", backgroundColor: "#111", borderRadius: 18, borderWidth: 0.5, borderColor: "#1e1e1e", paddingVertical: 28, paddingHorizontal: 18, marginBottom: 14 },
+  emptyTitle: { color: "#fff", fontSize: 14, fontWeight: "600", marginBottom: 6, textAlign: "center" },
+  emptySub: { color: "#666", fontSize: 11.5, textAlign: "center", lineHeight: 17, marginBottom: 16 },
+  promptWrap: { gap: 8, width: "100%" },
+  promptChip: { borderWidth: 0.5, borderColor: "#2a2a2a", backgroundColor: "#161616", borderRadius: 999, paddingVertical: 9, paddingHorizontal: 14 },
+  promptTxt: { color: "#aaa", fontSize: 12, textAlign: "center" },
+  msgRow: { marginBottom: 12 },
+  msgRight: { alignItems: "flex-end" },
+  msgLeft: { alignItems: "flex-start" },
+  bubble: { maxWidth: "85%", borderRadius: 16, paddingHorizontal: 14, paddingVertical: 10 },
+  bubbleUser: { backgroundColor: "#2563EB", borderBottomRightRadius: 5 },
+  bubbleAi: { backgroundColor: "#161616", borderWidth: 0.5, borderColor: "#242424", borderBottomLeftRadius: 5 },
+  bubbleTxt: { color: "#ddd", fontSize: 13.5, lineHeight: 20 },
+  citeWrap: { flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 8, maxWidth: "90%" },
+  citeChip: { flexDirection: "row", alignItems: "center", gap: 5, backgroundColor: "rgba(37,99,235,0.1)", borderColor: "rgba(59,130,246,0.22)", borderWidth: 1, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4, maxWidth: 260 },
+  citeIdx: { color: "#60A5FA", fontSize: 10, fontWeight: "800" },
+  citeTxt: { color: "#8fb4f8", fontSize: 10.5, flexShrink: 1 },
+  inputRow: { flexDirection: "row", gap: 10, marginTop: 6 },
+  input: { flex: 1, backgroundColor: "#111", borderRadius: 14, paddingHorizontal: 14, paddingVertical: 12, fontSize: 13, color: "#fff", borderWidth: 0.5, borderColor: "#1e1e1e" },
+  sendBtn: { width: 46, height: 46, borderRadius: 14, backgroundColor: "#2563EB", alignItems: "center", justifyContent: "center" },
 });

@@ -2,6 +2,11 @@ import { useSignUp, useSSO } from "@clerk/clerk-expo";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, Alert } from "react-native";
+import * as WebBrowser from "expo-web-browser";
+import * as AuthSession from "expo-auth-session";
+
+// Required so the OAuth browser popup can hand the session back to the app
+WebBrowser.maybeCompleteAuthSession();
 
 export default function SignUpScreen() {
   const { signUp, setActive, isLoaded } = useSignUp();
@@ -14,11 +19,20 @@ export default function SignUpScreen() {
 
   async function handleGoogle() {
     try {
-      const { createdSessionId, setActive: sa } = await startSSOFlow({ strategy: "oauth_google" });
-      if (createdSessionId) await sa!({ session: createdSessionId });
-      router.replace("/(tabs)");
-    } catch {
-      Alert.alert("Google sign-in unavailable", "Please use email and password below.");
+      const { createdSessionId, setActive: sa } = await startSSOFlow({
+        strategy: "oauth_google",
+        redirectUrl: AuthSession.makeRedirectUri(),
+      });
+      if (createdSessionId) {
+        await sa!({ session: createdSessionId });
+        router.replace("/(tabs)");
+      } else {
+        // Flow finished without a session (cancelled, or extra steps required)
+        Alert.alert("Almost there", "Google didn't complete sign-in. Try again, or use email and password below.");
+      }
+    } catch (e: any) {
+      const msg = e?.errors?.[0]?.longMessage ?? e?.errors?.[0]?.message ?? e?.message ?? "Unknown error";
+      Alert.alert("Google sign-in failed", msg);
     }
   }
 
