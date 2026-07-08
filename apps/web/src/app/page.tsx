@@ -226,7 +226,7 @@ export default async function LandingPage() {
             <div className="flex flex-col justify-center">
               <div className="text-5xl mb-4" style={{ color: "rgba(0,0,0,0.2)", fontFamily: "Georgia, serif", lineHeight: 1 }}>"</div>
               <p className="text-lg md:text-xl leading-relaxed mb-6" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 700, color: "rgba(0,0,0,0.9)", lineHeight: 1.55 }}>
-                Flux literally saved my semester. I record every business lecture and get a full cheat sheet before I even leave the classroom.
+                By midterms, Flux basically knew my whole business course. The night before an exam I just ask it questions — and it answers from my own lectures, with the exact minute to rewatch.
               </p>
               <div className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: "rgba(0,0,0,0.7)" }}>Usman Tariq</div>
               <div className="text-xs" style={{ color: "rgba(0,0,0,0.45)" }}>Business Student · Queensborough Community College</div>
@@ -243,7 +243,7 @@ export default async function LandingPage() {
             <div className="flex flex-col items-center">
               <div className="text-5xl mb-4" style={{ color: "rgba(0,0,0,0.2)", fontFamily: "Georgia, serif", lineHeight: 1 }}>"</div>
               <p className="text-lg md:text-xl leading-relaxed mb-6" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 700, color: "rgba(0,0,0,0.9)", lineHeight: 1.55 }}>
-                Flux me permet de rester au top de mes cours de génie civil. Je transforme mes enregistrements en fiches de révision en quelques secondes — c'est indispensable.
+                Flux se souvient de tout mon semestre — chaque cours, chaque PDF, chaque vidéo. Avant un examen, je lui pose mes questions et il répond à partir de mes propres supports, avec les sources. C'est comme réviser avec quelqu'un qui a assisté à tous mes cours.
               </p>
               <div className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: "rgba(0,0,0,0.7)" }}>Mohamed Camara</div>
               <div className="text-xs" style={{ color: "rgba(0,0,0,0.45)" }}>Étudiant en Génie Civil · Université de Rennes, France</div>
@@ -260,7 +260,7 @@ export default async function LandingPage() {
             <div className="flex flex-col justify-center md:ml-auto">
               <div className="text-5xl mb-4" style={{ color: "rgba(0,0,0,0.2)", fontFamily: "Georgia, serif", lineHeight: 1 }}>"</div>
               <p className="text-lg md:text-xl leading-relaxed mb-6" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 700, color: "rgba(0,0,0,0.9)", lineHeight: 1.55 }}>
-                Between clinicals and coursework, I barely had time to review. Flux turns my lecture recordings into study guides overnight — I actually feel prepared walking into exams now.
+                Between clinicals I don&apos;t have time to re-watch lectures. I just ask Flux and it pulls the answer from my recordings and slides — and shows me exactly where it came from. It&apos;s like a study partner who went to every class.
               </p>
               <div className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: "rgba(0,0,0,0.7)" }}>Sira Camara</div>
               <div className="text-xs" style={{ color: "rgba(0,0,0,0.45)" }}>Nursing Student · LaGuardia Community College</div>
