@@ -7,7 +7,7 @@ const TYPE_COLOR: Record<string, string> = {
   assignment: "#f97316",
   deadline: "#eab308",
   quiz: "#a855f7",
-  class: "#3b82f6",
+  class: "#6E7FF3",
 };
 
 const BASE_EVENTS: Record<number, { type: string; label: string; course: string }[]> = {
@@ -107,7 +107,7 @@ export function CalendarShowcase() {
       <div className="max-w-5xl mx-auto">
         {/* Header */}
         <div className="text-center mb-14">
-          <div className="text-sm uppercase tracking-[0.2em] mb-4 font-semibold" style={{ color: "#3b82f6" }}>
+          <div className="text-sm uppercase tracking-[0.2em] mb-4 font-semibold" style={{ color: "#6E7FF3" }}>
             Stay ahead
           </div>
           <h2 className="text-4xl md:text-5xl mb-4" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, color: "#0f1115", lineHeight: 1.1, letterSpacing: "-0.02em" }}>
@@ -138,7 +138,7 @@ export function CalendarShowcase() {
                 <span style={{ fontSize: 18, fontWeight: 500, color: "#0f1115" }}>May 2026</span>
                 <button
                   className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium"
-                  style={{ background: "#2563eb", color: "white" }}
+                  style={{ background: "#4B5FE8", color: "white" }}
                 >
                   <Plus size={13} /> Add event
                 </button>
@@ -165,18 +165,18 @@ export function CalendarShowcase() {
                       className="relative flex flex-col items-center py-2 rounded-xl"
                       style={{
                         background: isSelected
-                          ? "rgba(37,99,235,0.12)"
+                          ? "rgba(75,95,232,0.12)"
                           : isToday
                           ? "rgba(0,0,0,0.05)"
                           : "transparent",
-                        outline: isSelected ? "1px solid #2563eb" : isToday ? "1px solid rgba(0,0,0,0.15)" : "none",
+                        outline: isSelected ? "1px solid #4B5FE8" : isToday ? "1px solid rgba(0,0,0,0.15)" : "none",
                         transition: "background 0.3s",
                       }}
                     >
                       <span style={{
                         fontSize: 13,
                         fontWeight: isSelected || isToday ? 600 : 400,
-                        color: isSelected ? "#2563eb" : isToday ? "#0f1115" : "rgba(0,0,0,0.6)",
+                        color: isSelected ? "#4B5FE8" : isToday ? "#0f1115" : "rgba(0,0,0,0.6)",
                       }}>
                         {d}
                       </span>
@@ -305,13 +305,13 @@ export function CalendarShowcase() {
                       style={{ background: "rgba(0,0,0,0.07)", border: "1px solid rgba(0,0,0,0.15)", color: "#0f1115", minHeight: 40 }}
                     >
                       {typedTitle}
-                      <span className="ml-0.5 inline-block w-px h-4 align-middle" style={{ background: "#2563eb", animation: "blink 1s infinite" }} />
+                      <span className="ml-0.5 inline-block w-px h-4 align-middle" style={{ background: "#4B5FE8", animation: "blink 1s infinite" }} />
                     </div>
                   </div>
                   <div className="flex gap-3">
                     <div className="flex-1">
                       <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(0,0,0,0.35)", marginBottom: 6 }}>Type</div>
-                      <div className="rounded-xl px-3 py-2.5 text-sm" style={{ background: "rgba(0,0,0,0.07)", border: "1px solid rgba(0,0,0,0.15)", color: "rgba(59,130,246,1)" }}>Class</div>
+                      <div className="rounded-xl px-3 py-2.5 text-sm" style={{ background: "rgba(0,0,0,0.07)", border: "1px solid rgba(0,0,0,0.15)", color: "rgba(110,127,243,1)" }}>Class</div>
                     </div>
                     <div className="flex-1">
                       <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(0,0,0,0.35)", marginBottom: 6 }}>Date</div>
@@ -320,7 +320,7 @@ export function CalendarShowcase() {
                   </div>
                   <div
                     className="w-full py-2.5 rounded-xl text-sm font-medium text-center mt-1"
-                    style={{ background: "#2563eb", color: "white" }}
+                    style={{ background: "#4B5FE8", color: "white" }}
                   >
                     Save event
                   </div>

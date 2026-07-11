@@ -19,11 +19,11 @@ export function Navbar() {
       >
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2.5" style={{ textDecoration: "none" }}>
-          <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "#2563eb" }}>
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "#4B5FE8" }}>
             <Layers size={17} style={{ color: "white" }} />
           </div>
           <span style={{ fontSize: 22, fontWeight: 800, color: "#111110", letterSpacing: "-0.5px" }}>
-            Fl<span style={{ color: "#2563eb" }}>u</span>x
+            Fl<span style={{ color: "#4B5FE8" }}>u</span>x
           </span>
         </Link>
 
@@ -57,7 +57,7 @@ export function Navbar() {
           <Link
             href="/sign-up"
             className="font-semibold"
-            style={{ fontSize: 15, background: "#2563eb", color: "white", textDecoration: "none", padding: "9px 22px", borderRadius: 999 }}
+            style={{ fontSize: 15, background: "#4B5FE8", color: "white", textDecoration: "none", padding: "9px 22px", borderRadius: 999 }}
           >
             Get started
           </Link>
@@ -66,7 +66,7 @@ export function Navbar() {
 
       <style>{`
         .navbar-link { color: rgba(0,0,0,0.5); transition: color 0.15s; }
-        .navbar-link:hover { color: #2563eb; }
+        .navbar-link:hover { color: #4B5FE8; }
       `}</style>
     </header>
   );

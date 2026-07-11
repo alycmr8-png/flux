@@ -13,6 +13,7 @@ import { CalendarShowcase } from "@/components/CalendarShowcase";
 import { RecordingDemo } from "@/components/RecordingDemo";
 import { Navbar } from "@/components/Navbar";
 import { RotatingPrompts } from "@/components/RotatingPrompts";
+import { Hero3DLogo } from "@/components/Hero3DLogo";
 import { PricingSection } from "@/components/PricingSection";
 import { ScrollReveal } from "@/components/ScrollReveal";
 import { YoutubeFeatureDemo } from "@/components/YoutubeFeatureDemo";
@@ -26,59 +27,10 @@ export default async function LandingPage() {
   return (
     <main className="min-h-screen flex flex-col" style={{ background: "#ffffff", position: "relative", overflow: "hidden" }}>
 
-      {/* Background arcs */}
-      <svg
-        aria-hidden="true"
-        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none", zIndex: 0 }}
-        preserveAspectRatio="xMidYMid slice"
-        viewBox="0 0 1440 900"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        {/* Sidewalk-gray rope lines */}
-        {/* Large arc — top left sweeping to bottom right */}
-        <path
-          d="M -200,800 Q 400,-200 1600,400"
-          fill="none" stroke="rgba(168,162,158,0.35)" strokeWidth="1.5"
-        />
-        {/* Second arc — crossing, top right to bottom left */}
-        <path
-          d="M 1600,100 Q 800,600 -100,300"
-          fill="none" stroke="rgba(168,162,158,0.28)" strokeWidth="1.25"
-        />
-        {/* Third arc — bottom sweep */}
-        <path
-          d="M -100,1100 Q 700,200 1600,700"
-          fill="none" stroke="rgba(168,162,158,0.22)" strokeWidth="1"
-        />
-        {/* Subtle gray haze — top right */}
-        <radialGradient id="glowA" cx="75%" cy="15%" r="40%">
-          <stop offset="0%" stopColor="#a8a29e" stopOpacity="0.12" />
-          <stop offset="100%" stopColor="#a8a29e" stopOpacity="0" />
-        </radialGradient>
-        <rect x="0" y="0" width="100%" height="100%" fill="url(#glowA)" />
-        {/* Subtle gray haze — bottom left */}
-        <radialGradient id="glowB" cx="20%" cy="85%" r="35%">
-          <stop offset="0%" stopColor="#a8a29e" stopOpacity="0.1" />
-          <stop offset="100%" stopColor="#a8a29e" stopOpacity="0" />
-        </radialGradient>
-        <rect x="0" y="0" width="100%" height="100%" fill="url(#glowB)" />
-
-        {/* Sidewalk-gray sparkles & dots — sparse, understated accents */}
-        <path d="M0,-10 C0,-3 3,0 10,0 C3,0 0,3 0,10 C0,3 -3,0 -10,0 C-3,0 0,-3 0,-10 Z" transform="translate(150,230) scale(0.9)"  fill="rgba(168,162,158,0.28)" />
-        <path d="M0,-10 C0,-3 3,0 10,0 C3,0 0,3 0,10 C0,3 -3,0 -10,0 C-3,0 0,-3 0,-10 Z" transform="translate(1295,205) scale(1)"   fill="rgba(168,162,158,0.3)" />
-        <path d="M0,-10 C0,-3 3,0 10,0 C3,0 0,3 0,10 C0,3 -3,0 -10,0 C-3,0 0,-3 0,-10 Z" transform="translate(1205,615) scale(0.8)" fill="rgba(168,162,158,0.24)" />
-
-        {/* Dots */}
-        <circle cx="325" cy="150" r="3" fill="rgba(168,162,158,0.28)" />
-        <circle cx="1120" cy="300" r="4" fill="rgba(168,162,158,0.25)" />
-        <circle cx="180" cy="700" r="3" fill="rgba(168,162,158,0.22)" />
-        <circle cx="1330" cy="480" r="3" fill="rgba(168,162,158,0.28)" />
-      </svg>
-
       <Navbar />
 
       {/* Hero */}
-      <div className="flex flex-col items-center text-center px-6 md:px-16 pt-48 md:pt-64 pb-16" style={{ position: "relative", zIndex: 1 }}>
+      <div className="flex flex-col items-center text-center px-6 md:px-16 pt-36 md:pt-44 pb-16" style={{ position: "relative", zIndex: 1 }}>
 
         {/* hero background — soft blue glow + fading dot grid */}
         <div
@@ -87,9 +39,9 @@ export default async function LandingPage() {
           style={{
             pointerEvents: "none",
             background:
-              "radial-gradient(58% 48% at 50% 0%, rgba(37,99,235,0.10) 0%, rgba(37,99,235,0.04) 45%, transparent 72%)," +
-              "radial-gradient(34% 30% at 88% 18%, rgba(96,165,250,0.07) 0%, transparent 70%)," +
-              "radial-gradient(40% 34% at 8% 62%, rgba(168,162,158,0.10) 0%, transparent 70%)",
+              "radial-gradient(58% 48% at 50% 0%, rgba(75,95,232,0.12) 0%, rgba(75,95,232,0.05) 45%, transparent 72%)," +
+              "radial-gradient(34% 30% at 88% 18%, rgba(159,123,250,0.08) 0%, transparent 70%)," +
+              "radial-gradient(40% 34% at 8% 62%, rgba(110,127,243,0.06) 0%, transparent 70%)",
           }}
         />
         <div
@@ -104,52 +56,64 @@ export default async function LandingPage() {
           }}
         />
 
-        {/* boxed hero content */}
-        <div
-          className="flex flex-col items-center text-center w-full"
-          style={{
-            position: "relative",
-            maxWidth: 1040,
-            background: "linear-gradient(180deg, #ffffff 0%, #faf9f7 100%)",
-            border: "1px solid rgba(168,162,158,0.35)",
-            borderRadius: 28,
-            padding: "64px 48px",
-            boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 24px 64px rgba(37,99,235,0.07), 0 16px 48px rgba(0,0,0,0.05)",
-          }}
-        >
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-10" style={{ background: "rgba(37,99,235,0.15)", border: "1px solid rgba(37,99,235,0.4)" }}>
-            <Layers size={12} style={{ color: "#2563eb" }} />
-            <span className="text-xs uppercase tracking-[0.2em] font-semibold" style={{ color: "#2563eb" }}>
+        {/* 3D animated Flux logo */}
+        <div className="w-full mb-6" style={{ position: "relative" }}>
+          <Hero3DLogo />
+        </div>
+
+        {/* hero content — open, no box */}
+        <div className="flex flex-col items-center text-center w-full" style={{ position: "relative", maxWidth: 900 }}>
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-9" style={{ background: "rgba(75,95,232,0.08)", border: "1px solid rgba(75,95,232,0.25)" }}>
+            <Layers size={12} style={{ color: "#4B5FE8" }} />
+            <span className="text-xs uppercase tracking-[0.2em] font-semibold" style={{ color: "#4B5FE8" }}>
               Flux — Built for university students
             </span>
           </div>
           <h1 className="text-5xl md:text-7xl mb-6 leading-[1.05]" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, color: "#0f1115", letterSpacing: "-0.03em" }}>
-            The AI that went to<br /><span style={{ color: "#3b82f6" }}>every one of your classes.</span>
+            The AI that went to<br />
+            <span
+              style={{
+                backgroundImage: "linear-gradient(110deg, #4B5FE8 0%, #6E7FF3 55%, #9F7BFA 100%)",
+                WebkitBackgroundClip: "text",
+                backgroundClip: "text",
+                color: "transparent",
+              }}
+            >
+              every one of your classes.
+            </span>
           </h1>
-          <p className="text-base md:text-lg mb-7 leading-relaxed max-w-xl" style={{ color: "rgba(0,0,0,0.65)" }}>
+          <p className="text-base md:text-lg mb-7 leading-relaxed max-w-xl" style={{ color: "rgba(15,17,21,0.6)" }}>
             Record lectures, paste videos, drop files, take notes. Flux remembers your whole semester — ask your course anything and get answers with sources.
           </p>
           <div className="mb-9 px-2 w-full flex justify-center">
             <RotatingPrompts />
           </div>
-          <div className="flex gap-3 mb-5">
-            <Link href="/sign-up" className="font-semibold px-10 py-4 rounded-full text-base transition-all hover:opacity-90" style={{ background: "#2563eb", color: "white" }}>
-              Get started free
+          <div className="flex flex-wrap justify-center gap-3 mb-5">
+            <Link
+              href="/sign-up"
+              className="font-semibold px-10 py-4 rounded-full text-base transition-all hover:opacity-90 hover:-translate-y-0.5"
+              style={{
+                background: "linear-gradient(135deg, #4B5FE8 0%, #6E7FF3 100%)",
+                color: "white",
+                boxShadow: "0 10px 30px rgba(75,95,232,0.35)",
+              }}
+            >
+              Get started free →
             </Link>
-            <Link href="/sign-in" className="font-medium px-10 py-4 rounded-full text-base transition-all" style={{ border: "1.5px solid rgba(0,0,0,0.2)", color: "#0f1115", background: "rgba(0,0,0,0.07)" }}>
+            <Link
+              href="/sign-in"
+              className="font-medium px-10 py-4 rounded-full text-base transition-all hover:border-[rgba(75,95,232,0.4)]"
+              style={{ border: "1.5px solid rgba(15,17,21,0.15)", color: "#0f1115", background: "white" }}
+            >
               Sign in
             </Link>
           </div>
-          <span className="text-sm" style={{ color: "rgba(0,0,0,0.4)" }}>Free to start · No credit card needed</span>
+          <span className="text-sm" style={{ color: "rgba(15,17,21,0.4)" }}>Free to start · No credit card needed</span>
         </div>
       </div>
 
       {/* Demo */}
       <div className="relative py-14 md:py-20">
-        {/* sidewalk-gray curve behind the first demo — thin, understated */}
-        <svg aria-hidden="true" className="absolute inset-0" preserveAspectRatio="none" viewBox="0 0 1440 900" xmlns="http://www.w3.org/2000/svg" style={{ width: "100%", height: "100%", pointerEvents: "none", zIndex: 0 }}>
-          <path d="M -200,760 C 420,-40 1020,940 1640,140" fill="none" stroke="rgba(168,162,158,0.4)" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
-        </svg>
         <ScrollReveal className="relative z-10 flex justify-center px-4 md:px-12 pb-12" delay={100}>
           <ProductDemo />
         </ScrollReveal>
@@ -159,7 +123,7 @@ export default async function LandingPage() {
       <ScrollReveal className="px-6 md:px-16 py-16 md:py-20">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-12">
-            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: "#3b82f6", marginBottom: 14 }}>How it works</div>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: "#6E7FF3", marginBottom: 14 }}>How it works</div>
             <h2 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: "clamp(28px, 4.5vw, 44px)", color: "#0f1115", letterSpacing: "-0.03em", lineHeight: 1.1 }}>
               Not a note-taking app.<br />A course memory.
             </h2>
@@ -176,7 +140,7 @@ export default async function LandingPage() {
               { n: "03", title: "Ask your course", text: "“Explain the Chain Rule the way my professor did.” Answers come from your actual course materials — not generic AI knowledge — cited to the exact lecture minute or page." },
             ].map(step => (
               <div key={step.n} className="rounded-2xl p-7" style={{ background: "rgba(0,0,0,0.03)", border: "1px solid rgba(0,0,0,0.08)" }}>
-                <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 13, color: "#3b82f6", letterSpacing: "0.1em", marginBottom: 14 }}>{step.n}</div>
+                <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 13, color: "#6E7FF3", letterSpacing: "0.1em", marginBottom: 14 }}>{step.n}</div>
                 <div className="text-lg font-bold mb-3" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: "#0f1115", letterSpacing: "-0.01em" }}>{step.title}</div>
                 <p className="text-sm leading-relaxed" style={{ color: "rgba(0,0,0,0.5)" }}>{step.text}</p>
               </div>
@@ -188,7 +152,7 @@ export default async function LandingPage() {
       {/* Recording animation demo */}
       <ScrollReveal className="flex flex-col items-center px-4 md:px-12 pb-20 gap-8" delay={150}>
         <div className="text-center max-w-2xl">
-          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: "#3b82f6", marginBottom: 14 }}>What you get</div>
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: "#6E7FF3", marginBottom: 14 }}>What you get</div>
           <h2 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: "clamp(30px, 5vw, 52px)", color: "#0f1115", letterSpacing: "-0.03em", lineHeight: 1.1, marginBottom: 16 }}>
             From lecture to study-ready in minutes.
           </h2>
@@ -305,12 +269,12 @@ export default async function LandingPage() {
       {/* CTA footer */}
       <ScrollReveal className="py-24 text-center px-6">
         <h2 className="text-4xl md:text-5xl mb-4" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, color: "#0f1115", letterSpacing: "-0.03em" }}>
-          Ask your semester <span style={{ color: "#3b82f6" }}>anything.</span>
+          Ask your semester <span style={{ color: "#6E7FF3" }}>anything.</span>
         </h2>
         <p className="text-sm mb-8 max-w-sm mx-auto" style={{ color: "rgba(0,0,0,0.55)", lineHeight: 1.7 }}>
           Every lecture, file, and note — remembered. Start capturing today and walk into finals with a full semester behind you.
         </p>
-        <Link href="/sign-up" className="font-semibold px-10 py-3.5 rounded-full text-sm transition-all hover:opacity-90" style={{ background: "#2563eb", color: "white" }}>
+        <Link href="/sign-up" className="font-semibold px-10 py-3.5 rounded-full text-sm transition-all hover:opacity-90" style={{ background: "#4B5FE8", color: "white" }}>
           Get started free
         </Link>
       </ScrollReveal>
@@ -320,11 +284,11 @@ export default async function LandingPage() {
         <div className="max-w-6xl mx-auto px-6 md:px-16 py-12 flex flex-col md:flex-row items-center md:items-start justify-between gap-8">
           <div className="flex flex-col items-center md:items-start gap-3">
             <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ background: "#2563eb" }}>
+              <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ background: "#4B5FE8" }}>
                 <Layers size={13} style={{ color: "#0f1115" }} />
               </div>
               <span style={{ fontSize: 17, fontWeight: 800, color: "#0f1115", letterSpacing: "-0.4px" }}>
-                Fl<span style={{ color: "#3b82f6" }}>u</span>x
+                Fl<span style={{ color: "#6E7FF3" }}>u</span>x
               </span>
             </div>
             <p className="text-xs max-w-[240px] text-center md:text-left" style={{ color: "rgba(0,0,0,0.35)", lineHeight: 1.6 }}>

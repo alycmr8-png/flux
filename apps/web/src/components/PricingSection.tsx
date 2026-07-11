@@ -4,16 +4,16 @@ import { Check } from "lucide-react";
 import { useState } from "react";
 
 const FEATURES = [
+  "Ask your course — answers with sources",
   "Unlimited lecture recordings",
-  "AI-generated cheat sheets",
-  "Auto-generated quizzes & flashcards",
-  "Full study books from lectures",
+  "AI summaries & key points",
+  "Flashcards & practice questions",
+  "Full study books from your course memory",
   "YouTube video to study material",
-  "AI tutor chatbot",
-  "Calendar & deadline tracking",
   "Upload documents & slides",
-  "Multi-language support (5 languages)",
+  "Calendar & deadline tracking",
   "Notes per class",
+  "English & French support",
 ];
 
 const PLANS = [
@@ -78,12 +78,12 @@ export function PricingSection() {
                 className="relative flex flex-col rounded-2xl p-7 transition-all duration-200"
                 style={{
                   background: isRecommended
-                    ? "rgba(37,99,235,0.06)"
+                    ? "rgba(75,95,232,0.06)"
                     : "#ffffff",
                   border: isRecommended
-                    ? "1.5px solid #2563eb"
+                    ? "1.5px solid #4B5FE8"
                     : "1px solid rgba(0,0,0,0.1)",
-                  boxShadow: isRecommended ? "0 10px 34px rgba(37,99,235,0.14)" : "0 1px 3px rgba(0,0,0,0.06)",
+                  boxShadow: isRecommended ? "0 10px 34px rgba(75,95,232,0.14)" : "0 1px 3px rgba(0,0,0,0.06)",
                   transform: isHovered ? "translateY(-4px)" : "translateY(0)",
                 }}
               >
@@ -91,7 +91,7 @@ export function PricingSection() {
                 {plan.badge && (
                   <div
                     className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-xs font-semibold"
-                    style={{ background: isRecommended ? "#2563eb" : "rgba(0,0,0,0.08)", color: isRecommended ? "white" : "#0f1115", whiteSpace: "nowrap" }}
+                    style={{ background: isRecommended ? "#4B5FE8" : "rgba(0,0,0,0.08)", color: isRecommended ? "white" : "#0f1115", whiteSpace: "nowrap" }}
                   >
                     {isRecommended && <span className="mr-1">Recommended · </span>}{plan.badge}
                   </div>
@@ -120,7 +120,7 @@ export function PricingSection() {
                 <ul className="flex flex-col gap-3 flex-1 mb-8">
                   {FEATURES.map(f => (
                     <li key={f} className="flex items-center gap-3">
-                      <Check size={13} style={{ color: isRecommended ? "#2563eb" : "rgba(0,0,0,0.45)", flexShrink: 0 }} />
+                      <Check size={13} style={{ color: isRecommended ? "#4B5FE8" : "rgba(0,0,0,0.45)", flexShrink: 0 }} />
                       <span style={{ fontSize: 13, color: "rgba(0,0,0,0.7)" }}>{f}</span>
                     </li>
                   ))}
@@ -131,7 +131,7 @@ export function PricingSection() {
                   href="/sign-up"
                   className="w-full py-3 rounded-xl font-medium text-sm transition-all text-center block"
                   style={{
-                    background: isRecommended ? "#2563eb" : "rgba(0,0,0,0.05)",
+                    background: isRecommended ? "#4B5FE8" : "rgba(0,0,0,0.05)",
                     color: isRecommended ? "white" : "#0f1115",
                     border: isRecommended ? "none" : "1px solid rgba(0,0,0,0.12)",
                   }}

@@ -31,7 +31,7 @@ const CAPTIONS: Record<string, { icon: any; title: string; desc: string; flagshi
   "class-studybook-done":   { icon: BookMarked,   title: "A full study book, auto-built",    desc: "Chapters, glossary, and practice — generated from your whole course memory." },
 };
 
-const ACCENT = "#3b82f6";
+const ACCENT = "#6E7FF3";
 
 const NAV = [
   { key: "home",   icon: Home,       label: "Home"      },
@@ -65,7 +65,7 @@ const RECORDINGS = [
 ];
 
 const KEY_POINTS = [
-  { cat: "Definition", text: "Cognitive dissonance is mental conflict from contradictory beliefs", color: "#3b82f6", bg: "rgba(59,130,246,0.12)" },
+  { cat: "Definition", text: "Cognitive dissonance is mental conflict from contradictory beliefs", color: "#6E7FF3", bg: "rgba(110,127,243,0.12)" },
   { cat: "Important",  text: "The brain resolves dissonance by changing beliefs or adding new ones", color: "#f97316", bg: "rgba(249,115,22,0.12)" },
   { cat: "Example",    text: "Pavlov's dogs — conditioned response through repeated stimulus pairing", color: "#22c55e", bg: "rgba(34,197,94,0.12)" },
 ];
@@ -78,7 +78,7 @@ const ASK_CITATIONS = [
 ];
 
 const STUDY_BOOKS = [
-  { title: "Midterm Complete Study Guide", chapters: 6, terms: 24, color: "#3b82f6" },
+  { title: "Midterm Complete Study Guide", chapters: 6, terms: 24, color: "#6E7FF3" },
   { title: "Week 3 — Memory and Cognition", chapters: 4, terms: 16, color: "#a78bfa" },
   { title: "Final Exam Master Book",        chapters: 8, terms: 36, color: "#10b981" },
 ];
@@ -97,7 +97,7 @@ function Sidebar() {
           const active = key === "record";
           return (
             <div key={key} className="flex items-center gap-2 px-2.5 py-2 rounded-lg"
-              style={{ background: active ? "rgba(37,99,235,0.18)" : "transparent", color: active ? "#93c5fd" : "rgba(255,255,255,0.5)" }}>
+              style={{ background: active ? "rgba(75,95,232,0.18)" : "transparent", color: active ? "#AEB8FA" : "rgba(255,255,255,0.5)" }}>
               <Icon size={11} />
               <span style={{ fontSize: 10, fontWeight: active ? 600 : 400 }}>{label}</span>
             </div>
@@ -114,14 +114,14 @@ function ClassesView({ cardRef }: { cardRef: React.RefObject<HTMLDivElement | nu
     <div className="flex-1 p-6">
       <div className="flex items-center justify-between mb-5">
         <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 20, color: "white", fontWeight: 700 }}>Workspace</div>
-        <div className="flex items-center gap-1 px-3 py-1.5 rounded-full" style={{ background: "#2563eb", color: "white", fontSize: 11 }}>
+        <div className="flex items-center gap-1 px-3 py-1.5 rounded-full" style={{ background: "#4B5FE8", color: "white", fontSize: 11 }}>
           <Plus size={11} /> New Class
         </div>
       </div>
       <div className="grid grid-cols-2 gap-3">
         {COURSES.map((c, i) => (
           <div key={i} ref={i === 0 ? cardRef : undefined} className="rounded-xl p-4"
-            style={{ background: i === 0 ? "rgba(37,99,235,0.18)" : "rgba(255,255,255,0.05)", border: `1px solid ${i === 0 ? "#2563eb" : "rgba(255,255,255,0.1)"}` }}>
+            style={{ background: i === 0 ? "rgba(75,95,232,0.18)" : "rgba(255,255,255,0.05)", border: `1px solid ${i === 0 ? "#4B5FE8" : "rgba(255,255,255,0.1)"}` }}>
             <div className="w-7 h-7 rounded-lg flex items-center justify-center mb-2.5" style={{ background: "rgba(255,255,255,0.12)" }}>
               <Layers size={12} style={{ color: "rgba(255,255,255,0.65)" }} />
             </div>
@@ -145,17 +145,17 @@ function ClassView({ tab, phase, refs }: {
     <div className="flex-1 flex flex-col overflow-hidden">
       {/* Feature tabs */}
       <div className="px-5 pt-4">
-        <div className="flex gap-0.5 p-1 rounded-xl w-fit max-w-full overflow-hidden" style={{ background: "rgba(37,99,235,0.12)", border: "1px solid rgba(37,99,235,0.2)" }}>
+        <div className="flex gap-0.5 p-1 rounded-xl w-fit max-w-full overflow-hidden" style={{ background: "rgba(75,95,232,0.12)", border: "1px solid rgba(75,95,232,0.2)" }}>
           {CLASS_TABS.map(({ key, label, icon: Icon }) => {
             const activeTab = tab === key;
             return (
               <div key={key} ref={refs[key]} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg transition-all"
                 style={{
-                  background: activeTab ? "#2563eb" : "transparent",
+                  background: activeTab ? "#4B5FE8" : "transparent",
                   color: activeTab ? "white" : "rgba(255,255,255,0.55)",
                   fontSize: 10,
                   fontWeight: activeTab ? 600 : 500,
-                  boxShadow: activeTab ? "0 2px 10px rgba(37,99,235,0.5)" : "none",
+                  boxShadow: activeTab ? "0 2px 10px rgba(75,95,232,0.5)" : "none",
                 }}>
                 <Icon size={11} />{label}
               </div>
@@ -187,9 +187,9 @@ function ClassView({ tab, phase, refs }: {
                   <div className="w-6 h-6 rounded-md flex items-center justify-center shrink-0" style={{ background: "rgba(255,255,255,0.1)" }}><Mic2 size={11} style={{ color: "rgba(255,255,255,0.65)" }} /></div>
                   <div className="flex-1 min-w-0">
                     <div style={{ fontSize: 11, color: "white", fontWeight: 500 }}>{title}</div>
-                    <div style={{ fontSize: 9, color: "#93c5fd" }}>Transcript · Summary · Key Points · Ask AI</div>
+                    <div style={{ fontSize: 9, color: "#AEB8FA" }}>Transcript · Summary · Key Points · Ask AI</div>
                   </div>
-                  <div className="px-2 py-0.5 rounded-full" style={{ background: "rgba(37,99,235,0.2)", color: "#93c5fd", fontSize: 9 }}>Open</div>
+                  <div className="px-2 py-0.5 rounded-full" style={{ background: "rgba(75,95,232,0.2)", color: "#AEB8FA", fontSize: 9 }}>Open</div>
                 </div>
               ))}
             </div>
@@ -200,18 +200,18 @@ function ClassView({ tab, phase, refs }: {
         {tab === "video" && phase === "idle" && (
           <div style={{ maxWidth: 440 }}>
             <div className="flex gap-2 mb-3">
-              <div className="flex-1 flex items-center gap-2 px-3 py-2.5 rounded-xl" style={{ background: "rgba(37,99,235,0.1)", border: "1px solid rgba(37,99,235,0.28)" }}>
+              <div className="flex-1 flex items-center gap-2 px-3 py-2.5 rounded-xl" style={{ background: "rgba(75,95,232,0.1)", border: "1px solid rgba(75,95,232,0.28)" }}>
                 <Youtube size={13} style={{ color: "#ef4444" }} />
                 <span style={{ fontSize: 11, color: "rgba(255,255,255,0.6)" }}>youtube.com/watch?v=lecture</span>
               </div>
-              <div className="px-4 py-2.5 rounded-xl font-semibold" style={{ background: "#2563eb", color: "white", fontSize: 11 }}>Load</div>
+              <div className="px-4 py-2.5 rounded-xl font-semibold" style={{ background: "#4B5FE8", color: "white", fontSize: 11 }}>Load</div>
             </div>
             <div className="rounded-xl overflow-hidden mb-3" style={{ aspectRatio: "16/9", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: "rgba(239,68,68,0.9)" }}>
                 <Youtube size={22} style={{ color: "white" }} />
               </div>
             </div>
-            <div className="flex gap-1 p-1 rounded-lg" style={{ background: "rgba(37,99,235,0.1)", border: "1px solid rgba(37,99,235,0.18)" }}>
+            <div className="flex gap-1 p-1 rounded-lg" style={{ background: "rgba(75,95,232,0.1)", border: "1px solid rgba(75,95,232,0.18)" }}>
               {["Transcript","Summary","Key Points","Chatbot"].map(t => (
                 <div key={t} className="flex-1 text-center py-1.5 rounded-md" style={{ fontSize: 9, color: "rgba(255,255,255,0.6)" }}>{t}</div>
               ))}
@@ -221,7 +221,7 @@ function ClassView({ tab, phase, refs }: {
 
         {tab === "video" && phase === "keypoints" && (
           <div style={{ maxWidth: 460 }}>
-            <div style={{ fontSize: 9, textTransform: "uppercase", letterSpacing: "0.12em", color: "#93c5fd", marginBottom: 10, fontWeight: 600 }}>Key Points</div>
+            <div style={{ fontSize: 9, textTransform: "uppercase", letterSpacing: "0.12em", color: "#AEB8FA", marginBottom: 10, fontWeight: 600 }}>Key Points</div>
             <div className="space-y-2.5">
               {KEY_POINTS.map((kp, i) => (
                 <div key={i} className="flex gap-2.5 items-start rounded-xl px-3.5 py-3" style={{ background: kp.bg, border: `1px solid ${kp.color}33` }}>
@@ -237,16 +237,16 @@ function ClassView({ tab, phase, refs }: {
         {tab === "ask" && (
           <div className="flex flex-col gap-3 mx-auto" style={{ maxWidth: 480 }}>
             <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full" style={{ background: "rgba(37,99,235,0.2)", border: "1px solid rgba(37,99,235,0.4)" }}>
-                <Sparkles size={12} style={{ color: "#93c5fd" }} />
-                <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.04em", color: "#bfdbfe" }}>Ask your course</span>
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full" style={{ background: "rgba(75,95,232,0.2)", border: "1px solid rgba(75,95,232,0.4)" }}>
+                <Sparkles size={12} style={{ color: "#AEB8FA" }} />
+                <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.04em", color: "#C7CEFB" }}>Ask your course</span>
               </div>
               <span style={{ fontSize: 10, color: "rgba(255,255,255,0.5)", marginLeft: "auto" }}>In memory: 12 lectures · 8 files · 5 notes</span>
             </div>
 
             {/* User question */}
             <div className="flex justify-end">
-              <div className="px-3.5 py-2.5 max-w-[88%]" style={{ background: "#2563eb", color: "white", borderRadius: "16px 16px 4px 16px", fontSize: 12.5, lineHeight: 1.5, fontWeight: 500 }}>
+              <div className="px-3.5 py-2.5 max-w-[88%]" style={{ background: "#4B5FE8", color: "white", borderRadius: "16px 16px 4px 16px", fontSize: 12.5, lineHeight: 1.5, fontWeight: 500 }}>
                 {ASK_QUESTION}
               </div>
             </div>
@@ -273,7 +273,7 @@ function ClassView({ tab, phase, refs }: {
                   <span style={{ fontSize: 9, textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(255,255,255,0.45)", fontWeight: 600 }}>Sources</span>
                   {ASK_CITATIONS.map(c => (
                     <span key={c.n} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full"
-                      style={{ background: "rgba(37,99,235,0.2)", color: "#bfdbfe", border: "1px solid rgba(37,99,235,0.4)", fontSize: 10, fontWeight: 500 }}>
+                      style={{ background: "rgba(75,95,232,0.2)", color: "#C7CEFB", border: "1px solid rgba(75,95,232,0.4)", fontSize: 10, fontWeight: 500 }}>
                       <span style={{ fontWeight: 800 }}>[{c.n}]</span> {c.label}
                     </span>
                   ))}
@@ -283,7 +283,7 @@ function ClassView({ tab, phase, refs }: {
 
             <div className="flex gap-2 mt-1">
               <div className="flex-1 px-3.5 py-2.5 rounded-xl" style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)", fontSize: 11, color: "rgba(255,255,255,0.4)" }}>Ask anything about this course…</div>
-              <div className="px-4 py-2.5 rounded-xl font-semibold" style={{ background: "#2563eb", color: "white", fontSize: 11 }}>Send</div>
+              <div className="px-4 py-2.5 rounded-xl font-semibold" style={{ background: "#4B5FE8", color: "white", fontSize: 11 }}>Send</div>
             </div>
           </div>
         )}
@@ -405,8 +405,8 @@ export function ProductDemo() {
         </div>
 
         <div className="flex items-start gap-3.5 mt-4 px-1 max-w-xl mx-auto" style={{ minHeight: 70 }}>
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: cap?.flagship ? "rgba(37,99,235,0.12)" : "rgba(0,0,0,0.05)", border: cap?.flagship ? "1px solid rgba(37,99,235,0.35)" : "1px solid rgba(0,0,0,0.1)" }}>
-            <CapIcon size={18} style={{ color: cap?.flagship ? "#2563eb" : "rgba(0,0,0,0.7)" }} />
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: cap?.flagship ? "rgba(75,95,232,0.12)" : "rgba(0,0,0,0.05)", border: cap?.flagship ? "1px solid rgba(75,95,232,0.35)" : "1px solid rgba(0,0,0,0.1)" }}>
+            <CapIcon size={18} style={{ color: cap?.flagship ? "#4B5FE8" : "rgba(0,0,0,0.7)" }} />
           </div>
           <div className="flex-1 min-w-0 text-left">
             <div className="flex items-center gap-2 flex-wrap">
@@ -414,7 +414,7 @@ export function ProductDemo() {
                 {cap?.title}
               </span>
               {cap?.flagship && (
-                <span className="px-2 py-0.5 rounded-full" style={{ fontSize: 9, fontWeight: 800, letterSpacing: "0.08em", textTransform: "uppercase", color: "#2563eb", background: "rgba(37,99,235,0.12)", border: "1px solid rgba(37,99,235,0.3)" }}>
+                <span className="px-2 py-0.5 rounded-full" style={{ fontSize: 9, fontWeight: 800, letterSpacing: "0.08em", textTransform: "uppercase", color: "#4B5FE8", background: "rgba(75,95,232,0.12)", border: "1px solid rgba(75,95,232,0.3)" }}>
                   ★ Core feature
                 </span>
               )}

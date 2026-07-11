@@ -38,7 +38,7 @@ function RecordPreview() {
 
       {/* Previous recordings — white card like platform */}
       <div className="bg-white rounded-2xl p-4" style={{ border: "1px solid rgba(0,0,0,0.08)" }}>
-        <div className="text-[10px] uppercase tracking-widest mb-3" style={{ color: "#3b82f6", fontWeight: 600 }}>Previous recordings</div>
+        <div className="text-[10px] uppercase tracking-widest mb-3" style={{ color: "#6E7FF3", fontWeight: 600 }}>Previous recordings</div>
         {[
           { title: "Week 3 — Memory & Cognition",  dur: "48:12" },
           { title: "Week 2 — Behavioral Theory",   dur: "51:03" },
@@ -48,7 +48,7 @@ function RecordPreview() {
             <span className="text-sm text-[#111110]">{title}</span>
             <div className="flex items-center gap-2">
               <span className="text-xs" style={{ color: "#888" }}>{dur}</span>
-              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: "rgba(37,99,235,0.1)", color: "#2563eb" }}>AI ready</span>
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: "rgba(75,95,232,0.1)", color: "#4B5FE8" }}>AI ready</span>
             </div>
           </div>
         ))}
@@ -60,7 +60,7 @@ function RecordPreview() {
 function NotePreview() {
   return (
     <div className="bg-white rounded-2xl p-6" style={{ border: "1px solid rgba(0,0,0,0.08)" }}>
-      <div className="text-[10px] uppercase tracking-widest mb-1 font-semibold" style={{ color: "#3b82f6" }}>Take Note</div>
+      <div className="text-[10px] uppercase tracking-widest mb-1 font-semibold" style={{ color: "#6E7FF3" }}>Take Note</div>
       <div className="text-base font-semibold text-[#111110] mb-4">Week 3 — Memory & Cognition</div>
       <div className="space-y-2 text-sm text-[#555] leading-relaxed">
         <p>Short-term memory holds roughly <strong className="text-[#111110]">7 ± 2 items</strong> at once (Miller's Law).</p>
@@ -68,7 +68,7 @@ function NotePreview() {
         <p>The <strong className="text-[#111110]">testing effect</strong>: actively retrieving information strengthens memory more than re-reading.</p>
       </div>
       <div className="mt-4 pt-4 border-t border-[rgba(0,0,0,0.06)] flex gap-2">
-        <span className="text-xs px-2.5 py-1 rounded-full" style={{ background: "rgba(37,99,235,0.08)", color: "#2563eb" }}>PSYC 301</span>
+        <span className="text-xs px-2.5 py-1 rounded-full" style={{ background: "rgba(75,95,232,0.08)", color: "#4B5FE8" }}>PSYC 301</span>
         <span className="text-xs px-2.5 py-1 rounded-full" style={{ background: "rgba(0,0,0,0.04)", color: "#888" }}>Week 3</span>
       </div>
     </div>
@@ -121,19 +121,19 @@ function QuizPreview() {
           <button key={i} onClick={() => setSelected(i)}
             className="w-full text-left flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm transition-all"
             style={{
-              border: `1px solid ${selected === i ? "#2563eb" : "rgba(0,0,0,0.1)"}`,
-              background: selected === i ? "rgba(37,99,235,0.1)" : "rgba(0,0,0,0.04)",
+              border: `1px solid ${selected === i ? "#4B5FE8" : "rgba(0,0,0,0.1)"}`,
+              background: selected === i ? "rgba(75,95,232,0.1)" : "rgba(0,0,0,0.04)",
               color: selected === i ? "#0f1115" : "rgba(0,0,0,0.6)",
             }}>
             <span className="w-3 h-3 rounded-full border shrink-0"
-              style={{ borderColor: selected === i ? "#2563eb" : "rgba(0,0,0,0.3)", background: selected === i ? "#2563eb" : "transparent" }} />
+              style={{ borderColor: selected === i ? "#4B5FE8" : "rgba(0,0,0,0.3)", background: selected === i ? "#4B5FE8" : "transparent" }} />
             {opt}
           </button>
         ))}
       </div>
       <div className="flex items-center justify-between">
         <span className="text-xs" style={{ color: "rgba(0,0,0,0.35)" }}>Auto-generated from your lecture</span>
-        <button className="text-xs font-medium px-4 py-2 rounded-full" style={{ background: "#2563eb", color: "white" }}>Next →</button>
+        <button className="text-xs font-medium px-4 py-2 rounded-full" style={{ background: "#4B5FE8", color: "white" }}>Next →</button>
       </div>
     </div>
   );
@@ -184,11 +184,11 @@ function VideoPreview() {
     <div className="space-y-4">
       {/* URL bar */}
       <div className="flex gap-2">
-        <div className="flex-1 flex items-center gap-2 px-4 py-3 rounded-xl" style={{ background: "rgba(37,99,235,0.08)", border: "1px solid rgba(37,99,235,0.25)" }}>
-          <Youtube size={14} style={{ color: "#3b82f6" }} />
+        <div className="flex-1 flex items-center gap-2 px-4 py-3 rounded-xl" style={{ background: "rgba(75,95,232,0.08)", border: "1px solid rgba(75,95,232,0.25)" }}>
+          <Youtube size={14} style={{ color: "#6E7FF3" }} />
           <span className="text-sm" style={{ color: "rgba(0,0,0,0.4)" }}>youtube.com/watch?v=vo4pMVb0R6M</span>
         </div>
-        <div className="px-5 py-3 rounded-xl text-sm font-semibold shrink-0" style={{ background: "#2563eb", color: "white" }}>Load</div>
+        <div className="px-5 py-3 rounded-xl text-sm font-semibold shrink-0" style={{ background: "#4B5FE8", color: "white" }}>Load</div>
       </div>
 
       {/* Real YouTube embed */}
@@ -202,11 +202,11 @@ function VideoPreview() {
       </div>
 
       {/* Sub-tabs */}
-      <div className="flex gap-1 p-1 rounded-xl overflow-x-auto" style={{ background: "rgba(37,99,235,0.1)", border: "1px solid rgba(37,99,235,0.15)" }}>
+      <div className="flex gap-1 p-1 rounded-xl overflow-x-auto" style={{ background: "rgba(75,95,232,0.1)", border: "1px solid rgba(75,95,232,0.15)" }}>
         {vtabs.map(t => (
           <button key={t} onClick={() => setVtab(t.toLowerCase())}
             className="flex-1 py-2.5 px-3 rounded-lg text-sm font-medium transition-all whitespace-nowrap"
-            style={{ background: vtab === t.toLowerCase() ? "#2563eb" : "transparent", color: vtab === t.toLowerCase() ? "white" : "rgba(0,0,0,0.45)" }}>
+            style={{ background: vtab === t.toLowerCase() ? "#4B5FE8" : "transparent", color: vtab === t.toLowerCase() ? "white" : "rgba(0,0,0,0.45)" }}>
             {t}
           </button>
         ))}
@@ -232,7 +232,7 @@ function VideoPreview() {
                 "Modern psychology uses 7 perspectives: biological, evolutionary, psychodynamic, behavioral, cognitive, social-cultural, humanistic",
               ].map((b, i) => (
                 <div key={i} className="flex items-start gap-2 text-sm" style={{ color: "rgba(0,0,0,0.65)" }}>
-                  <span className="mt-1.5 w-1.5 h-1.5 rounded-full shrink-0" style={{ background: "#3b82f6" }} />
+                  <span className="mt-1.5 w-1.5 h-1.5 rounded-full shrink-0" style={{ background: "#6E7FF3" }} />
                   {b}
                 </div>
               ))}
@@ -254,7 +254,7 @@ function VideoPreview() {
               ["04:10", "Today, psychologists work across 7 major perspectives, often combining them to understand complex human behavior."],
             ].map(([t, line]) => (
               <div key={t} className="flex gap-3 text-sm">
-                <span className="shrink-0 font-mono text-xs pt-0.5" style={{ color: "#2563eb", minWidth: 36 }}>{t}</span>
+                <span className="shrink-0 font-mono text-xs pt-0.5" style={{ color: "#4B5FE8", minWidth: 36 }}>{t}</span>
                 <span style={{ color: "rgba(0,0,0,0.65)", lineHeight: 1.6 }}>{line}</span>
               </div>
             ))}
@@ -271,11 +271,11 @@ function VideoPreview() {
                   onClick={() => setFlipped(p => { const s = new Set(p); s.has(i) ? s.delete(i) : s.add(i); return s; })}
                   className="cursor-pointer rounded-xl p-4 flex flex-col justify-center transition-all"
                   style={{
-                    background: flipped.has(i) ? "rgba(37,99,235,0.15)" : "rgba(0,0,0,0.04)",
-                    border: `1px solid ${flipped.has(i) ? "#3b82f6" : "rgba(0,0,0,0.1)"}`,
+                    background: flipped.has(i) ? "rgba(75,95,232,0.15)" : "rgba(0,0,0,0.04)",
+                    border: `1px solid ${flipped.has(i) ? "#6E7FF3" : "rgba(0,0,0,0.1)"}`,
                     minHeight: 100,
                   }}>
-                  <div className="text-[10px] uppercase tracking-widest mb-2" style={{ color: flipped.has(i) ? "#2563eb" : "rgba(0,0,0,0.35)" }}>
+                  <div className="text-[10px] uppercase tracking-widest mb-2" style={{ color: flipped.has(i) ? "#4B5FE8" : "rgba(0,0,0,0.35)" }}>
                     {flipped.has(i) ? "Answer" : "Question"}
                   </div>
                   <p className="text-sm leading-relaxed" style={{ color: flipped.has(i) ? "#0f1115" : "rgba(0,0,0,0.7)" }}>
@@ -306,12 +306,12 @@ function VideoPreview() {
                   <button key={i} onClick={() => setQuizSelected(i)}
                     className="w-full text-left flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-all"
                     style={{
-                      border: `1px solid ${picked ? "#2563eb" : "rgba(0,0,0,0.1)"}`,
-                      background: picked ? "rgba(37,99,235,0.15)" : "rgba(0,0,0,0.05)",
+                      border: `1px solid ${picked ? "#4B5FE8" : "rgba(0,0,0,0.1)"}`,
+                      background: picked ? "rgba(75,95,232,0.15)" : "rgba(0,0,0,0.05)",
                       color: picked ? "#0f1115" : "rgba(0,0,0,0.65)",
                     }}>
                     <span className="w-3.5 h-3.5 rounded-full border shrink-0"
-                      style={{ borderColor: picked ? "#3b82f6" : "rgba(0,0,0,0.3)", background: picked ? "#2563eb" : "transparent" }} />
+                      style={{ borderColor: picked ? "#6E7FF3" : "rgba(0,0,0,0.3)", background: picked ? "#4B5FE8" : "transparent" }} />
                     {opt.label}
                   </button>
                 );
@@ -334,23 +334,23 @@ function VideoPreview() {
         {vtab === "chatbot" && (
           <div className="space-y-3">
             <div className="flex justify-end">
-              <div className="px-4 py-2.5 rounded-2xl rounded-tr-sm text-sm max-w-[80%]" style={{ background: "#2563eb", color: "white" }}>
+              <div className="px-4 py-2.5 rounded-2xl rounded-tr-sm text-sm max-w-[80%]" style={{ background: "#4B5FE8", color: "white" }}>
                 What's the difference between structuralism and functionalism?
               </div>
             </div>
             <div className="flex justify-start">
-              <div className="px-4 py-2.5 rounded-2xl rounded-tl-sm text-sm max-w-[85%] leading-relaxed" style={{ background: "rgba(0,0,0,0.06)", color: "rgba(0,0,0,0.75)", border: "1px solid rgba(37,99,235,0.2)" }}>
-                At <strong style={{ color: "#2563eb" }}>0:38</strong>, the video explains: <strong>structuralism</strong> (Wundt) asked <em>what</em> the mind is made of — using introspection to identify basic elements. <strong>Functionalism</strong> (James) asked <em>why</em> the mind works as it does — how mental processes help us adapt and survive.
+              <div className="px-4 py-2.5 rounded-2xl rounded-tl-sm text-sm max-w-[85%] leading-relaxed" style={{ background: "rgba(0,0,0,0.06)", color: "rgba(0,0,0,0.75)", border: "1px solid rgba(75,95,232,0.2)" }}>
+                At <strong style={{ color: "#4B5FE8" }}>0:38</strong>, the video explains: <strong>structuralism</strong> (Wundt) asked <em>what</em> the mind is made of — using introspection to identify basic elements. <strong>Functionalism</strong> (James) asked <em>why</em> the mind works as it does — how mental processes help us adapt and survive.
               </div>
             </div>
             <div className="flex justify-end">
-              <div className="px-4 py-2.5 rounded-2xl rounded-tr-sm text-sm max-w-[80%]" style={{ background: "#2563eb", color: "white" }}>
+              <div className="px-4 py-2.5 rounded-2xl rounded-tr-sm text-sm max-w-[80%]" style={{ background: "#4B5FE8", color: "white" }}>
                 Which came first historically?
               </div>
             </div>
             <div className="flex justify-start">
-              <div className="px-4 py-2.5 rounded-2xl rounded-tl-sm text-sm max-w-[85%] leading-relaxed" style={{ background: "rgba(0,0,0,0.06)", color: "rgba(0,0,0,0.75)", border: "1px solid rgba(37,99,235,0.2)" }}>
-                Structuralism came first — Wundt's lab opened in <strong style={{ color: "#2563eb" }}>1879</strong>. Functionalism emerged shortly after, championed by William James who disagreed with reducing the mind to static elements.
+              <div className="px-4 py-2.5 rounded-2xl rounded-tl-sm text-sm max-w-[85%] leading-relaxed" style={{ background: "rgba(0,0,0,0.06)", color: "rgba(0,0,0,0.75)", border: "1px solid rgba(75,95,232,0.2)" }}>
+                Structuralism came first — Wundt's lab opened in <strong style={{ color: "#4B5FE8" }}>1879</strong>. Functionalism emerged shortly after, championed by William James who disagreed with reducing the mind to static elements.
               </div>
             </div>
           </div>
@@ -378,7 +378,7 @@ export function FeaturesShowcase() {
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="text-center mb-10">
-          <div className="text-sm uppercase tracking-[0.2em] font-semibold mb-3" style={{ color: "#3b82f6" }}>What you get</div>
+          <div className="text-sm uppercase tracking-[0.2em] font-semibold mb-3" style={{ color: "#6E7FF3" }}>What you get</div>
           <h2 className="text-4xl md:text-5xl" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, color: "#0f1115", letterSpacing: "-0.02em" }}>
             Everything to ace the semester.
           </h2>
@@ -389,12 +389,12 @@ export function FeaturesShowcase() {
 
         {/* Tab bar */}
         <div className="flex justify-center mb-8 overflow-x-auto">
-          <div className="flex gap-1 p-1 rounded-2xl shrink-0" style={{ background: "rgba(37,99,235,0.1)", border: "1px solid rgba(37,99,235,0.15)" }}>
+          <div className="flex gap-1 p-1 rounded-2xl shrink-0" style={{ background: "rgba(75,95,232,0.1)", border: "1px solid rgba(75,95,232,0.15)" }}>
             {TABS.map(({ key, label, icon: Icon }) => (
               <button key={key} onClick={() => setActive(key)}
                 className="flex items-center gap-2 px-4 md:px-5 py-2.5 rounded-xl text-sm font-medium transition-all whitespace-nowrap"
                 style={{
-                  background: active === key ? "#2563eb" : "transparent",
+                  background: active === key ? "#4B5FE8" : "transparent",
                   color: active === key ? "white" : "rgba(0,0,0,0.45)",
                 }}>
                 <Icon size={13} />

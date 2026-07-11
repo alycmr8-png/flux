@@ -62,11 +62,11 @@ export function FilesFeatureDemo() {
 
         {/* Header */}
         <div className="text-center mb-10">
-          <div className="text-sm uppercase tracking-[0.2em] font-semibold mb-3" style={{ color: "#3b82f6" }}>
+          <div className="text-sm uppercase tracking-[0.2em] font-semibold mb-3" style={{ color: "#6E7FF3" }}>
             Upload any document
           </div>
           <h2 className="text-4xl md:text-5xl" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, color: "#0f1115", letterSpacing: "-0.02em" }}>
-            Drop a PDF. <span style={{ color: "#3b82f6" }}>Understand everything.</span>
+            Drop a PDF. <span style={{ color: "#6E7FF3" }}>Understand everything.</span>
           </h2>
           <p className="text-base md:text-lg mt-3 max-w-xl mx-auto" style={{ color: "rgba(0,0,0,0.55)" }}>
             Upload any lecture slide, textbook chapter, or study guide — Flux breaks it down into summaries, key terms, practice questions, and exam tips.
@@ -77,19 +77,19 @@ export function FilesFeatureDemo() {
         <div className="max-w-4xl mx-auto space-y-4 rounded-2xl p-5 md:p-6" style={{ background: "#ffffff", border: "1px solid rgba(0,0,0,0.1)", boxShadow: "0 20px 50px rgba(0,0,0,0.18)" }}>
 
           {/* File bar */}
-          <div className="flex items-center gap-3 px-4 py-3 rounded-xl" style={{ background: "rgba(37,99,235,0.08)", border: "1px solid rgba(37,99,235,0.25)" }}>
-            <FileText size={14} style={{ color: "#3b82f6" }} className="shrink-0" />
+          <div className="flex items-center gap-3 px-4 py-3 rounded-xl" style={{ background: "rgba(75,95,232,0.08)", border: "1px solid rgba(75,95,232,0.25)" }}>
+            <FileText size={14} style={{ color: "#6E7FF3" }} className="shrink-0" />
             <span className="text-sm flex-1" style={{ color: "rgba(0,0,0,0.55)" }}>Chapter_4_Cell_Biology.pdf</span>
-            <span className="text-xs font-semibold shrink-0" style={{ color: "#2563eb" }}>Analysed ✓</span>
+            <span className="text-xs font-semibold shrink-0" style={{ color: "#4B5FE8" }}>Analysed ✓</span>
           </div>
 
           {/* Tabs */}
-          <div className="flex gap-1 p-1 rounded-xl overflow-x-auto" style={{ background: "rgba(37,99,235,0.1)", border: "1px solid rgba(37,99,235,0.15)" }}>
+          <div className="flex gap-1 p-1 rounded-xl overflow-x-auto" style={{ background: "rgba(75,95,232,0.1)", border: "1px solid rgba(75,95,232,0.15)" }}>
             {TABS.map(t => (
               <button key={t} onClick={() => { setTab(t); setFlipped(new Set()); }}
                 className="flex-1 py-2.5 px-3 rounded-lg text-sm font-medium transition-all whitespace-nowrap"
                 style={{
-                  background: tab === t ? "#2563eb" : "transparent",
+                  background: tab === t ? "#4B5FE8" : "transparent",
                   color: tab === t ? "white" : "rgba(0,0,0,0.45)",
                 }}>
                 {t}
@@ -98,7 +98,7 @@ export function FilesFeatureDemo() {
           </div>
 
           {/* Tab content */}
-          <div className="rounded-2xl p-8" style={{ background: "rgba(0,0,0,0.04)", border: "1px solid rgba(37,99,235,0.15)", minHeight: 400 }}>
+          <div className="rounded-2xl p-8" style={{ background: "rgba(0,0,0,0.04)", border: "1px solid rgba(75,95,232,0.15)", minHeight: 400 }}>
 
             {tab === "Summary" && (
               <div className="space-y-4">
@@ -115,7 +115,7 @@ export function FilesFeatureDemo() {
                     <div className="space-y-2">
                       {s.bullets.map((b, j) => (
                         <div key={j} className="flex gap-2 text-sm" style={{ color: "rgba(0,0,0,0.65)" }}>
-                          <span className="mt-2 w-1.5 h-1.5 rounded-full shrink-0" style={{ background: "#3b82f6" }} />
+                          <span className="mt-2 w-1.5 h-1.5 rounded-full shrink-0" style={{ background: "#6E7FF3" }} />
                           {b}
                         </div>
                       ))}
@@ -127,7 +127,7 @@ export function FilesFeatureDemo() {
 
             {tab === "Key Terms" && (
               <div className="space-y-3">
-                <div className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: "#3b82f6" }}>Definitions</div>
+                <div className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: "#6E7FF3" }}>Definitions</div>
                 {DEMO.keyTerms.map((kt, i) => (
                   <div key={i} className="rounded-xl p-3" style={{ background: "rgba(0,0,0,0.04)", border: "1px solid rgba(0,0,0,0.08)" }}>
                     <div className="text-sm font-semibold mb-0.5" style={{ color: "#0f1115" }}>{kt.term}</div>
@@ -139,17 +139,17 @@ export function FilesFeatureDemo() {
 
             {tab === "Practice Q&A" && (
               <div className="space-y-3">
-                <div className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: "#3b82f6" }}>Click a card to reveal the answer</div>
+                <div className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: "#6E7FF3" }}>Click a card to reveal the answer</div>
                 <div className="space-y-2">
                   {DEMO.quiz.map((item, i) => (
                     <div key={i}
                       onClick={() => setFlipped(p => { const s = new Set(p); s.has(i) ? s.delete(i) : s.add(i); return s; })}
                       className="cursor-pointer rounded-xl p-4 transition-all"
                       style={{
-                        background: flipped.has(i) ? "rgba(37,99,235,0.15)" : "rgba(0,0,0,0.04)",
-                        border: `1px solid ${flipped.has(i) ? "#3b82f6" : "rgba(0,0,0,0.1)"}`,
+                        background: flipped.has(i) ? "rgba(75,95,232,0.15)" : "rgba(0,0,0,0.04)",
+                        border: `1px solid ${flipped.has(i) ? "#6E7FF3" : "rgba(0,0,0,0.1)"}`,
                       }}>
-                      <div className="text-[10px] uppercase tracking-widest mb-1.5" style={{ color: flipped.has(i) ? "#2563eb" : "rgba(0,0,0,0.35)" }}>
+                      <div className="text-[10px] uppercase tracking-widest mb-1.5" style={{ color: flipped.has(i) ? "#4B5FE8" : "rgba(0,0,0,0.35)" }}>
                         {flipped.has(i) ? "Answer" : `Q${i + 1}`}
                       </div>
                       <p className="text-sm leading-relaxed" style={{ color: flipped.has(i) ? "#0f1115" : "rgba(0,0,0,0.7)" }}>
@@ -163,10 +163,10 @@ export function FilesFeatureDemo() {
 
             {tab === "Exam Tips" && (
               <div className="space-y-3">
-                <div className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: "#3b82f6" }}>What to focus on</div>
+                <div className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: "#6E7FF3" }}>What to focus on</div>
                 {DEMO.tips.map((tip, i) => (
                   <div key={i} className="flex gap-3 text-sm rounded-xl p-3" style={{ background: "rgba(0,0,0,0.04)", border: "1px solid rgba(0,0,0,0.08)", color: "rgba(0,0,0,0.65)" }}>
-                    <span className="font-bold shrink-0" style={{ color: "#3b82f6" }}>{i + 1}.</span>
+                    <span className="font-bold shrink-0" style={{ color: "#6E7FF3" }}>{i + 1}.</span>
                     {tip}
                   </div>
                 ))}

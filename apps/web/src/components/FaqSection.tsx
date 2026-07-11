@@ -3,12 +3,12 @@ import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 
 const FAQS = [
-  { q: "What is Flux?", a: "Flux is an AI study assistant that turns your lecture recordings, YouTube videos, and documents into cheat sheets, quizzes, flashcards, and key points — automatically." },
-  { q: "How does the recording feature work?", a: "You record your lecture directly in the browser. Flux transcribes the audio using AI, then generates a summary, cheat sheet, and quiz from the transcript — all within minutes." },
-  { q: "Can I upload YouTube videos?", a: "Yes. Paste any YouTube link and Flux fetches the transcript, then generates a summary, key points, flashcards, quiz, and an AI chatbot you can ask questions about the video." },
+  { q: "What is Flux?", a: "Flux is a course memory — not a note-taking app. Everything you capture for a class (lectures, files, videos, notes) becomes one knowledge base you can ask questions, and every answer is cited back to your actual materials." },
+  { q: "How does the recording feature work?", a: "You record your lecture directly in the browser. Flux transcribes the audio, generates a summary and key points, and adds the whole lecture to your course memory — all within minutes." },
+  { q: "Can I upload YouTube videos?", a: "Yes. Paste any YouTube link and Flux fetches the transcript, then gives you a summary, key points, flashcards, and a chatbot — and the video becomes part of your course memory." },
   { q: "What file types can I upload?", a: "Flux supports PDF, Word (.docx, .doc), PowerPoint (.pptx, .ppt), Excel (.xlsx, .xls), OpenDocument files (.odt, .odp, .ods), images, and plain text files." },
   { q: "Is there a free trial?", a: "Yes — you get a 7-day free trial on all plans. No credit card required to start." },
-  { q: "How much does Flux cost?", a: "The Student plan is $8/month (or $60/year). The Pro plan is $15/month and includes priority processing, analytics, and Google Drive sync. Cancel anytime." },
+  { q: "How much does Flux cost?", a: "Flux is $9.99/month — or less on longer plans: $6.99/month billed every 6 months, or $5.99/month billed yearly. Every plan includes everything. Cancel anytime." },
   { q: "Does Flux work for any subject?", a: "Yes. Flux works for any subject — biology, law, history, engineering, business, and more. The AI adapts to the content of your lecture or document." },
   { q: "Is my data private?", a: "Your recordings and documents are processed securely and never shared with other users. You can delete your data at any time from your account." },
 ];
@@ -19,7 +19,7 @@ export function FaqSection() {
   return (
     <section id="faq" className="px-6 md:px-16 py-20 md:py-28 max-w-3xl mx-auto">
       <div className="text-center mb-12">
-        <div className="text-sm uppercase tracking-[0.2em] font-semibold mb-3" style={{ color: "#3b82f6" }}>FAQ</div>
+        <div className="text-sm uppercase tracking-[0.2em] font-semibold mb-3" style={{ color: "#6E7FF3" }}>FAQ</div>
         <h2 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: "clamp(36px, 6vw, 56px)", color: "#0f1115", letterSpacing: "-0.03em" }}>
           Frequently asked questions
         </h2>
@@ -28,7 +28,7 @@ export function FaqSection() {
       <div className="space-y-2">
         {FAQS.map((item, i) => (
           <div key={i} className="rounded-2xl overflow-hidden transition-all"
-            style={{ background: open === i ? "rgba(37,99,235,0.08)" : "rgba(0,0,0,0.04)", border: `1px solid ${open === i ? "rgba(37,99,235,0.25)" : "rgba(0,0,0,0.08)"}` }}>
+            style={{ background: open === i ? "rgba(75,95,232,0.08)" : "rgba(0,0,0,0.04)", border: `1px solid ${open === i ? "rgba(75,95,232,0.25)" : "rgba(0,0,0,0.08)"}` }}>
             <button
               onClick={() => setOpen(open === i ? null : i)}
               className="w-full flex items-center justify-between px-6 py-4 text-left gap-4"

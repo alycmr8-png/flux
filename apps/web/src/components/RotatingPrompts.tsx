@@ -27,12 +27,12 @@ export function RotatingPrompts() {
     <div
       className="inline-flex items-center gap-2.5 px-5 py-3 rounded-full"
       style={{
-        background: "rgba(37,99,235,0.06)",
-        border: "1px solid rgba(37,99,235,0.18)",
+        background: "rgba(75,95,232,0.06)",
+        border: "1px solid rgba(75,95,232,0.18)",
         maxWidth: "100%",
       }}
     >
-      <Sparkles size={14} style={{ color: "#2563eb", flexShrink: 0 }} />
+      <Sparkles size={14} style={{ color: "#4B5FE8", flexShrink: 0 }} />
       <span
         className="text-sm md:text-base"
         style={{

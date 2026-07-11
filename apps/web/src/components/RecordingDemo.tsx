@@ -31,7 +31,7 @@ const WAVE_HEIGHTS = Array.from({ length: 20 }, () => 0.35 + Math.random() * 0.6
 const WAVE_DURATIONS = Array.from({ length: 20 }, () => 0.4 + Math.random() * 0.7);
 
 const RESULT_CARDS = [
-  { label: "Transcript",  color: "#3b82f6", desc: "Full text ready"         },
+  { label: "Transcript",  color: "#6E7FF3", desc: "Full text ready"         },
   { label: "Summary",     color: "#a855f7", desc: "Key concepts extracted"  },
   { label: "Key Points",  color: "#f97316", desc: "15 points identified"    },
   { label: "Quiz",        color: "#22c55e", desc: "8 questions generated"   },
@@ -132,7 +132,7 @@ export function RecordingDemo() {
               <div style={{ fontSize: 8, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(255,255,255,0.25)", padding: "6px 8px 4px" }}>Menu</div>
               {NAV.map(({ icon: Icon, label }) => (
                 <div key={label} className="flex items-center gap-2 px-2.5 py-2 rounded-lg"
-                  style={{ background: label === "Workspace" ? "rgba(37,99,235,0.18)" : "transparent", color: label === "Workspace" ? "#60a5fa" : "rgba(255,255,255,0.4)" }}>
+                  style={{ background: label === "Workspace" ? "rgba(75,95,232,0.18)" : "transparent", color: label === "Workspace" ? "#93A0F8" : "rgba(255,255,255,0.4)" }}>
                   <Icon size={11} />
                   <span style={{ fontSize: 10, fontWeight: label === "Workspace" ? 600 : 400 }}>{label}</span>
                 </div>
@@ -145,12 +145,12 @@ export function RecordingDemo() {
 
             {/* Class pills + workspace label */}
             <div className="px-5 pt-4 pb-0">
-              <div style={{ fontSize: 8, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "#3b82f6", marginBottom: 8 }}>Workspace</div>
+              <div style={{ fontSize: 8, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "#6E7FF3", marginBottom: 8 }}>Workspace</div>
               <div className="flex gap-1.5 flex-wrap">
                 {["Cognitive Psych", "Biology 101", "Econ 202"].map((c, i) => (
                   <div key={c} className="px-3 py-1 rounded-full" style={{
                     fontSize: 10, fontWeight: i === 0 ? 700 : 400,
-                    background: i === 0 ? "#2563eb" : "rgba(255,255,255,0.06)",
+                    background: i === 0 ? "#4B5FE8" : "rgba(255,255,255,0.06)",
                     color: i === 0 ? "white" : "rgba(255,255,255,0.45)",
                     border: i === 0 ? "none" : "1px solid rgba(255,255,255,0.08)",
                   }}>{c}</div>
@@ -160,10 +160,10 @@ export function RecordingDemo() {
 
             {/* Feature tabs */}
             <div className="px-5 pt-3 pb-0">
-              <div className="flex gap-0.5 p-0.5 rounded-xl w-fit" style={{ background: "rgba(37,99,235,0.1)", border: "1px solid rgba(37,99,235,0.15)" }}>
+              <div className="flex gap-0.5 p-0.5 rounded-xl w-fit" style={{ background: "rgba(75,95,232,0.1)", border: "1px solid rgba(75,95,232,0.15)" }}>
                 {TABS.map(({ icon: Icon, label }, i) => (
                   <div key={label} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg"
-                    style={{ background: i === 0 ? "#2563eb" : "transparent", color: i === 0 ? "white" : "rgba(255,255,255,0.4)", fontSize: 9 }}>
+                    style={{ background: i === 0 ? "#4B5FE8" : "transparent", color: i === 0 ? "white" : "rgba(255,255,255,0.4)", fontSize: 9 }}>
                     <Icon size={9} />{label}
                   </div>
                 ))}
@@ -285,7 +285,7 @@ export function RecordingDemo() {
             style={{
               width: (phase === p || (phase === "hold" && p === "done")) ? 20 : 6,
               height: 6,
-              background: (phase === p || (phase === "hold" && p === "done")) ? "#2563eb" : "rgba(255,255,255,0.15)",
+              background: (phase === p || (phase === "hold" && p === "done")) ? "#4B5FE8" : "rgba(255,255,255,0.15)",
             }} />
         ))}
       </div>
