@@ -24,17 +24,23 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   ];
 
   return (
-    <div className="flex flex-col md:flex-row h-screen overflow-hidden" style={{ background: "#0F0F0E" }}>
+    <div
+      className="flex flex-col md:flex-row h-screen overflow-hidden"
+      style={{
+        background:
+          "radial-gradient(90% 60% at 70% -10%, rgba(75,95,232,0.10) 0%, rgba(75,95,232,0) 55%), radial-gradient(70% 50% at 0% 100%, rgba(110,127,243,0.05) 0%, rgba(110,127,243,0) 60%), #0B0D12",
+      }}
+    >
 
       {/* Sidebar — desktop only */}
       <aside
         className="hidden md:flex w-52 shrink-0 flex-col py-7"
-        style={{ background: "#000000", borderRight: "1px solid rgba(255,255,255,0.08)" }}
+        style={{ background: "rgba(8,10,14,0.85)", backdropFilter: "blur(10px)", borderRight: "1px solid rgba(148,163,184,0.10)" }}
       >
         {/* Logo */}
         <div className="px-6 pb-6 mb-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "linear-gradient(135deg,#2563EB,#3B82F6)", boxShadow: "0 4px 14px rgba(37,99,235,0.35)" }}>
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "linear-gradient(135deg,#4B5FE8,#6E7FF3)", boxShadow: "0 4px 14px rgba(75,95,232,0.35)" }}>
               <Layers size={17} style={{ color: "white" }} />
             </div>
             <div>
@@ -62,8 +68,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 className="flex items-center gap-3 px-3 py-3 rounded-xl transition-all"
                 style={{
                   fontSize: 15,
-                  background: active ? "rgba(37,99,235,0.18)" : "transparent",
-                  color: active ? "#60a5fa" : "rgba(255,255,255,0.45)",
+                  background: active
+                    ? "linear-gradient(135deg, rgba(75,95,232,0.26) 0%, rgba(110,127,243,0.12) 100%)"
+                    : "transparent",
+                  border: active ? "1px solid rgba(110,127,243,0.28)" : "1px solid transparent",
+                  boxShadow: active ? "0 4px 18px rgba(75,95,232,0.18)" : "none",
+                  color: active ? "#B7C0FA" : "rgba(226,232,240,0.5)",
                   fontWeight: active ? 600 : 500,
                 }}
               >
@@ -91,7 +101,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       {/* Bottom tab bar — mobile only */}
       <nav
         className="md:hidden fixed bottom-0 left-0 right-0 flex items-center justify-around px-1 pt-2 z-50 safe-bottom"
-        style={{ background: "rgba(10,10,10,0.92)", backdropFilter: "blur(14px)", borderTop: "1px solid rgba(255,255,255,0.08)", paddingBottom: "calc(env(safe-area-inset-bottom) + 8px)" }}
+        style={{ background: "rgba(9,11,16,0.92)", backdropFilter: "blur(14px)", borderTop: "1px solid rgba(255,255,255,0.08)", paddingBottom: "calc(env(safe-area-inset-bottom) + 8px)" }}
       >
         {nav.map(({ href, icon: Icon, label }) => {
           const active = pathname === href || (href !== "/dashboard" && pathname.startsWith(href));
@@ -100,7 +110,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               key={href}
               href={href}
               className="flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-xl transition-all"
-              style={{ color: active ? "#3b82f6" : "rgba(255,255,255,0.38)" }}
+              style={{ color: active ? "#6E7FF3" : "rgba(255,255,255,0.38)" }}
             >
               <Icon size={19} />
               <span className="text-[9px] font-medium">{label}</span>

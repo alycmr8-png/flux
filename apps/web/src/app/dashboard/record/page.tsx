@@ -26,10 +26,10 @@ const SEMESTERS = ["Fall", "Spring", "Summer", "Winter"];
 function TermTooltip({ term, definition, highYield }: { term: string; definition: string; highYield?: boolean }) {
   return (
     <span className="relative group/tt inline">
-      <span className={`cursor-help border-b border-dotted font-medium transition-colors ${highYield ? "border-yellow-500 text-[#111110]" : "border-[rgba(0,0,0,0.3)] text-[#111110]"} hover:border-[#111110]`}>
+      <span className={`cursor-help border-b border-dotted font-medium transition-colors ${highYield ? "border-yellow-500 text-slate-100" : "border-[rgba(0,0,0,0.3)] text-slate-100"} hover:border-[#111110]`}>
         {term}
       </span>
-      <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50 w-64 bg-[#111110] text-white text-xs rounded-xl px-3.5 py-3 shadow-xl opacity-0 group-hover/tt:opacity-100 pointer-events-none transition-opacity duration-150 leading-relaxed text-left whitespace-normal">
+      <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50 w-64 bg-indigo-600 text-white text-xs rounded-xl px-3.5 py-3 shadow-xl opacity-0 group-hover/tt:opacity-100 pointer-events-none transition-opacity duration-150 leading-relaxed text-left whitespace-normal">
         {highYield && <span className="text-yellow-400 text-[9px] uppercase tracking-widest block mb-1">★ High Yield</span>}
         <span className="opacity-50 text-[9px] uppercase tracking-widest block mb-1">{term}</span>
         {definition}
@@ -60,6 +60,7 @@ function TextWithTerms({ text, glossaryMap }: { text: string; glossaryMap: Map<s
 function CreateClassPage({ onBack, onCreate }: { onBack: () => void; onCreate: (c: any) => void }) {
   const apiFetch = useApiFetch();
   const toast = useToast();
+  const t = useT();
   const [name, setName] = useState("");
   const [semester, setSemester] = useState("Fall");
   const [year, setYear] = useState(new Date().getFullYear().toString());
@@ -88,47 +89,47 @@ function CreateClassPage({ onBack, onCreate }: { onBack: () => void; onCreate: (
 
   return (
     <div className="max-w-lg">
-      <button onClick={onBack} className="flex items-center gap-2 text-[#555] hover:text-[#111110] transition-colors text-sm mb-8">
-        <ArrowLeft size={14} /> Back
+      <button onClick={onBack} className="flex items-center gap-2 text-slate-400 hover:text-slate-100 transition-colors text-sm mb-8">
+        <ArrowLeft size={14} /> {t.common.back}
       </button>
 
-      <h1 className="font-serif italic text-5xl mb-1">New Class</h1>
-      <p className="text-[#555] text-sm mb-8">Set up your class to start organizing lectures and materials.</p>
+      <h1 className="font-serif italic text-5xl mb-1">{t.newClass.title}</h1>
+      <p className="text-slate-400 text-sm mb-8">{t.newClass.subtitle}</p>
 
       <div className="space-y-4">
         {/* Class name */}
         <div>
-          <label className="text-[10px] text-[#555] uppercase tracking-widest block mb-1.5">Class Name</label>
+          <label className="text-[10px] text-slate-400 uppercase tracking-widest block mb-1.5">{t.newClass.classNameLabel}</label>
           <input
             value={name}
             onChange={e => setName(e.target.value)}
             onKeyDown={e => e.key === "Enter" && create()}
-            placeholder="e.g. Calculus II, Biology 101…"
-            className="w-full bg-white border border-[rgba(0,0,0,0.08)] focus:border-[rgba(0,0,0,0.1)] rounded-xl px-4 py-3 text-sm text-[#111110] placeholder-[rgba(0,0,0,0.3)] outline-none"
+            placeholder={t.newClass.classNamePlaceholder}
+            className="w-full bg-[#12151C] border border-[rgba(148,163,184,0.12)] focus:border-indigo-500/50 rounded-xl px-4 py-3 text-sm text-slate-100 placeholder-slate-600 outline-none"
           />
         </div>
 
         {/* Semester */}
         <div>
-          <label className="text-[10px] text-[#555] uppercase tracking-widest block mb-1.5">Semester</label>
+          <label className="text-[10px] text-slate-400 uppercase tracking-widest block mb-1.5">{t.newClass.semester}</label>
           <div className="flex gap-2">
-            <div className="flex gap-1 bg-white border border-[rgba(0,0,0,0.08)] rounded-xl p-1">
+            <div className="flex gap-1 bg-[#12151C] border border-[rgba(148,163,184,0.12)] rounded-xl p-1">
               {SEMESTERS.map(s => (
                 <button
                   key={s}
                   onClick={() => setSemester(s)}
                   className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                    semester === s ? "bg-white text-[#111110]" : "text-[#555] hover:text-[#111110]"
+                    semester === s ? "bg-[#4B5FE8] text-white shadow-sm" : "text-slate-400 hover:text-slate-100"
                   }`}
                 >
-                  {s}
+                  {t.newClass.semesters[s] ?? s}
                 </button>
               ))}
             </div>
             <input
               value={year}
               onChange={e => setYear(e.target.value)}
-              className="w-20 bg-white border border-[rgba(0,0,0,0.08)] focus:border-[rgba(0,0,0,0.1)] rounded-xl px-3 py-2 text-sm text-[#111110] outline-none text-center"
+              className="w-20 bg-[#12151C] border border-[rgba(148,163,184,0.12)] focus:border-indigo-500/50 rounded-xl px-3 py-2 text-sm text-slate-100 outline-none text-center"
               maxLength={4}
             />
           </div>
@@ -137,9 +138,9 @@ function CreateClassPage({ onBack, onCreate }: { onBack: () => void; onCreate: (
         <button
           onClick={create}
           disabled={loading || !name.trim()}
-          className="w-full bg-white text-[#111110] rounded-xl py-3 text-sm font-medium disabled:opacity-40 flex items-center justify-center gap-2 hover:bg-[#eee] transition-colors"
+          className="w-full bg-[#12151C] text-slate-100 rounded-xl py-3 text-sm font-medium disabled:opacity-40 flex items-center justify-center gap-2 hover:bg-[#1A1F2B] transition-colors"
         >
-          {loading ? <><Loader2 size={14} className="animate-spin" /> Creating…</> : "Create Class"}
+          {loading ? <><Loader2 size={14} className="animate-spin" /> {t.common.creating}</> : t.newClass.create}
         </button>
       </div>
     </div>
@@ -173,11 +174,11 @@ function ClassList({ onSelect, onCreate }: { onSelect: (c: any) => void; onCreat
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="font-serif italic text-3xl mb-1">{t.workspace.title}</h1>
-          <p className="text-[#555] text-sm">{t.workspace.subtitle}</p>
+          <p className="text-slate-400 text-sm">{t.workspace.subtitle}</p>
         </div>
         <button
           onClick={onCreate}
-          className="flex items-center gap-2 bg-white text-[#111110] text-sm font-medium px-4 py-2 rounded-full hover:bg-[#eee] transition-colors"
+          className="flex items-center gap-2 bg-[#12151C] text-slate-100 text-sm font-medium px-4 py-2 rounded-full hover:bg-[#1A1F2B] transition-colors"
         >
           <Plus size={14} /> {t.workspace.newClass}
         </button>
@@ -186,17 +187,17 @@ function ClassList({ onSelect, onCreate }: { onSelect: (c: any) => void; onCreat
       {isLoading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {[...Array(6)].map((_, i) => (
-            <div key={i} className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl p-7 animate-pulse">
+            <div key={i} className="bg-[#12151C] border border-[rgba(148,163,184,0.12)] rounded-2xl p-7 animate-pulse">
               <div className="h-4 bg-[#1e1e1e] rounded w-2/3 mb-3" />
-              <div className="h-3 bg-[#f0ede8] rounded w-1/3" />
+              <div className="h-3 bg-[rgba(99,102,241,0.12)] rounded w-1/3" />
             </div>
           ))}
         </div>
       ) : courses.length === 0 ? (
-        <div className="border border-dashed border-[rgba(0,0,0,0.08)] rounded-2xl p-16 text-center">
+        <div className="border border-dashed border-[rgba(148,163,184,0.12)] rounded-2xl p-16 text-center">
           <Layers size={36} className="mx-auto mb-4 text-[#222]" />
-          <p className="text-[#555] text-sm font-medium mb-1">No classes yet</p>
-          <p className="text-[#555] text-xs mb-4">Create your first class to start recording lectures</p>
+          <p className="text-slate-400 text-sm font-medium mb-1">No classes yet</p>
+          <p className="text-slate-400 text-xs mb-4">Create your first class to start recording lectures</p>
           <button onClick={onCreate} className="text-xs text-[#6b6b69] border border-[rgba(0,0,0,0.1)] px-4 py-2 rounded-full hover:border-[#ddd] transition-colors">
             Create a class
           </button>
@@ -206,12 +207,12 @@ function ClassList({ onSelect, onCreate }: { onSelect: (c: any) => void; onCreat
           {courses.map((c) => (
             <div key={c.id} className="relative group/card">
               {confirmDeleteId === c.id ? (
-                <div className="bg-white border border-red-200 rounded-2xl p-7 flex flex-col gap-3">
-                  <p className="text-sm font-medium text-[#111110]">Delete &ldquo;{c.name}&rdquo;?</p>
-                  <p className="text-xs text-[#666] leading-relaxed">All lectures, notes, and materials in this class will be permanently deleted.</p>
+                <div className="bg-[#12151C] border border-red-200 rounded-2xl p-7 flex flex-col gap-3">
+                  <p className="text-sm font-medium text-slate-100">Delete &ldquo;{c.name}&rdquo;?</p>
+                  <p className="text-xs text-slate-400 leading-relaxed">All lectures, notes, and materials in this class will be permanently deleted.</p>
                   <div className="flex gap-2 mt-1">
                     <button onClick={() => setConfirmDeleteId(null)} disabled={deleting}
-                      className="flex-1 text-xs py-2 rounded-lg border border-[rgba(0,0,0,0.12)] text-[#555] hover:text-black transition-colors">
+                      className="flex-1 text-xs py-2 rounded-lg border border-[rgba(0,0,0,0.12)] text-slate-400 hover:text-slate-100 transition-colors">
                       Cancel
                     </button>
                     <button onClick={() => deleteCourse(c.id)} disabled={deleting}
@@ -225,13 +226,13 @@ function ClassList({ onSelect, onCreate }: { onSelect: (c: any) => void; onCreat
                 <>
                   <button
                     onClick={() => onSelect(c)}
-                    className="w-full bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl p-7 text-left hover:border-[rgba(0,0,0,0.1)] hover:bg-white/5 transition-all group"
+                    className="w-full bg-[#12151C] border border-[rgba(148,163,184,0.12)] rounded-2xl p-7 text-left hover:border-[rgba(0,0,0,0.1)] hover:bg-[#12151C]/5 transition-all group"
                   >
-                    <div className="w-10 h-10 rounded-xl bg-[#f0ede8] flex items-center justify-center mb-4 group-hover:bg-[#222] transition-colors">
-                      <Layers size={16} className="text-[#555] group-hover:text-[#111110] transition-colors" />
+                    <div className="w-10 h-10 rounded-xl bg-[rgba(99,102,241,0.12)] flex items-center justify-center mb-4 group-hover:bg-indigo-500 transition-colors">
+                      <Layers size={16} className="text-slate-400 group-hover:text-slate-100 transition-colors" />
                     </div>
-                    <div className="text-[#111110] font-medium text-base mb-1">{c.name}</div>
-                    <div className="text-[#555] text-xs">{c.code}</div>
+                    <div className="text-slate-100 font-medium text-base mb-1">{c.name}</div>
+                    <div className="text-slate-400 text-xs">{c.code}</div>
                   </button>
                   <button
                     onClick={e => { e.stopPropagation(); setConfirmDeleteId(c.id); }}
@@ -1449,7 +1450,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
     <div className="w-full max-w-7xl px-3 py-5 md:px-8 md:py-8">
       {/* Header */}
       <div className="mb-8">
-        <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "#3b82f6", marginBottom: 14 }}>
+        <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "#6E7FF3", marginBottom: 14 }}>
           Workspace
         </div>
         {/* Class pills */}
@@ -1460,7 +1461,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
               onClick={() => onSelect(c)}
               className="whitespace-nowrap transition-all"
               style={c.id === course.id
-                ? { padding: "8px 16px", borderRadius: 999, fontSize: 13.5, fontWeight: 600, background: "#2563EB", color: "white", border: "1px solid #2563EB", boxShadow: "0 4px 16px rgba(37,99,235,0.35)" }
+                ? { padding: "8px 16px", borderRadius: 999, fontSize: 13.5, fontWeight: 600, background: "#4B5FE8", color: "white", border: "1px solid #4B5FE8", boxShadow: "0 4px 16px rgba(75,95,232,0.35)" }
                 : { padding: "8px 16px", borderRadius: 999, fontSize: 13.5, fontWeight: 500, background: "transparent", color: "rgba(255,255,255,0.6)", border: "1px solid rgba(255,255,255,0.12)" }
               }
             >
@@ -1489,10 +1490,10 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
               borderRadius: 999,
               fontSize: 13.5,
               fontWeight: tab === key ? 600 : 500,
-              background: tab === key ? "#2563EB" : "transparent",
+              background: tab === key ? "#4B5FE8" : "transparent",
               color: tab === key ? "white" : "rgba(255,255,255,0.6)",
-              border: tab === key ? "1px solid #2563EB" : "1px solid rgba(255,255,255,0.12)",
-              boxShadow: tab === key ? "0 4px 16px rgba(37,99,235,0.35)" : "none",
+              border: tab === key ? "1px solid #4B5FE8" : "1px solid rgba(255,255,255,0.12)",
+              boxShadow: tab === key ? "0 4px 16px rgba(75,95,232,0.35)" : "none",
             }}
           >
             <Icon size={14} />
@@ -1508,8 +1509,8 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
 
           {/* Header */}
           <div className="px-5 py-4 flex items-center gap-3 shrink-0" style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "rgba(37,99,235,0.18)" }}>
-              <Sparkles size={16} style={{ color: "#60a5fa" }} />
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "rgba(75,95,232,0.18)" }}>
+              <Sparkles size={16} style={{ color: "#93A0F8" }} />
             </div>
             <div className="flex-1 min-w-0">
               <div className="text-sm font-semibold text-white">{t.workspace.ask.title}</div>
@@ -1533,7 +1534,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
           <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
             {askIndexing && askMessages.length === 0 && (
               <div className="flex flex-col items-center justify-center h-full gap-3 text-center px-6">
-                <Loader2 size={22} className="animate-spin" style={{ color: "#60a5fa" }} />
+                <Loader2 size={22} className="animate-spin" style={{ color: "#93A0F8" }} />
                 <div className="text-sm" style={{ color: "rgba(255,255,255,0.6)" }}>{t.workspace.ask.building}</div>
                 <div className="text-xs" style={{ color: "rgba(255,255,255,0.35)" }}>{t.workspace.ask.buildingHint}</div>
               </div>
@@ -1548,7 +1549,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
                     <div className="flex flex-wrap justify-center gap-2">
                       {t.workspace.ask.quickPrompts.map(p => (
                         <button key={p} onClick={() => sendAsk(p)}
-                          className="text-xs px-3.5 py-2 rounded-full transition-colors hover:bg-white/10"
+                          className="text-xs px-3.5 py-2 rounded-full transition-colors hover:bg-white/[0.06]"
                           style={{ color: "rgba(255,255,255,0.6)", border: "1px solid rgba(255,255,255,0.12)" }}>
                           {p}
                         </button>
@@ -1562,7 +1563,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
               <div key={i} className={`flex flex-col ${m.role === "user" ? "items-end" : "items-start"}`}>
                 <span className="text-sm max-w-[85%] leading-relaxed px-4 py-2.5 whitespace-pre-wrap"
                   style={{
-                    background: m.role === "user" ? "#2563eb" : "rgba(255,255,255,0.06)",
+                    background: m.role === "user" ? "#4B5FE8" : "rgba(255,255,255,0.06)",
                     color: m.role === "user" ? "white" : "rgba(255,255,255,0.85)",
                     borderRadius: m.role === "user" ? "18px 18px 4px 18px" : "18px 18px 18px 4px",
                   }}>{m.content}</span>
@@ -1571,7 +1572,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
                     {m.citations!.map((c: any) => (
                       <span key={c.n} title={c.snippet}
                         className="inline-flex items-center gap-1 text-[10px] px-2.5 py-1 rounded-full"
-                        style={{ background: "rgba(37,99,235,0.12)", color: "#60a5fa", border: "1px solid rgba(37,99,235,0.25)" }}>
+                        style={{ background: "rgba(75,95,232,0.12)", color: "#93A0F8", border: "1px solid rgba(75,95,232,0.25)" }}>
                         <span className="font-bold">[{c.n}]</span> {c.label}
                       </span>
                     ))}
@@ -1597,7 +1598,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
               style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "white" }} />
             <button onClick={() => sendAsk()} disabled={!askInput.trim() || askLoading}
               className="text-sm font-semibold px-4 py-2.5 rounded-xl disabled:opacity-40"
-              style={{ background: "#2563eb", color: "white" }}>
+              style={{ background: "#4B5FE8", color: "white" }}>
               {t.workspace.ask.send}
             </button>
           </div>
@@ -1621,26 +1622,26 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
           {/* ── Open lecture detail screen ── */}
           {openLectureId ? (
             <div>
-              <button onClick={closeOpenLecture} className="flex items-center gap-2 text-sm text-[#555] hover:text-[#111110] transition-colors mb-6">
+              <button onClick={closeOpenLecture} className="flex items-center gap-2 text-sm text-slate-400 hover:text-slate-100 transition-colors mb-6">
                 <ArrowLeft size={14} /> Back to recordings
               </button>
               {openLectureData === null ? (
-                <div className="flex items-center gap-3 text-sm text-[#555] py-8">
+                <div className="flex items-center gap-3 text-sm text-slate-400 py-8">
                   <Loader2 size={16} className="animate-spin" /> Loading…
                 </div>
               ) : (
-                <div className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl overflow-hidden">
-                  <div className="px-6 py-5 border-b border-[rgba(0,0,0,0.06)]">
-                    <div className="text-lg font-medium text-[#111110]">
+                <div className="bg-[#12151C] border border-[rgba(148,163,184,0.12)] rounded-2xl overflow-hidden">
+                  <div className="px-6 py-5 border-b border-[rgba(148,163,184,0.09)]">
+                    <div className="text-lg font-medium text-slate-100">
                       {audioLectures.find(l => l.id === openLectureId)?.title ?? "Recording"}
                     </div>
-                    <div className="text-xs text-[#888] mt-0.5">
+                    <div className="text-xs text-slate-500 mt-0.5">
                       {(() => { const l = audioLectures.find(l => l.id === openLectureId); return l ? format(new Date(l.recordedAt), "MMMM d, yyyy") : ""; })()}
                     </div>
                   </div>
                   {/* Sticky audio player — always visible */}
                   {openLectureData.audioUrl ? (
-                    <div className="px-6 py-3 border-b border-[rgba(0,0,0,0.06)] sticky top-0 z-10 bg-white">
+                    <div className="px-6 py-3 border-b border-[rgba(148,163,184,0.09)] sticky top-0 z-10 bg-[#12151C]">
                       <audio
                         ref={openAudioRef}
                         src={openLectureData.audioUrl}
@@ -1664,10 +1665,10 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
                       />
                     </div>
                   ) : (
-                    <div className="px-6 py-3 border-b border-[rgba(0,0,0,0.06)] text-sm text-[#888]">Audio not available.</div>
+                    <div className="px-6 py-3 border-b border-[rgba(148,163,184,0.09)] text-sm text-slate-500">Audio not available.</div>
                   )}
                   {/* Tabs */}
-                  <div className="flex gap-2 overflow-x-auto p-3" style={{ background: "rgba(37,99,235,0.05)", borderBottom: "1px solid rgba(37,99,235,0.12)" }}>
+                  <div className="flex gap-2 overflow-x-auto p-3" style={{ background: "rgba(75,95,232,0.05)", borderBottom: "1px solid rgba(75,95,232,0.12)" }}>
                     {(([
                       { key: "transcript" as const, label: "Transcript" },
                       { key: "summary" as const,    label: "Summary"    },
@@ -1686,7 +1687,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
                           borderRadius: 999,
                           fontSize: 15,
                           fontWeight: openTab === key ? 700 : 500,
-                          background: openTab === key ? "#2563eb" : "rgba(255,255,255,0.8)",
+                          background: openTab === key ? "#4B5FE8" : "rgba(255,255,255,0.8)",
                           color: openTab === key ? "white" : "rgba(0,0,0,0.5)",
                           border: openTab === key ? "none" : "1px solid rgba(0,0,0,0.1)",
                         }}
@@ -1698,7 +1699,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
                   <div className="relative overflow-hidden" style={{ height: 460 }}>
                     {openTab === "transcript" && (
                       <div className="absolute inset-0 overflow-y-auto px-6 py-6">
-                        <p className="text-sm text-[#444] leading-[1.85] whitespace-pre-wrap">
+                        <p className="text-sm text-slate-400 leading-[1.85] whitespace-pre-wrap">
                           {openLectureData.transcript || "Transcript not available."}
                         </p>
                       </div>
@@ -1713,8 +1714,8 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
                         ) : openLectureKeyPoints ? (
                           <div className="space-y-2">
                             {openLectureKeyPoints.map((kp: any, i: number) => {
-                              const colors: Record<string, string> = { Definition: "#3b82f6", Important: "#f97316", Formula: "#8b5cf6", Example: "#22c55e", Warning: "#ef4444" };
-                              const bg: Record<string, string> = { Definition: "rgba(59,130,246,0.06)", Important: "rgba(249,115,22,0.06)", Formula: "rgba(139,92,246,0.06)", Example: "rgba(34,197,94,0.06)", Warning: "rgba(239,68,68,0.06)" };
+                              const colors: Record<string, string> = { Definition: "#6E7FF3", Important: "#f97316", Formula: "#8b5cf6", Example: "#22c55e", Warning: "#ef4444" };
+                              const bg: Record<string, string> = { Definition: "rgba(110,127,243,0.06)", Important: "rgba(249,115,22,0.06)", Formula: "rgba(139,92,246,0.06)", Example: "rgba(34,197,94,0.06)", Warning: "rgba(239,68,68,0.06)" };
                               const color = colors[kp.category] ?? "#6b7280";
                               const background = bg[kp.category] ?? "rgba(107,114,128,0.06)";
                               return (
@@ -1728,7 +1729,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
                         ) : (
                           <div className="h-full flex flex-col items-center justify-center gap-4">
                             <p className="text-sm text-[#aaa]">Generate key points from this lecture</p>
-                            <button onClick={generateOpenLectureKeyPoints} className="px-5 py-2.5 rounded-full text-sm font-semibold text-white" style={{ background: "#2563eb" }}>
+                            <button onClick={generateOpenLectureKeyPoints} className="px-5 py-2.5 rounded-full text-sm font-semibold text-white" style={{ background: "#4B5FE8" }}>
                               Generate Key Points
                             </button>
                           </div>
@@ -1741,25 +1742,25 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
                         {openLectureData.sheet ? (
                           <div className="space-y-6">
                             {(openLectureData.sheet.content?.sections ?? []).slice(0, 3).map((s: any, i: number) => (
-                              <div key={i} className="border-l-2 border-[rgba(37,99,235,0.2)] pl-4">
-                                <div className="text-[10px] font-bold uppercase tracking-widest text-[#2563eb] mb-2">{s.heading}</div>
+                              <div key={i} className="border-l-2 border-[rgba(75,95,232,0.2)] pl-4">
+                                <div className="text-[10px] font-bold uppercase tracking-widest text-[#4B5FE8] mb-2">{s.heading}</div>
                                 <ul className="space-y-2">
                                   {(s.bullets ?? []).slice(0, 4).map((b: string, j: number) => (
-                                    <li key={j} className="flex gap-2 text-sm text-[#444] leading-[1.75]">
-                                      <span className="text-[#ccc] shrink-0 mt-0.5">·</span>{b}
+                                    <li key={j} className="flex gap-2 text-sm text-slate-400 leading-[1.75]">
+                                      <span className="text-slate-500 shrink-0 mt-0.5">·</span>{b}
                                     </li>
                                   ))}
                                 </ul>
                               </div>
                             ))}
                             {(openLectureData.sheet.content?.keyTerms ?? []).length > 0 && (
-                              <div className="border-l-2 border-[rgba(0,0,0,0.08)] pl-4">
-                                <div className="text-[10px] font-bold uppercase tracking-widest text-[#888] mb-2">Key Terms</div>
+                              <div className="border-l-2 border-[rgba(148,163,184,0.12)] pl-4">
+                                <div className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Key Terms</div>
                                 <div className="space-y-2">
                                   {(openLectureData.sheet.content.keyTerms ?? []).map((kt: any, i: number) => (
                                     <div key={i} className="flex gap-2 text-sm">
                                       <span className="font-semibold text-[#333] shrink-0">{kt.term}:</span>
-                                      <span className="text-[#666]">{kt.definition}</span>
+                                      <span className="text-slate-400">{kt.definition}</span>
                                     </div>
                                   ))}
                                 </div>
@@ -1781,7 +1782,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
                               <div className="flex flex-wrap gap-2 justify-center">
                                 {["Summarize the main points", "What are the key terms?", "Quiz me on this lecture"].map(s => (
                                   <button key={s} onClick={() => { setOpenChatInput(s); }}
-                                    className="text-xs px-3 py-1.5 rounded-full border border-[rgba(37,99,235,0.3)] text-[#2563eb] hover:bg-[rgba(37,99,235,0.06)] transition-colors">
+                                    className="text-xs px-3 py-1.5 rounded-full border border-[rgba(75,95,232,0.3)] text-[#4B5FE8] hover:bg-[rgba(75,95,232,0.06)] transition-colors">
                                     {s}
                                   </button>
                                 ))}
@@ -1792,7 +1793,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
                             <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
                               <span className="text-sm max-w-[85%] leading-relaxed px-4 py-2.5"
                                 style={{
-                                  background: m.role === "user" ? "#2563eb" : "rgba(0,0,0,0.04)",
+                                  background: m.role === "user" ? "#4B5FE8" : "rgba(0,0,0,0.04)",
                                   color: m.role === "user" ? "white" : "#333",
                                   borderRadius: m.role === "user" ? "18px 18px 4px 18px" : "18px 18px 18px 4px",
                                 }}>{m.content}</span>
@@ -1806,13 +1807,13 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
                             </div>
                           )}
                         </div>
-                        <div className="flex gap-2 px-4 pb-4 pt-3 border-t border-[rgba(0,0,0,0.06)] shrink-0">
+                        <div className="flex gap-2 px-4 pb-4 pt-3 border-t border-[rgba(148,163,184,0.09)] shrink-0">
                           <input value={openChatInput} onChange={e => setOpenChatInput(e.target.value)}
                             onKeyDown={e => e.key === "Enter" && !e.shiftKey && sendOpenChat()}
                             placeholder="Ask about this lecture…"
-                            className="flex-1 bg-[rgba(0,0,0,0.03)] border border-[rgba(0,0,0,0.08)] focus:border-[rgba(0,0,0,0.15)] rounded-xl px-4 py-2.5 text-sm text-[#333] placeholder-[rgba(0,0,0,0.3)] outline-none" />
+                            className="flex-1 bg-[rgba(0,0,0,0.03)] border border-[rgba(148,163,184,0.12)] focus:border-[rgba(0,0,0,0.15)] rounded-xl px-4 py-2.5 text-sm text-[#333] placeholder-slate-600 outline-none" />
                           <button onClick={sendOpenChat} disabled={!openChatInput.trim() || openChatLoading}
-                            className="text-sm font-semibold px-4 py-2.5 rounded-xl disabled:opacity-40" style={{ background: "#2563eb", color: "white" }}>
+                            className="text-sm font-semibold px-4 py-2.5 rounded-xl disabled:opacity-40" style={{ background: "#4B5FE8", color: "white" }}>
                             Send
                           </button>
                         </div>
@@ -1827,35 +1828,35 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
             <>
               {/* ── Step: name ── */}
               {recStep === "name" && (
-                <div className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl p-8 flex flex-col items-center gap-5">
+                <div className="bg-[#12151C] border border-[rgba(148,163,184,0.12)] rounded-2xl p-8 flex flex-col items-center gap-5">
                   <div className="w-full space-y-2">
-                    <label className="text-[10px] text-[#555] uppercase tracking-widest block">Recording Name</label>
+                    <label className="text-[10px] text-slate-400 uppercase tracking-widest block">Recording Name</label>
                     <input
                       autoFocus
                       value={recTitle}
                       onChange={e => setRecTitle(e.target.value)}
                       onKeyDown={e => e.key === "Enter" && recTitle.trim() && startRecording()}
                       placeholder="e.g. Lecture 3 — Cell Division"
-                      className="w-full bg-[rgba(0,0,0,0.03)] border border-[rgba(0,0,0,0.08)] rounded-xl px-4 py-3 text-sm text-[#111110] placeholder-[rgba(0,0,0,0.3)] outline-none focus:border-[rgba(0,0,0,0.18)]"
+                      className="w-full bg-[rgba(0,0,0,0.03)] border border-[rgba(148,163,184,0.12)] rounded-xl px-4 py-3 text-sm text-slate-100 placeholder-slate-600 outline-none focus:border-[rgba(0,0,0,0.18)]"
                     />
-                    <p className="text-xs text-[#888]">{format(new Date(), "MMMM d, yyyy")}</p>
+                    <p className="text-xs text-slate-500">{format(new Date(), "MMMM d, yyyy")}</p>
                   </div>
                   <button
                     onClick={startRecording}
                     disabled={!recTitle.trim()}
-                    className="w-16 h-16 rounded-full flex items-center justify-center bg-[rgba(0,0,0,0.06)] hover:bg-[rgba(0,0,0,0.1)] transition-colors disabled:opacity-30"
+                    className="w-16 h-16 rounded-full flex items-center justify-center bg-[rgba(148,163,184,0.1)] hover:bg-[rgba(148,163,184,0.16)] transition-colors disabled:opacity-30"
                   >
-                    <Mic size={22} className="text-[#111110]" />
+                    <Mic size={22} className="text-slate-100" />
                   </button>
-                  <p className="text-xs text-[#888]">{recTitle.trim() ? "Tap to start recording" : "Enter a name to start"}</p>
+                  <p className="text-xs text-slate-500">{recTitle.trim() ? "Tap to start recording" : "Enter a name to start"}</p>
                 </div>
               )}
 
               {/* ── Step: recording ── */}
               {recStep === "recording" && (
-                <div className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl p-8 flex flex-col items-center gap-4">
-                  <div className="text-xs text-[#888] self-start font-medium">{recTitle}</div>
-                  <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 64, fontWeight: 400, color: "#111110", letterSpacing: -2, fontVariantNumeric: "tabular-nums" }}>{fmt(seconds)}</div>
+                <div className="bg-[#12151C] border border-[rgba(148,163,184,0.12)] rounded-2xl p-8 flex flex-col items-center gap-4">
+                  <div className="text-xs text-slate-500 self-start font-medium">{recTitle}</div>
+                  <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 64, fontWeight: 400, color: "#F1F5F9", letterSpacing: -2, fontVariantNumeric: "tabular-nums" }}>{fmt(seconds)}</div>
                   <div className="flex items-end gap-0.5 h-12 my-1" style={{ opacity: paused ? 0.2 : 1, transition: "opacity 0.3s" }}>
                     {waveHeights.current.map((h, i) => (
                       <div key={i} style={{ width: 3, height: 48, borderRadius: 2, background: "#111110", transformOrigin: "center", animation: paused ? "none" : `waveBar ${waveDurations.current[i]}s ease-in-out infinite`, animationDelay: `${i * 0.04}s`, transform: paused ? "scaleY(0.25)" : undefined }} />
@@ -1866,12 +1867,12 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
                       onClick={paused ? resumeRecording : pauseRecording}
                       className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border border-[rgba(0,0,0,0.12)] hover:bg-[rgba(0,0,0,0.03)] transition-colors"
                     >
-                      {paused ? <Play size={16} className="text-[#111110]" /> : <Pause size={16} className="text-[#111110]" />}
-                      <span className="text-sm font-medium text-[#111110]">{paused ? "Resume" : "Pause"}</span>
+                      {paused ? <Play size={16} className="text-slate-100" /> : <Pause size={16} className="text-slate-100" />}
+                      <span className="text-sm font-medium text-slate-100">{paused ? "Resume" : "Pause"}</span>
                     </button>
                     <button
                       onClick={stopRecording}
-                      className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-[#111110] hover:opacity-90 transition-opacity"
+                      className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-indigo-600 hover:opacity-90 transition-opacity"
                     >
                       <StopCircle size={16} className="text-white" />
                       <span className="text-sm font-medium text-white">Stop</span>
@@ -1882,18 +1883,18 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
 
               {/* ── Step: saved ── */}
               {recStep === "saved" && (
-                <div className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl p-6 space-y-4">
+                <div className="bg-[#12151C] border border-[rgba(148,163,184,0.12)] rounded-2xl p-6 space-y-4">
                   <div className="flex items-center gap-2">
                     <CheckCircle size={15} className="text-green-500" />
-                    <span className="text-sm font-medium text-[#111110]">{recTitle || "Recording"}</span>
-                    <span className="ml-auto text-xs text-[#888]">{fmt(seconds)}</span>
+                    <span className="text-sm font-medium text-slate-100">{recTitle || "Recording"}</span>
+                    <span className="ml-auto text-xs text-slate-500">{fmt(seconds)}</span>
                   </div>
                   <button
                     onClick={playAudio}
-                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-[rgba(0,0,0,0.08)] hover:bg-[rgba(0,0,0,0.02)] transition-colors"
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-[rgba(148,163,184,0.12)] hover:bg-[rgba(0,0,0,0.02)] transition-colors"
                   >
-                    {playing ? <Pause size={15} className="text-[#111110]" /> : <Play size={15} className="text-[#111110]" />}
-                    <span className="text-sm text-[#111110]">{playing ? "Pause" : "Listen to recording"}</span>
+                    {playing ? <Pause size={15} className="text-slate-100" /> : <Play size={15} className="text-slate-100" />}
+                    <span className="text-sm text-slate-100">{playing ? "Pause" : "Listen to recording"}</span>
                   </button>
                   {processingError && (
                     <div className="bg-red-50 border border-red-100 rounded-xl px-4 py-3 text-sm text-red-600">{processingError}</div>
@@ -1901,12 +1902,12 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
                   <button
                     onClick={processAudio}
                     disabled={uploading}
-                    className="w-full flex items-center justify-center gap-2 py-4 rounded-xl bg-[#111110] hover:opacity-90 transition-opacity disabled:opacity-40"
+                    className="w-full flex items-center justify-center gap-2 py-4 rounded-xl bg-indigo-600 hover:opacity-90 transition-opacity disabled:opacity-40"
                   >
                     {uploading ? <Loader2 size={16} className="animate-spin text-white" /> : <Sparkles size={16} className="text-white" />}
                     <span className="text-base font-medium text-white">Process Audio</span>
                   </button>
-                  <button onClick={resetRecorder} className="w-full text-xs text-[rgba(0,0,0,0.3)] hover:text-[#555] transition-colors">
+                  <button onClick={resetRecorder} className="w-full text-xs text-[rgba(0,0,0,0.3)] hover:text-slate-400 transition-colors">
                     Discard recording
                   </button>
                 </div>
@@ -1914,7 +1915,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
 
               {/* ── Step: processing ── */}
               {recStep === "processing" && (
-                <div className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl p-16 flex flex-col items-center gap-6">
+                <div className="bg-[#12151C] border border-[rgba(148,163,184,0.12)] rounded-2xl p-16 flex flex-col items-center gap-6">
                   <div className="relative flex items-center justify-center w-28 h-28">
                     {[0, 1, 2].map(i => (
                       <div key={i} className="absolute rounded-full border border-[rgba(0,0,0,0.1)]" style={{
@@ -1923,11 +1924,11 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
                         animation: `ringPulse 2s ease-out ${i * 0.45}s infinite`,
                       }} />
                     ))}
-                    <Loader2 size={22} className="animate-spin text-[#111110] relative z-10" />
+                    <Loader2 size={22} className="animate-spin text-slate-100 relative z-10" />
                   </div>
                   <div className="text-center space-y-1">
-                    <div className="text-sm font-medium text-[#111110]">Processing your audio…</div>
-                    <div className="text-xs text-[#888]">
+                    <div className="text-sm font-medium text-slate-100">Processing your audio…</div>
+                    <div className="text-xs text-slate-500">
                       {processingStatus === "transcribing"
                         ? "Converting speech to text"
                         : processingStatus === "generating"
@@ -1945,13 +1946,13 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
 
               {/* ── Step: done ── */}
               {recStep === "done" && (
-                <div className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl p-12 flex flex-col items-center gap-4">
+                <div className="bg-[#12151C] border border-[rgba(148,163,184,0.12)] rounded-2xl p-12 flex flex-col items-center gap-4">
                   <div className="w-14 h-14 rounded-full bg-green-50 flex items-center justify-center">
                     <CheckCircle size={24} className="text-green-500" />
                   </div>
                   <div className="text-center">
-                    <div className="text-base font-medium text-[#111110] mb-1">Processing complete!</div>
-                    <div className="text-sm text-[#888]">Your recording is ready. Open it from the list below.</div>
+                    <div className="text-base font-medium text-slate-100 mb-1">Processing complete!</div>
+                    <div className="text-sm text-slate-500">Your recording is ready. Open it from the list below.</div>
                   </div>
                 </div>
               )}
@@ -1959,46 +1960,46 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
               {/* ── Recordings list ── */}
               {audioLectures.length > 0 && (
                 <div className="mt-2">
-                  <p className="text-xs text-[#555] uppercase tracking-widest mb-3">Recordings</p>
+                  <p className="text-xs text-slate-400 uppercase tracking-widest mb-3">Recordings</p>
                   <div className="space-y-2">
                     {audioLectures.map(l => (
-                      <div key={l.id} className="bg-white border border-[rgba(0,0,0,0.08)] rounded-xl px-4 py-3 transition-all" style={{ borderColor: confirmArchiveId === l.id ? "rgba(239,68,68,0.25)" : undefined }}>
+                      <div key={l.id} className="bg-[#12151C] border border-[rgba(148,163,184,0.12)] rounded-xl px-4 py-3 transition-all" style={{ borderColor: confirmArchiveId === l.id ? "rgba(239,68,68,0.25)" : undefined }}>
                         {confirmArchiveId === l.id ? (
                           <div className="flex items-center justify-between gap-3">
-                            <p className="text-xs text-[#555] flex-1">Delete <span className="font-medium text-[#111110]">"{l.title}"</span>?</p>
+                            <p className="text-xs text-slate-400 flex-1">Delete <span className="font-medium text-slate-100">"{l.title}"</span>?</p>
                             <div className="flex items-center gap-2 shrink-0">
-                              <button onClick={() => setConfirmArchiveId(null)} className="text-xs px-3 py-1.5 rounded-lg text-[#555] hover:text-[#111110] transition-colors">Cancel</button>
+                              <button onClick={() => setConfirmArchiveId(null)} className="text-xs px-3 py-1.5 rounded-lg text-slate-400 hover:text-slate-100 transition-colors">Cancel</button>
                               <button onClick={() => archiveLecture(l.id)} className="text-xs px-3 py-1.5 rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors">Delete</button>
                             </div>
                           </div>
                         ) : (
                           <div className="flex items-center gap-3">
-                            <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 bg-[rgba(0,0,0,0.04)]">
-                              <Mic2 size={12} className="text-[#444]" />
+                            <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 bg-[rgba(148,163,184,0.08)]">
+                              <Mic2 size={12} className="text-slate-400" />
                             </div>
                             <div className="flex-1 min-w-0">
-                              <div className="text-sm text-[#111110] truncate">{l.title}</div>
-                              <div className="text-xs text-[#888] mt-0.5">{format(new Date(l.recordedAt), "MMM d, yyyy")}</div>
+                              <div className="text-sm text-slate-100 truncate">{l.title}</div>
+                              <div className="text-xs text-slate-500 mt-0.5">{format(new Date(l.recordedAt), "MMM d, yyyy")}</div>
                             </div>
                             <div className="flex items-center gap-2 shrink-0">
                               {l.status === "ready" ? (
                                 <button
                                   onClick={() => openLecture(l)}
-                                  className="text-xs font-medium px-3 py-1.5 rounded-lg bg-[rgba(0,0,0,0.06)] text-[#111110] hover:bg-[rgba(0,0,0,0.1)] transition-colors"
+                                  className="text-xs font-medium px-3 py-1.5 rounded-lg bg-[rgba(148,163,184,0.1)] text-slate-100 hover:bg-[rgba(148,163,184,0.16)] transition-colors"
                                 >
                                   Open
                                 </button>
                               ) : l.status === "error" ? (
                                 <span className="text-[9px] font-semibold text-red-400 px-2 py-0.5 rounded-full bg-red-50">Failed</span>
                               ) : (
-                                <span className="text-[9px] font-semibold text-[#555] px-2 py-0.5 rounded-full bg-[rgba(0,0,0,0.05)] flex items-center gap-1">
+                                <span className="text-[9px] font-semibold text-slate-400 px-2 py-0.5 rounded-full bg-[rgba(148,163,184,0.08)] flex items-center gap-1">
                                   <Loader2 size={8} className="animate-spin" /> Processing
                                 </span>
                               )}
                               <button
                                 onClick={() => setConfirmArchiveId(l.id)}
                                 className="p-1.5 rounded-lg hover:bg-red-50 transition-colors"
-                                style={{ color: "rgba(0,0,0,0.3)" }}
+                                style={{ color: "rgba(148,163,184,0.4)" }}
                                 title="Delete recording"
                               >
                                 <Trash2 size={13} />
@@ -2024,11 +2025,11 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
           {(docView === "idle" || docView === "staging") && !batchProgress && batchResults.length === 0 && (
             <div className="rounded-2xl overflow-hidden border border-[rgba(255,255,255,0.08)]" style={{ background: "rgba(255,255,255,0.03)" }}>
               {/* Drop zone */}
-              <label className="flex flex-col items-center gap-3 border-2 border-dashed border-[rgba(255,255,255,0.1)] rounded-2xl m-4 p-10 cursor-pointer transition-colors hover:border-[rgba(37,99,235,0.4)] hover:bg-[rgba(37,99,235,0.04)] text-[rgba(255,255,255,0.4)] hover:text-white">
+              <label className="flex flex-col items-center gap-3 border-2 border-dashed border-[rgba(255,255,255,0.1)] rounded-2xl m-4 p-10 cursor-pointer transition-colors hover:border-[rgba(75,95,232,0.4)] hover:bg-[rgba(75,95,232,0.04)] text-[rgba(255,255,255,0.4)] hover:text-white">
                 <FileUp size={28} />
                 <div className="text-center">
-                  <div className="text-sm font-medium mb-0.5">Click to add documents</div>
-                  <div className="text-xs text-[rgba(255,255,255,0.35)]">PDF, Word, PowerPoint, Excel, OpenDocument, images, TXT — add as many as you need</div>
+                  <div className="text-sm font-medium mb-0.5">{t.workspace.files.dropTitle}</div>
+                  <div className="text-xs text-[rgba(255,255,255,0.35)]">{t.workspace.files.dropHint}</div>
                 </div>
                 <input type="file" accept=".pdf,.txt,.md,.csv,.docx,.doc,.pptx,.ppt,.xlsx,.xls,.odt,.odp,.ods,.jpg,.jpeg,.png,.webp,.gif,.heic,.heif" className="hidden" multiple
                   onChange={e => {
@@ -2056,8 +2057,8 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
                   <div className="px-4 py-4 border-t border-[rgba(255,255,255,0.06)] flex items-center gap-3">
                     <button onClick={saveFiles} disabled={batchProcessing}
                       className="flex items-center gap-2 text-white text-sm font-medium px-5 py-2.5 rounded-full disabled:opacity-40 transition-colors"
-                      style={{ background: "#2563eb" }}>
-                      Save ({docQueue.length})
+                      style={{ background: "#4B5FE8" }}>
+                      {t.common.save} ({docQueue.length})
                     </button>
                     <button onClick={generateBatch} disabled={batchProcessing}
                       className="flex items-center gap-2 border border-[rgba(255,255,255,0.15)] text-[rgba(255,255,255,0.7)] text-sm font-medium px-5 py-2.5 rounded-full hover:bg-[rgba(255,255,255,0.06)] transition-colors disabled:opacity-40">
@@ -2079,7 +2080,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
               <div className="text-sm font-medium text-white mb-1">Processing {batchProgress.current} of {batchProgress.total}</div>
               <div className="text-xs text-[rgba(255,255,255,0.4)]">Generating "{batchProgress.name}"…</div>
               <div className="mt-4 h-1 rounded-full bg-[rgba(255,255,255,0.08)] overflow-hidden">
-                <div className="h-1 rounded-full bg-[#2563eb] transition-all" style={{ width: `${(batchProgress.current / batchProgress.total) * 100}%` }} />
+                <div className="h-1 rounded-full bg-[#4B5FE8] transition-all" style={{ width: `${(batchProgress.current / batchProgress.total) * 100}%` }} />
               </div>
             </div>
           )}
@@ -2127,12 +2128,12 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
               <input autoFocus value={docName} onChange={e => setDocName(e.target.value)}
                 onKeyDown={e => e.key === "Enter" && docName.trim() && generateDocument()}
                 placeholder="e.g. Chapter 3 — Thermodynamics"
-                className="w-full border border-[rgba(255,255,255,0.1)] focus:border-[rgba(37,99,235,0.5)] rounded-xl px-4 py-3 text-sm text-white placeholder-[rgba(255,255,255,0.25)] outline-none mb-4"
+                className="w-full border border-[rgba(255,255,255,0.1)] focus:border-[rgba(75,95,232,0.5)] rounded-xl px-4 py-3 text-sm text-white placeholder-[rgba(255,255,255,0.25)] outline-none mb-4"
                 style={{ background: "rgba(255,255,255,0.06)" }} />
               {docError && <p className="text-xs text-red-400 mb-3">{docError}</p>}
               <button onClick={generateDocument} disabled={!docName.trim()}
                 className="w-full rounded-xl py-3 text-sm font-semibold text-white disabled:opacity-40 transition-colors"
-                style={{ background: "#2563eb" }}>
+                style={{ background: "#4B5FE8" }}>
                 Generate
               </button>
             </div>
@@ -2173,9 +2174,9 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
                     <button key={t} onClick={() => { setDocTab(t); setDocQuizSelected(null); }}
                       className="px-4 py-2 rounded-full text-xs font-medium transition-all whitespace-nowrap"
                       style={{
-                        background: docTab === t ? "#2563eb" : "rgba(255,255,255,0.07)",
+                        background: docTab === t ? "#4B5FE8" : "rgba(255,255,255,0.07)",
                         color: docTab === t ? "white" : "rgba(255,255,255,0.45)",
-                        border: `1px solid ${docTab === t ? "#2563eb" : "rgba(255,255,255,0.1)"}`,
+                        border: `1px solid ${docTab === t ? "#4B5FE8" : "rgba(255,255,255,0.1)"}`,
                       }}>
                       {labels[t]}
                     </button>
@@ -2212,7 +2213,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
                         <div className="space-y-1.5">
                           {(s.bullets ?? []).map((b: string, j: number) => (
                             <div key={j} className="flex gap-2 text-sm text-[rgba(255,255,255,0.6)]">
-                              <span className="shrink-0 mt-2 w-1.5 h-1.5 rounded-full bg-[#2563eb]" />
+                              <span className="shrink-0 mt-2 w-1.5 h-1.5 rounded-full bg-[#4B5FE8]" />
                               {b}
                             </div>
                           ))}
@@ -2226,7 +2227,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {(docResult.keyTerms ?? []).map((kt: any, i: number) => (
                       <div key={i} className="rounded-xl border border-[rgba(255,255,255,0.07)] px-4 py-3" style={{ background: "rgba(255,255,255,0.04)" }}>
-                        <div className="text-xs font-bold text-[#60a5fa] mb-1">{kt.term}</div>
+                        <div className="text-xs font-bold text-[#93A0F8] mb-1">{kt.term}</div>
                         <div className="text-xs text-[rgba(255,255,255,0.5)] leading-relaxed">{kt.definition}</div>
                       </div>
                     ))}
@@ -2240,10 +2241,10 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
                         onClick={() => setDocFlipped(p => { const s = new Set(p); s.has(i) ? s.delete(i) : s.add(i); return s; })}
                         className="cursor-pointer rounded-xl border px-4 py-3 transition-all"
                         style={{
-                          background: docFlipped.has(i) ? "rgba(37,99,235,0.1)" : "rgba(255,255,255,0.04)",
-                          borderColor: docFlipped.has(i) ? "rgba(37,99,235,0.35)" : "rgba(255,255,255,0.08)",
+                          background: docFlipped.has(i) ? "rgba(75,95,232,0.1)" : "rgba(255,255,255,0.04)",
+                          borderColor: docFlipped.has(i) ? "rgba(75,95,232,0.35)" : "rgba(255,255,255,0.08)",
                         }}>
-                        <div className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: docFlipped.has(i) ? "#60a5fa" : "rgba(255,255,255,0.3)" }}>
+                        <div className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: docFlipped.has(i) ? "#93A0F8" : "rgba(255,255,255,0.3)" }}>
                           {docFlipped.has(i) ? "Answer" : `Q${i + 1}`}
                         </div>
                         <div className="text-sm text-white">{docFlipped.has(i) ? pq.answer : pq.question}</div>
@@ -2257,7 +2258,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
                   <div className="space-y-2">
                     {(docResult.examTips ?? []).map((tip: string, i: number) => (
                       <div key={i} className="flex gap-3 text-sm text-[rgba(255,255,255,0.6)] rounded-xl border border-[rgba(255,255,255,0.07)] px-4 py-3" style={{ background: "rgba(255,255,255,0.04)" }}>
-                        <span className="shrink-0 font-bold text-[#2563eb]">{i + 1}.</span>
+                        <span className="shrink-0 font-bold text-[#4B5FE8]">{i + 1}.</span>
                         {tip}
                       </div>
                     ))}
@@ -2274,7 +2275,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
                     <div className="flex items-center gap-2 flex-wrap">
                       <button onClick={() => setDocSaveChoice("choosing")} disabled={docSaving}
                         className="flex items-center gap-1.5 text-xs text-white px-4 py-2 rounded-full font-semibold disabled:opacity-40 transition-colors"
-                        style={{ background: "#2563eb" }}>
+                        style={{ background: "#4B5FE8" }}>
                         Save to Study Book
                       </button>
                       <button onClick={enterEditMode}
@@ -2296,7 +2297,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
                       <div className="flex flex-wrap gap-2">
                         <button onClick={() => saveDocument()} disabled={docSaving}
                           className="flex items-center gap-1.5 text-xs text-white px-4 py-2 rounded-full font-semibold disabled:opacity-40 transition-colors"
-                          style={{ background: "#2563eb" }}>
+                          style={{ background: "#4B5FE8" }}>
                           {docSaving ? <><Loader2 size={10} className="animate-spin" /> Saving…</> : "Create New Study Book"}
                         </button>
                         {studyBooks.length > 0 && (
@@ -2342,8 +2343,8 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
               {/* AI Chatbot */}
               {docLectureId && (
                 <div className="border-t border-[rgba(255,255,255,0.07)]">
-                  <div className="px-6 py-3" style={{ background: "rgba(37,99,235,0.08)", borderBottom: "1px solid rgba(37,99,235,0.15)" }}>
-                    <div className="text-[10px] font-bold uppercase tracking-widest text-[#60a5fa]">Ask AI about this document</div>
+                  <div className="px-6 py-3" style={{ background: "rgba(75,95,232,0.08)", borderBottom: "1px solid rgba(75,95,232,0.15)" }}>
+                    <div className="text-[10px] font-bold uppercase tracking-widest text-[#93A0F8]">Ask AI about this document</div>
                   </div>
                   <div className="relative overflow-hidden" style={{ height: 260 }}>
                     <div className="absolute inset-0 overflow-y-auto px-6 pt-4 pb-3 space-y-3">
@@ -2353,7 +2354,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
                           <div className="flex flex-wrap gap-1.5 justify-center">
                             {["Summarize this document", "What are the key terms?", "Quiz me on this"].map(s => (
                               <button key={s} onClick={() => setDocChatInput(s)}
-                                className="text-[11px] px-2.5 py-1 rounded-full border border-[rgba(37,99,235,0.3)] text-[#60a5fa] hover:bg-[rgba(37,99,235,0.1)] transition-colors">
+                                className="text-[11px] px-2.5 py-1 rounded-full border border-[rgba(75,95,232,0.3)] text-[#93A0F8] hover:bg-[rgba(75,95,232,0.1)] transition-colors">
                                 {s}
                               </button>
                             ))}
@@ -2364,7 +2365,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
                         <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
                           <span className="text-sm max-w-[85%] leading-relaxed px-3 py-2"
                             style={{
-                              background: m.role === "user" ? "#2563eb" : "rgba(255,255,255,0.07)",
+                              background: m.role === "user" ? "#4B5FE8" : "rgba(255,255,255,0.07)",
                               color: m.role === "user" ? "white" : "rgba(255,255,255,0.75)",
                               borderRadius: m.role === "user" ? "14px 14px 3px 14px" : "14px 14px 14px 3px",
                             }}>{m.content}</span>
@@ -2383,10 +2384,10 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
                     <input value={docChatInput} onChange={e => setDocChatInput(e.target.value)}
                       onKeyDown={e => e.key === "Enter" && !e.shiftKey && sendDocChat()}
                       placeholder="Ask about this document…"
-                      className="flex-1 border border-[rgba(255,255,255,0.1)] focus:border-[rgba(37,99,235,0.5)] rounded-xl px-4 py-2.5 text-sm text-white placeholder-[rgba(255,255,255,0.25)] outline-none"
+                      className="flex-1 border border-[rgba(255,255,255,0.1)] focus:border-[rgba(75,95,232,0.5)] rounded-xl px-4 py-2.5 text-sm text-white placeholder-[rgba(255,255,255,0.25)] outline-none"
                       style={{ background: "rgba(255,255,255,0.06)" }} />
                     <button onClick={sendDocChat} disabled={!docChatInput.trim() || docChatLoading}
-                      className="text-sm font-semibold px-4 py-2.5 rounded-xl disabled:opacity-40" style={{ background: "#2563eb", color: "white" }}>
+                      className="text-sm font-semibold px-4 py-2.5 rounded-xl disabled:opacity-40" style={{ background: "#4B5FE8", color: "white" }}>
                       Send
                     </button>
                   </div>
@@ -2398,7 +2399,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
           {/* Previously saved files */}
           {docView !== "processing" && docView !== "editing" && sheets.filter((s: any) => !s.title?.endsWith("— Cheat Sheet")).length > 0 && (
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-[rgba(255,255,255,0.3)] mb-3">Saved Files</p>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-[rgba(255,255,255,0.3)] mb-3">{t.workspace.files.savedFiles}</p>
               <div className="space-y-2">
                 {sheets.filter((s: any) => !s.title?.endsWith("— Cheat Sheet")).map((s: any) => (
                   <button key={s.id} onClick={() => {
@@ -2415,8 +2416,8 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
                   }}
                     className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border text-left transition-all hover:border-[rgba(255,255,255,0.2)] hover:bg-[rgba(255,255,255,0.05)]"
                     style={{ background: "rgba(255,255,255,0.03)", borderColor: "rgba(255,255,255,0.08)" }}>
-                    <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "rgba(37,99,235,0.15)" }}>
-                      <FileText size={13} style={{ color: "#60a5fa" }} />
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "rgba(75,95,232,0.15)" }}>
+                      <FileText size={13} style={{ color: "#93A0F8" }} />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-medium text-white truncate">{s.title?.replace(/^Study Book:\s*/, "")}</div>
@@ -2434,20 +2435,20 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
 
           {/* editing */}
           {docView === "editing" && (
-            <div className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl p-6 space-y-5">
+            <div className="bg-[#12151C] border border-[rgba(148,163,184,0.12)] rounded-2xl p-6 space-y-5">
               <div className="flex items-center gap-3">
-                <button onClick={() => setDocView("result")} className="text-[#555] hover:text-[#111110] transition-colors">
+                <button onClick={() => setDocView("result")} className="text-slate-400 hover:text-slate-100 transition-colors">
                   <ArrowLeft size={15} />
                 </button>
-                <div className="text-sm font-medium text-[#111110]">Editing — {docName}</div>
+                <div className="text-sm font-medium text-slate-100">Editing — {docName}</div>
               </div>
               <div>
-                <div className="text-[10px] text-[#555] uppercase tracking-widest mb-1.5">Summary</div>
+                <div className="text-[10px] text-slate-400 uppercase tracking-widest mb-1.5">Summary</div>
                 <textarea
                   value={editSummary}
                   onChange={e => setEditSummary(e.target.value)}
                   rows={3}
-                  className="w-full bg-white border border-[rgba(0,0,0,0.08)] rounded-xl px-4 py-3 text-sm text-[#555] outline-none focus:border-[rgba(0,0,0,0.1)] resize-none leading-relaxed"
+                  className="w-full bg-[#12151C] border border-[rgba(148,163,184,0.12)] rounded-xl px-4 py-3 text-sm text-slate-400 outline-none focus:border-indigo-500/50 resize-none leading-relaxed"
                 />
               </div>
               {editDocSections.map((sec, i) => (
@@ -2455,24 +2456,24 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
                   <input
                     value={sec.heading}
                     onChange={e => setEditDocSections(prev => prev.map((s, j) => j === i ? { ...s, heading: e.target.value } : s))}
-                    className="w-full bg-transparent border-b border-[rgba(0,0,0,0.08)] pb-1 mb-2 text-[10px] text-[#555] uppercase tracking-widest outline-none focus:border-[#444]"
+                    className="w-full bg-transparent border-b border-[rgba(148,163,184,0.12)] pb-1 mb-2 text-[10px] text-slate-400 uppercase tracking-widest outline-none focus:border-[#444]"
                   />
                   <textarea
                     value={sec.bullets}
                     onChange={e => setEditDocSections(prev => prev.map((s, j) => j === i ? { ...s, bullets: e.target.value } : s))}
                     rows={Math.max(3, sec.bullets.split("\n").length)}
-                    className="w-full bg-white border border-[rgba(0,0,0,0.08)] rounded-xl px-4 py-3 text-xs text-[#555] outline-none focus:border-[rgba(0,0,0,0.1)] resize-none leading-relaxed"
+                    className="w-full bg-[#12151C] border border-[rgba(148,163,184,0.12)] rounded-xl px-4 py-3 text-xs text-slate-400 outline-none focus:border-indigo-500/50 resize-none leading-relaxed"
                     placeholder="One bullet per line"
                   />
                 </div>
               ))}
               <div>
-                <div className="text-[10px] text-[#555] uppercase tracking-widest mb-1.5">Key Terms</div>
+                <div className="text-[10px] text-slate-400 uppercase tracking-widest mb-1.5">Key Terms</div>
                 <textarea
                   value={editDocKeyTerms}
                   onChange={e => setEditDocKeyTerms(e.target.value)}
                   rows={Math.max(3, editDocKeyTerms.split("\n").length)}
-                  className="w-full bg-white border border-[rgba(0,0,0,0.08)] rounded-xl px-4 py-3 text-xs text-[#555] outline-none focus:border-[rgba(0,0,0,0.1)] resize-none leading-relaxed"
+                  className="w-full bg-[#12151C] border border-[rgba(148,163,184,0.12)] rounded-xl px-4 py-3 text-xs text-slate-400 outline-none focus:border-indigo-500/50 resize-none leading-relaxed"
                   placeholder="Term: Definition (one per line)"
                 />
               </div>
@@ -2480,7 +2481,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
               <button
                 onClick={saveEditedDocument}
                 disabled={docSaving}
-                className="w-full bg-[rgba(255,255,255,0.15)] text-[#111110] rounded-xl py-3 text-sm font-medium hover:opacity-80 transition-opacity disabled:opacity-40 flex items-center justify-center gap-2"
+                className="w-full bg-[rgba(255,255,255,0.15)] text-slate-100 rounded-xl py-3 text-sm font-medium hover:opacity-80 transition-opacity disabled:opacity-40 flex items-center justify-center gap-2"
               >
                 {docSaving ? <><Loader2 size={14} className="animate-spin" /> Saving…</> : "Save to Study Book"}
               </button>
@@ -2495,17 +2496,17 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
         <div className="space-y-4">
           {/* URL input */}
           <div className="flex gap-2">
-            <div className="flex-1 bg-white rounded-2xl px-4 py-3 flex items-center gap-3" style={{ border: "1.5px solid rgba(37,99,235,0.3)" }}>
-              <Youtube size={14} style={{ color: "#2563eb" }} className="shrink-0" />
+            <div className="flex-1 bg-[#12151C] rounded-2xl px-4 py-3 flex items-center gap-3" style={{ border: "1.5px solid rgba(75,95,232,0.3)" }}>
+              <Youtube size={14} style={{ color: "#4B5FE8" }} className="shrink-0" />
               <input
                 value={ytVideoId ? ytUrl : ytDraft}
                 onChange={e => { if (ytVideoId) return; setYtDraft(e.target.value); setYtError(""); }}
                 onKeyDown={e => e.key === "Enter" && !ytVideoId && confirmYtUrl()}
                 placeholder="Paste a YouTube URL…"
-                className="flex-1 bg-transparent text-sm text-[#111110] placeholder-[rgba(0,0,0,0.3)] outline-none"
+                className="flex-1 bg-transparent text-sm text-slate-100 placeholder-slate-600 outline-none"
               />
               {ytVideoId && (
-                <button onClick={() => handleYtUrl("")} className="text-[#555] hover:text-[#111110] transition-colors">
+                <button onClick={() => handleYtUrl("")} className="text-slate-400 hover:text-slate-100 transition-colors">
                   <X size={13} />
                 </button>
               )}
@@ -2515,7 +2516,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
                 onClick={confirmYtUrl}
                 disabled={!ytDraft.trim()}
                 className="text-sm font-semibold px-5 rounded-2xl transition-opacity disabled:opacity-40 shrink-0"
-                style={{ background: "#2563eb", color: "white" }}
+                style={{ background: "#4B5FE8", color: "white" }}
               >
                 Load
               </button>
@@ -2527,7 +2528,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
           {/* ── Saved videos — small video cards, only when nothing is open ── */}
           {!ytVideoId && !ytLectureId && videoLectures.length > 0 && (
             <div>
-              <p className="text-xs text-[#555] uppercase tracking-widest mb-3">Your videos</p>
+              <p className="text-xs text-slate-400 uppercase tracking-widest mb-3">{t.workspace.files.yourVideos}</p>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {videoLectures.map((l: any) => {
                   const vid = ytIdFromUrl(l.audioUrl);
@@ -2535,9 +2536,9 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
                     <div key={l.id} className="relative group/vid">
                       <button
                         onClick={() => openSavedVideo(l)}
-                        className="block w-full text-left bg-white border border-[rgba(0,0,0,0.08)] rounded-xl overflow-hidden hover:border-[rgba(0,0,0,0.2)] transition-all"
+                        className="block w-full text-left bg-[#12151C] border border-[rgba(148,163,184,0.12)] rounded-xl overflow-hidden hover:border-[rgba(0,0,0,0.2)] transition-all"
                       >
-                        <div className="relative w-full bg-black" style={{ aspectRatio: "16/9" }}>
+                        <div className="relative w-full bg-indigo-600" style={{ aspectRatio: "16/9" }}>
                           {vid ? (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img src={`https://img.youtube.com/vi/${vid}/mqdefault.jpg`} alt={l.title} className="w-full h-full object-cover" />
@@ -2545,7 +2546,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
                             <div className="w-full h-full flex items-center justify-center"><Youtube size={20} style={{ color: "rgba(255,255,255,0.4)" }} /></div>
                           )}
                           <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/vid:opacity-100 transition-opacity" style={{ background: "rgba(0,0,0,0.35)" }}>
-                            <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: "#2563eb" }}>
+                            <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: "#4B5FE8" }}>
                               <Play size={14} style={{ color: "white", marginLeft: 1 }} />
                             </div>
                           </div>
@@ -2556,8 +2557,8 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
                           )}
                         </div>
                         <div className="px-3 py-2">
-                          <div className="text-xs font-medium text-[#111110] truncate">{l.title}</div>
-                          <div className="text-[10px] text-[#888] mt-0.5">{format(new Date(l.recordedAt), "MMM d, yyyy")}</div>
+                          <div className="text-xs font-medium text-slate-100 truncate">{l.title}</div>
+                          <div className="text-[10px] text-slate-500 mt-0.5">{format(new Date(l.recordedAt), "MMM d, yyyy")}</div>
                         </div>
                       </button>
                       <button
@@ -2587,8 +2588,8 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
           {(ytVideoId || ytLectureId) && (
             <>
               {/* Video box — only when we have the URL */}
-              {ytVideoId && <div className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl overflow-hidden p-3">
-                <div className="rounded-xl overflow-hidden bg-black w-full" style={{ aspectRatio: "16/9" }}>
+              {ytVideoId && <div className="bg-[#12151C] border border-[rgba(148,163,184,0.12)] rounded-2xl overflow-hidden p-3">
+                <div className="rounded-xl overflow-hidden bg-indigo-600 w-full" style={{ aspectRatio: "16/9" }}>
                   <iframe
                     src={`https://www.youtube.com/embed/${ytVideoId}`}
                     className="w-full h-full"
@@ -2596,21 +2597,21 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
                     allowFullScreen
                   />
                 </div>
-                {ytTitle && <p className="text-xs text-[#555] mt-2 truncate">{ytTitle}</p>}
+                {ytTitle && <p className="text-xs text-slate-400 mt-2 truncate">{ytTitle}</p>}
               </div>}
 
               {/* Feature tabs + content */}
-              <div className="bg-white rounded-2xl overflow-hidden" style={{ border: "1px solid rgba(37,99,235,0.14)", boxShadow: "0 2px 12px rgba(37,99,235,0.05), 0 1px 3px rgba(0,0,0,0.06)" }}>
+              <div className="bg-[#12151C] rounded-2xl overflow-hidden" style={{ border: "1px solid rgba(75,95,232,0.14)", boxShadow: "0 2px 12px rgba(75,95,232,0.05), 0 1px 3px rgba(0,0,0,0.06)" }}>
                 {/* Tab bar */}
-                <div className="flex gap-2 overflow-x-auto p-3" style={{ background: "rgba(37,99,235,0.05)", borderBottom: "1px solid rgba(37,99,235,0.12)" }}>
+                <div className="flex gap-2 overflow-x-auto p-3" style={{ background: "rgba(75,95,232,0.05)", borderBottom: "1px solid rgba(75,95,232,0.12)" }}>
                   {([
-                    { key: "transcript", label: "Transcript" },
-                    { key: "summary",    label: "Summary"    },
-                    { key: "keypoints",  label: "Key Points" },
-                    { key: "quiz",       label: "Quiz"       },
-                    { key: "flashcards", label: "Flashcards" },
-                    { key: "note",       label: "Take Note"  },
-                    { key: "chatbot",    label: "Chatbot"    },
+                    { key: "transcript", label: t.workspace.videoTabs.transcript },
+                    { key: "summary",    label: t.workspace.videoTabs.summary },
+                    { key: "keypoints",  label: t.workspace.videoTabs.keypoints },
+                    { key: "quiz",       label: t.workspace.videoTabs.quiz },
+                    { key: "flashcards", label: t.workspace.videoTabs.flashcards },
+                    { key: "note",       label: t.workspace.videoTabs.note },
+                    { key: "chatbot",    label: t.workspace.videoTabs.chatbot },
                   ] as const).map(({ key, label }) => (
                     <button
                       key={key}
@@ -2621,7 +2622,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
                         borderRadius: 999,
                         fontSize: 15,
                         fontWeight: ytActiveTab === key ? 700 : 500,
-                        background: ytActiveTab === key ? "#2563eb" : "rgba(255,255,255,0.8)",
+                        background: ytActiveTab === key ? "#4B5FE8" : "rgba(255,255,255,0.8)",
                         color: ytActiveTab === key ? "white" : "rgba(0,0,0,0.5)",
                         border: ytActiveTab === key ? "none" : "1px solid rgba(0,0,0,0.1)",
                       }}
@@ -2644,12 +2645,12 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
                         <textarea
                           value={ytTranscript}
                           onChange={e => setYtTranscript(e.target.value)}
-                          className="w-full h-full bg-transparent text-sm text-[#444] outline-none resize-none leading-[1.85] tracking-[0.01em]"
+                          className="w-full h-full bg-transparent text-sm text-slate-400 outline-none resize-none leading-[1.85] tracking-[0.01em]"
                         />
                       ) : (
                         <div className="h-full flex flex-col items-center justify-center gap-4">
                           <p className="text-sm text-[#aaa]">Load the full transcript for this video.</p>
-                          <button onClick={loadTranscript} className="text-sm font-semibold px-5 py-2.5 rounded-full" style={{ background: "#2563eb", color: "white" }}>
+                          <button onClick={loadTranscript} className="text-sm font-semibold px-5 py-2.5 rounded-full" style={{ background: "#4B5FE8", color: "white" }}>
                             Load Transcript
                           </button>
                         </div>
@@ -2667,13 +2668,13 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
                         </div>
                       ) : ytSummary ? (
                         <div className="space-y-5">
-                          <p className="text-sm text-[#444] leading-[1.85] whitespace-pre-line">{ytSummary}</p>
-                          <button onClick={generateYtSummary} className="text-xs text-[#bbb] hover:text-[#888] transition-colors">Regenerate</button>
+                          <p className="text-sm text-slate-400 leading-[1.85] whitespace-pre-line">{ytSummary}</p>
+                          <button onClick={generateYtSummary} className="text-xs text-[#bbb] hover:text-slate-500 transition-colors">Regenerate</button>
                         </div>
                       ) : (
                         <div className="h-full flex flex-col items-center justify-center gap-4">
                           <p className="text-sm text-[#aaa]">Get a concise summary of this video lecture.</p>
-                          <button onClick={generateYtSummary} className="text-sm font-semibold px-5 py-2.5 rounded-full" style={{ background: "#2563eb", color: "white" }}>
+                          <button onClick={generateYtSummary} className="text-sm font-semibold px-5 py-2.5 rounded-full" style={{ background: "#4B5FE8", color: "white" }}>
                             Generate Summary
                           </button>
                         </div>
@@ -2693,7 +2694,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
                         <div className="space-y-2">
                           {ytKeyPoints.map((kp: any, i: number) => {
                             const colorMap: Record<string, { bg: string; text: string; border: string }> = {
-                              Definition: { bg: "rgba(37,99,235,0.06)",  text: "#2563eb", border: "rgba(37,99,235,0.2)"  },
+                              Definition: { bg: "rgba(75,95,232,0.06)",  text: "#4B5FE8", border: "rgba(75,95,232,0.2)"  },
                               Important:  { bg: "rgba(245,158,11,0.06)", text: "#d97706", border: "rgba(245,158,11,0.2)" },
                               Formula:    { bg: "rgba(16,185,129,0.06)", text: "#059669", border: "rgba(16,185,129,0.2)" },
                               Example:    { bg: "rgba(139,92,246,0.06)", text: "#7c3aed", border: "rgba(139,92,246,0.2)" },
@@ -2709,12 +2710,12 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
                               </div>
                             );
                           })}
-                          <button onClick={generateYtKeyPoints} className="text-xs text-[#bbb] hover:text-[#888] transition-colors pt-1">Regenerate</button>
+                          <button onClick={generateYtKeyPoints} className="text-xs text-[#bbb] hover:text-slate-500 transition-colors pt-1">Regenerate</button>
                         </div>
                       ) : (
                         <div className="h-full flex flex-col items-center justify-center gap-4">
                           <p className="text-sm text-[#aaa]">Extract and highlight all key points from this video.</p>
-                          <button onClick={generateYtKeyPoints} className="text-sm font-semibold px-5 py-2.5 rounded-full" style={{ background: "#2563eb", color: "white" }}>
+                          <button onClick={generateYtKeyPoints} className="text-sm font-semibold px-5 py-2.5 rounded-full" style={{ background: "#4B5FE8", color: "white" }}>
                             Extract Key Points
                           </button>
                         </div>
@@ -2735,11 +2736,11 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
                           {ytInlineQuiz.map((q: any, i: number) => {
                             const revealed = ytQuizRevealed.has(i);
                             return (
-                              <div key={i} className="rounded-xl border overflow-hidden" style={{ borderColor: revealed ? "rgba(37,99,235,0.3)" : "rgba(0,0,0,0.07)" }}>
-                                <div className="px-4 py-3 text-sm font-medium text-[#111110]" style={{ background: revealed ? "rgba(37,99,235,0.04)" : "rgba(0,0,0,0.02)" }}>
-                                  <span className="text-[#2563eb] font-bold mr-2">Q{i + 1}.</span>{q.question}
+                              <div key={i} className="rounded-xl border overflow-hidden" style={{ borderColor: revealed ? "rgba(75,95,232,0.3)" : "rgba(0,0,0,0.07)" }}>
+                                <div className="px-4 py-3 text-sm font-medium text-slate-100" style={{ background: revealed ? "rgba(75,95,232,0.04)" : "rgba(0,0,0,0.02)" }}>
+                                  <span className="text-[#4B5FE8] font-bold mr-2">Q{i + 1}.</span>{q.question}
                                 </div>
-                                <div className="px-4 pb-3 pt-2 space-y-1.5 bg-white">
+                                <div className="px-4 pb-3 pt-2 space-y-1.5 bg-[#12151C]">
                                   {(q.options ?? []).map((opt: string, j: number) => {
                                     const letter = ["A","B","C","D"][j];
                                     const isCorrect = revealed && letter === q.answer;
@@ -2752,11 +2753,11 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
                                     );
                                   })}
                                   {revealed && q.explanation && (
-                                    <p className="text-xs text-[#888] mt-2 px-1 leading-relaxed">{q.explanation}</p>
+                                    <p className="text-xs text-slate-500 mt-2 px-1 leading-relaxed">{q.explanation}</p>
                                   )}
                                   {!revealed && (
                                     <button onClick={() => setYtQuizRevealed(p => { const s = new Set(p); s.add(i); return s; })}
-                                      className="text-xs font-semibold text-[#2563eb] mt-1 px-1 hover:opacity-70 transition-opacity">
+                                      className="text-xs font-semibold text-[#4B5FE8] mt-1 px-1 hover:opacity-70 transition-opacity">
                                       Reveal answer →
                                     </button>
                                   )}
@@ -2764,12 +2765,12 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
                               </div>
                             );
                           })}
-                          <button onClick={generateYtInlineQuiz} className="text-xs text-[#bbb] hover:text-[#888] transition-colors pt-1">Regenerate</button>
+                          <button onClick={generateYtInlineQuiz} className="text-xs text-[#bbb] hover:text-slate-500 transition-colors pt-1">Regenerate</button>
                         </div>
                       ) : (
                         <div className="h-full flex flex-col items-center justify-center gap-4">
                           <p className="text-sm text-[#aaa]">Generate quiz questions from this video.</p>
-                          <button onClick={generateYtInlineQuiz} className="text-sm font-semibold px-5 py-2.5 rounded-full" style={{ background: "#2563eb", color: "white" }}>
+                          <button onClick={generateYtInlineQuiz} className="text-sm font-semibold px-5 py-2.5 rounded-full" style={{ background: "#4B5FE8", color: "white" }}>
                             Generate Quiz
                           </button>
                         </div>
@@ -2791,18 +2792,18 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
                             {ytFlashcards.map((fc: any, i: number) => (
                               <div key={i} onClick={() => setYtFlipped(p => { const s = new Set(p); s.has(i) ? s.delete(i) : s.add(i); return s; })}
                                 className="cursor-pointer rounded-xl p-4 min-h-[100px] flex flex-col items-center justify-center text-center transition-all select-none"
-                                style={{ background: ytFlipped.has(i) ? "rgba(37,99,235,0.06)" : "rgba(0,0,0,0.02)", border: `1px solid ${ytFlipped.has(i) ? "rgba(37,99,235,0.25)" : "rgba(0,0,0,0.07)"}` }}>
-                                <div className="text-[10px] uppercase tracking-widest mb-2" style={{ color: ytFlipped.has(i) ? "#2563eb" : "#bbb" }}>{ytFlipped.has(i) ? "Answer" : "Question"}</div>
+                                style={{ background: ytFlipped.has(i) ? "rgba(75,95,232,0.06)" : "rgba(0,0,0,0.02)", border: `1px solid ${ytFlipped.has(i) ? "rgba(75,95,232,0.25)" : "rgba(0,0,0,0.07)"}` }}>
+                                <div className="text-[10px] uppercase tracking-widest mb-2" style={{ color: ytFlipped.has(i) ? "#4B5FE8" : "#bbb" }}>{ytFlipped.has(i) ? "Answer" : "Question"}</div>
                                 <p className="text-sm leading-relaxed" style={{ color: ytFlipped.has(i) ? "#1e3a8a" : "#555" }}>{ytFlipped.has(i) ? fc.back : fc.front}</p>
                               </div>
                             ))}
                           </div>
-                          <button onClick={generateYtFlashcards} className="text-xs text-[#bbb] hover:text-[#888] transition-colors">Regenerate</button>
+                          <button onClick={generateYtFlashcards} className="text-xs text-[#bbb] hover:text-slate-500 transition-colors">Regenerate</button>
                         </div>
                       ) : (
                         <div className="h-full flex flex-col items-center justify-center gap-4">
                           <p className="text-sm text-[#aaa]">Create flashcards from key concepts in this video.</p>
-                          <button onClick={generateYtFlashcards} className="text-sm font-semibold px-5 py-2.5 rounded-full" style={{ background: "#2563eb", color: "white" }}>
+                          <button onClick={generateYtFlashcards} className="text-sm font-semibold px-5 py-2.5 rounded-full" style={{ background: "#4B5FE8", color: "white" }}>
                             Generate Flashcards
                           </button>
                         </div>
@@ -2817,9 +2818,9 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
                         value={ytNote}
                         onChange={e => { setYtNote(e.target.value); setYtNoteNaming(false); }}
                         placeholder="Start typing your notes…"
-                        className="flex-1 w-full bg-transparent text-sm text-[#444] placeholder-[rgba(0,0,0,0.25)] outline-none resize-none leading-[1.85]"
+                        className="flex-1 w-full bg-transparent text-sm text-slate-400 placeholder-[rgba(0,0,0,0.25)] outline-none resize-none leading-[1.85]"
                       />
-                      <div className="flex items-center gap-2 shrink-0 pt-2 border-t border-[rgba(0,0,0,0.06)]">
+                      <div className="flex items-center gap-2 shrink-0 pt-2 border-t border-[rgba(148,163,184,0.09)]">
                         {ytNoteSaved ? (
                           <div className="flex items-center gap-1.5 text-sm text-green-600"><CheckCircle size={13} /> Saved!</div>
                         ) : ytNoteNaming ? (
@@ -2827,14 +2828,14 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
                             <input autoFocus value={ytNoteName} onChange={e => setYtNoteName(e.target.value)}
                               onKeyDown={e => e.key === "Enter" && saveYtNote(ytNoteName)}
                               placeholder="Name this note…"
-                              className="flex-1 bg-[rgba(0,0,0,0.03)] border border-[rgba(0,0,0,0.08)] focus:border-[rgba(0,0,0,0.15)] rounded-lg px-3 py-2 text-sm text-[#111110] placeholder-[rgba(0,0,0,0.3)] outline-none" />
+                              className="flex-1 bg-[rgba(0,0,0,0.03)] border border-[rgba(148,163,184,0.12)] focus:border-[rgba(0,0,0,0.15)] rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-600 outline-none" />
                             <button onClick={() => saveYtNote(ytNoteName)} disabled={!ytNoteName.trim()}
-                              className="text-sm font-semibold px-4 py-2 rounded-lg disabled:opacity-40" style={{ background: "#2563eb", color: "white" }}>Save</button>
-                            <button onClick={() => { setYtNoteNaming(false); setYtNoteName(""); }} className="text-sm text-[#999] hover:text-[#555] px-2 py-2 transition-colors">Cancel</button>
+                              className="text-sm font-semibold px-4 py-2 rounded-lg disabled:opacity-40" style={{ background: "#4B5FE8", color: "white" }}>Save</button>
+                            <button onClick={() => { setYtNoteNaming(false); setYtNoteName(""); }} className="text-sm text-[#999] hover:text-slate-400 px-2 py-2 transition-colors">Cancel</button>
                           </>
                         ) : (
                           <button onClick={() => setYtNoteNaming(true)} disabled={!ytNote.trim()}
-                            className="text-sm font-semibold px-4 py-2 rounded-lg disabled:opacity-40" style={{ background: "#2563eb", color: "white" }}>
+                            className="text-sm font-semibold px-4 py-2 rounded-lg disabled:opacity-40" style={{ background: "#4B5FE8", color: "white" }}>
                             Save to Notes
                           </button>
                         )}
@@ -2855,7 +2856,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
                           <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
                             <span className="text-sm px-4 py-2.5 max-w-[85%] leading-relaxed"
                               style={{
-                                background: m.role === "user" ? "#2563eb" : "rgba(0,0,0,0.04)",
+                                background: m.role === "user" ? "#4B5FE8" : "rgba(0,0,0,0.04)",
                                 color: m.role === "user" ? "white" : "#333",
                                 borderRadius: m.role === "user" ? "18px 18px 4px 18px" : "18px 18px 18px 4px",
                               }}>{m.content}</span>
@@ -2869,16 +2870,16 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
                           </div>
                         )}
                       </div>
-                      <div className="flex gap-2 px-4 pb-4 pt-3 border-t border-[rgba(0,0,0,0.06)] shrink-0">
+                      <div className="flex gap-2 px-4 pb-4 pt-3 border-t border-[rgba(148,163,184,0.09)] shrink-0">
                         <input
                           value={ytChatInput}
                           onChange={e => setYtChatInput(e.target.value)}
                           onKeyDown={e => e.key === "Enter" && !e.shiftKey && sendYtChat()}
                           placeholder="Ask a question…"
-                          className="flex-1 bg-[rgba(0,0,0,0.03)] border border-[rgba(0,0,0,0.08)] focus:border-[rgba(0,0,0,0.15)] rounded-xl px-4 py-2.5 text-sm text-[#333] placeholder-[rgba(0,0,0,0.3)] outline-none"
+                          className="flex-1 bg-[rgba(0,0,0,0.03)] border border-[rgba(148,163,184,0.12)] focus:border-[rgba(0,0,0,0.15)] rounded-xl px-4 py-2.5 text-sm text-[#333] placeholder-slate-600 outline-none"
                         />
                         <button onClick={sendYtChat} disabled={!ytChatInput.trim() || ytChatLoading}
-                          className="text-sm font-semibold px-4 py-2.5 rounded-xl disabled:opacity-40" style={{ background: "#2563eb", color: "white" }}>
+                          className="text-sm font-semibold px-4 py-2.5 rounded-xl disabled:opacity-40" style={{ background: "#4B5FE8", color: "white" }}>
                           Send
                         </button>
                       </div>
@@ -2896,15 +2897,15 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
       {tab === "studybook" && sbView === "list" && (
         <div className="space-y-3">
           {/* Generate Study Book card */}
-          <div className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl p-5">
+          <div className="bg-[#12151C] border border-[rgba(148,163,184,0.12)] rounded-2xl p-5">
             <div className="text-[10px] font-semibold uppercase tracking-widest text-[rgba(0,0,0,0.38)] mb-1">Generate Study Book</div>
 
             {generateBookDone ? (
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-sm text-[#111110]">
+                <div className="flex items-center gap-2 text-sm text-slate-100">
                   <CheckCircle size={14} className="text-green-500" /> Study book ready — see below
                 </div>
-                <button onClick={() => { setGenerateBookDone(false); setShowMaterials(false); }} className="text-xs text-[#555] hover:text-[#111110] transition-colors">Generate another</button>
+                <button onClick={() => { setGenerateBookDone(false); setShowMaterials(false); }} className="text-xs text-slate-400 hover:text-slate-100 transition-colors">Generate another</button>
               </div>
             ) : (
               <>
@@ -2912,7 +2913,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
                 {!showMaterials ? (
                   <div className="flex items-center justify-between mb-4">
                     <div className="text-xs text-[#6b6b69] space-y-0.5">
-                      <p className="font-medium text-[#444]">Uses all class materials:</p>
+                      <p className="font-medium text-slate-400">Uses all class materials:</p>
                       <p>
                         {[
                           lectures.filter((l: any) => l.status === "ready").length > 0 && `${lectures.filter((l: any) => l.status === "ready").length} recording${lectures.filter((l: any) => l.status === "ready").length !== 1 ? "s" : ""}`,
@@ -2921,30 +2922,30 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
                         ].filter(Boolean).join(" · ") || "No materials yet"}
                       </p>
                     </div>
-                    <button onClick={openMaterialPicker} className="text-[10px] font-medium text-[#555] hover:text-[#111110] border border-[rgba(0,0,0,0.1)] px-2.5 py-1 rounded-full transition-colors shrink-0 ml-3">
+                    <button onClick={openMaterialPicker} className="text-[10px] font-medium text-slate-400 hover:text-slate-100 border border-[rgba(0,0,0,0.1)] px-2.5 py-1 rounded-full transition-colors shrink-0 ml-3">
                       Choose
                     </button>
                   </div>
                 ) : (
-                  <div className="mb-4 border border-[rgba(0,0,0,0.08)] rounded-xl overflow-hidden">
+                  <div className="mb-4 border border-[rgba(148,163,184,0.12)] rounded-xl overflow-hidden">
                     {/* Header */}
-                    <div className="flex items-center justify-between px-4 py-2.5 bg-[rgba(0,0,0,0.02)] border-b border-[rgba(0,0,0,0.06)]">
-                      <span className="text-[10px] font-semibold uppercase tracking-widest text-[#555]">Select materials</span>
-                      <button onClick={() => setShowMaterials(false)} className="text-[10px] text-[#555] hover:text-[#111110]">Use all</button>
+                    <div className="flex items-center justify-between px-4 py-2.5 bg-[rgba(0,0,0,0.02)] border-b border-[rgba(148,163,184,0.09)]">
+                      <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Select materials</span>
+                      <button onClick={() => setShowMaterials(false)} className="text-[10px] text-slate-400 hover:text-slate-100">Use all</button>
                     </div>
 
                     {/* Recordings & Files */}
                     {lectures.filter((l: any) => l.status === "ready").length > 0 && (
-                      <div className="border-b border-[rgba(0,0,0,0.06)]">
-                        <div className="flex items-center justify-between px-4 py-2 bg-white">
-                          <span className="text-[10px] font-semibold uppercase tracking-widest text-[#888]">Recordings & Files</span>
+                      <div className="border-b border-[rgba(148,163,184,0.09)]">
+                        <div className="flex items-center justify-between px-4 py-2 bg-[#12151C]">
+                          <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">Recordings & Files</span>
                           <button
                             onClick={() => {
                               const all = lectures.filter((l: any) => l.status === "ready").map((l: any) => l.id);
                               const allSelected = all.every((id: string) => selectedLectureIds.has(id));
                               setSelectedLectureIds(allSelected ? new Set() : new Set(all));
                             }}
-                            className="text-[10px] text-[#555] hover:text-[#111110]"
+                            className="text-[10px] text-slate-400 hover:text-slate-100"
                           >
                             {lectures.filter((l: any) => l.status === "ready").every((l: any) => selectedLectureIds.has(l.id)) ? "Deselect all" : "Select all"}
                           </button>
@@ -2952,7 +2953,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
                         {lectures.filter((l: any) => l.status === "ready").map((l: any) => (
                           <label key={l.id} className="flex items-center gap-3 px-4 py-2.5 hover:bg-[rgba(0,0,0,0.02)] cursor-pointer border-t border-[rgba(0,0,0,0.04)]">
                             <input type="checkbox" checked={selectedLectureIds.has(l.id)} onChange={() => toggleLecture(l.id)} className="rounded accent-[#111110]" />
-                            <span className="text-xs text-[#111110] truncate">{l.title}</span>
+                            <span className="text-xs text-slate-100 truncate">{l.title}</span>
                           </label>
                         ))}
                       </div>
@@ -2961,15 +2962,15 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
                     {/* Notes */}
                     {notes.length > 0 && (
                       <div>
-                        <div className="flex items-center justify-between px-4 py-2 bg-white">
-                          <span className="text-[10px] font-semibold uppercase tracking-widest text-[#888]">Notes</span>
+                        <div className="flex items-center justify-between px-4 py-2 bg-[#12151C]">
+                          <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">Notes</span>
                           <button
                             onClick={() => {
                               const all = notes.map(n => n.id);
                               const allSelected = all.every(id => selectedNoteIds.has(id));
                               setSelectedNoteIds(allSelected ? new Set() : new Set(all));
                             }}
-                            className="text-[10px] text-[#555] hover:text-[#111110]"
+                            className="text-[10px] text-slate-400 hover:text-slate-100"
                           >
                             {notes.every(n => selectedNoteIds.has(n.id)) ? "Deselect all" : "Select all"}
                           </button>
@@ -2977,7 +2978,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
                         {notes.map(n => (
                           <label key={n.id} className="flex items-center gap-3 px-4 py-2.5 hover:bg-[rgba(0,0,0,0.02)] cursor-pointer border-t border-[rgba(0,0,0,0.04)]">
                             <input type="checkbox" checked={selectedNoteIds.has(n.id)} onChange={() => toggleNote(n.id)} className="rounded accent-[#111110]" />
-                            <span className="text-xs text-[#111110] truncate">{n.name}</span>
+                            <span className="text-xs text-slate-100 truncate">{n.name}</span>
                           </label>
                         ))}
                       </div>
@@ -2996,12 +2997,12 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
                     onKeyDown={e => e.key === "Enter" && !generatingBook && generateClassBook()}
                     placeholder="e.g. Midterm Complete Study Guide"
                     disabled={generatingBook}
-                    className="flex-1 bg-white border border-[rgba(0,0,0,0.08)] rounded-xl px-4 py-2.5 text-sm text-[#111110] placeholder-[rgba(0,0,0,0.3)] outline-none focus:border-[rgba(0,0,0,0.1)] disabled:opacity-50"
+                    className="flex-1 bg-[#12151C] border border-[rgba(148,163,184,0.12)] rounded-xl px-4 py-2.5 text-sm text-slate-100 placeholder-slate-600 outline-none focus:border-indigo-500/50 disabled:opacity-50"
                   />
                   <button
                     onClick={generateClassBook}
                     disabled={generatingBook}
-                    className="flex items-center gap-2 bg-[rgba(255,255,255,0.15)] text-[#111110] text-sm font-medium px-5 py-2.5 rounded-xl hover:opacity-80 transition-opacity disabled:opacity-40 shrink-0"
+                    className="flex items-center gap-2 bg-[rgba(255,255,255,0.15)] text-slate-100 text-sm font-medium px-5 py-2.5 rounded-xl hover:opacity-80 transition-opacity disabled:opacity-40 shrink-0"
                   >
                     {generatingBook ? <><Loader2 size={13} className="animate-spin" /> Generating…</> : "Generate"}
                   </button>
@@ -3013,10 +3014,10 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
           </div>
 
           {studyBooks.length === 0 ? (
-            <div className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl p-8 text-center">
-              <BookMarked size={28} className="mx-auto mb-3 text-[#555]" />
-              <p className="text-sm text-[#555] mb-1">No study books yet.</p>
-              <p className="text-xs text-[#555]">Enter a title above and click Generate to create one.</p>
+            <div className="bg-[#12151C] border border-[rgba(148,163,184,0.12)] rounded-2xl p-8 text-center">
+              <BookMarked size={28} className="mx-auto mb-3 text-slate-400" />
+              <p className="text-sm text-slate-400 mb-1">No study books yet.</p>
+              <p className="text-xs text-slate-400">Enter a title above and click Generate to create one.</p>
             </div>
           ) : (
             studyBooks.map((sb: any, idx: number) => {
@@ -3035,12 +3036,12 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
                 <button
                   key={sb.id}
                   onClick={() => openSb(sb)}
-                  className="w-full bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl text-left hover:shadow-sm transition-all overflow-hidden flex"
+                  className="w-full bg-[#12151C] border border-[rgba(148,163,184,0.12)] rounded-2xl text-left hover:shadow-sm transition-all overflow-hidden flex"
                 >
                   <div className="w-2.5 shrink-0 self-stretch rounded-l-2xl" style={{ background: spine }} />
                   <div className="flex-1 px-5 py-4 flex items-center justify-between gap-3">
                     <div>
-                      <div className="text-sm font-medium text-[#111110] mb-0.5">{title}</div>
+                      <div className="text-sm font-medium text-slate-100 mb-0.5">{title}</div>
                       <div className="text-[10px] text-[#6b6b69]">
                         {format(new Date(sb.createdAt), "MMM d, yyyy")}
                         {chapterCount > 0 && ` · ${chapterCount} chapter${chapterCount !== 1 ? "s" : ""}`}
@@ -3049,7 +3050,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
                         {glossaryCount > 0 && ` · ${glossaryCount} terms`}
                       </div>
                     </div>
-                    <span className="text-[10px] font-medium px-3 py-1.5 rounded-full shrink-0" style={{ background: "rgba(0,0,0,0.06)", color: "#555" }}>Open</span>
+                    <span className="text-[10px] font-medium px-3 py-1.5 rounded-full shrink-0" style={{ background: "rgba(0,0,0,0.06)", color: "#94A3B8" }}>Open</span>
                   </div>
                 </button>
               );
@@ -3071,31 +3072,31 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
           <div className="space-y-4">
             {/* Header */}
             <div className="flex items-center gap-3">
-              <button onClick={closeSb} className="text-[#555] hover:text-[#111110] transition-colors">
+              <button onClick={closeSb} className="text-slate-400 hover:text-slate-100 transition-colors">
                 <ArrowLeft size={15} />
               </button>
               <div className="flex-1 min-w-0">
-                <div className="text-base font-medium text-[#111110] truncate">{sbTitle}</div>
-                <div className="text-[10px] text-[#555]">{format(new Date(activeSb.createdAt), 'MMM d, yyyy')}</div>
+                <div className="text-base font-medium text-slate-100 truncate">{sbTitle}</div>
+                <div className="text-[10px] text-slate-400">{format(new Date(activeSb.createdAt), 'MMM d, yyyy')}</div>
               </div>
             </div>
 
             {/* Summary */}
             {summary && (
-              <div className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl p-5">
-                <div className="text-[10px] font-bold uppercase tracking-widest text-[#555] mb-2">Overview</div>
-                <p className="text-sm text-[#444] leading-relaxed">{summary}</p>
+              <div className="bg-[#12151C] border border-[rgba(148,163,184,0.12)] rounded-2xl p-5">
+                <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">Overview</div>
+                <p className="text-sm text-slate-400 leading-relaxed">{summary}</p>
               </div>
             )}
 
             {/* Key Takeaways */}
             {takeaways.length > 0 && (
-              <div className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl p-5">
-                <div className="text-[10px] font-bold uppercase tracking-widest text-[#555] mb-3">Key Takeaways · {takeaways.length}</div>
+              <div className="bg-[#12151C] border border-[rgba(148,163,184,0.12)] rounded-2xl p-5">
+                <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3">Key Takeaways · {takeaways.length}</div>
                 <div className="space-y-2">
                   {takeaways.map((pt: string, i: number) => (
-                    <div key={i} className="flex gap-2.5 text-sm text-[#444] leading-relaxed">
-                      <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[#2563eb] shrink-0" />
+                    <div key={i} className="flex gap-2.5 text-sm text-slate-400 leading-relaxed">
+                      <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[#4B5FE8] shrink-0" />
                       {pt}
                     </div>
                   ))}
@@ -3105,13 +3106,13 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
 
             {/* Key Terms */}
             {keyTerms.length > 0 && (
-              <div className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl p-5">
-                <div className="text-[10px] font-bold uppercase tracking-widest text-[#555] mb-3">Key Terms · {keyTerms.length}</div>
+              <div className="bg-[#12151C] border border-[rgba(148,163,184,0.12)] rounded-2xl p-5">
+                <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3">Key Terms · {keyTerms.length}</div>
                 <div className="space-y-2.5">
                   {keyTerms.map((kt: any, i: number) => (
                     <div key={i} className="flex gap-2 text-sm">
-                      <span className="font-semibold text-[#111110] shrink-0">{kt.term}:</span>
-                      <span className="text-[#555]">{kt.definition}</span>
+                      <span className="font-semibold text-slate-100 shrink-0">{kt.term}:</span>
+                      <span className="text-slate-400">{kt.definition}</span>
                     </div>
                   ))}
                 </div>
@@ -3120,22 +3121,22 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
 
             {/* Practice Questions */}
             {questions.length > 0 && (
-              <div className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl p-5">
-                <div className="text-[10px] font-bold uppercase tracking-widest text-[#555] mb-3">Practice Questions · {questions.length}</div>
+              <div className="bg-[#12151C] border border-[rgba(148,163,184,0.12)] rounded-2xl p-5">
+                <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3">Practice Questions · {questions.length}</div>
                 <div className="space-y-3">
                   {questions.map((q: any, i: number) => {
                     const revealed = openQ.has(i);
                     const answer = q.answer ?? q.correctAnswer ?? '';
                     return (
-                      <div key={i} className="rounded-xl border overflow-hidden" style={{ borderColor: revealed ? 'rgba(37,99,235,0.25)' : 'rgba(0,0,0,0.07)' }}>
-                        <div className="px-4 py-3 text-sm font-medium text-[#111110]" style={{ background: revealed ? 'rgba(37,99,235,0.04)' : 'rgba(0,0,0,0.02)' }}>
-                          <span className="text-[#2563eb] font-bold mr-2">Q{i + 1}.</span>{q.question}
+                      <div key={i} className="rounded-xl border overflow-hidden" style={{ borderColor: revealed ? 'rgba(75,95,232,0.25)' : 'rgba(0,0,0,0.07)' }}>
+                        <div className="px-4 py-3 text-sm font-medium text-slate-100" style={{ background: revealed ? 'rgba(75,95,232,0.04)' : 'rgba(0,0,0,0.02)' }}>
+                          <span className="text-[#4B5FE8] font-bold mr-2">Q{i + 1}.</span>{q.question}
                         </div>
                         {revealed ? (
-                          <div className="px-4 py-3 bg-white text-sm text-[#444] leading-relaxed border-t border-[rgba(0,0,0,0.06)]">{answer}</div>
+                          <div className="px-4 py-3 bg-[#12151C] text-sm text-slate-400 leading-relaxed border-t border-[rgba(148,163,184,0.09)]">{answer}</div>
                         ) : (
                           <button onClick={() => setOpenQ(p => { const s = new Set(p); s.add(i); return s; })}
-                            className="w-full text-left px-4 py-2 text-xs font-semibold text-[#2563eb] hover:opacity-70 transition-opacity bg-white border-t border-[rgba(0,0,0,0.06)]">
+                            className="w-full text-left px-4 py-2 text-xs font-semibold text-[#4B5FE8] hover:opacity-70 transition-opacity bg-[#12151C] border-t border-[rgba(148,163,184,0.09)]">
                             Reveal answer →
                           </button>
                         )}
@@ -3153,23 +3154,23 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
       {tab === "note" && noteView === "list" && (
         <div className="space-y-3">
           <div className="flex items-center justify-between mb-1">
-            <p className="text-xs text-[#555] uppercase tracking-widest">Your Notes</p>
+            <p className="text-xs text-slate-400 uppercase tracking-widest">Your Notes</p>
             <button
               onClick={() => { setNewNoteName(""); setNoteView("create"); }}
-              className="flex items-center gap-1.5 text-xs bg-white text-[#111110] px-3 py-1.5 rounded-full font-medium hover:bg-[#eee] transition-colors"
+              className="flex items-center gap-1.5 text-xs bg-[#12151C] text-slate-100 px-3 py-1.5 rounded-full font-medium hover:bg-[#1A1F2B] transition-colors"
             >
               <Plus size={11} /> New Note
             </button>
           </div>
 
           {notes.length === 0 ? (
-            <div className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl p-10 text-center">
+            <div className="bg-[#12151C] border border-[rgba(148,163,184,0.12)] rounded-2xl p-10 text-center">
               <PenLine size={28} className="mx-auto mb-3 text-[#222]" />
-              <p className="text-sm text-[#555] mb-1">No notes yet</p>
-              <p className="text-xs text-[#555] mb-4">Create your first note for {course.name}</p>
+              <p className="text-sm text-slate-400 mb-1">No notes yet</p>
+              <p className="text-xs text-slate-400 mb-4">Create your first note for {course.name}</p>
               <button
                 onClick={() => { setNewNoteName(""); setNoteView("create"); }}
-                className="text-xs border border-[rgba(0,0,0,0.1)] px-4 py-2 rounded-full text-[#111110] hover:border-[#ddd] transition-colors"
+                className="text-xs border border-[rgba(0,0,0,0.1)] px-4 py-2 rounded-full text-slate-100 hover:border-[#ddd] transition-colors"
               >
                 Create a note
               </button>
@@ -3177,16 +3178,16 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
           ) : (
             <div className="space-y-2">
               {notes.map(n => (
-                <div key={n.id} className="group bg-white border border-[rgba(0,0,0,0.08)] rounded-xl px-4 py-3 flex items-center justify-between hover:border-[rgba(0,0,0,0.1)] transition-colors">
+                <div key={n.id} className="group bg-[#12151C] border border-[rgba(148,163,184,0.12)] rounded-xl px-4 py-3 flex items-center justify-between hover:border-[rgba(0,0,0,0.1)] transition-colors">
                   <button className="flex-1 text-left" onClick={() => { setActiveNote(n); setNoteSavedAt(null); setNoteView("edit"); }}>
-                    <div className="text-sm text-[#111110]">{n.name}</div>
-                    <div className="text-[10px] text-[#555] mt-0.5">
+                    <div className="text-sm text-slate-100">{n.name}</div>
+                    <div className="text-[10px] text-slate-400 mt-0.5">
                       {format(new Date(n.updatedAt), "MMM d, yyyy · h:mm a")}
                     </div>
                   </button>
                   <button
                     onClick={() => deleteNote(n.id)}
-                    className="opacity-0 group-hover:opacity-100 text-[#555] hover:text-red-400 transition-all ml-3"
+                    className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-400 transition-all ml-3"
                   >
                     <Trash2 size={13} />
                   </button>
@@ -3199,27 +3200,27 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
 
       {tab === "note" && noteView === "create" && (
         <div className="max-w-sm">
-          <button onClick={() => setNoteView("list")} className="flex items-center gap-2 text-[#555] hover:text-[#111110] transition-colors text-sm mb-6">
+          <button onClick={() => setNoteView("list")} className="flex items-center gap-2 text-slate-400 hover:text-slate-100 transition-colors text-sm mb-6">
             <ArrowLeft size={14} /> Back
           </button>
           <h2 className="font-serif italic text-2xl mb-1">New Note</h2>
-          <p className="text-[#555] text-sm mb-6">Give your note a name to get started.</p>
+          <p className="text-slate-400 text-sm mb-6">Give your note a name to get started.</p>
           <div className="space-y-4">
             <div>
-              <label className="text-[10px] text-[#555] uppercase tracking-widest block mb-1.5">Note name</label>
+              <label className="text-[10px] text-slate-400 uppercase tracking-widest block mb-1.5">Note name</label>
               <input
                 autoFocus
                 value={newNoteName}
                 onChange={e => setNewNoteName(e.target.value)}
                 onKeyDown={e => e.key === "Enter" && createNote()}
                 placeholder="e.g. Chapter 3 — Derivatives, Lecture 5…"
-                className="w-full bg-white border border-[rgba(0,0,0,0.08)] focus:border-[rgba(0,0,0,0.1)] rounded-xl px-4 py-3 text-sm text-[#111110] placeholder-[rgba(0,0,0,0.3)] outline-none"
+                className="w-full bg-[#12151C] border border-[rgba(148,163,184,0.12)] focus:border-indigo-500/50 rounded-xl px-4 py-3 text-sm text-slate-100 placeholder-slate-600 outline-none"
               />
             </div>
             <button
               onClick={createNote}
               disabled={!newNoteName.trim()}
-              className="w-full bg-white text-[#111110] rounded-xl py-3 text-sm font-medium disabled:opacity-40 hover:bg-[#eee] transition-colors"
+              className="w-full bg-[#12151C] text-slate-100 rounded-xl py-3 text-sm font-medium disabled:opacity-40 hover:bg-[#1A1F2B] transition-colors"
             >
               Create Note
             </button>
@@ -3231,19 +3232,19 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
         <div className="space-y-3">
           {/* Header */}
           <div className="flex items-center gap-3">
-            <button onClick={() => setNoteView("list")} className="text-[#555] hover:text-[#111110] transition-colors">
+            <button onClick={() => setNoteView("list")} className="text-slate-400 hover:text-slate-100 transition-colors">
               <ArrowLeft size={15} />
             </button>
-            <div className="text-sm font-medium text-[#111110]">{activeNote.name}</div>
+            <div className="text-sm font-medium text-slate-100">{activeNote.name}</div>
             <div className="ml-auto flex items-center gap-3">
               {noteSavedAt && (
-                <span className="text-[10px] text-[#555]">
+                <span className="text-[10px] text-slate-400">
                   Saved {noteSavedAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                 </span>
               )}
               <button
                 onClick={saveNoteNow}
-                className="px-3 py-1.5 rounded-lg text-xs font-medium bg-[#111110] text-white hover:bg-[#333] transition-colors"
+                className="px-3 py-1.5 rounded-lg text-xs font-medium bg-indigo-600 text-white hover:bg-indigo-500 transition-colors"
               >
                 Save
               </button>
@@ -3258,7 +3259,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
                 });
                 if (ok) deleteNote(activeNote.id);
               }}
-              className="text-[#555] hover:text-red-400 transition-colors"
+              className="text-slate-400 hover:text-red-400 transition-colors"
               aria-label="Delete note"
             >
               <Trash2 size={13} />

@@ -14,7 +14,7 @@ const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
 const EVENT_TYPES = [
   { value: "study",      label: "Study Session", color: "#10b981" },
-  { value: "class",      label: "Class",         color: "#3b82f6" },
+  { value: "class",      label: "Class",         color: "#6E7FF3" },
   { value: "exam",       label: "Exam",          color: "#ef4444" },
   { value: "assignment", label: "Assignment",    color: "#f97316" },
   { value: "deadline",   label: "Deadline",      color: "#eab308" },
@@ -357,11 +357,11 @@ export default function CalendarPage() {
         <div className="rounded-2xl overflow-hidden" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)" }}>
           {/* Week nav */}
           <div className="flex items-center justify-between px-5 py-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
-            <button onClick={() => setWeekStart(subWeeks(weekStart, 1))} className="p-1.5 rounded-lg hover:bg-white/10 transition-colors" style={{ color: "rgba(255,255,255,0.5)" }}><ChevronLeft size={16} /></button>
+            <button onClick={() => setWeekStart(subWeeks(weekStart, 1))} className="p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors" style={{ color: "rgba(255,255,255,0.5)" }}><ChevronLeft size={16} /></button>
             <span style={{ fontSize: 14, fontWeight: 500 }}>
               {format(weekStart, "MMM d")} – {format(weekEnd, "MMM d, yyyy")}
             </span>
-            <button onClick={() => setWeekStart(addWeeks(weekStart, 1))} className="p-1.5 rounded-lg hover:bg-white/10 transition-colors" style={{ color: "rgba(255,255,255,0.5)" }}><ChevronRight size={16} /></button>
+            <button onClick={() => setWeekStart(addWeeks(weekStart, 1))} className="p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors" style={{ color: "rgba(255,255,255,0.5)" }}><ChevronRight size={16} /></button>
           </div>
 
           {/* Grid */}
@@ -374,12 +374,12 @@ export default function CalendarPage() {
                   const today = isToday(day);
                   return (
                     <div key={day.toISOString()} className="py-2.5 text-center" style={{ borderLeft: "1px solid rgba(255,255,255,0.06)" }}>
-                      <div style={{ fontSize: 10, color: today ? "#3b82f6" : "rgba(255,255,255,0.35)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em" }}>{format(day, "EEE")}</div>
+                      <div style={{ fontSize: 10, color: today ? "#6E7FF3" : "rgba(255,255,255,0.35)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em" }}>{format(day, "EEE")}</div>
                       <div style={{
                         fontSize: 18, fontWeight: 700, color: today ? "white" : "rgba(255,255,255,0.7)",
                         width: 32, height: 32, margin: "2px auto 0",
                         borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center",
-                        background: today ? "#2563eb" : "transparent",
+                        background: today ? "#4B5FE8" : "transparent",
                       }}>{format(day, "d")}</div>
                     </div>
                   );

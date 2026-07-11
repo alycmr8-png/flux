@@ -10,12 +10,12 @@ import useSWR from "swr";
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
 const TYPE_COLOR: Record<string, string> = {
-  Exam:       "bg-red-50 text-red-600 border-red-100",
-  Quiz:       "bg-orange-50 text-orange-600 border-orange-100",
-  Project:    "bg-purple-50 text-purple-600 border-purple-100",
+  Exam:       "bg-red-500/10 text-red-400 border-red-500/20",
+  Quiz:       "bg-orange-500/10 text-orange-400 border-orange-500/20",
+  Project:    "bg-purple-500/10 text-purple-400 border-purple-500/20",
   Assignment: "bg-blue-50 text-blue-600 border-blue-100",
-  Reading:    "bg-green-50 text-green-600 border-green-100",
-  Other:      "bg-gray-50 text-gray-500 border-gray-100",
+  Reading:    "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+  Other:      "bg-slate-500/10 text-slate-400 border-slate-500/20",
 };
 
 const TYPE_DOT: Record<string, string> = {
@@ -32,26 +32,26 @@ function SemesterProgress({ start, end }: { start: string; end: string }) {
   const currentWeek = Math.min(totalWeeks, Math.ceil((now.getTime() - s.getTime()) / (7 * 86400000)));
 
   return (
-    <div className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl p-5 mb-6">
+    <div className="bg-[#12151C] border border-[rgba(148,163,184,0.12)] rounded-2xl p-5 mb-6">
       <div className="flex items-center justify-between mb-3">
         <div>
-          <div className="text-[10px] text-[#555] uppercase tracking-widest mb-0.5">Semester Progress</div>
-          <div className="text-sm font-medium text-[#111110]">Week {currentWeek} of {totalWeeks}</div>
+          <div className="text-[10px] text-slate-400 uppercase tracking-widest mb-0.5">Semester Progress</div>
+          <div className="text-sm font-medium text-slate-100">Week {currentWeek} of {totalWeeks}</div>
         </div>
         <div className="text-right">
-          <div className="text-2xl font-serif text-[#111110]">{Math.round(pct)}%</div>
-          <div className="text-[10px] text-[#555]">{daysLeft} days left</div>
+          <div className="text-2xl font-serif text-slate-100">{Math.round(pct)}%</div>
+          <div className="text-[10px] text-slate-400">{daysLeft} days left</div>
         </div>
       </div>
-      <div className="h-2 bg-[rgba(0,0,0,0.06)] rounded-full overflow-hidden">
+      <div className="h-2 bg-[rgba(148,163,184,0.1)] rounded-full overflow-hidden">
         <div
           className="h-2 rounded-full transition-all"
-          style={{ width: `${pct}%`, background: pct > 75 ? "#ef4444" : pct > 50 ? "#f97316" : "#111110" }}
+          style={{ width: `${pct}%`, background: pct > 75 ? "#ef4444" : pct > 50 ? "#f97316" : "#6366F1" }}
         />
       </div>
       <div className="flex justify-between mt-1.5">
-        <span className="text-[10px] text-[#555]">{new Date(start).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
-        <span className="text-[10px] text-[#555]">{new Date(end).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
+        <span className="text-[10px] text-slate-400">{new Date(start).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
+        <span className="text-[10px] text-slate-400">{new Date(end).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
       </div>
     </div>
   );
@@ -88,31 +88,31 @@ function GradeCalculator({ weights }: { weights: { category: string; weight: num
   };
 
   return (
-    <div className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl overflow-hidden mb-6">
+    <div className="bg-[#12151C] border border-[rgba(148,163,184,0.12)] rounded-2xl overflow-hidden mb-6">
       <button
         onClick={() => setOpen(o => !o)}
-        className="w-full flex items-center justify-between px-5 py-4 hover:bg-white/[0.02] transition-colors"
+        className="w-full flex items-center justify-between px-5 py-4 hover:bg-white/[0.04] transition-colors"
       >
         <div className="flex items-center gap-2">
-          <Star size={13} className="text-[#555]" />
-          <span className="text-[10px] text-[#555] uppercase tracking-widest font-semibold">Grade Calculator</span>
+          <Star size={13} className="text-slate-400" />
+          <span className="text-[10px] text-slate-400 uppercase tracking-widest font-semibold">Grade Calculator</span>
           {projected !== null && (
-            <span className="text-[10px] bg-[rgba(0,0,0,0.06)] rounded-full px-2 py-0.5 text-[#555]">
+            <span className="text-[10px] bg-[rgba(148,163,184,0.1)] rounded-full px-2 py-0.5 text-slate-400">
               {projected.toFixed(1)}% · {letterGrade(projected)}
             </span>
           )}
         </div>
-        <ChevronDown size={13} className={`text-[#555] transition-transform ${open ? "rotate-180" : ""}`} />
+        <ChevronDown size={13} className={`text-slate-400 transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
 
       {open && (
-        <div className="border-t border-[rgba(0,0,0,0.06)] px-5 pb-5 pt-4">
+        <div className="border-t border-[rgba(148,163,184,0.09)] px-5 pb-5 pt-4">
           <div className="space-y-2 mb-4">
             {weights.map(w => (
               <div key={w.category} className="flex items-center gap-3">
                 <div className="flex-1 min-w-0">
-                  <div className="text-xs text-[#111110] truncate">{w.category}</div>
-                  <div className="text-[10px] text-[#555]">{w.weight}% of grade</div>
+                  <div className="text-xs text-slate-100 truncate">{w.category}</div>
+                  <div className="text-[10px] text-slate-400">{w.weight}% of grade</div>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <input
@@ -121,26 +121,26 @@ function GradeCalculator({ weights }: { weights: { category: string; weight: num
                     value={grades[w.category] ?? ""}
                     onChange={e => setGrades(g => ({ ...g, [w.category]: e.target.value }))}
                     placeholder="—"
-                    className="w-16 text-center text-sm border border-[rgba(0,0,0,0.08)] rounded-lg px-2 py-1.5 outline-none focus:border-[rgba(0,0,0,0.2)] text-[#111110] bg-white"
+                    className="w-16 text-center text-sm border border-[rgba(148,163,184,0.12)] rounded-lg px-2 py-1.5 outline-none focus:border-indigo-500/50 text-slate-100 bg-[#12151C]"
                   />
-                  <span className="text-xs text-[#555]">%</span>
+                  <span className="text-xs text-slate-400">%</span>
                 </div>
                 {/* Weight bar */}
-                <div className="w-16 h-1.5 bg-[rgba(0,0,0,0.06)] rounded-full overflow-hidden">
-                  <div className="h-1.5 bg-[#111110] rounded-full" style={{ width: `${w.weight}%` }} />
+                <div className="w-16 h-1.5 bg-[rgba(148,163,184,0.1)] rounded-full overflow-hidden">
+                  <div className="h-1.5 bg-indigo-600 rounded-full" style={{ width: `${w.weight}%` }} />
                 </div>
               </div>
             ))}
           </div>
 
           {projected !== null && (
-            <div className="border-t border-[rgba(0,0,0,0.06)] pt-3 flex items-center justify-between">
-              <div className="text-xs text-[#555]">
+            <div className="border-t border-[rgba(148,163,184,0.09)] pt-3 flex items-center justify-between">
+              <div className="text-xs text-slate-400">
                 Based on {filled} of {weights.length} categories ({totalWeight}% of grade)
               </div>
               <div className="text-right">
-                <div className="text-xl font-serif text-[#111110]">{projected.toFixed(1)}%</div>
-                <div className="text-xs text-[#555]">{letterGrade(projected)}</div>
+                <div className="text-xl font-serif text-slate-100">{projected.toFixed(1)}%</div>
+                <div className="text-xs text-slate-400">{letterGrade(projected)}</div>
               </div>
             </div>
           )}
@@ -169,26 +169,26 @@ function DeadlinesList({ schedule }: { schedule: any[] }) {
   const urgencyColor = (days: number) => {
     if (days <= 3) return "text-red-500";
     if (days <= 7) return "text-orange-500";
-    return "text-[#555]";
+    return "text-slate-400";
   };
 
   return (
-    <div className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl overflow-hidden mb-6">
-      <div className="px-5 py-4 border-b border-[rgba(0,0,0,0.06)] flex items-center justify-between">
+    <div className="bg-[#12151C] border border-[rgba(148,163,184,0.12)] rounded-2xl overflow-hidden mb-6">
+      <div className="px-5 py-4 border-b border-[rgba(148,163,184,0.09)] flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <ClipboardList size={13} className="text-[#555]" />
-          <span className="text-[10px] text-[#555] uppercase tracking-widest font-semibold">
+          <ClipboardList size={13} className="text-slate-400" />
+          <span className="text-[10px] text-slate-400 uppercase tracking-widest font-semibold">
             Deadlines at a Glance
           </span>
-          <span className="text-[9px] bg-[rgba(0,0,0,0.06)] rounded-full px-2 py-0.5 text-[#555]">{upcoming.length} upcoming</span>
+          <span className="text-[9px] bg-[rgba(148,163,184,0.1)] rounded-full px-2 py-0.5 text-slate-400">{upcoming.length} upcoming</span>
         </div>
         {past.length > 0 && (
-          <span className="text-[10px] text-[#555]">{past.length} past</span>
+          <span className="text-[10px] text-slate-400">{past.length} past</span>
         )}
       </div>
 
       {upcoming.length === 0 ? (
-        <div className="px-5 py-8 text-center text-sm text-[#555]">No upcoming deadlines.</div>
+        <div className="px-5 py-8 text-center text-sm text-slate-400">No upcoming deadlines.</div>
       ) : (
         <div className="divide-y divide-[rgba(0,0,0,0.05)]">
           {displayed.map((item, i) => {
@@ -200,7 +200,7 @@ function DeadlinesList({ schedule }: { schedule: any[] }) {
 
                 {/* Date */}
                 <div className="w-16 shrink-0 text-center">
-                  <div className="text-xs font-medium text-[#111110]">
+                  <div className="text-xs font-medium text-slate-100">
                     {new Date(item.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                   </div>
                   <div className={`text-[10px] ${urgencyColor(days)}`}>
@@ -209,9 +209,9 @@ function DeadlinesList({ schedule }: { schedule: any[] }) {
                 </div>
 
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm text-[#111110] truncate font-medium">{item.title}</div>
+                  <div className="text-sm text-slate-100 truncate font-medium">{item.title}</div>
                   {item.description && (
-                    <div className="text-[10px] text-[#555] truncate mt-0.5">{item.description}</div>
+                    <div className="text-[10px] text-slate-400 truncate mt-0.5">{item.description}</div>
                   )}
                   {item.raw_date_text && (
                     <div className="text-[10px] text-[#aaa] mt-0.5 italic">"{item.raw_date_text}"</div>
@@ -234,8 +234,8 @@ function DeadlinesList({ schedule }: { schedule: any[] }) {
       )}
 
       {upcoming.length > 8 && (
-        <div className="px-5 py-3 border-t border-[rgba(0,0,0,0.06)]">
-          <button onClick={() => setShowAll(s => !s)} className="text-xs text-[#555] hover:text-[#111110] transition-colors">
+        <div className="px-5 py-3 border-t border-[rgba(148,163,184,0.09)]">
+          <button onClick={() => setShowAll(s => !s)} className="text-xs text-slate-400 hover:text-slate-100 transition-colors">
             {showAll ? "Show less" : `Show all ${upcoming.length} deadlines`}
           </button>
         </div>
@@ -252,22 +252,22 @@ function WeeklyGantt({ topics, semesterStart, totalWeeks }: { topics: any[]; sem
   const currentWeek = Math.ceil((today.getTime() - start.getTime()) / (7 * 86400000));
 
   return (
-    <div className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl overflow-hidden mb-6">
+    <div className="bg-[#12151C] border border-[rgba(148,163,184,0.12)] rounded-2xl overflow-hidden mb-6">
       <button
         onClick={() => setOpen(o => !o)}
-        className="w-full flex items-center justify-between px-5 py-4 hover:bg-white/[0.02] transition-colors"
+        className="w-full flex items-center justify-between px-5 py-4 hover:bg-white/[0.04] transition-colors"
       >
         <div className="flex items-center gap-2">
-          <Calendar size={13} className="text-[#555]" />
-          <span className="text-[10px] text-[#555] uppercase tracking-widest font-semibold">
+          <Calendar size={13} className="text-slate-400" />
+          <span className="text-[10px] text-slate-400 uppercase tracking-widest font-semibold">
             Semester Timeline
           </span>
         </div>
-        <ChevronDown size={13} className={`text-[#555] transition-transform ${open ? "rotate-180" : ""}`} />
+        <ChevronDown size={13} className={`text-slate-400 transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
 
       {open && (
-        <div className="border-t border-[rgba(0,0,0,0.06)] px-5 pb-5 pt-4 overflow-x-auto">
+        <div className="border-t border-[rgba(148,163,184,0.09)] px-5 pb-5 pt-4 overflow-x-auto">
           <div className="min-w-[600px]">
             {/* Week header */}
             <div className="flex mb-3">
@@ -276,7 +276,7 @@ function WeeklyGantt({ topics, semesterStart, totalWeeks }: { topics: any[]; sem
                 {Array.from({ length: totalWeeks }, (_, i) => (
                   <div
                     key={i}
-                    className={`flex-1 text-center text-[9px] py-1 rounded-sm ${i + 1 === currentWeek ? "bg-[#111110] text-white" : "text-[#555]"}`}
+                    className={`flex-1 text-center text-[9px] py-1 rounded-sm ${i + 1 === currentWeek ? "bg-indigo-600 text-white" : "text-slate-400"}`}
                   >
                     {i + 1}
                   </div>
@@ -287,12 +287,12 @@ function WeeklyGantt({ topics, semesterStart, totalWeeks }: { topics: any[]; sem
             {/* Topics */}
             {topics.slice(0, 16).map((t, i) => (
               <div key={i} className="flex items-center mb-1.5">
-                <div className="w-32 shrink-0 text-[10px] text-[#555] truncate pr-3">{t.title}</div>
+                <div className="w-32 shrink-0 text-[10px] text-slate-400 truncate pr-3">{t.title}</div>
                 <div className="flex-1 flex">
                   {Array.from({ length: totalWeeks }, (_, wi) => (
                     <div
                       key={wi}
-                      className={`flex-1 h-5 rounded-sm mx-px ${wi + 1 === t.week ? "bg-[#111110]" : wi + 1 < (t.week ?? 0) ? "bg-[rgba(0,0,0,0.04)]" : "bg-[rgba(0,0,0,0.04)]"}`}
+                      className={`flex-1 h-5 rounded-sm mx-px ${wi + 1 === t.week ? "bg-indigo-600" : wi + 1 < (t.week ?? 0) ? "bg-[rgba(148,163,184,0.08)]" : "bg-[rgba(148,163,184,0.08)]"}`}
                     />
                   ))}
                 </div>
@@ -301,10 +301,10 @@ function WeeklyGantt({ topics, semesterStart, totalWeeks }: { topics: any[]; sem
 
             {/* Current week indicator */}
             <div className="flex mt-3">
-              <div className="w-32 shrink-0 text-[10px] text-[#111110] font-medium">Today →</div>
+              <div className="w-32 shrink-0 text-[10px] text-slate-100 font-medium">Today →</div>
               <div className="flex-1 flex">
                 {Array.from({ length: totalWeeks }, (_, i) => (
-                  <div key={i} className={`flex-1 h-0.5 ${i + 1 <= currentWeek ? "bg-[#111110]" : "bg-[rgba(0,0,0,0.06)]"}`} />
+                  <div key={i} className={`flex-1 h-0.5 ${i + 1 <= currentWeek ? "bg-indigo-600" : "bg-[rgba(148,163,184,0.1)]"}`} />
                 ))}
               </div>
             </div>
@@ -469,11 +469,11 @@ export default function SyllabusPage() {
 
           {/* Office hours fallback */}
           {meta?.officeHours && (
-            <div className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl px-5 py-4 flex items-center gap-3">
-              <Clock size={13} className="text-[#555] shrink-0" />
+            <div className="bg-[#12151C] border border-[rgba(148,163,184,0.12)] rounded-2xl px-5 py-4 flex items-center gap-3">
+              <Clock size={13} className="text-slate-400 shrink-0" />
               <div>
-                <div className="text-[10px] text-[#555] uppercase tracking-widest mb-0.5">Office Hours</div>
-                <div className="text-sm text-[#111110]">{meta.officeHours}</div>
+                <div className="text-[10px] text-slate-400 uppercase tracking-widest mb-0.5">Office Hours</div>
+                <div className="text-sm text-slate-100">{meta.officeHours}</div>
               </div>
             </div>
           )}

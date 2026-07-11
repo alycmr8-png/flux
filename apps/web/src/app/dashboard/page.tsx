@@ -14,7 +14,7 @@ const TYPE_COLOR: Record<string, string> = {
   assignment: "#f97316",
   deadline:   "#eab308",
   quiz:       "#a855f7",
-  class:      "#3b82f6",
+  class:      "#6E7FF3",
   other:      "#6b7280",
 };
 
@@ -108,13 +108,13 @@ export default function DashboardHome() {
       <div className="flex-1 min-w-0 py-6 px-0 md:py-9 md:pl-10 md:pr-0">
 
         {/* Header */}
-        <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "#3b82f6", marginBottom: 6 }}>{t.home.overview}</div>
+        <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "#6E7FF3", marginBottom: 6 }}>{t.home.overview}</div>
         <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 30, color: "white", marginBottom: 28 }}>
           {t.home[greetingKey()]}{firstName ? `, ${firstName}` : ""}.
         </h1>
 
         {/* Coming up */}
-        <p className="text-xs uppercase tracking-widest mb-3" style={{ color: "#3b82f6" }}>{t.home.comingUp}</p>
+        <p className="text-xs uppercase tracking-widest mb-3" style={{ color: "#6E7FF3" }}>{t.home.comingUp}</p>
         <div className="flex flex-col gap-2 mb-8">
           {!ready || eventsLoading ? (
             [...Array(2)].map((_, i) => (
@@ -122,7 +122,7 @@ export default function DashboardHome() {
             ))
           ) : allUpcoming.length === 0 ? (
             <Link href="/dashboard/calendar"
-              className="flex items-center gap-3 rounded-2xl px-4 py-3 border transition-all hover:border-white/20 hover:bg-white/10"
+              className="flex items-center gap-3 rounded-2xl px-4 py-3 border transition-all hover:border-white/20 hover:bg-white/[0.06]"
               style={{ background: "rgba(255,255,255,0.04)", borderColor: "rgba(255,255,255,0.08)", borderStyle: "dashed" }}>
               <Plus size={14} style={{ color: "rgba(255,255,255,0.3)" }} />
               <span className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>No upcoming events — add one in Calendar</span>
@@ -136,7 +136,7 @@ export default function DashboardHome() {
                 const cdColor = diff === 0 ? "#ef4444" : diff <= 1 ? "#f97316" : diff <= 3 ? "#eab308" : "rgba(255,255,255,0.35)";
                 return (
                   <Link key={e.id} href="/dashboard/calendar"
-                    className="flex items-center gap-4 rounded-2xl px-4 py-3 border transition-all duration-200 hover:border-white/20 hover:bg-white/10"
+                    className="flex items-center gap-4 rounded-2xl px-4 py-3 border transition-all duration-200 hover:border-white/20 hover:bg-white/[0.06]"
                     style={{ background: diff === 0 ? "rgba(239,68,68,0.08)" : "rgba(255,255,255,0.05)", borderColor: diff === 0 ? "rgba(239,68,68,0.2)" : "rgba(255,255,255,0.08)", borderLeft: `3px solid ${color}` }}
                   >
                     <div style={{ minWidth: 38, textAlign: "center" }}>
@@ -166,7 +166,7 @@ export default function DashboardHome() {
         </div>
 
         {/* My classes */}
-        <p className="text-xs uppercase tracking-widest mb-3" style={{ color: "#3b82f6" }}>{t.home.myClasses}</p>
+        <p className="text-xs uppercase tracking-widest mb-3" style={{ color: "#6E7FF3" }}>{t.home.myClasses}</p>
         <div className="space-y-2 mb-8">
           {!ready || coursesLoading ? (
             [...Array(2)].map((_, i) => (
@@ -174,7 +174,7 @@ export default function DashboardHome() {
             ))
           ) : courses.length === 0 ? (
             <Link href="/dashboard/record"
-              className="flex items-center gap-3 rounded-2xl px-5 py-4 border transition-all hover:border-white/20 hover:bg-white/10"
+              className="flex items-center gap-3 rounded-2xl px-5 py-4 border transition-all hover:border-white/20 hover:bg-white/[0.06]"
               style={{ background: "rgba(255,255,255,0.04)", borderColor: "rgba(255,255,255,0.08)", borderStyle: "dashed" }}>
               <Plus size={14} style={{ color: "rgba(255,255,255,0.3)" }} />
               <span className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>Add your first class</span>
@@ -182,7 +182,7 @@ export default function DashboardHome() {
           ) : (
             courses.map((cls: any) => (
               <Link key={cls.id} href="/dashboard/record"
-                className="flex items-center gap-4 rounded-2xl px-5 py-4 border transition-all duration-200 hover:border-white/20 hover:bg-white/10"
+                className="flex items-center gap-4 rounded-2xl px-5 py-4 border transition-all duration-200 hover:border-white/20 hover:bg-white/[0.06]"
                 style={{ background: "rgba(255,255,255,0.06)", borderColor: "rgba(255,255,255,0.08)" }}>
                 <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "rgba(255,255,255,0.08)" }}>
                   <Layers size={15} style={{ color: "rgba(255,255,255,0.45)" }} />
@@ -200,7 +200,7 @@ export default function DashboardHome() {
         {/* Recent Videos */}
         {recentVideos.length > 0 && (
           <>
-            <p className="text-xs uppercase tracking-widest mb-3" style={{ color: "#3b82f6" }}>{t.home.recentVideos}</p>
+            <p className="text-xs uppercase tracking-widest mb-3" style={{ color: "#6E7FF3" }}>{t.home.recentVideos}</p>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
               {recentVideos.slice(0, 8).map((v: any) => (
                 <div key={v.videoId ?? v.title} className="relative group/card">
@@ -234,7 +234,7 @@ export default function DashboardHome() {
                       </div>
                     )}
                     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity" style={{ background: "rgba(0,0,0,0.4)" }}>
-                      <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: "#2563eb" }}>
+                      <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: "#4B5FE8" }}>
                         <Youtube size={14} style={{ color: "white" }} />
                       </div>
                     </div>
@@ -253,13 +253,13 @@ export default function DashboardHome() {
         {/* Saved notes */}
         {notes.length > 0 && (
           <>
-            <p className="text-xs uppercase tracking-widest mb-3" style={{ color: "#3b82f6" }}>{t.home.savedNotes}</p>
+            <p className="text-xs uppercase tracking-widest mb-3" style={{ color: "#6E7FF3" }}>{t.home.savedNotes}</p>
             <div className="space-y-2">
               {notes.map((cs: any) => (
                 <Link
                   key={cs.id}
                   href="/dashboard/summaries"
-                  className="flex items-center gap-3 rounded-xl px-4 py-3 border transition-all duration-200 hover:border-white/20 hover:bg-white/10"
+                  className="flex items-center gap-3 rounded-xl px-4 py-3 border transition-all duration-200 hover:border-white/20 hover:bg-white/[0.06]"
                   style={{ background: "rgba(255,255,255,0.06)", borderColor: "rgba(255,255,255,0.08)" }}
                 >
                   <FileText size={14} style={{ color: "rgba(255,255,255,0.4)" }} className="shrink-0" />
@@ -290,7 +290,7 @@ export default function DashboardHome() {
           </div>
           <Link
             href="/dashboard/calendar"
-            className="flex items-center justify-center w-7 h-7 rounded-lg transition-all hover:bg-white/15"
+            className="flex items-center justify-center w-7 h-7 rounded-lg transition-all hover:bg-[#12151C]/15"
             style={{ background: "rgba(255,255,255,0.08)" }}
             title="Add event"
           >
@@ -401,7 +401,7 @@ export default function DashboardHome() {
           {filtered.length > 8 && (
             <Link
               href="/dashboard/calendar"
-              className="flex items-center justify-center gap-1 rounded-xl py-2.5 text-xs transition-all hover:bg-white/10"
+              className="flex items-center justify-center gap-1 rounded-xl py-2.5 text-xs transition-all hover:bg-white/[0.06]"
               style={{ color: "rgba(255,255,255,0.35)", border: "1px dashed rgba(255,255,255,0.1)" }}
             >
               +{filtered.length - 8} more <ChevronRight size={12} />

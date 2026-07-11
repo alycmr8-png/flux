@@ -7,37 +7,41 @@ import { useApiFetch, useApiSWRFetcher } from "@/lib/apiFetch";
 
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
+const SHARED_FEATURES = [
+  "Ask your course — answers with sources",
+  "Unlimited recordings & uploads",
+  "AI summaries, key points & flashcards",
+  "Study books from your course memory",
+  "Calendar, notes & YouTube import",
+];
+
 const PLANS = [
   {
-    id: "student",
-    name: "Student",
-    price: "$8",
+    id: "monthly",
+    name: "Monthly",
+    price: "$9.99",
     period: "/mo",
-    annual: "or $60/yr",
-    highlight: true,
-    features: [
-      "Unlimited recordings",
-      "AI cheat sheets & quizzes",
-      "Google Drive sync",
-      "Unlimited courses",
-      "Action items extraction",
-      "5 languages supported",
-    ],
+    annual: "billed monthly",
+    highlight: false,
+    features: SHARED_FEATURES,
   },
   {
-    id: "pro",
-    name: "Pro",
-    price: "$15",
+    id: "6month",
+    name: "6-Month",
+    price: "$6.99",
     period: "/mo",
-    annual: "",
+    annual: "$41.94 every 6 months · Save 30%",
+    highlight: true,
+    features: SHARED_FEATURES,
+  },
+  {
+    id: "yearly",
+    name: "Yearly",
+    price: "$5.99",
+    period: "/mo",
+    annual: "$71.88 per year · Save 40%",
     highlight: false,
-    features: [
-      "Everything in Student",
-      "Priority AI processing",
-      "Study calendar & scheduling",
-      "Retention analytics",
-      "Document & slide uploads",
-    ],
+    features: SHARED_FEATURES,
   },
 ];
 
@@ -53,7 +57,7 @@ export default function BillingPage() {
 
   const isNew = currentPlan === "free" && !success;
 
-  async function upgrade(plan: "student" | "pro") {
+  async function upgrade(plan: "monthly" | "6month" | "yearly") {
     setLoading(plan);
     try {
       const res = await apiFetch(`/api/billing/checkout`, {
@@ -77,7 +81,7 @@ export default function BillingPage() {
     }
   }
 
-  const planLabel: Record<string, string> = { free: "Free", student: "Student", pro: "Pro" };
+  const planLabel: Record<string, string> = { free: "Free", monthly: "Monthly", "6month": "6-Month", yearly: "Yearly", student: "Student", pro: "Pro" };
 
   return (
     <div className="p-8 max-w-2xl">
@@ -85,18 +89,18 @@ export default function BillingPage() {
       {isNew ? (
         <>
           <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(0,0,0,0.38)", marginBottom: 6 }}>Billing</div>
-          <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 30, color: "#111110", marginBottom: 28 }}>Choose your plan</h1>
+          <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 30, color: "#F1F5F9", marginBottom: 28 }}>Choose your plan</h1>
         </>
       ) : (
         <>
           <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(0,0,0,0.38)", marginBottom: 6 }}>Account</div>
-          <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 30, color: "#111110", marginBottom: 28 }}>Billing</h1>
+          <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 30, color: "#F1F5F9", marginBottom: 28 }}>Billing</h1>
         </>
       )}
 
       {/* Success banner */}
       {success && (
-        <div className="bg-[#f0faf0] border border-[#c8e6c9] rounded-2xl p-5 mb-6">
+        <div className="bg-[rgba(16,185,129,0.10)] border border-[rgba(16,185,129,0.3)] rounded-2xl p-5 mb-6">
           <div className="flex items-center gap-2 text-[#4caf50] mb-3">
             <Check size={16} />
             <span className="text-sm font-medium">
@@ -105,7 +109,7 @@ export default function BillingPage() {
           </div>
           <button
             onClick={() => router.push("/dashboard")}
-            className="flex items-center gap-2 bg-black text-white text-sm font-medium px-5 py-2.5 rounded-full hover:bg-[#222] transition-colors"
+            className="flex items-center gap-2 bg-indigo-600 text-white text-sm font-medium px-5 py-2.5 rounded-full hover:bg-indigo-500 transition-colors"
           >
             Start using Flux <ArrowRight size={14} />
           </button>
@@ -114,17 +118,17 @@ export default function BillingPage() {
 
       {/* Current plan — only shown to paying users */}
       {!isLoading && currentPlan !== "free" && !success && (
-        <div className="bg-[#f4f4f4] border border-[#e5e5e5] rounded-2xl p-5 mb-6">
-          <div className="text-[10px] text-[#444] uppercase tracking-widest mb-3">Current plan</div>
+        <div className="bg-[#12151C] border border-[rgba(148,163,184,0.14)] rounded-2xl p-5 mb-6">
+          <div className="text-[10px] text-slate-400 uppercase tracking-widest mb-3">Current plan</div>
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-black font-medium text-lg">{planLabel[currentPlan]}</div>
-              <div className="text-xs text-[#444] mt-0.5">Unlimited recordings</div>
+              <div className="text-slate-100 font-medium text-lg">{planLabel[currentPlan]}</div>
+              <div className="text-xs text-slate-400 mt-0.5">Unlimited recordings</div>
             </div>
             <button
               onClick={openPortal}
               disabled={loading === "portal"}
-              className="text-xs border border-[#ccc] text-[#555] hover:text-black hover:border-[#888] rounded-full px-4 py-2 transition-colors disabled:opacity-50"
+              className="text-xs border border-[rgba(148,163,184,0.2)] text-slate-400 hover:text-slate-100 hover:border-[rgba(148,163,184,0.4)] rounded-full px-4 py-2 transition-colors disabled:opacity-50"
             >
               {loading === "portal" ? "Loading…" : "Manage subscription"}
             </button>
@@ -136,46 +140,44 @@ export default function BillingPage() {
       <div className="space-y-3">
         {PLANS.map((plan) => {
           const isCurrent = currentPlan === plan.id;
-          const canUpgrade =
-            currentPlan === "free" ||
-            (currentPlan === "student" && plan.id === "pro");
+          const canUpgrade = currentPlan === "free";
 
           return (
             <div
               key={plan.id}
               className={`border rounded-2xl p-5 flex items-start justify-between gap-4 ${
                 plan.highlight && !isCurrent
-                  ? "border-black bg-[#f4f4f4]"
+                  ? "border-black bg-[#12151C]"
                   : isCurrent
-                  ? "border-[#d4d4d4] bg-[#f4f4f4]"
-                  : "border-[#e5e5e5] bg-[#fafafa]"
+                  ? "border-[rgba(148,163,184,0.18)] bg-[#12151C]"
+                  : "border-[rgba(148,163,184,0.14)] bg-[#10131A]"
               }`}
             >
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="text-sm font-medium text-black">{plan.name}</span>
+                  <span className="text-sm font-medium text-slate-100">{plan.name}</span>
                   {plan.highlight && !isCurrent && (
-                    <span className="text-[9px] font-bold uppercase tracking-widest bg-black text-white rounded-full px-2 py-0.5">
+                    <span className="text-[9px] font-bold uppercase tracking-widest bg-indigo-600 text-white rounded-full px-2 py-0.5">
                       Popular
                     </span>
                   )}
                   {isCurrent && (
-                    <span className="text-[9px] font-bold uppercase tracking-widest border border-[#ccc] text-[#555] rounded-full px-2 py-0.5">
+                    <span className="text-[9px] font-bold uppercase tracking-widest border border-[rgba(148,163,184,0.2)] text-slate-400 rounded-full px-2 py-0.5">
                       Current
                     </span>
                   )}
                 </div>
                 <div className="flex items-baseline gap-1 mb-1">
-                  <span className="text-2xl text-black font-light">{plan.price}</span>
-                  <span className="text-[#444] text-xs">{plan.period}</span>
+                  <span className="text-2xl text-slate-100 font-light">{plan.price}</span>
+                  <span className="text-slate-400 text-xs">{plan.period}</span>
                   {plan.annual && (
-                    <span className="text-[#ccc] text-xs ml-1">{plan.annual}</span>
+                    <span className="text-slate-500 text-xs ml-1">{plan.annual}</span>
                   )}
                 </div>
                 <div className="space-y-1.5 mt-3">
                   {plan.features.map((f) => (
-                    <div key={f} className="flex items-center gap-2 text-xs text-[#666]">
-                      <Check size={10} className="text-[#444] shrink-0" />
+                    <div key={f} className="flex items-center gap-2 text-xs text-slate-400">
+                      <Check size={10} className="text-slate-400 shrink-0" />
                       {f}
                     </div>
                   ))}
@@ -184,12 +186,12 @@ export default function BillingPage() {
 
               {!isCurrent && canUpgrade && (
                 <button
-                  onClick={() => upgrade(plan.id as "student" | "pro")}
+                  onClick={() => upgrade(plan.id as "monthly" | "6month" | "yearly")}
                   disabled={!!loading}
                   className={`flex items-center gap-1.5 text-xs font-medium px-4 py-2.5 rounded-full transition-colors disabled:opacity-50 shrink-0 mt-1 ${
                     plan.highlight
-                      ? "bg-black text-white hover:bg-[#222]"
-                      : "border border-[#ccc] text-black hover:border-[#888]"
+                      ? "bg-indigo-600 text-white hover:bg-indigo-500"
+                      : "border border-[rgba(148,163,184,0.2)] text-slate-100 hover:border-[rgba(148,163,184,0.4)]"
                   }`}
                 >
                   <Zap size={11} />
@@ -201,7 +203,7 @@ export default function BillingPage() {
         })}
       </div>
 
-      <p className="text-xs text-[#ccc] mt-6 text-center">
+      <p className="text-xs text-slate-500 mt-6 text-center">
         7-day free trial on all plans. Cancel anytime.
       </p>
     </div>

@@ -25,7 +25,7 @@ const Ctx = createContext<FeedbackCtx | null>(null);
 const KIND = {
   success: { icon: CheckCircle2, color: "#22c55e", glow: "rgba(34,197,94,0.18)" },
   error:   { icon: AlertCircle,  color: "#ef4444", glow: "rgba(239,68,68,0.18)" },
-  info:    { icon: Info,         color: "#3b82f6", glow: "rgba(59,130,246,0.18)" },
+  info:    { icon: Info,         color: "#6E7FF3", glow: "rgba(110,127,243,0.18)" },
 } as const;
 
 // ── Provider ─────────────────────────────────────────────────────────────────
@@ -90,7 +90,7 @@ export function FeedbackProvider({ children }: { children: React.ReactNode }) {
               role="status"
               className="pointer-events-auto flex items-start gap-3 rounded-2xl px-4 py-3 shadow-2xl"
               style={{
-                background: "rgba(26,26,24,0.96)",
+                background: "rgba(17,20,28,0.96)",
                 border: "1px solid rgba(255,255,255,0.1)",
                 backdropFilter: "blur(12px)",
                 boxShadow: `0 12px 40px rgba(0,0,0,0.45), 0 0 0 1px ${glow}`,
@@ -128,7 +128,7 @@ export function FeedbackProvider({ children }: { children: React.ReactNode }) {
             aria-modal="true"
             className="w-full max-w-sm rounded-2xl p-6"
             style={{
-              background: "#1a1a18",
+              background: "#141821",
               border: "1px solid rgba(255,255,255,0.12)",
               boxShadow: "0 24px 64px rgba(0,0,0,0.5)",
               animation: "dialog-in 0.22s cubic-bezier(0.21,1.02,0.73,1)",
@@ -137,11 +137,11 @@ export function FeedbackProvider({ children }: { children: React.ReactNode }) {
             <div className="flex items-start gap-3 mb-4">
               <div
                 className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-                style={{ background: dialog.danger ? "rgba(239,68,68,0.12)" : "rgba(59,130,246,0.12)" }}
+                style={{ background: dialog.danger ? "rgba(239,68,68,0.12)" : "rgba(110,127,243,0.12)" }}
               >
                 {dialog.danger
                   ? <AlertTriangle size={17} style={{ color: "#ef4444" }} />
-                  : <Info size={17} style={{ color: "#3b82f6" }} />}
+                  : <Info size={17} style={{ color: "#6E7FF3" }} />}
               </div>
               <div className="flex-1 pt-0.5">
                 <div style={{ fontSize: 16, fontWeight: 600, color: "white" }}>{dialog.title}</div>
@@ -164,7 +164,7 @@ export function FeedbackProvider({ children }: { children: React.ReactNode }) {
                 autoFocus
                 onClick={() => closeDialog(true)}
                 className="px-4 py-2 rounded-xl text-sm font-semibold transition-all hover:opacity-90 active:scale-[0.97]"
-                style={{ background: dialog.danger ? "#ef4444" : "#2563eb", color: "white" }}
+                style={{ background: dialog.danger ? "#ef4444" : "#4B5FE8", color: "white" }}
               >
                 {dialog.confirmLabel ?? "Confirm"}
               </button>

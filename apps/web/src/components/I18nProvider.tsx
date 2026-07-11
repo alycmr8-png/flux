@@ -1,6 +1,9 @@
 "use client";
 import { useEffect, useState, useRef } from "react";
+import { useAuth } from "@clerk/nextjs";
 import { initI18n, LANGUAGES, type Language } from "@/lib/i18nConfig";
+
+const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
 export function I18nProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
@@ -13,6 +16,7 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
 export function LanguageSwitcher() {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const { getToken } = useAuth();
   const current = typeof window !== "undefined" ? localStorage.getItem("lang") ?? "en" : "en";
 
   // Close when clicking outside
@@ -28,12 +32,16 @@ export function LanguageSwitcher() {
   async function change(lang: Language) {
     setOpen(false);
     localStorage.setItem("lang", lang);
+    // Persist to the API so AI answers (Ask, summaries, study books) match the UI language
     try {
-      await fetch("/api/settings/language", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ language: lang }),
-      });
+      const token = await getToken();
+      if (token) {
+        await fetch(`${BASE}/api/settings/language`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ language: lang }),
+        });
+      }
     } catch {}
     window.location.reload();
   }

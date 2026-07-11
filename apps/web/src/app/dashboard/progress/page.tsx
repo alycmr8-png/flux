@@ -115,7 +115,7 @@ function ClassSection({ cls, onRename }: { cls: any; onRename: (id: string, titl
         <div className="flex items-center gap-3">
           {open ? <ChevronDown size={14} style={{ color: "rgba(255,255,255,0.4)" }} /> : <ChevronRight size={14} style={{ color: "rgba(255,255,255,0.4)" }} />}
           <span className="text-sm font-medium" style={{ color: "white" }}>{cls.name}</span>
-          <span className="text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full" style={{ background: "rgba(37,99,235,0.15)", color: "#60a5fa" }}>
+          <span className="text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full" style={{ background: "rgba(75,95,232,0.15)", color: "#93A0F8" }}>
             {count} {count === 1 ? "lecture" : "lectures"}
           </span>
         </div>
@@ -154,7 +154,7 @@ export default function ProgressPage() {
     <div style={{ color: "white", maxWidth: 780 }}>
       {/* Header */}
       <div className="mb-8">
-        <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "#3b82f6", marginBottom: 6 }}>Analytics</div>
+        <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "#6E7FF3", marginBottom: 6 }}>Analytics</div>
         <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 30, color: "white" }}>Progress</h1>
       </div>
 
@@ -162,9 +162,9 @@ export default function ProgressPage() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
 
         {/* Lectures recorded */}
-        <div className="rounded-2xl p-5 flex items-center gap-4 border" style={{ background: "rgba(37,99,235,0.1)", borderColor: "rgba(37,99,235,0.25)" }}>
-          <div className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0" style={{ background: "rgba(37,99,235,0.2)" }}>
-            <Mic2 size={20} style={{ color: "#60a5fa" }} />
+        <div className="rounded-2xl p-5 flex items-center gap-4 border" style={{ background: "rgba(75,95,232,0.1)", borderColor: "rgba(75,95,232,0.25)" }}>
+          <div className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0" style={{ background: "rgba(75,95,232,0.2)" }}>
+            <Mic2 size={20} style={{ color: "#93A0F8" }} />
           </div>
           <div>
             <div style={{ fontSize: 36, fontWeight: 800, color: "white", lineHeight: 1 }}>{isLoading ? "—" : lectures}</div>
@@ -213,7 +213,7 @@ export default function ProgressPage() {
       {retention.length > 0 && (
         <div className="rounded-2xl p-6 mb-6 border" style={{ background: "rgba(255,255,255,0.04)", borderColor: "rgba(255,255,255,0.08)" }}>
           <div className="flex items-center gap-2 mb-6">
-            <BookOpen size={14} style={{ color: "#3b82f6" }} />
+            <BookOpen size={14} style={{ color: "#6E7FF3" }} />
             <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.4)" }}>
               Quiz retention by course
             </p>
