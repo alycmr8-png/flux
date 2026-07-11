@@ -22,11 +22,12 @@ async function getOrCreateCustomer(s: any, user: any): Promise<string> {
 
 router.post("/checkout", async (req, res) => {
   const user = (req as any).user;
-  const { plan } = req.body as { plan: "student" | "pro" };
+  const { plan } = req.body as { plan: "monthly" | "6month" | "yearly" };
 
   const priceIds: Record<string, string> = {
-    student: process.env.STRIPE_STUDENT_PRICE_ID ?? "",
-    pro: process.env.STRIPE_PRO_PRICE_ID ?? "",
+    monthly: process.env.STRIPE_MONTHLY_PRICE_ID ?? "",
+    "6month": process.env.STRIPE_6MONTH_PRICE_ID ?? "",
+    yearly: process.env.STRIPE_YEARLY_PRICE_ID ?? "",
   };
 
   const priceId = priceIds[plan];
