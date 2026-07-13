@@ -106,7 +106,7 @@ function ChapterSection({ ch, idx }: { ch: Chapter; idx: number }) {
         </div>
         <div className="flex-1 min-w-0">
           <div className="font-semibold text-base truncate" style={{ color: open ? "white" : "#111" }}>{ch.title}</div>
-          {ch.timestamp && <div className="text-xs font-mono mt-0.5" style={{ color: open ? "rgba(255,255,255,0.6)" : "#999" }}>{ch.timestamp}</div>}
+          {ch.timestamp && <div className="text-xs font-mono mt-0.5" style={{ color: open ? "rgba(255,255,255,0.72)" : "#999" }}>{ch.timestamp}</div>}
         </div>
         {open ? <ChevronUp size={16} style={{ color: "rgba(255,255,255,0.7)", flexShrink: 0 }} /> : <ChevronDown size={16} style={{ color: "#aaa", flexShrink: 0 }} />}
       </button>
@@ -220,7 +220,7 @@ function StudyBookViewer({ book, lectureTitle, onRegenerate, regenerating }: {
               return (
                 <button key={item.chapter}
                   onClick={() => document.getElementById(`ch-${item.chapter}`)?.scrollIntoView({ behavior: "smooth", block: "start" })}
-                  className="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-left hover:bg-[#12151C] transition-all group">
+                  className="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-left hover:bg-[#1A2030] transition-all group">
                   <div className="w-6 h-6 rounded-lg flex items-center justify-center text-xs font-bold shrink-0"
                     style={{ background: `${color}18`, color }}>
                     {item.chapter}
@@ -243,7 +243,7 @@ function StudyBookViewer({ book, lectureTitle, onRegenerate, regenerating }: {
             <div className="text-[10px] font-bold uppercase tracking-widest text-[#999]">Glossary</div>
             <input value={glossarySearch} onChange={e => setGlossarySearch(e.target.value)}
               placeholder="Search terms..."
-              className="bg-[#0F1218] border border-[rgba(148,163,184,0.14)] rounded-xl px-4 py-2 text-sm text-slate-100 placeholder-slate-600 outline-none focus:border-[rgba(148,163,184,0.2)] w-48" />
+              className="bg-[#161B28] border border-[rgba(148,163,184,0.22)] rounded-xl px-4 py-2 text-sm text-slate-100 placeholder-slate-600 outline-none focus:border-[rgba(148,163,184,0.2)] w-48" />
           </div>
           <div className="rounded-3xl border overflow-hidden" style={{ borderColor: "#ebebeb" }}>
             {filtered.map((g, i) => (

@@ -51,11 +51,11 @@ export default function ArchivePage() {
       {isLoading ? (
         <div className="space-y-2">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="bg-[#12151C] border border-[rgba(148,163,184,0.12)] rounded-xl h-16 animate-pulse" />
+            <div key={i} className="bg-[#1A2030] border border-[rgba(148,163,184,0.2)] rounded-xl h-16 animate-pulse" />
           ))}
         </div>
       ) : lectures.length === 0 ? (
-        <div className="bg-[#12151C] border border-[rgba(148,163,184,0.12)] rounded-2xl p-16 text-center">
+        <div className="bg-[#1A2030] border border-[rgba(148,163,184,0.2)] rounded-2xl p-16 text-center">
           <Archive size={32} className="mx-auto mb-4" style={{ color: "#ccc" }} />
           <p className="text-sm text-slate-400 font-medium">Archive is empty</p>
           <p className="text-xs text-slate-500 mt-1">Deleted recordings will appear here.</p>
@@ -71,7 +71,7 @@ export default function ArchivePage() {
                 {items.map(l => (
                   <div
                     key={l.id}
-                    className="bg-[#12151C] border rounded-xl px-4 py-3 transition-all"
+                    className="bg-[#1A2030] border rounded-xl px-4 py-3 transition-all"
                     style={{ borderColor: confirmDeleteId === l.id ? "rgba(239,68,68,0.3)" : "rgba(0,0,0,0.08)" }}
                   >
                     {confirmDeleteId === l.id ? (

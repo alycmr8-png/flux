@@ -17,7 +17,7 @@ function RingChart({ value, size = 96, stroke = 8 }: { value: number; size?: num
   return (
     <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
       <svg width={size} height={size} style={{ transform: "rotate(-90deg)" }}>
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth={stroke} />
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="rgba(255,255,255,0.14)" strokeWidth={stroke} />
         <circle
           cx={size / 2} cy={size / 2} r={r} fill="none"
           stroke={color} strokeWidth={stroke}
@@ -47,7 +47,7 @@ function RetentionBar({ name, code, avg }: { name: string; code: string; avg: nu
         </div>
         <span className="text-sm font-bold tabular-nums" style={{ color }}>{avg}%</span>
       </div>
-      <div className="h-2 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.07)" }}>
+      <div className="h-2 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.12)" }}>
         <div className="h-2 rounded-full transition-all duration-1000 ease-out" style={{ width: `${avg}%`, background: `linear-gradient(90deg, ${color}88, ${color})` }} />
       </div>
     </div>
@@ -69,21 +69,21 @@ function LectureRow({ lecture, onRename }: { lecture: any; onRename: (id: string
   }
 
   return (
-    <div className="flex items-center justify-between py-2.5 border-b last:border-0 group" style={{ borderColor: "rgba(255,255,255,0.05)" }}>
+    <div className="flex items-center justify-between py-2.5 border-b last:border-0 group" style={{ borderColor: "rgba(255,255,255,0.09)" }}>
       <div className="flex items-center gap-3 flex-1 min-w-0 mr-3">
-        <div className="w-6 h-6 rounded-md flex items-center justify-center shrink-0" style={{ background: "rgba(255,255,255,0.07)" }}>
-          <Mic2 size={11} style={{ color: "rgba(255,255,255,0.4)" }} />
+        <div className="w-6 h-6 rounded-md flex items-center justify-center shrink-0" style={{ background: "rgba(255,255,255,0.12)" }}>
+          <Mic2 size={11} style={{ color: "rgba(255,255,255,0.52)" }} />
         </div>
         <div className="flex-1 min-w-0">
           {editing ? (
             <input autoFocus value={val} onChange={e => setVal(e.target.value)}
               onKeyDown={e => { if (e.key === "Enter") save(); if (e.key === "Escape") setEditing(false); }}
               className="w-full rounded-lg px-2 py-1 text-sm outline-none border"
-              style={{ background: "rgba(255,255,255,0.06)", borderColor: "rgba(255,255,255,0.12)", color: "white" }} />
+              style={{ background: "rgba(255,255,255,0.11)", borderColor: "rgba(255,255,255,0.18)", color: "white" }} />
           ) : (
             <div className="text-sm truncate" style={{ color: "white" }}>{lecture.title}</div>
           )}
-          <div className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.3)" }}>
+          <div className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.42)" }}>
             {format(new Date(lecture.recordedAt), "MMM d, yyyy")}
           </div>
         </div>
@@ -92,10 +92,10 @@ function LectureRow({ lecture, onRename }: { lecture: any; onRename: (id: string
         {editing ? (
           <>
             <button onClick={save} disabled={saving} className="p-1.5" style={{ color: "#22c55e" }}><Check size={13} /></button>
-            <button onClick={() => { setEditing(false); setVal(lecture.title); }} className="p-1.5" style={{ color: "rgba(255,255,255,0.4)" }}><X size={13} /></button>
+            <button onClick={() => { setEditing(false); setVal(lecture.title); }} className="p-1.5" style={{ color: "rgba(255,255,255,0.52)" }}><X size={13} /></button>
           </>
         ) : (
-          <button onClick={() => setEditing(true)} className="p-1.5 opacity-0 group-hover:opacity-100 transition-all" style={{ color: "rgba(255,255,255,0.3)" }}>
+          <button onClick={() => setEditing(true)} className="p-1.5 opacity-0 group-hover:opacity-100 transition-all" style={{ color: "rgba(255,255,255,0.42)" }}>
             <Pencil size={12} />
           </button>
         )}
@@ -110,21 +110,21 @@ function ClassSection({ cls, onRename }: { cls: any; onRename: (id: string, titl
   const count = cls.lectures.length;
 
   return (
-    <div className="rounded-2xl overflow-hidden border" style={{ background: "rgba(255,255,255,0.04)", borderColor: "rgba(255,255,255,0.07)" }}>
+    <div className="rounded-2xl overflow-hidden border" style={{ background: "rgba(255,255,255,0.08)", borderColor: "rgba(255,255,255,0.12)" }}>
       <button onClick={() => setOpen(!open)} className="w-full flex items-center justify-between px-5 py-4 hover:bg-white/5 transition-colors">
         <div className="flex items-center gap-3">
-          {open ? <ChevronDown size={14} style={{ color: "rgba(255,255,255,0.4)" }} /> : <ChevronRight size={14} style={{ color: "rgba(255,255,255,0.4)" }} />}
+          {open ? <ChevronDown size={14} style={{ color: "rgba(255,255,255,0.52)" }} /> : <ChevronRight size={14} style={{ color: "rgba(255,255,255,0.52)" }} />}
           <span className="text-sm font-medium" style={{ color: "white" }}>{cls.name}</span>
           <span className="text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full" style={{ background: "rgba(75,95,232,0.15)", color: "#93A0F8" }}>
             {count} {count === 1 ? "lecture" : "lectures"}
           </span>
         </div>
-        <span className="text-xs font-mono" style={{ color: "rgba(255,255,255,0.25)" }}>{cls.code}</span>
+        <span className="text-xs font-mono" style={{ color: "rgba(255,255,255,0.38)" }}>{cls.code}</span>
       </button>
       {open && (
-        <div className="px-5 pb-3 border-t" style={{ borderColor: "rgba(255,255,255,0.05)" }}>
+        <div className="px-5 pb-3 border-t" style={{ borderColor: "rgba(255,255,255,0.09)" }}>
           {count === 0
-            ? <p className="text-xs py-3" style={{ color: "rgba(255,255,255,0.3)" }}>No recordings yet.</p>
+            ? <p className="text-xs py-3" style={{ color: "rgba(255,255,255,0.42)" }}>No recordings yet.</p>
             : cls.lectures.map((l: any) => <LectureRow key={l.id} lecture={l} onRename={onRename} />)
           }
         </div>
@@ -168,7 +168,7 @@ export default function ProgressPage() {
           </div>
           <div>
             <div style={{ fontSize: 36, fontWeight: 800, color: "white", lineHeight: 1 }}>{isLoading ? "—" : lectures}</div>
-            <div style={{ fontSize: 11, color: "rgba(255,255,255,0.45)", marginTop: 3 }}>Lectures recorded</div>
+            <div style={{ fontSize: 11, color: "rgba(255,255,255,0.58)", marginTop: 3 }}>Lectures recorded</div>
           </div>
         </div>
 
@@ -178,13 +178,13 @@ export default function ProgressPage() {
           borderColor: avgScore >= 70 ? "rgba(34,197,94,0.25)" : avgScore >= 50 ? "rgba(249,115,22,0.25)" : "rgba(239,68,68,0.25)",
         }}>
           {isLoading ? (
-            <div className="w-24 h-24 rounded-full animate-pulse" style={{ background: "rgba(255,255,255,0.08)" }} />
+            <div className="w-24 h-24 rounded-full animate-pulse" style={{ background: "rgba(255,255,255,0.14)" }} />
           ) : (
             <RingChart value={avgScore} />
           )}
           <div>
             <div style={{ fontSize: 14, fontWeight: 600, color: "white" }}>Avg Quiz Score</div>
-            <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", marginTop: 3 }}>
+            <div style={{ fontSize: 11, color: "rgba(255,255,255,0.52)", marginTop: 3 }}>
               {avgScore >= 70 ? "Great work!" : avgScore >= 50 ? "Keep studying" : "Needs attention"}
             </div>
             <div className="flex items-center gap-1 mt-2">
@@ -203,7 +203,7 @@ export default function ProgressPage() {
           </div>
           <div>
             <div style={{ fontSize: 36, fontWeight: 800, color: "white", lineHeight: 1 }}>{isLoading ? "—" : streak}</div>
-            <div style={{ fontSize: 11, color: "rgba(255,255,255,0.45)", marginTop: 3 }}>Day streak</div>
+            <div style={{ fontSize: 11, color: "rgba(255,255,255,0.58)", marginTop: 3 }}>Day streak</div>
             {streak >= 3 && <div style={{ fontSize: 10, color: "#f97316", marginTop: 4 }}>🔥 On fire!</div>}
           </div>
         </div>
@@ -211,10 +211,10 @@ export default function ProgressPage() {
 
       {/* ── Retention chart ── */}
       {retention.length > 0 && (
-        <div className="rounded-2xl p-6 mb-6 border" style={{ background: "rgba(255,255,255,0.04)", borderColor: "rgba(255,255,255,0.08)" }}>
+        <div className="rounded-2xl p-6 mb-6 border" style={{ background: "rgba(255,255,255,0.08)", borderColor: "rgba(255,255,255,0.14)" }}>
           <div className="flex items-center gap-2 mb-6">
             <BookOpen size={14} style={{ color: "#6E7FF3" }} />
-            <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.4)" }}>
+            <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.52)" }}>
               Quiz retention by course
             </p>
           </div>
@@ -224,11 +224,11 @@ export default function ProgressPage() {
             ))}
           </div>
           {/* Legend */}
-          <div className="flex items-center gap-5 mt-6 pt-4 border-t" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
+          <div className="flex items-center gap-5 mt-6 pt-4 border-t" style={{ borderColor: "rgba(255,255,255,0.11)" }}>
             {[{ label: "Strong (≥70%)", color: "#22c55e" }, { label: "Average (50–70%)", color: "#f97316" }, { label: "Needs work (<50%)", color: "#ef4444" }].map(l => (
               <div key={l.label} className="flex items-center gap-1.5">
                 <div className="w-2.5 h-2.5 rounded-full" style={{ background: l.color }} />
-                <span style={{ fontSize: 10, color: "rgba(255,255,255,0.35)" }}>{l.label}</span>
+                <span style={{ fontSize: 10, color: "rgba(255,255,255,0.48)" }}>{l.label}</span>
               </div>
             ))}
           </div>
@@ -237,8 +237,8 @@ export default function ProgressPage() {
 
       {/* ── Recordings by class ── */}
       <div className="mb-2 flex items-center gap-2">
-        <Mic2 size={13} style={{ color: "rgba(255,255,255,0.3)" }} />
-        <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)" }}>
+        <Mic2 size={13} style={{ color: "rgba(255,255,255,0.42)" }} />
+        <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.42)" }}>
           Recordings by class
         </p>
       </div>
@@ -246,15 +246,15 @@ export default function ProgressPage() {
       {isLoading && (
         <div className="space-y-3">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="rounded-2xl h-14 animate-pulse border" style={{ background: "rgba(255,255,255,0.04)", borderColor: "rgba(255,255,255,0.07)" }} />
+            <div key={i} className="rounded-2xl h-14 animate-pulse border" style={{ background: "rgba(255,255,255,0.08)", borderColor: "rgba(255,255,255,0.12)" }} />
           ))}
         </div>
       )}
 
       {!isLoading && !p?.lecturesByClass?.length && (
-        <div className="rounded-2xl p-8 text-center border" style={{ background: "rgba(255,255,255,0.03)", borderColor: "rgba(255,255,255,0.07)", borderStyle: "dashed" }}>
+        <div className="rounded-2xl p-8 text-center border" style={{ background: "rgba(255,255,255,0.07)", borderColor: "rgba(255,255,255,0.12)", borderStyle: "dashed" }}>
           <Mic2 size={28} className="mx-auto mb-3" style={{ color: "rgba(255,255,255,0.15)" }} />
-          <p style={{ fontSize: 13, color: "rgba(255,255,255,0.35)" }}>No classes yet. Create one in the Workspace.</p>
+          <p style={{ fontSize: 13, color: "rgba(255,255,255,0.48)" }}>No classes yet. Create one in the Workspace.</p>
         </div>
       )}
 

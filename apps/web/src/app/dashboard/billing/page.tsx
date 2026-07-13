@@ -118,7 +118,7 @@ export default function BillingPage() {
 
       {/* Current plan — only shown to paying users */}
       {!isLoading && currentPlan !== "free" && !success && (
-        <div className="bg-[#12151C] border border-[rgba(148,163,184,0.14)] rounded-2xl p-5 mb-6">
+        <div className="bg-[#1A2030] border border-[rgba(148,163,184,0.22)] rounded-2xl p-5 mb-6">
           <div className="text-[10px] text-slate-400 uppercase tracking-widest mb-3">Current plan</div>
           <div className="flex items-center justify-between">
             <div>
@@ -147,10 +147,10 @@ export default function BillingPage() {
               key={plan.id}
               className={`border rounded-2xl p-5 flex items-start justify-between gap-4 ${
                 plan.highlight && !isCurrent
-                  ? "border-black bg-[#12151C]"
+                  ? "border-black bg-[#1A2030]"
                   : isCurrent
-                  ? "border-[rgba(148,163,184,0.18)] bg-[#12151C]"
-                  : "border-[rgba(148,163,184,0.14)] bg-[#10131A]"
+                  ? "border-[rgba(148,163,184,0.25)] bg-[#1A2030]"
+                  : "border-[rgba(148,163,184,0.22)] bg-[#161B28]"
               }`}
             >
               <div className="flex-1">

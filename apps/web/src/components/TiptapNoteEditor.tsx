@@ -55,7 +55,7 @@ export function TiptapNoteEditor({
         onMouseDown={e => { e.preventDefault(); onClick(); }}
         title={title}
         className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
-          active ? "bg-indigo-600 text-white" : "text-slate-400 hover:text-slate-100 hover:bg-[rgba(148,163,184,0.08)]"
+          active ? "bg-indigo-600 text-white" : "text-slate-400 hover:text-slate-100 hover:bg-[rgba(148,163,184,0.14)]"
         }`}
       >
         {children}
@@ -66,9 +66,9 @@ export function TiptapNoteEditor({
   const Sep = () => <span className="w-px h-4 bg-[rgba(0,0,0,0.08)] mx-0.5 shrink-0" />;
 
   return (
-    <div className="bg-[#12151C] border border-[rgba(148,163,184,0.12)] rounded-2xl overflow-hidden">
+    <div className="bg-[#1A2030] border border-[rgba(148,163,184,0.2)] rounded-2xl overflow-hidden">
       {/* Toolbar */}
-      <div className="flex items-center gap-0.5 px-4 py-2.5 border-b border-[rgba(148,163,184,0.09)] flex-wrap">
+      <div className="flex items-center gap-0.5 px-4 py-2.5 border-b border-[rgba(148,163,184,0.16)] flex-wrap">
         <Btn onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()} active={editor.isActive("heading", { level: 1 })} title="Heading 1">H1</Btn>
         <Btn onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} active={editor.isActive("heading", { level: 2 })} title="Heading 2">H2</Btn>
         <Btn onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()} active={editor.isActive("heading", { level: 3 })} title="Heading 3">H3</Btn>

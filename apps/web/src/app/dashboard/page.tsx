@@ -118,14 +118,14 @@ export default function DashboardHome() {
         <div className="flex flex-col gap-2 mb-8">
           {!ready || eventsLoading ? (
             [...Array(2)].map((_, i) => (
-              <div key={i} className="rounded-2xl px-4 py-3 border animate-pulse" style={{ background: "rgba(255,255,255,0.05)", borderColor: "rgba(255,255,255,0.08)", height: 58 }} />
+              <div key={i} className="rounded-2xl px-4 py-3 border animate-pulse" style={{ background: "rgba(255,255,255,0.09)", borderColor: "rgba(255,255,255,0.14)", height: 58 }} />
             ))
           ) : allUpcoming.length === 0 ? (
             <Link href="/dashboard/calendar"
               className="flex items-center gap-3 rounded-2xl px-4 py-3 border transition-all hover:border-white/20 hover:bg-white/[0.06]"
-              style={{ background: "rgba(255,255,255,0.04)", borderColor: "rgba(255,255,255,0.08)", borderStyle: "dashed" }}>
-              <Plus size={14} style={{ color: "rgba(255,255,255,0.3)" }} />
-              <span className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>No upcoming events — add one in Calendar</span>
+              style={{ background: "rgba(255,255,255,0.08)", borderColor: "rgba(255,255,255,0.14)", borderStyle: "dashed" }}>
+              <Plus size={14} style={{ color: "rgba(255,255,255,0.42)" }} />
+              <span className="text-xs" style={{ color: "rgba(255,255,255,0.52)" }}>No upcoming events — add one in Calendar</span>
             </Link>
           ) : (
             <>
@@ -133,19 +133,19 @@ export default function DashboardHome() {
                 const diff = differenceInCalendarDays(new Date(e.date), today);
                 const color = TYPE_COLOR[e.type] ?? "#6b7280";
                 const cdLabel = diff === 0 ? "Today!" : diff === 1 ? "Tomorrow" : `In ${diff} days`;
-                const cdColor = diff === 0 ? "#ef4444" : diff <= 1 ? "#f97316" : diff <= 3 ? "#eab308" : "rgba(255,255,255,0.35)";
+                const cdColor = diff === 0 ? "#ef4444" : diff <= 1 ? "#f97316" : diff <= 3 ? "#eab308" : "rgba(255,255,255,0.48)";
                 return (
                   <Link key={e.id} href="/dashboard/calendar"
                     className="flex items-center gap-4 rounded-2xl px-4 py-3 border transition-all duration-200 hover:border-white/20 hover:bg-white/[0.06]"
-                    style={{ background: diff === 0 ? "rgba(239,68,68,0.08)" : "rgba(255,255,255,0.05)", borderColor: diff === 0 ? "rgba(239,68,68,0.2)" : "rgba(255,255,255,0.08)", borderLeft: `3px solid ${color}` }}
+                    style={{ background: diff === 0 ? "rgba(239,68,68,0.08)" : "rgba(255,255,255,0.09)", borderColor: diff === 0 ? "rgba(239,68,68,0.2)" : "rgba(255,255,255,0.14)", borderLeft: `3px solid ${color}` }}
                   >
                     <div style={{ minWidth: 38, textAlign: "center" }}>
                       <div style={{ fontSize: 20, fontWeight: 700, lineHeight: 1, color: "white" }}>{format(new Date(e.date), "d")}</div>
-                      <div style={{ fontSize: 9, textTransform: "uppercase", color: "rgba(255,255,255,0.3)" }}>{format(new Date(e.date), "MMM")}</div>
+                      <div style={{ fontSize: 9, textTransform: "uppercase", color: "rgba(255,255,255,0.42)" }}>{format(new Date(e.date), "MMM")}</div>
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-medium truncate" style={{ color: "white" }}>{e.title}</div>
-                      <div className="text-[10px] uppercase tracking-wider mt-0.5" style={{ color: "rgba(255,255,255,0.35)" }}>
+                      <div className="text-[10px] uppercase tracking-wider mt-0.5" style={{ color: "rgba(255,255,255,0.48)" }}>
                         {TYPE_LABEL[e.type]}{e.course?.code ? ` · ${e.course.code}` : ""}
                       </div>
                     </div>
@@ -157,7 +157,7 @@ export default function DashboardHome() {
                 );
               })}
               {allUpcoming.length > 3 && (
-                <Link href="/dashboard/calendar" className="text-xs text-center py-1 transition-colors hover:text-white" style={{ color: "rgba(255,255,255,0.3)" }}>
+                <Link href="/dashboard/calendar" className="text-xs text-center py-1 transition-colors hover:text-white" style={{ color: "rgba(255,255,255,0.42)" }}>
                   +{allUpcoming.length - 3} more events →
                 </Link>
               )}
@@ -170,26 +170,26 @@ export default function DashboardHome() {
         <div className="space-y-2 mb-8">
           {!ready || coursesLoading ? (
             [...Array(2)].map((_, i) => (
-              <div key={i} className="rounded-2xl px-5 py-4 border animate-pulse" style={{ background: "rgba(255,255,255,0.06)", borderColor: "rgba(255,255,255,0.08)", height: 64 }} />
+              <div key={i} className="rounded-2xl px-5 py-4 border animate-pulse" style={{ background: "rgba(255,255,255,0.11)", borderColor: "rgba(255,255,255,0.14)", height: 64 }} />
             ))
           ) : courses.length === 0 ? (
             <Link href="/dashboard/record"
               className="flex items-center gap-3 rounded-2xl px-5 py-4 border transition-all hover:border-white/20 hover:bg-white/[0.06]"
-              style={{ background: "rgba(255,255,255,0.04)", borderColor: "rgba(255,255,255,0.08)", borderStyle: "dashed" }}>
-              <Plus size={14} style={{ color: "rgba(255,255,255,0.3)" }} />
-              <span className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>Add your first class</span>
+              style={{ background: "rgba(255,255,255,0.08)", borderColor: "rgba(255,255,255,0.14)", borderStyle: "dashed" }}>
+              <Plus size={14} style={{ color: "rgba(255,255,255,0.42)" }} />
+              <span className="text-xs" style={{ color: "rgba(255,255,255,0.52)" }}>Add your first class</span>
             </Link>
           ) : (
             courses.map((cls: any) => (
               <Link key={cls.id} href="/dashboard/record"
                 className="flex items-center gap-4 rounded-2xl px-5 py-4 border transition-all duration-200 hover:border-white/20 hover:bg-white/[0.06]"
-                style={{ background: "rgba(255,255,255,0.06)", borderColor: "rgba(255,255,255,0.08)" }}>
-                <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "rgba(255,255,255,0.08)" }}>
-                  <Layers size={15} style={{ color: "rgba(255,255,255,0.45)" }} />
+                style={{ background: "rgba(255,255,255,0.11)", borderColor: "rgba(255,255,255,0.14)" }}>
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "rgba(255,255,255,0.14)" }}>
+                  <Layers size={15} style={{ color: "rgba(255,255,255,0.58)" }} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-medium truncate" style={{ color: "white" }}>{cls.name}</div>
-                  <div className="text-[11px] mt-0.5" style={{ color: "rgba(255,255,255,0.35)" }}>{cls.code}</div>
+                  <div className="text-[11px] mt-0.5" style={{ color: "rgba(255,255,255,0.48)" }}>{cls.code}</div>
                 </div>
                 <ChevronRight size={13} style={{ color: "rgba(255,255,255,0.2)" }} />
               </Link>
@@ -217,7 +217,7 @@ export default function DashboardHome() {
                 <Link
                   href={v.videoId ? `/dashboard/record?videoId=${v.videoId}&courseId=${v.courseId}` : `/dashboard/record`}
                   className="rounded-2xl overflow-hidden border transition-all duration-200 hover:border-white/20 hover:scale-[1.02] group block"
-                  style={{ background: "rgba(255,255,255,0.06)", borderColor: "rgba(255,255,255,0.08)" }}
+                  style={{ background: "rgba(255,255,255,0.11)", borderColor: "rgba(255,255,255,0.14)" }}
                 >
                   <div className="relative w-full" style={{ paddingBottom: "56.25%" }}>
                     {v.thumbnail ? (
@@ -229,8 +229,8 @@ export default function DashboardHome() {
                         unoptimized
                       />
                     ) : (
-                      <div className="absolute inset-0 flex items-center justify-center" style={{ background: "rgba(255,255,255,0.05)" }}>
-                        <Youtube size={20} style={{ color: "rgba(255,255,255,0.3)" }} />
+                      <div className="absolute inset-0 flex items-center justify-center" style={{ background: "rgba(255,255,255,0.09)" }}>
+                        <Youtube size={20} style={{ color: "rgba(255,255,255,0.42)" }} />
                       </div>
                     )}
                     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity" style={{ background: "rgba(0,0,0,0.4)" }}>
@@ -241,7 +241,7 @@ export default function DashboardHome() {
                   </div>
                   <div className="px-3 py-2.5">
                     <div className="text-xs font-medium truncate" style={{ color: "white" }}>{v.title}</div>
-                    <div className="text-[10px] mt-0.5" style={{ color: "rgba(255,255,255,0.35)" }}>YouTube Video</div>
+                    <div className="text-[10px] mt-0.5" style={{ color: "rgba(255,255,255,0.48)" }}>YouTube Video</div>
                   </div>
                 </Link>
                 </div>
@@ -260,12 +260,12 @@ export default function DashboardHome() {
                   key={cs.id}
                   href="/dashboard/summaries"
                   className="flex items-center gap-3 rounded-xl px-4 py-3 border transition-all duration-200 hover:border-white/20 hover:bg-white/[0.06]"
-                  style={{ background: "rgba(255,255,255,0.06)", borderColor: "rgba(255,255,255,0.08)" }}
+                  style={{ background: "rgba(255,255,255,0.11)", borderColor: "rgba(255,255,255,0.14)" }}
                 >
-                  <FileText size={14} style={{ color: "rgba(255,255,255,0.4)" }} className="shrink-0" />
+                  <FileText size={14} style={{ color: "rgba(255,255,255,0.52)" }} className="shrink-0" />
                   <div className="flex-1 min-w-0">
                     <div className="text-sm truncate" style={{ color: "white" }}>{cs.title}</div>
-                    <div className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.35)" }}>{cs.driveUrl ? "Drive synced" : "Local"}</div>
+                    <div className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.48)" }}>{cs.driveUrl ? "Drive synced" : "Local"}</div>
                   </div>
                   <ChevronRight size={12} style={{ color: "rgba(255,255,255,0.2)" }} />
                 </Link>
@@ -278,23 +278,23 @@ export default function DashboardHome() {
       {/* RIGHT — upcoming events panel (hidden on mobile) */}
       <div
         className="hidden lg:flex w-80 shrink-0 flex-col py-9 pr-8"
-        style={{ borderLeft: "1px solid rgba(255,255,255,0.07)" }}
+        style={{ borderLeft: "1px solid rgba(255,255,255,0.12)" }}
       >
         {/* Panel header */}
         <div className="flex items-center justify-between mb-5 pl-6">
           <div>
-            <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: 4 }}>Upcoming</div>
+            <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(255,255,255,0.42)", marginBottom: 4 }}>Upcoming</div>
             <div style={{ fontSize: 16, fontWeight: 500, color: "white" }}>
               {allUpcoming.length === 0 ? "No events" : `${allUpcoming.length} event${allUpcoming.length !== 1 ? "s" : ""}`}
             </div>
           </div>
           <Link
             href="/dashboard/calendar"
-            className="flex items-center justify-center w-7 h-7 rounded-lg transition-all hover:bg-[#12151C]/15"
-            style={{ background: "rgba(255,255,255,0.08)" }}
+            className="flex items-center justify-center w-7 h-7 rounded-lg transition-all hover:bg-[#1A2030]/15"
+            style={{ background: "rgba(255,255,255,0.14)" }}
             title="Add event"
           >
-            <Plus size={14} style={{ color: "rgba(255,255,255,0.6)" }} />
+            <Plus size={14} style={{ color: "rgba(255,255,255,0.72)" }} />
           </Link>
         </div>
 
@@ -309,8 +309,8 @@ export default function DashboardHome() {
                 style={{
                   background: activeFilter === type
                     ? (type === "all" ? "rgba(255,255,255,0.9)" : TYPE_COLOR[type])
-                    : "rgba(255,255,255,0.07)",
-                  color: activeFilter === type ? "#111110" : "rgba(255,255,255,0.4)",
+                    : "rgba(255,255,255,0.12)",
+                  color: activeFilter === type ? "#111110" : "rgba(255,255,255,0.52)",
                 }}
               >
                 {type === "all" ? "All" : TYPE_LABEL[type] ?? type}
@@ -323,14 +323,14 @@ export default function DashboardHome() {
         <div className="flex-1 overflow-y-auto pl-6 flex flex-col gap-2" style={{ scrollbarWidth: "none" }}>
           {displayedEvents.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
-              <Calendar size={28} style={{ color: "rgba(255,255,255,0.12)", marginBottom: 12 }} />
-              <div style={{ fontSize: 13, color: "rgba(255,255,255,0.3)", marginBottom: 4 }}>
+              <Calendar size={28} style={{ color: "rgba(255,255,255,0.18)", marginBottom: 12 }} />
+              <div style={{ fontSize: 13, color: "rgba(255,255,255,0.42)", marginBottom: 4 }}>
                 {activeFilter === "all" ? "No upcoming events" : `No ${TYPE_LABEL[activeFilter]?.toLowerCase()} events`}
               </div>
               <Link
                 href="/dashboard/calendar"
                 className="text-xs mt-1 transition-colors hover:text-white"
-                style={{ color: "rgba(255,255,255,0.35)", textDecoration: "underline" }}
+                style={{ color: "rgba(255,255,255,0.48)", textDecoration: "underline" }}
               >
                 Add one
               </Link>
@@ -348,8 +348,8 @@ export default function DashboardHome() {
                   onClick={() => setExpandedEvent(isExpanded ? null : e.id)}
                   className="text-left rounded-xl px-4 py-3 border transition-all duration-200 hover:border-white/20 w-full"
                   style={{
-                    background: glow !== "transparent" ? glow : "rgba(255,255,255,0.05)",
-                    borderColor: isExpanded ? `${color}60` : "rgba(255,255,255,0.08)",
+                    background: glow !== "transparent" ? glow : "rgba(255,255,255,0.09)",
+                    borderColor: isExpanded ? `${color}60` : "rgba(255,255,255,0.14)",
                     borderLeft: `3px solid ${color}`,
                   }}
                 >
@@ -361,27 +361,27 @@ export default function DashboardHome() {
                         )}
                         <div className="text-sm font-medium truncate" style={{ color: "white" }}>{e.title}</div>
                       </div>
-                      <div className="text-[10px] uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.35)" }}>
+                      <div className="text-[10px] uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.48)" }}>
                         {e.course?.code ? `${e.course.code} · ` : ""}{TYPE_LABEL[e.type] ?? e.type}
                       </div>
                     </div>
                     <div className="shrink-0 text-right">
                       <div className="text-xs font-semibold" style={{ color }}>{dayLabel(e.date)}</div>
                       {diff > 1 && (
-                        <div className="text-[10px]" style={{ color: "rgba(255,255,255,0.25)" }}>{format(new Date(e.date), "EEE")}</div>
+                        <div className="text-[10px]" style={{ color: "rgba(255,255,255,0.38)" }}>{format(new Date(e.date), "EEE")}</div>
                       )}
                     </div>
                   </div>
 
                   {/* Expanded detail */}
                   {isExpanded && (
-                    <div className="mt-3 pt-3" style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }}>
-                      <div className="flex items-center gap-1.5 text-xs mb-1" style={{ color: "rgba(255,255,255,0.5)" }}>
+                    <div className="mt-3 pt-3" style={{ borderTop: "1px solid rgba(255,255,255,0.14)" }}>
+                      <div className="flex items-center gap-1.5 text-xs mb-1" style={{ color: "rgba(255,255,255,0.62)" }}>
                         <Clock size={10} />
                         {format(new Date(e.date), "EEEE, MMMM d, yyyy")}
                       </div>
                       {e.description && (
-                        <div className="text-xs leading-relaxed" style={{ color: "rgba(255,255,255,0.4)" }}>{e.description}</div>
+                        <div className="text-xs leading-relaxed" style={{ color: "rgba(255,255,255,0.52)" }}>{e.description}</div>
                       )}
                       <Link
                         href="/dashboard/calendar"
@@ -402,7 +402,7 @@ export default function DashboardHome() {
             <Link
               href="/dashboard/calendar"
               className="flex items-center justify-center gap-1 rounded-xl py-2.5 text-xs transition-all hover:bg-white/[0.06]"
-              style={{ color: "rgba(255,255,255,0.35)", border: "1px dashed rgba(255,255,255,0.1)" }}
+              style={{ color: "rgba(255,255,255,0.48)", border: "1px dashed rgba(255,255,255,0.16)" }}
             >
               +{filtered.length - 8} more <ChevronRight size={12} />
             </Link>
@@ -410,8 +410,8 @@ export default function DashboardHome() {
         </div>
 
         {/* Today's date footer */}
-        <div className="pl-6 pt-5 mt-2" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
-          <div style={{ fontSize: 11, color: "rgba(255,255,255,0.25)" }}>
+        <div className="pl-6 pt-5 mt-2" style={{ borderTop: "1px solid rgba(255,255,255,0.11)" }}>
+          <div style={{ fontSize: 11, color: "rgba(255,255,255,0.38)" }}>
             {format(new Date(), "EEEE, MMMM d")}
           </div>
         </div>

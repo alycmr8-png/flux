@@ -38,11 +38,11 @@ function countdownLabel(days: number): string {
   return `in ${days}d`;
 }
 function countdownColor(days: number, type: string): string {
-  if (!URGENT_TYPES.has(type)) return "rgba(255,255,255,0.3)";
+  if (!URGENT_TYPES.has(type)) return "rgba(255,255,255,0.42)";
   if (days === 0) return "#ef4444";
   if (days <= 1) return "#f97316";
   if (days <= 3) return "#eab308";
-  return "rgba(255,255,255,0.3)";
+  return "rgba(255,255,255,0.42)";
 }
 function formatHour(h: number) {
   if (h === 12) return "12 pm";
@@ -189,21 +189,21 @@ export default function CalendarPage() {
           50% { box-shadow: 0 0 0 4px rgba(239,68,68,0); }
         }
         .urgent-pulse { animation: urgentPulse 1.8s ease-in-out infinite; }
-        .hour-cell:hover { background: rgba(255,255,255,0.04); }
+        .hour-cell:hover { background: rgba(255,255,255,0.08); }
       `}</style>
 
       {/* Header */}
       <div className="flex items-start justify-between mb-6">
         <div>
           <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 28 }}>{t.calendar.title}</h1>
-          <p style={{ color: "rgba(255,255,255,0.4)", fontSize: 13, marginTop: 2 }}>{t.calendar.subtitle}</p>
+          <p style={{ color: "rgba(255,255,255,0.52)", fontSize: 13, marginTop: 2 }}>{t.calendar.subtitle}</p>
         </div>
         {/* View toggle */}
-        <div className="flex gap-1 p-1 rounded-xl" style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)" }}>
+        <div className="flex gap-1 p-1 rounded-xl" style={{ background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.16)" }}>
           {(["month", "week"] as const).map(v => (
             <button key={v} onClick={() => setView(v)}
               className="px-4 py-1.5 rounded-lg text-sm font-medium transition-all capitalize"
-              style={{ background: view === v ? "rgba(255,255,255,0.15)" : "transparent", color: view === v ? "white" : "rgba(255,255,255,0.4)" }}>
+              style={{ background: view === v ? "rgba(255,255,255,0.15)" : "transparent", color: view === v ? "white" : "rgba(255,255,255,0.52)" }}>
               {v === "month" ? t.calendar.month : t.calendar.week}
             </button>
           ))}
@@ -229,7 +229,7 @@ export default function CalendarPage() {
               <div key={e.id} className="flex items-center gap-2">
                 <span style={{ width: 6, height: 6, borderRadius: "50%", background: eventColor(e.type), display: "inline-block", flexShrink: 0 }} />
                 <span style={{ fontSize: 12, color: "rgba(255,255,255,0.7)" }}>{e.title}</span>
-                <span style={{ fontSize: 10, color: "rgba(255,255,255,0.35)" }}>· {EVENT_TYPES.find(t => t.value === e.type)?.label}</span>
+                <span style={{ fontSize: 10, color: "rgba(255,255,255,0.48)" }}>· {EVENT_TYPES.find(t => t.value === e.type)?.label}</span>
               </div>
             ))}
           </div>
@@ -240,15 +240,15 @@ export default function CalendarPage() {
       {view === "month" && (
         <div className="flex flex-col lg:flex-row gap-6">
           <div className="flex-1">
-            <div className="rounded-2xl p-5" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)" }}>
+            <div className="rounded-2xl p-5" style={{ background: "rgba(255,255,255,0.09)", border: "1px solid rgba(255,255,255,0.16)" }}>
               <div className="flex items-center justify-between mb-5">
-                <button onClick={() => setMonth(subMonths(month, 1))} className="p-1.5" style={{ color: "rgba(255,255,255,0.5)" }}><ChevronLeft size={16} /></button>
+                <button onClick={() => setMonth(subMonths(month, 1))} className="p-1.5" style={{ color: "rgba(255,255,255,0.62)" }}><ChevronLeft size={16} /></button>
                 <span style={{ fontSize: 14, fontWeight: 500 }}>{format(month, "MMMM yyyy")}</span>
-                <button onClick={() => setMonth(addMonths(month, 1))} className="p-1.5" style={{ color: "rgba(255,255,255,0.5)" }}><ChevronRight size={16} /></button>
+                <button onClick={() => setMonth(addMonths(month, 1))} className="p-1.5" style={{ color: "rgba(255,255,255,0.62)" }}><ChevronRight size={16} /></button>
               </div>
               <div className="grid grid-cols-7 mb-2">
                 {["Su","Mo","Tu","We","Th","Fr","Sa"].map(d => (
-                  <div key={d} style={{ textAlign: "center", fontSize: 10, color: "rgba(255,255,255,0.3)", paddingBottom: 6 }}>{d}</div>
+                  <div key={d} style={{ textAlign: "center", fontSize: 10, color: "rgba(255,255,255,0.42)", paddingBottom: 6 }}>{d}</div>
                 ))}
               </div>
               <div className="grid grid-cols-7 gap-1">
@@ -262,7 +262,7 @@ export default function CalendarPage() {
                   return (
                     <button key={day.toISOString()} onClick={() => setSelectedDay(isSelected ? null : day)}
                       className={`relative flex flex-col items-start w-full px-1 pt-1.5 pb-1 rounded-xl transition-all${isUrgent ? " urgent-pulse" : ""}`}
-                      style={{ background: isSelected ? "rgba(255,255,255,0.12)" : today ? "rgba(255,255,255,0.08)" : "transparent", outline: today ? "1px solid rgba(255,255,255,0.25)" : "none", opacity: past ? 0.4 : 1, minHeight: 52 }}>
+                      style={{ background: isSelected ? "rgba(255,255,255,0.18)" : today ? "rgba(255,255,255,0.14)" : "transparent", outline: today ? "1px solid rgba(255,255,255,0.38)" : "none", opacity: past ? 0.4 : 1, minHeight: 52 }}>
                       {/* Day number */}
                       <span className="w-full text-center mb-0.5" style={{ fontSize: 12, fontWeight: today ? 700 : 400, color: today ? "white" : "rgba(255,255,255,0.65)" }}>{format(day, "d")}</span>
                       {/* Event pills */}
@@ -275,7 +275,7 @@ export default function CalendarPage() {
                             </div>
                           ))}
                           {de.length > 2 && (
-                            <div style={{ fontSize: 9, color: "rgba(255,255,255,0.3)", paddingLeft: 4 }}>+{de.length - 2} more</div>
+                            <div style={{ fontSize: 9, color: "rgba(255,255,255,0.42)", paddingLeft: 4 }}>+{de.length - 2} more</div>
                           )}
                         </div>
                       )}
@@ -288,7 +288,7 @@ export default function CalendarPage() {
               {EVENT_TYPES.map(t => (
                 <div key={t.value} className="flex items-center gap-1.5">
                   <span style={{ width: 7, height: 7, borderRadius: "50%", background: t.color, display: "inline-block" }} />
-                  <span style={{ fontSize: 11, color: "rgba(255,255,255,0.4)" }}>{t.label}</span>
+                  <span style={{ fontSize: 11, color: "rgba(255,255,255,0.52)" }}>{t.label}</span>
                 </div>
               ))}
             </div>
@@ -296,7 +296,7 @@ export default function CalendarPage() {
 
           <div className="lg:w-72 flex flex-col gap-4">
             {selectedDay && (
-              <div className="rounded-2xl p-4" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)" }}>
+              <div className="rounded-2xl p-4" style={{ background: "rgba(255,255,255,0.09)", border: "1px solid rgba(255,255,255,0.16)" }}>
                 <div className="flex items-center justify-between mb-3">
                   <span style={{ fontSize: 13, fontWeight: 500 }}>{format(selectedDay, "EEEE, MMM d")}</span>
                   {!isPastDay(selectedDay) && (
@@ -306,7 +306,7 @@ export default function CalendarPage() {
                   )}
                 </div>
                 {selectedEvents.length === 0 ? (
-                  <p style={{ fontSize: 12, color: "rgba(255,255,255,0.35)" }}>{isPastDay(selectedDay) ? "This day has passed." : "No events — click Add to schedule one."}</p>
+                  <p style={{ fontSize: 12, color: "rgba(255,255,255,0.48)" }}>{isPastDay(selectedDay) ? "This day has passed." : "No events — click Add to schedule one."}</p>
                 ) : (
                   <div className="flex flex-col gap-2">
                     {selectedEvents.map(e => <EventCard key={e.id} event={e} onEdit={() => openEdit(e)} onDelete={() => deleteEvent(e.id)} />)}
@@ -315,10 +315,10 @@ export default function CalendarPage() {
               </div>
             )}
 
-            <div className="rounded-2xl p-4" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)" }}>
-              <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: 12 }}>{t.calendar.upcoming}</p>
+            <div className="rounded-2xl p-4" style={{ background: "rgba(255,255,255,0.09)", border: "1px solid rgba(255,255,255,0.16)" }}>
+              <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.42)", marginBottom: 12 }}>{t.calendar.upcoming}</p>
               {upcoming.length === 0 ? (
-                <p style={{ fontSize: 12, color: "rgba(255,255,255,0.35)" }}>{t.calendar.noEvents}</p>
+                <p style={{ fontSize: 12, color: "rgba(255,255,255,0.48)" }}>{t.calendar.noEvents}</p>
               ) : (
                 <div className="flex flex-col gap-2">
                   {upcoming.slice(0, 8).map(e => {
@@ -329,12 +329,12 @@ export default function CalendarPage() {
                       <div key={e.id} className="flex items-start gap-3">
                         <div style={{ textAlign: "right", minWidth: 36 }}>
                           <div style={{ fontSize: 16, fontWeight: 600, lineHeight: 1, color: "white" }}>{format(new Date(e.date), "d")}</div>
-                          <div style={{ fontSize: 9, color: "rgba(255,255,255,0.35)", textTransform: "uppercase" }}>{format(new Date(e.date), "MMM")}</div>
+                          <div style={{ fontSize: 9, color: "rgba(255,255,255,0.48)", textTransform: "uppercase" }}>{format(new Date(e.date), "MMM")}</div>
                         </div>
-                        <div className="flex-1 rounded-xl px-3 py-2" style={{ background: isUrgentEvent ? "rgba(239,68,68,0.06)" : "rgba(255,255,255,0.04)", borderLeft: `2px solid ${eventColor(e.type)}` }}>
+                        <div className="flex-1 rounded-xl px-3 py-2" style={{ background: isUrgentEvent ? "rgba(239,68,68,0.06)" : "rgba(255,255,255,0.08)", borderLeft: `2px solid ${eventColor(e.type)}` }}>
                           <div style={{ fontSize: 12, fontWeight: 500 }}>{e.title}</div>
                           <div className="flex items-center gap-2 mt-1">
-                            <span style={{ fontSize: 10, color: "rgba(255,255,255,0.35)" }}>{EVENT_TYPES.find(t => t.value === e.type)?.label}{e.course && ` · ${e.course.code}`}</span>
+                            <span style={{ fontSize: 10, color: "rgba(255,255,255,0.48)" }}>{EVENT_TYPES.find(t => t.value === e.type)?.label}{e.course && ` · ${e.course.code}`}</span>
                             <span className="flex items-center gap-0.5" style={{ fontSize: 10, fontWeight: 600, color: cdColor }}><Clock size={9} style={{ flexShrink: 0 }} />{countdownLabel(d)}</span>
                           </div>
                         </div>
@@ -354,27 +354,27 @@ export default function CalendarPage() {
 
       {/* ── WEEK VIEW ── */}
       {view === "week" && (
-        <div className="rounded-2xl overflow-hidden" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)" }}>
+        <div className="rounded-2xl overflow-hidden" style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.16)" }}>
           {/* Week nav */}
-          <div className="flex items-center justify-between px-5 py-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
-            <button onClick={() => setWeekStart(subWeeks(weekStart, 1))} className="p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors" style={{ color: "rgba(255,255,255,0.5)" }}><ChevronLeft size={16} /></button>
+          <div className="flex items-center justify-between px-5 py-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.14)" }}>
+            <button onClick={() => setWeekStart(subWeeks(weekStart, 1))} className="p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors" style={{ color: "rgba(255,255,255,0.62)" }}><ChevronLeft size={16} /></button>
             <span style={{ fontSize: 14, fontWeight: 500 }}>
               {format(weekStart, "MMM d")} – {format(weekEnd, "MMM d, yyyy")}
             </span>
-            <button onClick={() => setWeekStart(addWeeks(weekStart, 1))} className="p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors" style={{ color: "rgba(255,255,255,0.5)" }}><ChevronRight size={16} /></button>
+            <button onClick={() => setWeekStart(addWeeks(weekStart, 1))} className="p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors" style={{ color: "rgba(255,255,255,0.62)" }}><ChevronRight size={16} /></button>
           </div>
 
           {/* Grid */}
           <div className="overflow-x-auto">
             <div style={{ minWidth: 640 }}>
               {/* Day header row */}
-              <div className="grid" style={{ gridTemplateColumns: "52px repeat(7, 1fr)", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+              <div className="grid" style={{ gridTemplateColumns: "52px repeat(7, 1fr)", borderBottom: "1px solid rgba(255,255,255,0.14)" }}>
                 <div /> {/* corner */}
                 {weekDays.map(day => {
                   const today = isToday(day);
                   return (
-                    <div key={day.toISOString()} className="py-2.5 text-center" style={{ borderLeft: "1px solid rgba(255,255,255,0.06)" }}>
-                      <div style={{ fontSize: 10, color: today ? "#6E7FF3" : "rgba(255,255,255,0.35)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em" }}>{format(day, "EEE")}</div>
+                    <div key={day.toISOString()} className="py-2.5 text-center" style={{ borderLeft: "1px solid rgba(255,255,255,0.11)" }}>
+                      <div style={{ fontSize: 10, color: today ? "#6E7FF3" : "rgba(255,255,255,0.48)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em" }}>{format(day, "EEE")}</div>
                       <div style={{
                         fontSize: 18, fontWeight: 700, color: today ? "white" : "rgba(255,255,255,0.7)",
                         width: 32, height: 32, margin: "2px auto 0",
@@ -389,9 +389,9 @@ export default function CalendarPage() {
               {/* Hour rows */}
               <div style={{ maxHeight: 540, overflowY: "auto" }}>
                 {HOURS.map(hour => (
-                  <div key={hour} className="grid" style={{ gridTemplateColumns: "52px repeat(7, 1fr)", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+                  <div key={hour} className="grid" style={{ gridTemplateColumns: "52px repeat(7, 1fr)", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
                     {/* Hour label */}
-                    <div className="py-2 pr-3 text-right" style={{ fontSize: 10, color: "rgba(255,255,255,0.25)", paddingTop: 6, lineHeight: 1 }}>
+                    <div className="py-2 pr-3 text-right" style={{ fontSize: 10, color: "rgba(255,255,255,0.38)", paddingTop: 6, lineHeight: 1 }}>
                       {formatHour(hour)}
                     </div>
                     {/* Day cells */}
@@ -403,7 +403,7 @@ export default function CalendarPage() {
                           onClick={() => !past && openAdd(day, hour)}
                           className="hour-cell relative"
                           style={{
-                            borderLeft: "1px solid rgba(255,255,255,0.06)",
+                            borderLeft: "1px solid rgba(255,255,255,0.11)",
                             minHeight: 40,
                             cursor: past ? "default" : "pointer",
                             padding: evs.length ? "3px 4px" : "0",
@@ -414,7 +414,7 @@ export default function CalendarPage() {
                               className="rounded-md px-2 py-1 mb-1 cursor-pointer hover:opacity-80 transition-opacity"
                               style={{ background: `${eventColor(e.type)}22`, borderLeft: `2px solid ${eventColor(e.type)}` }}>
                               <div style={{ fontSize: 10, fontWeight: 600, color: eventColor(e.type), lineHeight: 1.2 }}>{e.title}</div>
-                              {e.course && <div style={{ fontSize: 9, color: "rgba(255,255,255,0.4)", marginTop: 1 }}>{e.course.code}</div>}
+                              {e.course && <div style={{ fontSize: 9, color: "rgba(255,255,255,0.52)", marginTop: 1 }}>{e.course.code}</div>}
                             </div>
                           ))}
                         </div>
@@ -427,7 +427,7 @@ export default function CalendarPage() {
           </div>
 
           {/* Week hint */}
-          <div className="px-5 py-3 text-center" style={{ borderTop: "1px solid rgba(255,255,255,0.06)", fontSize: 11, color: "rgba(255,255,255,0.25)" }}>
+          <div className="px-5 py-3 text-center" style={{ borderTop: "1px solid rgba(255,255,255,0.11)", fontSize: 11, color: "rgba(255,255,255,0.38)" }}>
             {t.calendar.hint}
           </div>
         </div>
@@ -438,10 +438,10 @@ export default function CalendarPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
           style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)" }}
           onClick={e => { if (e.target === e.currentTarget) setShowModal(false); }}>
-          <div className="w-full max-w-sm rounded-2xl p-6 max-h-[90dvh] overflow-y-auto" style={{ background: "#1a1a18", border: "1px solid rgba(255,255,255,0.12)" }}>
+          <div className="w-full max-w-sm rounded-2xl p-6 max-h-[90dvh] overflow-y-auto" style={{ background: "#1a1a18", border: "1px solid rgba(255,255,255,0.18)" }}>
             <div className="flex items-center justify-between mb-5">
               <span style={{ fontSize: 16, fontWeight: 500 }}>{editingEvent ? t.calendar.editEventTitle : t.calendar.addEventTitle}</span>
-              <button onClick={() => setShowModal(false)} style={{ color: "rgba(255,255,255,0.4)" }}><X size={16} /></button>
+              <button onClick={() => setShowModal(false)} style={{ color: "rgba(255,255,255,0.52)" }}><X size={16} /></button>
             </div>
 
             <div className="flex flex-col gap-3">
@@ -457,9 +457,9 @@ export default function CalendarPage() {
                     <button key={t.value} onClick={() => setType(t.value)}
                       className="px-3 py-1.5 rounded-full text-xs font-medium transition-all"
                       style={{
-                        background: type === t.value ? t.color : "rgba(255,255,255,0.07)",
-                        color: type === t.value ? "white" : "rgba(255,255,255,0.5)",
-                        border: `1px solid ${type === t.value ? t.color : "rgba(255,255,255,0.1)"}`,
+                        background: type === t.value ? t.color : "rgba(255,255,255,0.12)",
+                        color: type === t.value ? "white" : "rgba(255,255,255,0.62)",
+                        border: `1px solid ${type === t.value ? t.color : "rgba(255,255,255,0.16)"}`,
                       }}>
                       {t.label}
                     </button>
@@ -501,7 +501,7 @@ export default function CalendarPage() {
 
               <button onClick={saveEvent} disabled={saving || !title.trim() || !date}
                 className="w-full py-2.5 rounded-xl text-sm font-medium mt-1 transition-all"
-                style={{ background: saving || !title.trim() || !date ? "rgba(255,255,255,0.15)" : "white", color: saving || !title.trim() || !date ? "rgba(255,255,255,0.4)" : "black", cursor: saving || !title.trim() || !date ? "not-allowed" : "pointer" }}>
+                style={{ background: saving || !title.trim() || !date ? "rgba(255,255,255,0.15)" : "white", color: saving || !title.trim() || !date ? "rgba(255,255,255,0.52)" : "black", cursor: saving || !title.trim() || !date ? "not-allowed" : "pointer" }}>
                 {saving ? "Saving…" : editingEvent ? "Update" : "Save"}
               </button>
             </div>
@@ -514,13 +514,13 @@ export default function CalendarPage() {
 
 const labelStyle: React.CSSProperties = {
   fontSize: 10, fontWeight: 600, letterSpacing: "0.1em",
-  textTransform: "uppercase", color: "rgba(255,255,255,0.4)",
+  textTransform: "uppercase", color: "rgba(255,255,255,0.52)",
   display: "block", marginBottom: 6,
 };
 
 const inputStyle: React.CSSProperties = {
-  background: "rgba(255,255,255,0.07)",
-  border: "1px solid rgba(255,255,255,0.12)",
+  background: "rgba(255,255,255,0.12)",
+  border: "1px solid rgba(255,255,255,0.18)",
   color: "white",
 };
 
@@ -528,11 +528,11 @@ function EventCard({ event, onEdit, onDelete }: { event: any; onEdit: () => void
   const d = daysUntil(event.date);
   const cdColor = countdownColor(d, event.type);
   return (
-    <div className="flex items-start justify-between rounded-xl px-3 py-2.5" style={{ background: "rgba(255,255,255,0.06)", borderLeft: `3px solid ${eventColor(event.type)}` }}>
+    <div className="flex items-start justify-between rounded-xl px-3 py-2.5" style={{ background: "rgba(255,255,255,0.11)", borderLeft: `3px solid ${eventColor(event.type)}` }}>
       <div className="flex-1 min-w-0">
         <div style={{ fontSize: 13, fontWeight: 500 }}>{event.title}</div>
         <div className="flex items-center gap-2 mt-1">
-          <span style={{ fontSize: 11, color: "rgba(255,255,255,0.4)" }}>
+          <span style={{ fontSize: 11, color: "rgba(255,255,255,0.52)" }}>
             {EVENT_TYPES.find(t => t.value === event.type)?.label}
             {event.course && ` · ${event.course.code}`}
           </span>
@@ -540,7 +540,7 @@ function EventCard({ event, onEdit, onDelete }: { event: any; onEdit: () => void
             <Clock size={9} style={{ flexShrink: 0 }} />{countdownLabel(d)}
           </span>
         </div>
-        {event.description && <div style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", marginTop: 3 }}>{event.description}</div>}
+        {event.description && <div style={{ fontSize: 11, color: "rgba(255,255,255,0.48)", marginTop: 3 }}>{event.description}</div>}
       </div>
       <div className="flex gap-3 ml-3 mt-0.5 shrink-0">
         <button onClick={onEdit} className="opacity-40 hover:opacity-80 transition-opacity"><Pencil size={12} /></button>

@@ -13,7 +13,7 @@ const TYPE_COLOR: Record<string, string> = {
   Exam:       "bg-red-500/10 text-red-400 border-red-500/20",
   Quiz:       "bg-orange-500/10 text-orange-400 border-orange-500/20",
   Project:    "bg-purple-500/10 text-purple-400 border-purple-500/20",
-  Assignment: "bg-blue-50 text-blue-600 border-blue-100",
+  Assignment: "bg-indigo-500/10 text-indigo-400 border-indigo-500/20",
   Reading:    "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
   Other:      "bg-slate-500/10 text-slate-400 border-slate-500/20",
 };
@@ -32,7 +32,7 @@ function SemesterProgress({ start, end }: { start: string; end: string }) {
   const currentWeek = Math.min(totalWeeks, Math.ceil((now.getTime() - s.getTime()) / (7 * 86400000)));
 
   return (
-    <div className="bg-[#12151C] border border-[rgba(148,163,184,0.12)] rounded-2xl p-5 mb-6">
+    <div className="bg-[#1A2030] border border-[rgba(148,163,184,0.2)] rounded-2xl p-5 mb-6">
       <div className="flex items-center justify-between mb-3">
         <div>
           <div className="text-[10px] text-slate-400 uppercase tracking-widest mb-0.5">Semester Progress</div>
@@ -88,7 +88,7 @@ function GradeCalculator({ weights }: { weights: { category: string; weight: num
   };
 
   return (
-    <div className="bg-[#12151C] border border-[rgba(148,163,184,0.12)] rounded-2xl overflow-hidden mb-6">
+    <div className="bg-[#1A2030] border border-[rgba(148,163,184,0.2)] rounded-2xl overflow-hidden mb-6">
       <button
         onClick={() => setOpen(o => !o)}
         className="w-full flex items-center justify-between px-5 py-4 hover:bg-white/[0.04] transition-colors"
@@ -106,7 +106,7 @@ function GradeCalculator({ weights }: { weights: { category: string; weight: num
       </button>
 
       {open && (
-        <div className="border-t border-[rgba(148,163,184,0.09)] px-5 pb-5 pt-4">
+        <div className="border-t border-[rgba(148,163,184,0.16)] px-5 pb-5 pt-4">
           <div className="space-y-2 mb-4">
             {weights.map(w => (
               <div key={w.category} className="flex items-center gap-3">
@@ -121,7 +121,7 @@ function GradeCalculator({ weights }: { weights: { category: string; weight: num
                     value={grades[w.category] ?? ""}
                     onChange={e => setGrades(g => ({ ...g, [w.category]: e.target.value }))}
                     placeholder="—"
-                    className="w-16 text-center text-sm border border-[rgba(148,163,184,0.12)] rounded-lg px-2 py-1.5 outline-none focus:border-indigo-500/50 text-slate-100 bg-[#12151C]"
+                    className="w-16 text-center text-sm border border-[rgba(148,163,184,0.2)] rounded-lg px-2 py-1.5 outline-none focus:border-indigo-500/50 text-slate-100 bg-[#1A2030]"
                   />
                   <span className="text-xs text-slate-400">%</span>
                 </div>
@@ -134,7 +134,7 @@ function GradeCalculator({ weights }: { weights: { category: string; weight: num
           </div>
 
           {projected !== null && (
-            <div className="border-t border-[rgba(148,163,184,0.09)] pt-3 flex items-center justify-between">
+            <div className="border-t border-[rgba(148,163,184,0.16)] pt-3 flex items-center justify-between">
               <div className="text-xs text-slate-400">
                 Based on {filled} of {weights.length} categories ({totalWeight}% of grade)
               </div>
@@ -173,8 +173,8 @@ function DeadlinesList({ schedule }: { schedule: any[] }) {
   };
 
   return (
-    <div className="bg-[#12151C] border border-[rgba(148,163,184,0.12)] rounded-2xl overflow-hidden mb-6">
-      <div className="px-5 py-4 border-b border-[rgba(148,163,184,0.09)] flex items-center justify-between">
+    <div className="bg-[#1A2030] border border-[rgba(148,163,184,0.2)] rounded-2xl overflow-hidden mb-6">
+      <div className="px-5 py-4 border-b border-[rgba(148,163,184,0.16)] flex items-center justify-between">
         <div className="flex items-center gap-2">
           <ClipboardList size={13} className="text-slate-400" />
           <span className="text-[10px] text-slate-400 uppercase tracking-widest font-semibold">
@@ -234,7 +234,7 @@ function DeadlinesList({ schedule }: { schedule: any[] }) {
       )}
 
       {upcoming.length > 8 && (
-        <div className="px-5 py-3 border-t border-[rgba(148,163,184,0.09)]">
+        <div className="px-5 py-3 border-t border-[rgba(148,163,184,0.16)]">
           <button onClick={() => setShowAll(s => !s)} className="text-xs text-slate-400 hover:text-slate-100 transition-colors">
             {showAll ? "Show less" : `Show all ${upcoming.length} deadlines`}
           </button>
@@ -252,7 +252,7 @@ function WeeklyGantt({ topics, semesterStart, totalWeeks }: { topics: any[]; sem
   const currentWeek = Math.ceil((today.getTime() - start.getTime()) / (7 * 86400000));
 
   return (
-    <div className="bg-[#12151C] border border-[rgba(148,163,184,0.12)] rounded-2xl overflow-hidden mb-6">
+    <div className="bg-[#1A2030] border border-[rgba(148,163,184,0.2)] rounded-2xl overflow-hidden mb-6">
       <button
         onClick={() => setOpen(o => !o)}
         className="w-full flex items-center justify-between px-5 py-4 hover:bg-white/[0.04] transition-colors"
@@ -267,7 +267,7 @@ function WeeklyGantt({ topics, semesterStart, totalWeeks }: { topics: any[]; sem
       </button>
 
       {open && (
-        <div className="border-t border-[rgba(148,163,184,0.09)] px-5 pb-5 pt-4 overflow-x-auto">
+        <div className="border-t border-[rgba(148,163,184,0.16)] px-5 pb-5 pt-4 overflow-x-auto">
           <div className="min-w-[600px]">
             {/* Week header */}
             <div className="flex mb-3">
@@ -292,7 +292,7 @@ function WeeklyGantt({ topics, semesterStart, totalWeeks }: { topics: any[]; sem
                   {Array.from({ length: totalWeeks }, (_, wi) => (
                     <div
                       key={wi}
-                      className={`flex-1 h-5 rounded-sm mx-px ${wi + 1 === t.week ? "bg-indigo-600" : wi + 1 < (t.week ?? 0) ? "bg-[rgba(148,163,184,0.08)]" : "bg-[rgba(148,163,184,0.08)]"}`}
+                      className={`flex-1 h-5 rounded-sm mx-px ${wi + 1 === t.week ? "bg-indigo-600" : wi + 1 < (t.week ?? 0) ? "bg-[rgba(148,163,184,0.14)]" : "bg-[rgba(148,163,184,0.14)]"}`}
                     />
                   ))}
                 </div>
@@ -358,13 +358,13 @@ export default function SyllabusPage() {
 
   return (
     <div className="p-8 max-w-4xl">
-      <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: 6 }}>
+      <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(255,255,255,0.42)", marginBottom: 6 }}>
         Syllabus
       </div>
       <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 30, color: "white", marginBottom: 6 }}>
         Syllabus Parser
       </h1>
-      <p className="text-sm mb-8" style={{ color: "rgba(255,255,255,0.4)" }}>
+      <p className="text-sm mb-8" style={{ color: "rgba(255,255,255,0.52)" }}>
         Upload your syllabus — AI extracts every deadline, resolves "Week X" into real dates, and builds your dashboard.
       </p>
 
@@ -372,14 +372,14 @@ export default function SyllabusPage() {
         <div className="space-y-4 max-w-lg">
           {courses.length > 0 && (
             <div>
-              <label className="text-[10px] uppercase tracking-widest block mb-2" style={{ color: "rgba(255,255,255,0.35)" }}>
+              <label className="text-[10px] uppercase tracking-widest block mb-2" style={{ color: "rgba(255,255,255,0.48)" }}>
                 Course (optional)
               </label>
               <select
                 value={courseId}
                 onChange={e => setCourseId(e.target.value)}
                 className="w-full rounded-xl px-4 py-2.5 text-sm outline-none appearance-none"
-                style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", color: "white" }}
+                style={{ background: "rgba(255,255,255,0.11)", border: "1px solid rgba(255,255,255,0.14)", color: "white" }}
               >
                 <option value="">Select a course…</option>
                 {courses.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -388,26 +388,26 @@ export default function SyllabusPage() {
           )}
 
           <div>
-            <label className="text-[10px] uppercase tracking-widest block mb-2" style={{ color: "rgba(255,255,255,0.35)" }}>
-              Semester start date <span className="normal-case" style={{ color: "rgba(255,255,255,0.25)" }}>— helps resolve "Week X" dates</span>
+            <label className="text-[10px] uppercase tracking-widest block mb-2" style={{ color: "rgba(255,255,255,0.48)" }}>
+              Semester start date <span className="normal-case" style={{ color: "rgba(255,255,255,0.38)" }}>— helps resolve "Week X" dates</span>
             </label>
             <input
               type="date"
               value={semesterStart}
               onChange={e => setSemesterStart(e.target.value)}
               className="w-full rounded-xl px-4 py-2.5 text-sm outline-none"
-              style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", color: "white" }}
+              style={{ background: "rgba(255,255,255,0.11)", border: "1px solid rgba(255,255,255,0.14)", color: "white" }}
             />
           </div>
 
           <label
             className="flex flex-col items-center gap-4 border-2 border-dashed rounded-2xl p-14 cursor-pointer transition-colors"
-            style={{ borderColor: file ? "rgba(255,255,255,0.3)" : "rgba(255,255,255,0.1)", color: file ? "white" : "rgba(255,255,255,0.35)" }}
+            style={{ borderColor: file ? "rgba(255,255,255,0.42)" : "rgba(255,255,255,0.16)", color: file ? "white" : "rgba(255,255,255,0.48)" }}
           >
             <FileUp size={28} />
             <div className="text-center">
               <div className="text-sm font-medium">{file ? file.name : "Click to upload your syllabus"}</div>
-              {!file && <div className="text-xs mt-1" style={{ color: "rgba(255,255,255,0.25)" }}>PDF files only</div>}
+              {!file && <div className="text-xs mt-1" style={{ color: "rgba(255,255,255,0.38)" }}>PDF files only</div>}
             </div>
             <input type="file" accept=".pdf" className="hidden" onChange={e => setFile(e.target.files?.[0] ?? null)} />
           </label>
@@ -418,7 +418,7 @@ export default function SyllabusPage() {
             onClick={parse}
             disabled={!file || loading}
             className="w-full rounded-2xl py-3 text-sm font-medium disabled:opacity-40 flex items-center justify-center gap-2 transition-colors"
-            style={{ background: "rgba(255,255,255,0.12)", color: "white" }}
+            style={{ background: "rgba(255,255,255,0.18)", color: "white" }}
           >
             {loading
               ? <><Loader2 size={15} className="animate-spin" /> Analysing syllabus…</>
@@ -433,10 +433,10 @@ export default function SyllabusPage() {
               <h2 className="text-lg font-medium text-white">{meta?.courseName ?? "Your Course"}</h2>
               <div className="flex items-center gap-3 mt-1">
                 {meta?.professor && (
-                  <span className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>Prof. {meta.professor}</span>
+                  <span className="text-xs" style={{ color: "rgba(255,255,255,0.52)" }}>Prof. {meta.professor}</span>
                 )}
                 {meta?.officeHours && (
-                  <span className="text-xs flex items-center gap-1" style={{ color: "rgba(255,255,255,0.4)" }}>
+                  <span className="text-xs flex items-center gap-1" style={{ color: "rgba(255,255,255,0.52)" }}>
                     <Clock size={10} /> {meta.officeHours}
                   </span>
                 )}
@@ -445,7 +445,7 @@ export default function SyllabusPage() {
             <button
               onClick={() => { setResult(null); setFile(null); setError(""); }}
               className="text-xs transition-colors"
-              style={{ color: "rgba(255,255,255,0.4)" }}
+              style={{ color: "rgba(255,255,255,0.52)" }}
             >
               ← Upload another
             </button>
@@ -469,7 +469,7 @@ export default function SyllabusPage() {
 
           {/* Office hours fallback */}
           {meta?.officeHours && (
-            <div className="bg-[#12151C] border border-[rgba(148,163,184,0.12)] rounded-2xl px-5 py-4 flex items-center gap-3">
+            <div className="bg-[#1A2030] border border-[rgba(148,163,184,0.2)] rounded-2xl px-5 py-4 flex items-center gap-3">
               <Clock size={13} className="text-slate-400 shrink-0" />
               <div>
                 <div className="text-[10px] text-slate-400 uppercase tracking-widest mb-0.5">Office Hours</div>
