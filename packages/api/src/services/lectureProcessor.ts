@@ -83,7 +83,7 @@ export async function processLecture(lectureId: string, userId: string) {
       }
     }
 
-    await safeStatusUpdate(lectureId, { transcript, status: "generating" });
+    await safeStatusUpdate(lectureId, { transcript, status: "generating", segments: (segments as any) ?? undefined } as any);
 
     // ── Index into course memory for "Ask your course" (non-fatal) ──
     try {

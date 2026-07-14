@@ -28,6 +28,34 @@ function parseXmlTranscript(xml: string): string {
   return matches.map(m => decode(m[1]).trim()).filter(Boolean).join(" ").replace(/\s+/g, " ").trim();
 }
 
+/** Like parseXmlTranscript, but keeps the start/dur timings so citations can
+ *  jump to the exact moment in the video. */
+function parseXmlSegments(xml: string): { start: number; end: number; text: string }[] {
+  const decode = (s: string) =>
+    s.replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">")
+     .replace(/&quot;/g, '"').replace(/&#39;/g, "'")
+     .replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(+n))
+     .replace(/<[^>]+>/g, "");
+
+  const out: { start: number; end: number; text: string }[] = [];
+  // <text start="12.34" dur="3.2">…</text> (classic) or <p t="12340" d="3200">…</p> (json-ish XML)
+  for (const m of xml.matchAll(/<text[^>]*start="([\d.]+)"[^>]*(?:dur="([\d.]+)")?[^>]*>([\s\S]*?)<\/text>/g)) {
+    const start = parseFloat(m[1]);
+    const dur = m[2] ? parseFloat(m[2]) : 4;
+    const text = decode(m[3]).replace(/\s+/g, " ").trim();
+    if (text) out.push({ start, end: start + dur, text });
+  }
+  if (!out.length) {
+    for (const m of xml.matchAll(/<p[^>]*t="(\d+)"[^>]*(?:d="(\d+)")?[^>]*>([\s\S]*?)<\/p>/g)) {
+      const start = parseInt(m[1], 10) / 1000;
+      const dur = m[2] ? parseInt(m[2], 10) / 1000 : 4;
+      const text = decode(m[3]).replace(/\s+/g, " ").trim();
+      if (text) out.push({ start, end: start + dur, text });
+    }
+  }
+  return out;
+}
+
 interface YTTranscript {
   text: string;
   segments: { start: number; end: number; text: string }[];
@@ -41,7 +69,7 @@ async function withTimeout<T>(promise: Promise<T>, ms: number, label: string): P
   return Promise.race([promise, timeout]).finally(() => clearTimeout(timer!));
 }
 
-async function fetchYouTubeTranscript(videoId: string): Promise<YTTranscript> {
+export async function fetchYouTubeTranscript(videoId: string): Promise<YTTranscript> {
   // Strategy 0: Supadata API — reliable, bypasses Railway IP blocks
   if (process.env.SUPADATA_API_KEY) {
     try {
@@ -84,8 +112,15 @@ async function fetchYouTubeTranscript(videoId: string): Promise<YTTranscript> {
       const url = `https://www.youtube.com/api/timedtext?v=${videoId}&lang=en&fmt=json3${kind ? `&kind=${kind}` : ""}`;
       const { data } = await axios.get(url, { timeout: 8000, headers: { "User-Agent": "Mozilla/5.0" } });
       const events: any[] = data?.events ?? [];
-      const text = events.flatMap((e: any) => (e.segs ?? []).map((s: any) => s.utf8 ?? "")).join(" ").replace(/\s+/g, " ").trim();
-      if (text) { console.log(`[studybook] captions via timedtext kind=${kind||"manual"} (${text.length} chars)`); return { text, segments: [] }; }
+      const tSegs = events
+        .map((e: any) => ({
+          start: (e.tStartMs ?? 0) / 1000,
+          end: ((e.tStartMs ?? 0) + (e.dDurationMs ?? 4000)) / 1000,
+          text: (e.segs ?? []).map((s: any) => s.utf8 ?? "").join(" ").replace(/\s+/g, " ").trim(),
+        }))
+        .filter((s: any) => s.text);
+      const text = tSegs.map((s: any) => s.text).join(" ").replace(/\s+/g, " ").trim();
+      if (text) { console.log(`[studybook] captions via timedtext kind=${kind||"manual"} (${text.length} chars, ${tSegs.length} segments)`); return { text, segments: tSegs }; }
     } catch (_e) {}
   }
 
@@ -108,8 +143,9 @@ async function fetchYouTubeTranscript(videoId: string): Promise<YTTranscript> {
       if (!tracks.length) continue;
       const track = tracks.find((t: any) => t.languageCode === "en") ?? tracks[0];
       const { data: xml } = await axios.get(track.baseUrl, { timeout: 5000, responseType: "text" });
-      const text = parseXmlTranscript(xml);
-      if (text) { console.log(`[studybook] captions via InnerTube ${client.name} (${text.length} chars)`); return { text, segments: [] }; }
+      const xSegs = parseXmlSegments(xml);
+      const text = xSegs.length ? xSegs.map(s => s.text).join(" ").replace(/\s+/g, " ").trim() : parseXmlTranscript(xml);
+      if (text) { console.log(`[studybook] captions via InnerTube ${client.name} (${text.length} chars, ${xSegs.length} segments)`); return { text, segments: xSegs }; }
     } catch (_e) { console.log(`[studybook] InnerTube ${client.name} error: ${(_e as any)?.message}`); }
   }
 
@@ -346,9 +382,9 @@ router.post("/fetch-transcript", async (req, res) => {
 
     let lecture = await prisma.lecture.findFirst({ where: { userId: user.id, courseId: course.id, title } });
     if (!lecture) {
-      lecture = await prisma.lecture.create({ data: { userId: user.id, courseId: course.id, title, transcript, status: "ready", audioUrl: ytAudioUrl } });
+      lecture = await prisma.lecture.create({ data: { userId: user.id, courseId: course.id, title, transcript, status: "ready", audioUrl: ytAudioUrl, segments: (segments as any) ?? undefined } as any });
     } else {
-      await prisma.lecture.update({ where: { id: lecture.id }, data: { transcript, status: "ready", audioUrl: ytAudioUrl } });
+      await prisma.lecture.update({ where: { id: lecture.id }, data: { transcript, status: "ready", audioUrl: ytAudioUrl, segments: (segments as any) ?? undefined } as any });
     }
 
     // Index into course memory (non-fatal)
@@ -573,9 +609,9 @@ router.post("/from-youtube", async (req, res) => {
       const ytAudioUrl = `https://www.youtube.com/watch?v=${videoId}`;
       let lecture = await prisma.lecture.findFirst({ where: { userId: user.id, courseId: course.id, title } });
       if (!lecture) {
-        lecture = await prisma.lecture.create({ data: { userId: user.id, courseId: course.id, title, transcript, status: "ready", audioUrl: ytAudioUrl } });
+        lecture = await prisma.lecture.create({ data: { userId: user.id, courseId: course.id, title, transcript, status: "ready", audioUrl: ytAudioUrl, segments: (segments as any) ?? undefined } as any });
       } else {
-        await prisma.lecture.update({ where: { id: lecture.id }, data: { transcript, status: "ready", audioUrl: ytAudioUrl } });
+        await prisma.lecture.update({ where: { id: lecture.id }, data: { transcript, status: "ready", audioUrl: ytAudioUrl, segments: (segments as any) ?? undefined } as any });
       }
 
       // Index into course memory (non-fatal)

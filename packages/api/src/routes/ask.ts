@@ -47,6 +47,19 @@ router.post("/index", async (req, res) => {
   for (const l of lectures) {
     if (!l.transcript?.trim() || l.transcript.startsWith("[ERROR]")) continue;
     try {
+      const storedSegments = Array.isArray((l as any).segments) ? ((l as any).segments as { start: number; end: number; text: string }[]) : null;
+
+      if (!storedSegments?.length) {
+        // No stored segments: re-indexing from plain text would WIPE the
+        // timestamps on existing chunks. If this source already has
+        // timestamped chunks, leave them untouched.
+        const existing = await prisma.memoryChunk.findFirst({
+          where: { sourceId: l.id, userId: user.id },
+          select: { meta: true },
+        });
+        if (existing?.meta && (existing.meta as any).startSec != null) continue;
+      }
+
       indexed += await indexSource({
         userId: user.id,
         courseId,
@@ -54,6 +67,7 @@ router.post("/index", async (req, res) => {
         sourceId: l.id,
         sourceTitle: l.title,
         text: l.transcript,
+        segments: storedSegments?.length ? storedSegments : undefined,
       });
     } catch (e: any) {
       console.error(`[ask/index] lecture ${l.id} failed:`, e?.message);

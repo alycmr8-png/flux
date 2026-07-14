@@ -148,6 +148,7 @@ model Lecture {
   audioUrl        String?
   slidesUrl       String?
   transcript      String?       @db.Text
+  segments        Json?         // [{start,end,text}] — preserves citation timestamps across re-indexing
   status          LectureStatus @default(recording)
   archived        Boolean       @default(false)
   recordedAt      DateTime      @default(now())

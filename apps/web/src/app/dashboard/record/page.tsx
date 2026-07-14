@@ -1442,7 +1442,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
   const askAudioRef = useRef<HTMLAudioElement | null>(null);
 
   function citationClickable(c: any) {
-    return c.sourceType === "lecture" || c.sourceType === "video";
+    return ["lecture", "video", "file", "note"].includes(c.sourceType);
   }
 
   async function openCitation(c: any) {
@@ -1454,6 +1454,54 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
       const vid = ytIdFromUrl(lec?.audioUrl);
       if (vid) { window.open(`https://www.youtube.com/watch?v=${vid}&t=${startSec}s`, "_blank"); return; }
       toast("Couldn't locate this video.", "error");
+      return;
+    }
+
+    // Uploaded file → open its saved study view in the Files tab
+    if (c.sourceType === "file") {
+      setAskCiteLoading(c.n);
+      try {
+        // Files indexed as "<lectureId>_slides" point back at the lecture's sheet
+        const targetId = String(c.sourceId).replace(/_slides$/, "");
+        let sheet = (sheetsData?.data ?? []).find((s: any) => s.lectureId === targetId);
+        if (!sheet) {
+          const r = await apiFetch(`/api/cheatsheets?courseId=${course.id}`);
+          sheet = (r.data ?? []).find((s: any) => s.lectureId === targetId);
+        }
+        if (!sheet) { toast("Couldn't find this file's saved content.", "error"); return; }
+        switchTab("files");
+        setDocResult(sheet.content);
+        setDocName((sheet.title ?? "Document").replace(/^Study Book:\s*/, ""));
+        setDocView("result");
+        setDocSaved(true);
+        setDocSaveChoice("none");
+        setDocTab("summary");
+        setDocFlipped(new Set());
+        setDocLectureId(sheet.lectureId ?? null);
+        setDocChatMessages([]);
+        setDocId(null);
+      } finally {
+        setAskCiteLoading(null);
+      }
+      return;
+    }
+
+    // Note → open it in the note editor
+    if (c.sourceType === "note") {
+      setAskCiteLoading(c.n);
+      try {
+        let note = notes.find((n: any) => n.id === c.sourceId);
+        if (!note) {
+          const r = await apiFetch(`/api/notes?courseId=${course.id}`);
+          note = (r.data ?? []).find((n: any) => n.id === c.sourceId);
+        }
+        if (!note) { toast("Couldn't find this note.", "error"); return; }
+        switchTab("note");
+        setActiveNote(note);
+        setNoteView("edit");
+      } finally {
+        setAskCiteLoading(null);
+      }
       return;
     }
 
@@ -1631,7 +1679,12 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
                     {m.citations!.map((c: any) => {
                       const playable = citationClickable(c);
                       return (
-                        <button key={c.n} title={playable ? `Jump to this moment — ${c.snippet ?? ""}` : c.snippet}
+                        <button key={c.n}
+                          title={
+                            c.sourceType === "lecture" || c.sourceType === "video"
+                              ? `Jump to this moment — ${c.snippet ?? ""}`
+                              : `Open source — ${c.snippet ?? ""}`
+                          }
                           onClick={() => playable && openCitation(c)}
                           disabled={!playable}
                           className="inline-flex items-center gap-1 text-[10px] px-2.5 py-1 rounded-full transition-all"
@@ -1644,9 +1697,13 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
                           onMouseEnter={e => { if (playable) (e.currentTarget as HTMLElement).style.background = "rgba(75,95,232,0.28)"; }}
                           onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "rgba(75,95,232,0.12)"; }}
                         >
-                          {playable && (askCiteLoading === c.n
+                          {askCiteLoading === c.n
                             ? <Loader2 size={9} className="animate-spin" />
-                            : <Play size={9} fill="currentColor" />)}
+                            : c.sourceType === "file"
+                            ? <FileText size={9} />
+                            : c.sourceType === "note"
+                            ? <PenLine size={9} />
+                            : <Play size={9} fill="currentColor" />}
                           <span className="font-bold">[{c.n}]</span> {c.label}
                         </button>
                       );
