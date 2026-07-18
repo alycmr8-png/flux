@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { quotaMiddleware } from "../services/usage";
 import multer from "multer";
 import fs from "fs";
 import os from "os";
@@ -197,7 +198,7 @@ const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: MAX
 const docStore = new Map<string, { text: string; title: string; userId: string }>();
 
 // POST /api/documents — parse + generate, no DB save
-router.post("/", upload.single("document"), async (req, res) => {
+router.post("/", quotaMiddleware("gen"), upload.single("document"), async (req, res) => {
   const user = (req as any).user;
   const file = req.file;
   const title = (req.body.title as string)?.trim() || file?.originalname?.replace(/\.[^.]+$/, "") || "Uploaded Document";
@@ -227,7 +228,7 @@ router.post("/", upload.single("document"), async (req, res) => {
 });
 
 // POST /api/documents/regenerate — re-generate from stored text
-router.post("/regenerate", async (req, res) => {
+router.post("/regenerate", quotaMiddleware("gen"), async (req, res) => {
   const user = (req as any).user;
   const { docId } = req.body as { docId: string };
 
@@ -290,7 +291,7 @@ router.post("/save", async (req, res) => {
 // POST /api/documents/quick-save — store the uploaded files (text extracted &
 // indexed into course memory) WITHOUT generating AI study materials. Each file
 // becomes a visible "Saved File" in the Upload Files tab.
-router.post("/quick-save", upload.array("documents", 50), async (req, res) => {
+router.post("/quick-save", quotaMiddleware("gen"), upload.array("documents", 50), async (req, res) => {
   const user = (req as any).user;
   const courseId = req.body.courseId as string;
   const files = (req.files as Express.Multer.File[]) ?? [];

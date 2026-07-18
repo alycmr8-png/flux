@@ -110,29 +110,29 @@ export function RecordingDemo() {
         @keyframes rdSpin   { to{transform:rotate(360deg)} }
       `}</style>
 
-      <div className="rounded-2xl overflow-hidden shadow-2xl" style={{ background: "#111110", border: "1px solid rgba(255,255,255,0.1)" }}>
+      <div className="rounded-2xl overflow-hidden shadow-2xl" style={{ background: "#FFFFFF", border: "1px solid rgba(0,0,0,0.05)" }}>
 
         {/* Title bar */}
-        <div className="flex items-center gap-2 px-5 py-3" style={{ background: "rgba(255,255,255,0.04)", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+        <div className="flex items-center gap-2 px-5 py-3" style={{ background: "rgba(0,0,0,0.025)", borderBottom: "1px solid rgba(0,0,0,0.04)" }}>
           <span className="w-3 h-3 rounded-full" style={{ background: "#ff5f57" }} />
           <span className="w-3 h-3 rounded-full" style={{ background: "#febc2e" }} />
           <span className="w-3 h-3 rounded-full" style={{ background: "#28c840" }} />
-          <span className="mx-auto text-xs" style={{ color: "rgba(255,255,255,0.25)", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Flux — Workspace</span>
+          <span className="mx-auto text-xs" style={{ color: "rgba(31,35,40,0.38)", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Flux — Workspace</span>
         </div>
 
         <div className="flex" style={{ height: 420 }}>
 
           {/* Sidebar */}
-          <div className="hidden sm:flex w-44 shrink-0 flex-col py-5" style={{ background: "rgba(255,255,255,0.03)", borderRight: "1px solid rgba(255,255,255,0.07)" }}>
-            <div className="px-4 pb-4 mb-2" style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
-              <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 17, color: "white" }}>Flux</div>
-              <div style={{ fontSize: 7.5, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginTop: 1 }}>Study Assistant</div>
+          <div className="hidden sm:flex w-44 shrink-0 flex-col py-5" style={{ background: "rgba(0,0,0,0.02)", borderRight: "1px solid rgba(0,0,0,0.04)" }}>
+            <div className="px-4 pb-4 mb-2" style={{ borderBottom: "1px solid rgba(0,0,0,0.04)" }}>
+              <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 17, color: "#191918" }}>Flux</div>
+              <div style={{ fontSize: 7.5, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(31,35,40,0.42)", marginTop: 1 }}>Study Assistant</div>
             </div>
             <div className="flex-1 px-2">
-              <div style={{ fontSize: 8, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(255,255,255,0.25)", padding: "6px 8px 4px" }}>Menu</div>
+              <div style={{ fontSize: 8, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(31,35,40,0.38)", padding: "6px 8px 4px" }}>Menu</div>
               {NAV.map(({ icon: Icon, label }) => (
                 <div key={label} className="flex items-center gap-2 px-2.5 py-2 rounded-lg"
-                  style={{ background: label === "Workspace" ? "rgba(75,95,232,0.18)" : "transparent", color: label === "Workspace" ? "#93A0F8" : "rgba(255,255,255,0.4)" }}>
+                  style={{ background: label === "Workspace" ? "rgba(75,95,232,0.18)" : "transparent", color: label === "Workspace" ? "#4B5FE8" : "rgba(31,35,40,0.5)" }}>
                   <Icon size={11} />
                   <span style={{ fontSize: 10, fontWeight: label === "Workspace" ? 600 : 400 }}>{label}</span>
                 </div>
@@ -150,9 +150,9 @@ export function RecordingDemo() {
                 {["Cognitive Psych", "Biology 101", "Econ 202"].map((c, i) => (
                   <div key={c} className="px-3 py-1 rounded-full" style={{
                     fontSize: 10, fontWeight: i === 0 ? 700 : 400,
-                    background: i === 0 ? "#4B5FE8" : "rgba(255,255,255,0.06)",
-                    color: i === 0 ? "white" : "rgba(255,255,255,0.45)",
-                    border: i === 0 ? "none" : "1px solid rgba(255,255,255,0.08)",
+                    background: i === 0 ? "#4B5FE8" : "rgba(0,0,0,0.03)",
+                    color: i === 0 ? "white" : "rgba(31,35,40,0.55)",
+                    border: i === 0 ? "none" : "1px solid rgba(0,0,0,0.04)",
                   }}>{c}</div>
                 ))}
               </div>
@@ -163,7 +163,7 @@ export function RecordingDemo() {
               <div className="flex gap-0.5 p-0.5 rounded-xl w-fit" style={{ background: "rgba(75,95,232,0.1)", border: "1px solid rgba(75,95,232,0.15)" }}>
                 {TABS.map(({ icon: Icon, label }, i) => (
                   <div key={label} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg"
-                    style={{ background: i === 0 ? "#4B5FE8" : "transparent", color: i === 0 ? "white" : "rgba(255,255,255,0.4)", fontSize: 9 }}>
+                    style={{ background: i === 0 ? "#4B5FE8" : "transparent", color: i === 0 ? "white" : "rgba(31,35,40,0.5)", fontSize: 9 }}>
                     <Icon size={9} />{label}
                   </div>
                 ))}
@@ -177,23 +177,23 @@ export function RecordingDemo() {
               {(phase === "idle" || phase === "typing") && (
                 <div className="w-full max-w-xs flex flex-col items-center gap-4" style={{ animation: "rdFade 0.3s ease" }}>
                   <div className="w-full">
-                    <div style={{ fontSize: 8, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(255,255,255,0.4)", marginBottom: 6 }}>Recording Name</div>
-                    <div className="w-full rounded-xl px-4 py-2.5 flex items-center" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", fontSize: 12, color: typed ? "white" : "rgba(255,255,255,0.25)" }}>
+                    <div style={{ fontSize: 8, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(31,35,40,0.5)", marginBottom: 6 }}>Recording Name</div>
+                    <div className="w-full rounded-xl px-4 py-2.5 flex items-center" style={{ background: "rgba(0,0,0,0.03)", border: "1px solid rgba(0,0,0,0.06)", fontSize: 12, color: typed ? "#191918" : "rgba(31,35,40,0.38)" }}>
                       {typed || "e.g. Lecture 3 — Cell Division"}
-                      {phase === "typing" && <span style={{ display: "inline-block", width: 1.5, height: 13, background: "white", marginLeft: 2, animation: "rdBlink 0.9s infinite" }} />}
+                      {phase === "typing" && <span style={{ display: "inline-block", width: 1.5, height: 13, background: "#191918", marginLeft: 2, animation: "rdBlink 0.9s infinite" }} />}
                     </div>
                   </div>
-                  <div className="w-14 h-14 rounded-full flex items-center justify-center" style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)" }}>
-                    <Mic size={20} style={{ color: "rgba(255,255,255,0.5)" }} />
+                  <div className="w-14 h-14 rounded-full flex items-center justify-center" style={{ background: "rgba(0,0,0,0.04)", border: "1px solid rgba(0,0,0,0.06)" }}>
+                    <Mic size={20} style={{ color: "rgba(31,35,40,0.6)" }} />
                   </div>
-                  <div style={{ fontSize: 10, color: "rgba(255,255,255,0.3)" }}>Tap to start recording</div>
+                  <div style={{ fontSize: 10, color: "rgba(31,35,40,0.42)" }}>Tap to start recording</div>
                 </div>
               )}
 
               {/* Recording step */}
               {phase === "recording" && (
                 <div className="w-full max-w-xs flex flex-col items-center gap-3" style={{ animation: "rdFade 0.3s ease" }}>
-                  <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 52, fontWeight: 300, color: "white", letterSpacing: -2, fontVariantNumeric: "tabular-nums", lineHeight: 1 }}>
+                  <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 52, fontWeight: 300, color: "#191918", letterSpacing: -2, fontVariantNumeric: "tabular-nums", lineHeight: 1 }}>
                     {fmt(seconds)}
                   </div>
                   {/* Waveform */}
@@ -201,7 +201,7 @@ export function RecordingDemo() {
                     {WAVE_HEIGHTS.map((h, i) => (
                       <div key={i} style={{
                         width: 3, height: 40, borderRadius: 2,
-                        background: "rgba(255,255,255,0.7)",
+                        background: "rgba(31,35,40,0.75)",
                         transformOrigin: "center",
                         animation: `rdWave ${WAVE_DURATIONS[i]}s ease-in-out infinite`,
                         animationDelay: `${i * 0.04}s`,
@@ -210,13 +210,13 @@ export function RecordingDemo() {
                   </div>
                   <div className="flex items-center gap-1.5">
                     <div className="w-2 h-2 rounded-full" style={{ background: "#ef4444", animation: "rdPulse 1s infinite" }} />
-                    <span style={{ fontSize: 10, color: "rgba(255,255,255,0.5)" }}>Recording — {TITLE}</span>
+                    <span style={{ fontSize: 10, color: "rgba(31,35,40,0.6)" }}>Recording — {TITLE}</span>
                   </div>
                   <div className="flex gap-2 w-full mt-1">
-                    <div className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl" style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)", fontSize: 10, color: "rgba(255,255,255,0.6)" }}>
+                    <div className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl" style={{ background: "rgba(0,0,0,0.04)", border: "1px solid rgba(0,0,0,0.05)", fontSize: 10, color: "rgba(31,35,40,0.68)" }}>
                       <Pause size={12} /> Pause
                     </div>
-                    <div className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl" style={{ background: "#111110", fontSize: 10, color: "white" }}>
+                    <div className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl" style={{ background: "#4B5FE8", fontSize: 10, color: "white" }}>
                       <Square size={12} /> Stop
                     </div>
                   </div>
@@ -230,15 +230,15 @@ export function RecordingDemo() {
                     {[0, 1, 2].map(i => (
                       <div key={i} className="absolute rounded-full border" style={{
                         width: 30 + i * 18, height: 30 + i * 18,
-                        borderColor: "rgba(255,255,255,0.12)",
+                        borderColor: "rgba(0,0,0,0.06)",
                         animation: `rdRing 2s ease-out ${i * 0.45}s infinite`,
                       }} />
                     ))}
-                    <div className="relative z-10 w-5 h-5 rounded-full border-2" style={{ borderColor: "rgba(255,255,255,0.2)", borderTopColor: "white", animation: "rdSpin 0.8s linear infinite" }} />
+                    <div className="relative z-10 w-5 h-5 rounded-full border-2" style={{ borderColor: "rgba(0,0,0,0.15)", borderTopColor: "#4B5FE8", animation: "rdSpin 0.8s linear infinite" }} />
                   </div>
                   <div className="text-center">
-                    <div style={{ fontSize: 14, fontWeight: 500, color: "white", marginBottom: 4 }}>Processing your audio…</div>
-                    <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)" }}>Transcribing · Summarising · Generating</div>
+                    <div style={{ fontSize: 14, fontWeight: 500, color: "#191918", marginBottom: 4 }}>Processing your audio…</div>
+                    <div style={{ fontSize: 11, color: "rgba(31,35,40,0.5)" }}>Transcribing · Summarising · Generating</div>
                   </div>
                 </div>
               )}
@@ -248,14 +248,14 @@ export function RecordingDemo() {
                 <div className="w-full" style={{ animation: "rdFade 0.4s ease" }}>
                   <div className="flex items-center gap-2 mb-4">
                     <CheckCircle size={14} style={{ color: "#22c55e" }} />
-                    <span style={{ fontSize: 12, color: "rgba(255,255,255,0.6)" }}>Processing complete! Your recording is ready.</span>
+                    <span style={{ fontSize: 12, color: "rgba(31,35,40,0.68)" }}>Processing complete! Your recording is ready.</span>
                   </div>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                     {RESULT_CARDS.map((card, i) => (
                       <div key={card.label} className="rounded-xl p-3 flex flex-col gap-2"
                         style={{
-                          background: "rgba(255,255,255,0.05)",
-                          border: "1px solid rgba(255,255,255,0.08)",
+                          background: "rgba(0,0,0,0.03)",
+                          border: "1px solid rgba(0,0,0,0.04)",
                           opacity: visibleCards > i ? 1 : 0,
                           transform: visibleCards > i ? "translateY(0)" : "translateY(10px)",
                           transition: "opacity 0.35s ease, transform 0.35s ease",
@@ -264,8 +264,8 @@ export function RecordingDemo() {
                           <Sparkles size={12} style={{ color: card.color }} />
                         </div>
                         <div>
-                          <div style={{ fontSize: 11, fontWeight: 600, color: "white", marginBottom: 2 }}>{card.label}</div>
-                          <div style={{ fontSize: 9, color: "rgba(255,255,255,0.35)" }}>{card.desc}</div>
+                          <div style={{ fontSize: 11, fontWeight: 600, color: "#191918", marginBottom: 2 }}>{card.label}</div>
+                          <div style={{ fontSize: 9, color: "rgba(31,35,40,0.45)" }}>{card.desc}</div>
                         </div>
                       </div>
                     ))}
@@ -285,7 +285,7 @@ export function RecordingDemo() {
             style={{
               width: (phase === p || (phase === "hold" && p === "done")) ? 20 : 6,
               height: 6,
-              background: (phase === p || (phase === "hold" && p === "done")) ? "#4B5FE8" : "rgba(255,255,255,0.15)",
+              background: (phase === p || (phase === "hold" && p === "done")) ? "#4B5FE8" : "rgba(0,0,0,0.12)",
             }} />
         ))}
       </div>

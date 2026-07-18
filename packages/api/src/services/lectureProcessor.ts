@@ -6,6 +6,27 @@ import { syncToDrive } from "./google";
 import { scheduleSpacedRepetition } from "./spaced-repetition";
 import { indexSource } from "./memory";
 
+// Re-encodes a recording to 48 kbps mono mp3 next to the original, deletes the
+// original, and returns the new path — or null when ffmpeg is unavailable.
+async function compressAudio(inputPath: string): Promise<string | null> {
+  const path = require("path");
+  const { spawn } = require("child_process");
+  const outPath = inputPath.replace(/\.[^.]+$/, "") + ".c.mp3";
+  if (inputPath.endsWith(".c.mp3")) return null; // already compressed
+
+  const ok = await new Promise<boolean>(resolve => {
+    const proc = spawn("ffmpeg", ["-y", "-i", inputPath, "-ac", "1", "-ar", "16000", "-b:a", "48k", outPath]);
+    proc.on("error", () => resolve(false)); // ffmpeg missing (local dev without it)
+    proc.on("close", (code: number) => resolve(code === 0));
+  });
+  if (!ok || !fs.existsSync(outPath) || fs.statSync(outPath).size === 0) {
+    try { fs.unlinkSync(outPath); } catch { /* may not exist */ }
+    return null;
+  }
+  try { fs.unlinkSync(inputPath); } catch { /* original may be locked; not fatal */ }
+  return outPath;
+}
+
 async function safeStatusUpdate(lectureId: string, data: object) {
   try {
     await prisma.lecture.update({ where: { id: lectureId }, data });
@@ -33,7 +54,22 @@ export async function processLecture(lectureId: string, userId: string) {
       throw new Error(`Audio file not found: ${lecture.audioUrl}`);
     }
 
-    const result = await transcribeAudio(lecture.audioUrl);
+    // ── Compress the stored recording (non-fatal) ──
+    // Browser recordings arrive at ~64-128 kbps; 48 kbps mono mp3 is fully
+    // clear for speech and roughly quadruples how many lectures fit on the
+    // storage volume. Streaming/citations also get faster.
+    let audioPath = lecture.audioUrl;
+    try {
+      const compressed = await compressAudio(lecture.audioUrl);
+      if (compressed) {
+        audioPath = compressed;
+        await safeStatusUpdate(lectureId, { audioUrl: compressed });
+      }
+    } catch (e: any) {
+      console.error("[processLecture] compression failed (non-fatal):", e?.message);
+    }
+
+    const result = await transcribeAudio(audioPath);
     transcript = result.text;
     segments = result.segments;
 

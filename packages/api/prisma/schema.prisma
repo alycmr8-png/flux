@@ -22,9 +22,12 @@ model User {
   quizAttempts  QuizAttempt[]
   studySessions StudySession[]
   googleTokens  GoogleToken?
+  canvasConnection CanvasConnection?
+  usageMonths   UsageMonth[]
   subscription  Subscription?
   notes           Note[]
   calendarEvents  CalendarEvent[]
+  examPacks       ExamPack[]
 
   sentConnections     Connection[]  @relation("ConnectionFrom")
   receivedConnections Connection[]  @relation("ConnectionTo")
@@ -99,17 +102,19 @@ model GoogleToken {
 }
 
 model Course {
-  id        String   @id @default(cuid())
-  userId    String
-  name      String
-  code      String
-  color     String?
+  id             String   @id @default(cuid())
+  userId         String
+  name           String
+  code           String
+  color          String?
+  canvasCourseId String?
   createdAt DateTime @default(now())
 
   user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   lectures       Lecture[]
   notes          Note[]
   calendarEvents CalendarEvent[]
+  examPacks      ExamPack[]
 }
 
 model CalendarEvent {
@@ -120,6 +125,7 @@ model CalendarEvent {
   type        String
   courseId    String?
   description String?
+  canvasId    String?
   createdAt   DateTime @default(now())
 
   user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -180,6 +186,7 @@ model MemoryChunk {
   content     String   @db.Text
   meta        Json?    // { startSec?, endSec?, week? }
   embedding   Json     // float[] from text-embedding-3-small
+  embedding_vec Unsupported("vector(1536)")? // pgvector copy of embedding — DB-side similarity search
   createdAt   DateTime @default(now())
 
   @@index([courseId, userId])
@@ -253,4 +260,43 @@ enum SessionType {
   review
   quiz
   cheatsheet
+}
+
+model ExamPack {
+  id        String    @id @default(cuid())
+  userId    String
+  courseId  String
+  examDate  DateTime?
+  content   Json
+  createdAt DateTime  @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@index([userId, courseId])
+}
+
+model CanvasConnection {
+  id         String    @id @default(cuid())
+  userId     String    @unique
+  baseUrl    String
+  token      String
+  lastSyncAt DateTime?
+  lastResult Json?
+  createdAt  DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model UsageMonth {
+  id            String @id @default(cuid())
+  userId        String
+  month         String // "2026-07"
+  lectureCount  Int    @default(0)
+  askCount      Int    @default(0)
+  genCount      Int    @default(0)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, month])
 }

@@ -90,24 +90,24 @@ export function FeedbackProvider({ children }: { children: React.ReactNode }) {
               role="status"
               className="pointer-events-auto flex items-start gap-3 rounded-2xl px-4 py-3 shadow-2xl"
               style={{
-                background: "rgba(17,20,28,0.96)",
-                border: "1px solid rgba(255,255,255,0.1)",
+                background: "rgba(255,255,255,0.97)",
+                border: "1px solid rgba(0,0,0,0.05)",
                 backdropFilter: "blur(12px)",
-                boxShadow: `0 12px 40px rgba(0,0,0,0.45), 0 0 0 1px ${glow}`,
+                boxShadow: `0 12px 40px rgba(0,0,0,0.12), 0 0 0 1px ${glow}`,
                 animation: t.leaving
                   ? "toast-out 0.2s ease forwards"
                   : "toast-in 0.32s cubic-bezier(0.21,1.02,0.73,1)",
               }}
             >
               <Icon size={18} style={{ color, flexShrink: 0, marginTop: 1 }} />
-              <span className="flex-1 text-sm leading-snug" style={{ color: "rgba(255,255,255,0.92)" }}>
+              <span className="flex-1 text-sm leading-snug" style={{ color: "rgba(31,35,40,0.92)" }}>
                 {t.message}
               </span>
               <button
                 onClick={() => dismiss(t.id)}
                 aria-label="Dismiss"
-                className="shrink-0 -mr-1 -mt-0.5 rounded-lg p-1 transition-colors hover:bg-white/10"
-                style={{ color: "rgba(255,255,255,0.4)" }}
+                className="shrink-0 -mr-1 -mt-0.5 rounded-lg p-1 transition-colors hover:bg-black/[0.05]"
+                style={{ color: "rgba(31,35,40,0.45)" }}
               >
                 <X size={14} />
               </button>
@@ -120,7 +120,7 @@ export function FeedbackProvider({ children }: { children: React.ReactNode }) {
       {dialog && (
         <div
           className="fixed inset-0 z-[110] flex items-center justify-center p-4"
-          style={{ background: "rgba(0,0,0,0.65)", backdropFilter: "blur(4px)", animation: "overlay-in 0.18s ease" }}
+          style={{ background: "rgba(15,17,21,0.35)", backdropFilter: "blur(4px)", animation: "overlay-in 0.18s ease" }}
           onClick={e => { if (e.target === e.currentTarget) closeDialog(false); }}
         >
           <div
@@ -128,9 +128,9 @@ export function FeedbackProvider({ children }: { children: React.ReactNode }) {
             aria-modal="true"
             className="w-full max-w-sm rounded-2xl p-6"
             style={{
-              background: "#141821",
-              border: "1px solid rgba(255,255,255,0.12)",
-              boxShadow: "0 24px 64px rgba(0,0,0,0.5)",
+              background: "#FFFFFF",
+              border: "1px solid rgba(0,0,0,0.05)",
+              boxShadow: "0 24px 64px rgba(0,0,0,0.16)",
               animation: "dialog-in 0.22s cubic-bezier(0.21,1.02,0.73,1)",
             }}
           >
@@ -144,9 +144,9 @@ export function FeedbackProvider({ children }: { children: React.ReactNode }) {
                   : <Info size={17} style={{ color: "#6E7FF3" }} />}
               </div>
               <div className="flex-1 pt-0.5">
-                <div style={{ fontSize: 16, fontWeight: 600, color: "white" }}>{dialog.title}</div>
+                <div style={{ fontSize: 16, fontWeight: 600, color: "#191918" }}>{dialog.title}</div>
                 {dialog.message && (
-                  <div className="mt-1.5 text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.5)" }}>
+                  <div className="mt-1.5 text-sm leading-relaxed" style={{ color: "rgba(31,35,40,0.58)" }}>
                     {dialog.message}
                   </div>
                 )}
@@ -155,8 +155,8 @@ export function FeedbackProvider({ children }: { children: React.ReactNode }) {
             <div className="flex gap-2 justify-end">
               <button
                 onClick={() => closeDialog(false)}
-                className="px-4 py-2 rounded-xl text-sm font-medium transition-colors hover:bg-white/10"
-                style={{ color: "rgba(255,255,255,0.6)", border: "1px solid rgba(255,255,255,0.12)" }}
+                className="px-4 py-2 rounded-xl text-sm font-medium transition-colors hover:bg-black/[0.05]"
+                style={{ color: "rgba(31,35,40,0.6)", border: "1px solid rgba(0,0,0,0.08)" }}
               >
                 {dialog.cancelLabel ?? "Cancel"}
               </button>

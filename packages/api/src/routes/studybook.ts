@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { quotaMiddleware } from "../services/usage";
 import axios from "axios";
 import fs from "fs";
 import os from "os";
@@ -302,7 +303,7 @@ router.get("/:lectureId", async (req, res) => {
   res.json({ data: sheet ? { id: sheet.id, ...sheet.content as object } : null });
 });
 
-router.post("/summarize", async (req, res) => {
+router.post("/summarize", quotaMiddleware("gen"), async (req, res) => {
   const user = (req as any).user;
   const { lectureId } = req.body;
   const lecture = await prisma.lecture.findFirst({ where: { id: lectureId, userId: user.id } });
@@ -311,7 +312,7 @@ router.post("/summarize", async (req, res) => {
   res.json({ data: { summary } });
 });
 
-router.post("/flashcards", async (req, res) => {
+router.post("/flashcards", quotaMiddleware("gen"), async (req, res) => {
   const user = (req as any).user;
   const { lectureId } = req.body;
   const lecture = await prisma.lecture.findFirst({ where: { id: lectureId, userId: user.id } });
@@ -320,7 +321,7 @@ router.post("/flashcards", async (req, res) => {
   res.json({ data: { flashcards } });
 });
 
-router.post("/inline-quiz", async (req, res) => {
+router.post("/inline-quiz", quotaMiddleware("gen"), async (req, res) => {
   const user = (req as any).user;
   const { lectureId } = req.body;
   const lecture = await prisma.lecture.findFirst({ where: { id: lectureId, userId: user.id } });
@@ -329,7 +330,7 @@ router.post("/inline-quiz", async (req, res) => {
   res.json({ data: { questions } });
 });
 
-router.post("/key-points", async (req, res) => {
+router.post("/key-points", quotaMiddleware("gen"), async (req, res) => {
   const user = (req as any).user;
   const { lectureId } = req.body;
   const lecture = await prisma.lecture.findFirst({ where: { id: lectureId, userId: user.id } });
@@ -338,7 +339,7 @@ router.post("/key-points", async (req, res) => {
   res.json({ data: { points } });
 });
 
-router.post("/chat", async (req, res) => {
+router.post("/chat", quotaMiddleware("ask"), async (req, res) => {
   const user = (req as any).user;
   const { lectureId, messages } = req.body;
   const lecture = await prisma.lecture.findFirst({ where: { id: lectureId, userId: user.id } });
@@ -348,7 +349,7 @@ router.post("/chat", async (req, res) => {
 });
 
 // Fetch transcript only — no AI generation
-router.post("/fetch-transcript", async (req, res) => {
+router.post("/fetch-transcript", quotaMiddleware("gen"), async (req, res) => {
   const user = (req as any).user;
   const { url, courseId } = req.body as { url: string; courseId?: string };
 
@@ -400,7 +401,7 @@ router.post("/fetch-transcript", async (req, res) => {
   }
 });
 
-router.post("/generate", async (req, res) => {
+router.post("/generate", quotaMiddleware("gen"), async (req, res) => {
   const user = (req as any).user;
   const { lectureId, transcript: transcriptOverride } = req.body as { lectureId: string; transcript?: string };
 
@@ -433,7 +434,7 @@ router.post("/generate", async (req, res) => {
   res.json({ data: book });
 });
 
-router.post("/generate-from-course", async (req, res) => {
+router.post("/generate-from-course", quotaMiddleware("gen"), async (req, res) => {
   const user = (req as any).user;
   const { courseId, title, lectureIds, noteIds, notes } = req.body as {
     courseId: string;
@@ -569,7 +570,7 @@ router.post("/generate-from-course", async (req, res) => {
   res.json({ jobId });
 });
 
-router.post("/from-youtube", async (req, res) => {
+router.post("/from-youtube", quotaMiddleware("gen"), async (req, res) => {
   const user = (req as any).user;
   const { url, courseId } = req.body as { url: string; courseId?: string };
 

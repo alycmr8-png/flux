@@ -13,8 +13,8 @@ html {
 
 body {
   font-family: 'Jost', system-ui, sans-serif;
-  background: #0B0D12;
-  color: white;
+  background: #FBFBFA;
+  color: #1F2328;
   /* No accidental sideways scroll on phones */
   overflow-x: hidden;
   /* Kill the grey flash when tapping links/buttons on mobile */
@@ -44,7 +44,7 @@ body {
 
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 3px; }
+::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.18); border-radius: 3px; }
 
 @keyframes marquee {
   from { transform: translateX(0); }
@@ -61,7 +61,7 @@ body {
    The small things that make software feel hand-built. */
 
 /* Branded text selection instead of the OS default */
-::selection { background: rgba(37,99,235,0.35); color: #fff; }
+::selection { background: rgba(75,95,232,0.22); }
 
 /* Keyboard focus rings — visible for tab users, never for mouse clicks.
    Accessibility that good engineers ship and templates skip. */
@@ -99,4 +99,10 @@ button, a, [role="button"] { transition: transform 0.08s ease; }
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* Landing hero floating icon tiles */
+@keyframes heroFloat {
+  0%, 100% { margin-top: 0; }
+  50% { margin-top: -12px; }
 }

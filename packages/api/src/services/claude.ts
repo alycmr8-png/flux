@@ -555,6 +555,52 @@ ${sourceBlock}`,
   return extractText(msg);
 }
 
+// ─── Exam Mode ────────────────────────────────────────────────────────────────
+// Predicts likely exam content from the ENTIRE course memory: ranked topics,
+// practice questions (each citing the numbered source it came from), gaps in
+// the student's own notes, and a study plan sized to the days remaining.
+
+export async function generateExamPack(
+  courseName: string,
+  sources: { n: number; label: string; content: string }[],
+  noteTitles: string[],
+  daysUntilExam: number | null,
+  language = "en"
+) {
+  const langName = LANG_NAMES[language] ?? "English";
+  const sourceBlock = sources.map(s => `[${s.n}] ${s.label}\n${s.content}`).join("\n\n---\n\n");
+  const planDays = daysUntilExam != null ? Math.max(1, Math.min(daysUntilExam, 14)) : 5;
+
+  const message = await createWithRetry({
+    model: "gpt-4o",
+    max_tokens: 6000,
+    system: `You are the course memory for "${courseName}" — you attended every lecture and read every file the student captured. You are building their exam prep. Write ALL text in ${langName}.
+Return ONLY valid JSON — no markdown, no code blocks, no commentary.
+{
+  "topics": [{ "name": string, "importance": 1-5, "why": string, "cite": number[] }],
+  "questions": [{ "type": "mcq" | "short", "question": string, "options": string[] | null, "correctAnswer": string, "explanation": string, "cite": number[] }],
+  "gaps": [{ "topic": string, "evidence": string, "suggestion": string }],
+  "plan": [{ "label": string, "focus": string, "items": string[] }]
+}
+
+Rules:
+- topics: 5-8 likely exam topics RANKED by how much the material emphasizes them (repetition across lectures, professor cues like "this will be on the exam", "important", time spent). "why" = one concrete sentence of evidence. "cite" = the numbered source(s) that show it.
+- questions: 10-14 exam-style questions mixing "mcq" (4 options prefixed "A) ".."D) ", correctAnswer is the letter) and "short" (correctAnswer is a model answer, 1-3 sentences). Cover the top topics proportionally to importance. "explanation" says why the answer is right in 1-2 sentences. Every question MUST have "cite" pointing to the source(s) it was built from.
+- gaps: topics that the lectures/files emphasize but the student's own notes (listed below) don't cover. "evidence" = why it matters; "suggestion" = what to do about it. Empty array if the student has no notes at all — do NOT invent gaps.
+- plan: exactly ${planDays} entries. ${daysUntilExam != null ? `The exam is in ${daysUntilExam} day(s) — label entries "Day 1".."Day ${planDays}" ending at the exam.` : `No exam date given — label entries "Session 1".."Session ${planDays}".`} Order weak/heavy topics earlier, review + self-testing last. "items" = 2-4 concrete tasks referencing actual course material.
+- Ground EVERYTHING in the numbered sources. Never invent facts, topics, or citations.
+
+STUDENT'S OWN NOTES (titles): ${noteTitles.length ? noteTitles.join(" · ") : "(none)"}
+
+SOURCES:
+${sourceBlock}`,
+    messages: [{ role: "user", content: `Build my exam pack for "${courseName}".` }],
+  });
+
+  const json = extractText(message).match(/\{[\s\S]*\}/)?.[0] ?? "{}";
+  return JSON.parse(json);
+}
+
 // ─── Transcript corrector ─────────────────────────────────────────────────────
 // Fixes speech-to-text errors: punctuation, homophones, split words, run-ons.
 // Uses gpt-4o-mini (cheap) in 4 000-char chunks so long lectures are covered.

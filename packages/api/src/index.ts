@@ -21,6 +21,9 @@ import { noteRouter } from "./routes/notes";
 import { eventRouter } from "./routes/events";
 import { networkRouter } from "./routes/network";
 import { askRouter } from "./routes/ask";
+import { examPrepRouter } from "./routes/examprep";
+import { canvasRouter } from "./routes/canvas";
+import { usageSummary } from "./services/usage";
 import { errorHandler } from "./middleware/errorHandler";
 import { requireAuth } from "./middleware/requireAuth";
 
@@ -51,6 +54,12 @@ app.use("/api/billing", billingRouter);
 app.use("/api/studybook", studyBookRouter);
 app.use("/api/network", networkRouter);
 app.use("/api/ask", askRouter);
+app.use("/api/examprep", examPrepRouter);
+app.use("/api/canvas", canvasRouter);
+app.get("/api/usage", async (req, res) => {
+  const user = (req as any).user;
+  res.json({ data: await usageSummary(user.id) });
+});
 
 app.use(errorHandler);
 

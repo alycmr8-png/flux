@@ -1,5 +1,6 @@
 [phases.setup]
-nixPkgs = ["nodejs_20"]
+# ffmpeg: chunks long lecture recordings for Whisper (25 MB API limit)
+nixPkgs = ["nodejs_20", "ffmpeg"]
 
 [phases.start]
 cmd = "node packages/api/dist/index.js"

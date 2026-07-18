@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { verifyToken } from "@clerk/backend";
 import { prisma } from "../lib/prisma";
+import { verifyAudioSig } from "../lib/audioSign";
 
 async function dbWithRetry<T>(fn: () => Promise<T>, attempts = 4): Promise<T> {
   for (let i = 0; i < attempts; i++) {
@@ -23,7 +24,18 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
   // Verify a real Clerk session token — never trust a client-supplied user id header.
   const authHeader = (req.headers["authorization"] || req.headers["Authorization"]) as string | undefined;
   const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7).trim() : null;
-  if (!token) return res.status(401).json({ error: "Unauthorized" });
+
+  // Media elements (<audio src>) can't send Authorization headers, so lecture
+  // audio streams through short-lived signed URLs minted by GET /:id/audio-url.
+  if (!token) {
+    const m = /^\/lectures\/([^/]+)\/audio$/.exec(req.path);
+    const { uid, exp, sig } = req.query as Record<string, string | undefined>;
+    if (m && uid && exp && sig && verifyAudioSig(m[1], uid, parseInt(exp, 10), sig)) {
+      (req as any).user = { id: uid };
+      return next();
+    }
+    return res.status(401).json({ error: "Unauthorized" });
+  }
 
   let clerkUserId: string;
   try {

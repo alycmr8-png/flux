@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { quotaMiddleware } from "../services/usage";
 import { prisma } from "../lib/prisma";
 import { answerCourseQuestion } from "../services/claude";
 import { indexSource, searchCourse, courseMemoryStatus, stripHtml } from "../services/memory";
@@ -128,7 +129,7 @@ router.post("/index", async (req, res) => {
 });
 
 // POST /api/ask — course-scoped RAG chat with citations
-router.post("/", async (req, res) => {
+router.post("/", quotaMiddleware("ask"), async (req, res) => {
   const user = (req as any).user;
   const { courseId, messages } = req.body as {
     courseId: string;

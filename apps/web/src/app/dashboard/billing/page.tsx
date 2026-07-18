@@ -89,12 +89,12 @@ export default function BillingPage() {
       {isNew ? (
         <>
           <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(0,0,0,0.38)", marginBottom: 6 }}>Billing</div>
-          <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 30, color: "#F1F5F9", marginBottom: 28 }}>Choose your plan</h1>
+          <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 30, color: "#1F2328", marginBottom: 28 }}>Choose your plan</h1>
         </>
       ) : (
         <>
           <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(0,0,0,0.38)", marginBottom: 6 }}>Account</div>
-          <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 30, color: "#F1F5F9", marginBottom: 28 }}>Billing</h1>
+          <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 30, color: "#1F2328", marginBottom: 28 }}>Billing</h1>
         </>
       )}
 
@@ -118,17 +118,17 @@ export default function BillingPage() {
 
       {/* Current plan — only shown to paying users */}
       {!isLoading && currentPlan !== "free" && !success && (
-        <div className="bg-[#1A2030] border border-[rgba(148,163,184,0.22)] rounded-2xl p-5 mb-6">
-          <div className="text-[10px] text-slate-400 uppercase tracking-widest mb-3">Current plan</div>
+        <div className="bg-[#FFFFFF] border border-[rgba(0,0,0,0.09)] rounded-2xl p-5 mb-6">
+          <div className="text-[10px] text-gray-600 uppercase tracking-widest mb-3">Current plan</div>
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-slate-100 font-medium text-lg">{planLabel[currentPlan]}</div>
-              <div className="text-xs text-slate-400 mt-0.5">Unlimited recordings</div>
+              <div className="text-gray-900 font-medium text-lg">{planLabel[currentPlan]}</div>
+              <div className="text-xs text-gray-600 mt-0.5">Unlimited recordings</div>
             </div>
             <button
               onClick={openPortal}
               disabled={loading === "portal"}
-              className="text-xs border border-[rgba(148,163,184,0.2)] text-slate-400 hover:text-slate-100 hover:border-[rgba(148,163,184,0.4)] rounded-full px-4 py-2 transition-colors disabled:opacity-50"
+              className="text-xs border border-[rgba(0,0,0,0.08)] text-gray-600 hover:text-gray-900 hover:border-[rgba(148,163,184,0.4)] rounded-full px-4 py-2 transition-colors disabled:opacity-50"
             >
               {loading === "portal" ? "Loading…" : "Manage subscription"}
             </button>
@@ -147,37 +147,37 @@ export default function BillingPage() {
               key={plan.id}
               className={`border rounded-2xl p-5 flex items-start justify-between gap-4 ${
                 plan.highlight && !isCurrent
-                  ? "border-black bg-[#1A2030]"
+                  ? "border-black bg-[#FFFFFF]"
                   : isCurrent
-                  ? "border-[rgba(148,163,184,0.25)] bg-[#1A2030]"
-                  : "border-[rgba(148,163,184,0.22)] bg-[#161B28]"
+                  ? "border-[rgba(0,0,0,0.10)] bg-[#FFFFFF]"
+                  : "border-[rgba(0,0,0,0.09)] bg-[#F7F6F4]"
               }`}
             >
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="text-sm font-medium text-slate-100">{plan.name}</span>
+                  <span className="text-sm font-medium text-gray-900">{plan.name}</span>
                   {plan.highlight && !isCurrent && (
                     <span className="text-[9px] font-bold uppercase tracking-widest bg-indigo-600 text-white rounded-full px-2 py-0.5">
                       Popular
                     </span>
                   )}
                   {isCurrent && (
-                    <span className="text-[9px] font-bold uppercase tracking-widest border border-[rgba(148,163,184,0.2)] text-slate-400 rounded-full px-2 py-0.5">
+                    <span className="text-[9px] font-bold uppercase tracking-widest border border-[rgba(0,0,0,0.08)] text-gray-600 rounded-full px-2 py-0.5">
                       Current
                     </span>
                   )}
                 </div>
                 <div className="flex items-baseline gap-1 mb-1">
-                  <span className="text-2xl text-slate-100 font-light">{plan.price}</span>
-                  <span className="text-slate-400 text-xs">{plan.period}</span>
+                  <span className="text-2xl text-gray-900 font-light">{plan.price}</span>
+                  <span className="text-gray-600 text-xs">{plan.period}</span>
                   {plan.annual && (
-                    <span className="text-slate-500 text-xs ml-1">{plan.annual}</span>
+                    <span className="text-gray-500 text-xs ml-1">{plan.annual}</span>
                   )}
                 </div>
                 <div className="space-y-1.5 mt-3">
                   {plan.features.map((f) => (
-                    <div key={f} className="flex items-center gap-2 text-xs text-slate-400">
-                      <Check size={10} className="text-slate-400 shrink-0" />
+                    <div key={f} className="flex items-center gap-2 text-xs text-gray-600">
+                      <Check size={10} className="text-gray-600 shrink-0" />
                       {f}
                     </div>
                   ))}
@@ -191,7 +191,7 @@ export default function BillingPage() {
                   className={`flex items-center gap-1.5 text-xs font-medium px-4 py-2.5 rounded-full transition-colors disabled:opacity-50 shrink-0 mt-1 ${
                     plan.highlight
                       ? "bg-indigo-600 text-white hover:bg-indigo-500"
-                      : "border border-[rgba(148,163,184,0.2)] text-slate-100 hover:border-[rgba(148,163,184,0.4)]"
+                      : "border border-[rgba(0,0,0,0.08)] text-gray-900 hover:border-[rgba(148,163,184,0.4)]"
                   }`}
                 >
                   <Zap size={11} />
@@ -203,7 +203,7 @@ export default function BillingPage() {
         })}
       </div>
 
-      <p className="text-xs text-slate-500 mt-6 text-center">
+      <p className="text-xs text-gray-500 mt-6 text-center">
         7-day free trial on all plans. Cancel anytime.
       </p>
     </div>

@@ -28,26 +28,26 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       className="flex flex-col md:flex-row h-screen overflow-hidden"
       style={{
         background:
-          "radial-gradient(90% 60% at 70% -10%, rgba(75,95,232,0.10) 0%, rgba(75,95,232,0) 55%), radial-gradient(70% 50% at 0% 100%, rgba(110,127,243,0.05) 0%, rgba(110,127,243,0) 60%), #0B0D12",
+          "radial-gradient(90% 60% at 70% -10%, rgba(75,95,232,0.05) 0%, rgba(75,95,232,0) 55%), #FBFBFA",
       }}
     >
 
       {/* Sidebar — desktop only */}
       <aside
         className="hidden md:flex w-52 shrink-0 flex-col py-7"
-        style={{ background: "rgba(8,10,14,0.85)", backdropFilter: "blur(10px)", borderRight: "1px solid rgba(148,163,184,0.18)" }}
+        style={{ background: "#F7F6F4", borderRight: "1px solid rgba(0,0,0,0.07)" }}
       >
         {/* Logo */}
-        <div className="px-6 pb-6 mb-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.14)" }}>
+        <div className="px-6 pb-6 mb-3" style={{ borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "linear-gradient(135deg,#4B5FE8,#6E7FF3)", boxShadow: "0 4px 14px rgba(75,95,232,0.35)" }}>
               <Layers size={17} style={{ color: "white" }} />
             </div>
             <div>
-              <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 20, color: "white", letterSpacing: "-0.5px", lineHeight: 1.1 }}>
+              <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 20, color: "#1F2328", letterSpacing: "-0.5px", lineHeight: 1.1 }}>
                 Flux
               </div>
-              <div style={{ fontSize: 9, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.42)" }}>
+              <div style={{ fontSize: 9, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(31,35,40,0.5)" }}>
                 Study Assistant
               </div>
             </div>
@@ -56,7 +56,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
         {/* Nav */}
         <nav className="flex-1 px-3 pt-2 flex flex-col gap-1">
-          <div style={{ fontSize: 9, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(255,255,255,0.38)", padding: "8px 10px 6px" }}>
+          <div style={{ fontSize: 9, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(31,35,40,0.45)", padding: "8px 10px 6px" }}>
             {t.nav.menu}
           </div>
           {nav.map(({ href, icon: Icon, label }) => {
@@ -73,7 +73,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     : "transparent",
                   border: active ? "1px solid rgba(110,127,243,0.28)" : "1px solid transparent",
                   boxShadow: active ? "0 4px 18px rgba(75,95,232,0.18)" : "none",
-                  color: active ? "#B7C0FA" : "rgba(226,232,240,0.62)",
+                  color: active ? "#3D4ED0" : "rgba(31,35,40,0.6)",
                   fontWeight: active ? 600 : 500,
                 }}
               >
@@ -85,7 +85,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </nav>
 
         {/* Footer */}
-        <div className="px-3 pt-3 flex flex-col gap-3" style={{ borderTop: "1px solid rgba(255,255,255,0.12)" }}>
+        <div className="px-3 pt-3 flex flex-col gap-3" style={{ borderTop: "1px solid rgba(0,0,0,0.05)" }}>
           <LanguageSwitcher />
           <div className="px-2">
             {mounted && <UserButton appearance={{ elements: { avatarBox: "w-8 h-8" } }} />}
@@ -101,7 +101,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       {/* Bottom tab bar — mobile only */}
       <nav
         className="md:hidden fixed bottom-0 left-0 right-0 flex items-center justify-around px-1 pt-2 z-50 safe-bottom"
-        style={{ background: "rgba(9,11,16,0.92)", backdropFilter: "blur(14px)", borderTop: "1px solid rgba(255,255,255,0.14)", paddingBottom: "calc(env(safe-area-inset-bottom) + 8px)" }}
+        style={{ background: "rgba(251,251,250,0.94)", backdropFilter: "blur(14px)", borderTop: "1px solid rgba(0,0,0,0.07)", paddingBottom: "calc(env(safe-area-inset-bottom) + 8px)" }}
       >
         {nav.map(({ href, icon: Icon, label }) => {
           const active = pathname === href || (href !== "/dashboard" && pathname.startsWith(href));
@@ -110,7 +110,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               key={href}
               href={href}
               className="flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-xl transition-all"
-              style={{ color: active ? "#6E7FF3" : "rgba(255,255,255,0.5)" }}
+              style={{ color: active ? "#4B5FE8" : "rgba(31,35,40,0.5)" }}
             >
               <Icon size={19} />
               <span className="text-[9px] font-medium">{label}</span>
@@ -119,7 +119,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         })}
         <div className="flex flex-col items-center gap-0.5 px-2 py-1.5">
           {mounted && <UserButton appearance={{ elements: { avatarBox: "w-5 h-5" } }} />}
-          <span className="text-[9px] font-medium" style={{ color: "rgba(255,255,255,0.5)" }}>{t.nav.account}</span>
+          <span className="text-[9px] font-medium" style={{ color: "rgba(31,35,40,0.58)" }}>{t.nav.account}</span>
         </div>
       </nav>
     </div>

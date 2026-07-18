@@ -1,12 +1,12 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useUser, useAuth } from "@clerk/nextjs";
 import { useT } from "@/lib/useT";
 import Link from "next/link";
-import useSWR from "swr";
+import useSWR, { useSWRConfig } from "swr";
 import Image from "next/image";
 import { useApiSWRFetcher, useApiFetch } from "@/lib/apiFetch";
-import { FileText, Calendar, ChevronRight, Plus, Clock, Layers, Youtube, X } from "lucide-react";
+import { FileText, Calendar, ChevronRight, Plus, Clock, Layers, Youtube, X, Link2, RefreshCw, Loader2, CheckCircle } from "lucide-react";
 import { startOfDay, format, differenceInCalendarDays } from "date-fns";
 
 const TYPE_COLOR: Record<string, string> = {
@@ -24,6 +24,147 @@ const TYPE_LABEL: Record<string, string> = {
 };
 
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
+
+// ── Canvas LMS ───────────────────────────────────────────────────────────────
+// Students self-serve an access token from Canvas (no university approval
+// needed) and Flux imports classes, syllabi, PDFs and deadlines automatically.
+function CanvasCard() {
+  const t = useT();
+  const fetcher = useApiSWRFetcher();
+  const apiFetch = useApiFetch();
+  const { mutate: globalMutate } = useSWRConfig();
+  const { userId, isLoaded } = useAuth();
+  const ready = isLoaded && !!userId;
+
+  const { data, mutate } = useSWR(ready ? `${BASE}/api/canvas/status` : null, fetcher, {
+    revalidateOnFocus: false,
+    refreshInterval: (latest: any) => (latest?.data?.syncing ? 4000 : 0),
+  });
+  const status = data?.data ?? null;
+
+  const [open, setOpen] = useState(false);
+  const [url, setUrl] = useState("");
+  const [token, setToken] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+
+  // When a sync finishes, refresh classes + events so imports appear instantly
+  const syncingNow = !!status?.syncing;
+  const prevSyncing = useRef(false);
+  useEffect(() => {
+    if (prevSyncing.current && !syncingNow) {
+      globalMutate(`${BASE}/api/courses`);
+      globalMutate((key: any) => typeof key === "string" && key.startsWith(`${BASE}/api/events`), undefined, { revalidate: true });
+    }
+    prevSyncing.current = syncingNow;
+  }, [syncingNow, globalMutate]);
+
+  async function connect() {
+    setBusy(true);
+    setErr("");
+    try {
+      await apiFetch(`/api/canvas/connect`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ baseUrl: url, token }),
+      });
+      setOpen(false);
+      setToken("");
+      mutate();
+    } catch {
+      setErr(t.home.canvas.invalid);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function syncNow() {
+    try { await apiFetch(`/api/canvas/sync`, { method: "POST" }); mutate(); } catch {}
+  }
+
+  async function disconnect() {
+    try { await apiFetch(`/api/canvas`, { method: "DELETE" }); mutate(); } catch {}
+  }
+
+  const r = status?.lastResult as any;
+
+  return (
+    <div className="mb-8">
+      <p className="text-xs uppercase tracking-widest mb-3" style={{ color: "#6E7FF3" }}>{t.home.canvas.eyebrow}</p>
+      <div className="rounded-2xl border px-5 py-4" style={{ background: "#FFFFFF", borderColor: "rgba(0,0,0,0.07)" }}>
+        {!status?.connected ? (
+          <>
+            <div className="flex items-center gap-4">
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "rgba(75,95,232,0.1)" }}>
+                <Link2 size={15} style={{ color: "#4B5FE8" }} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-medium" style={{ color: "#1F2328" }}>{t.home.canvas.connect}</div>
+                <div className="text-[11px] mt-0.5" style={{ color: "rgba(31,35,40,0.55)" }}>{t.home.canvas.desc}</div>
+              </div>
+              <button onClick={() => setOpen(o => !o)}
+                className="text-xs font-semibold px-4 py-2 rounded-full text-white hover:opacity-90 transition-opacity shrink-0"
+                style={{ background: "#4B5FE8" }}>
+                {open ? t.home.canvas.close : t.home.canvas.connectCta}
+              </button>
+            </div>
+            {open && (
+              <div className="mt-4 pt-4 space-y-3" style={{ borderTop: "1px solid rgba(0,0,0,0.06)" }}>
+                <div>
+                  <label className="text-[11px] font-medium block mb-1" style={{ color: "rgba(31,35,40,0.6)" }}>{t.home.canvas.urlLabel}</label>
+                  <input value={url} onChange={e => setUrl(e.target.value)} placeholder="yourschool.instructure.com"
+                    className="w-full rounded-xl border px-3 py-2 text-sm text-gray-900 outline-none placeholder-gray-400"
+                    style={{ borderColor: "rgba(0,0,0,0.1)", background: "#FBFBFA" }} />
+                </div>
+                <div>
+                  <label className="text-[11px] font-medium block mb-1" style={{ color: "rgba(31,35,40,0.6)" }}>{t.home.canvas.tokenLabel}</label>
+                  <input value={token} onChange={e => setToken(e.target.value)} type="password" placeholder="1030~…"
+                    className="w-full rounded-xl border px-3 py-2 text-sm text-gray-900 outline-none placeholder-gray-400"
+                    style={{ borderColor: "rgba(0,0,0,0.1)", background: "#FBFBFA" }} />
+                  <p className="text-[10px] mt-1" style={{ color: "rgba(31,35,40,0.45)" }}>{t.home.canvas.tokenHelp}</p>
+                </div>
+                {err && <p className="text-[11px] text-red-600">{err}</p>}
+                <button onClick={connect} disabled={busy || !url.trim() || !token.trim()}
+                  className="flex items-center gap-2 text-xs font-semibold px-5 py-2.5 rounded-full text-white disabled:opacity-40 hover:opacity-90 transition-opacity"
+                  style={{ background: "#4B5FE8" }}>
+                  {busy ? <Loader2 size={12} className="animate-spin" /> : <Link2 size={12} />}
+                  {busy ? t.home.canvas.connecting : t.home.canvas.submit}
+                </button>
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "rgba(22,163,74,0.1)" }}>
+              {status.syncing ? <Loader2 size={15} className="animate-spin" style={{ color: "#4B5FE8" }} /> : <CheckCircle size={15} style={{ color: "#16A34A" }} />}
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-medium" style={{ color: "#1F2328" }}>
+                {status.syncing ? t.home.canvas.syncing : t.home.canvas.connected}
+              </div>
+              <div className="text-[11px] mt-0.5 truncate" style={{ color: "rgba(31,35,40,0.55)" }}>
+                {status.baseUrl?.replace("https://", "")}
+                {!status.syncing && r ? ` · ${t.home.canvas.summary.replace("{a}", String((r.coursesCreated ?? 0) + (r.coursesMatched ?? 0))).replace("{b}", String((r.filesIndexed ?? 0) + (r.syllabiIndexed ?? 0))).replace("{c}", String(r.eventsCreated ?? 0))}` : ""}
+              </div>
+            </div>
+            {!status.syncing && (
+              <div className="flex items-center gap-2 shrink-0">
+                <button onClick={syncNow}
+                  className="flex items-center gap-1.5 text-xs font-semibold px-4 py-2 rounded-full border text-gray-700 hover:bg-[#F1F0EE] transition-colors"
+                  style={{ borderColor: "rgba(0,0,0,0.1)" }}>
+                  <RefreshCw size={11} /> {t.home.canvas.syncNow}
+                </button>
+                <button onClick={disconnect} className="text-[11px] px-2 py-2 transition-colors hover:text-red-600" style={{ color: "rgba(31,35,40,0.45)" }}>
+                  {t.home.canvas.disconnect}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 function greetingKey(): "goodMorning" | "goodAfternoon" | "goodEvening" {
   const h = new Date().getHours();
@@ -109,7 +250,7 @@ export default function DashboardHome() {
 
         {/* Header */}
         <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "#6E7FF3", marginBottom: 6 }}>{t.home.overview}</div>
-        <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 30, color: "white", marginBottom: 28 }}>
+        <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 30, color: "#1F2328", marginBottom: 28 }}>
           {t.home[greetingKey()]}{firstName ? `, ${firstName}` : ""}.
         </h1>
 
@@ -118,14 +259,14 @@ export default function DashboardHome() {
         <div className="flex flex-col gap-2 mb-8">
           {!ready || eventsLoading ? (
             [...Array(2)].map((_, i) => (
-              <div key={i} className="rounded-2xl px-4 py-3 border animate-pulse" style={{ background: "rgba(255,255,255,0.09)", borderColor: "rgba(255,255,255,0.14)", height: 58 }} />
+              <div key={i} className="rounded-2xl px-4 py-3 border animate-pulse" style={{ background: "rgba(0,0,0,0.04)", borderColor: "rgba(0,0,0,0.06)", height: 58 }} />
             ))
           ) : allUpcoming.length === 0 ? (
             <Link href="/dashboard/calendar"
-              className="flex items-center gap-3 rounded-2xl px-4 py-3 border transition-all hover:border-white/20 hover:bg-white/[0.06]"
-              style={{ background: "rgba(255,255,255,0.08)", borderColor: "rgba(255,255,255,0.14)", borderStyle: "dashed" }}>
-              <Plus size={14} style={{ color: "rgba(255,255,255,0.42)" }} />
-              <span className="text-xs" style={{ color: "rgba(255,255,255,0.52)" }}>No upcoming events — add one in Calendar</span>
+              className="flex items-center gap-3 rounded-2xl px-4 py-3 border transition-all hover:border-white/20 hover:bg-black/[0.04]"
+              style={{ background: "rgba(0,0,0,0.04)", borderColor: "rgba(0,0,0,0.06)", borderStyle: "dashed" }}>
+              <Plus size={14} style={{ color: "rgba(31,35,40,0.5)" }} />
+              <span className="text-xs" style={{ color: "rgba(31,35,40,0.6)" }}>No upcoming events — add one in Calendar</span>
             </Link>
           ) : (
             <>
@@ -133,19 +274,19 @@ export default function DashboardHome() {
                 const diff = differenceInCalendarDays(new Date(e.date), today);
                 const color = TYPE_COLOR[e.type] ?? "#6b7280";
                 const cdLabel = diff === 0 ? "Today!" : diff === 1 ? "Tomorrow" : `In ${diff} days`;
-                const cdColor = diff === 0 ? "#ef4444" : diff <= 1 ? "#f97316" : diff <= 3 ? "#eab308" : "rgba(255,255,255,0.48)";
+                const cdColor = diff === 0 ? "#ef4444" : diff <= 1 ? "#f97316" : diff <= 3 ? "#eab308" : "rgba(31,35,40,0.55)";
                 return (
                   <Link key={e.id} href="/dashboard/calendar"
-                    className="flex items-center gap-4 rounded-2xl px-4 py-3 border transition-all duration-200 hover:border-white/20 hover:bg-white/[0.06]"
-                    style={{ background: diff === 0 ? "rgba(239,68,68,0.08)" : "rgba(255,255,255,0.09)", borderColor: diff === 0 ? "rgba(239,68,68,0.2)" : "rgba(255,255,255,0.14)", borderLeft: `3px solid ${color}` }}
+                    className="flex items-center gap-4 rounded-2xl px-4 py-3 border transition-all duration-200 hover:border-white/20 hover:bg-black/[0.04]"
+                    style={{ background: diff === 0 ? "rgba(239,68,68,0.08)" : "rgba(0,0,0,0.04)", borderColor: diff === 0 ? "rgba(239,68,68,0.2)" : "rgba(0,0,0,0.06)", borderLeft: `3px solid ${color}` }}
                   >
                     <div style={{ minWidth: 38, textAlign: "center" }}>
-                      <div style={{ fontSize: 20, fontWeight: 700, lineHeight: 1, color: "white" }}>{format(new Date(e.date), "d")}</div>
-                      <div style={{ fontSize: 9, textTransform: "uppercase", color: "rgba(255,255,255,0.42)" }}>{format(new Date(e.date), "MMM")}</div>
+                      <div style={{ fontSize: 20, fontWeight: 700, lineHeight: 1, color: "#1F2328" }}>{format(new Date(e.date), "d")}</div>
+                      <div style={{ fontSize: 9, textTransform: "uppercase", color: "rgba(31,35,40,0.5)" }}>{format(new Date(e.date), "MMM")}</div>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium truncate" style={{ color: "white" }}>{e.title}</div>
-                      <div className="text-[10px] uppercase tracking-wider mt-0.5" style={{ color: "rgba(255,255,255,0.48)" }}>
+                      <div className="text-sm font-medium truncate" style={{ color: "#1F2328" }}>{e.title}</div>
+                      <div className="text-[10px] uppercase tracking-wider mt-0.5" style={{ color: "rgba(31,35,40,0.55)" }}>
                         {TYPE_LABEL[e.type]}{e.course?.code ? ` · ${e.course.code}` : ""}
                       </div>
                     </div>
@@ -157,7 +298,7 @@ export default function DashboardHome() {
                 );
               })}
               {allUpcoming.length > 3 && (
-                <Link href="/dashboard/calendar" className="text-xs text-center py-1 transition-colors hover:text-white" style={{ color: "rgba(255,255,255,0.42)" }}>
+                <Link href="/dashboard/calendar" className="text-xs text-center py-1 transition-colors hover:text-gray-900" style={{ color: "rgba(31,35,40,0.5)" }}>
                   +{allUpcoming.length - 3} more events →
                 </Link>
               )}
@@ -170,32 +311,34 @@ export default function DashboardHome() {
         <div className="space-y-2 mb-8">
           {!ready || coursesLoading ? (
             [...Array(2)].map((_, i) => (
-              <div key={i} className="rounded-2xl px-5 py-4 border animate-pulse" style={{ background: "rgba(255,255,255,0.11)", borderColor: "rgba(255,255,255,0.14)", height: 64 }} />
+              <div key={i} className="rounded-2xl px-5 py-4 border animate-pulse" style={{ background: "rgba(0,0,0,0.05)", borderColor: "rgba(0,0,0,0.06)", height: 64 }} />
             ))
           ) : courses.length === 0 ? (
             <Link href="/dashboard/record"
-              className="flex items-center gap-3 rounded-2xl px-5 py-4 border transition-all hover:border-white/20 hover:bg-white/[0.06]"
-              style={{ background: "rgba(255,255,255,0.08)", borderColor: "rgba(255,255,255,0.14)", borderStyle: "dashed" }}>
-              <Plus size={14} style={{ color: "rgba(255,255,255,0.42)" }} />
-              <span className="text-xs" style={{ color: "rgba(255,255,255,0.52)" }}>Add your first class</span>
+              className="flex items-center gap-3 rounded-2xl px-5 py-4 border transition-all hover:border-white/20 hover:bg-black/[0.04]"
+              style={{ background: "rgba(0,0,0,0.04)", borderColor: "rgba(0,0,0,0.06)", borderStyle: "dashed" }}>
+              <Plus size={14} style={{ color: "rgba(31,35,40,0.5)" }} />
+              <span className="text-xs" style={{ color: "rgba(31,35,40,0.6)" }}>Add your first class</span>
             </Link>
           ) : (
             courses.map((cls: any) => (
               <Link key={cls.id} href="/dashboard/record"
-                className="flex items-center gap-4 rounded-2xl px-5 py-4 border transition-all duration-200 hover:border-white/20 hover:bg-white/[0.06]"
-                style={{ background: "rgba(255,255,255,0.11)", borderColor: "rgba(255,255,255,0.14)" }}>
-                <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "rgba(255,255,255,0.14)" }}>
-                  <Layers size={15} style={{ color: "rgba(255,255,255,0.58)" }} />
+                className="flex items-center gap-4 rounded-2xl px-5 py-4 border transition-all duration-200 hover:border-white/20 hover:bg-black/[0.04]"
+                style={{ background: "rgba(0,0,0,0.05)", borderColor: "rgba(0,0,0,0.06)" }}>
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "rgba(0,0,0,0.06)" }}>
+                  <Layers size={15} style={{ color: "rgba(31,35,40,0.66)" }} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium truncate" style={{ color: "white" }}>{cls.name}</div>
-                  <div className="text-[11px] mt-0.5" style={{ color: "rgba(255,255,255,0.48)" }}>{cls.code}</div>
+                  <div className="text-sm font-medium truncate" style={{ color: "#1F2328" }}>{cls.name}</div>
+                  <div className="text-[11px] mt-0.5" style={{ color: "rgba(31,35,40,0.55)" }}>{cls.code}</div>
                 </div>
-                <ChevronRight size={13} style={{ color: "rgba(255,255,255,0.2)" }} />
+                <ChevronRight size={13} style={{ color: "rgba(31,35,40,0.3)" }} />
               </Link>
             ))
           )}
         </div>
+
+        <CanvasCard />
 
         {/* Recent Videos */}
         {recentVideos.length > 0 && (
@@ -211,13 +354,13 @@ export default function DashboardHome() {
                     style={{ background: "rgba(0,0,0,0.6)" }}
                     title={t.home.removeFromHome}
                   >
-                    <X size={11} style={{ color: "white" }} />
+                    <X size={11} style={{ color: "#1F2328" }} />
                   </button>
                 )}
                 <Link
                   href={v.videoId ? `/dashboard/record?videoId=${v.videoId}&courseId=${v.courseId}` : `/dashboard/record`}
                   className="rounded-2xl overflow-hidden border transition-all duration-200 hover:border-white/20 hover:scale-[1.02] group block"
-                  style={{ background: "rgba(255,255,255,0.11)", borderColor: "rgba(255,255,255,0.14)" }}
+                  style={{ background: "rgba(0,0,0,0.05)", borderColor: "rgba(0,0,0,0.06)" }}
                 >
                   <div className="relative w-full" style={{ paddingBottom: "56.25%" }}>
                     {v.thumbnail ? (
@@ -229,19 +372,19 @@ export default function DashboardHome() {
                         unoptimized
                       />
                     ) : (
-                      <div className="absolute inset-0 flex items-center justify-center" style={{ background: "rgba(255,255,255,0.09)" }}>
-                        <Youtube size={20} style={{ color: "rgba(255,255,255,0.42)" }} />
+                      <div className="absolute inset-0 flex items-center justify-center" style={{ background: "rgba(0,0,0,0.04)" }}>
+                        <Youtube size={20} style={{ color: "rgba(31,35,40,0.5)" }} />
                       </div>
                     )}
                     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity" style={{ background: "rgba(0,0,0,0.4)" }}>
                       <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: "#4B5FE8" }}>
-                        <Youtube size={14} style={{ color: "white" }} />
+                        <Youtube size={14} style={{ color: "#1F2328" }} />
                       </div>
                     </div>
                   </div>
                   <div className="px-3 py-2.5">
-                    <div className="text-xs font-medium truncate" style={{ color: "white" }}>{v.title}</div>
-                    <div className="text-[10px] mt-0.5" style={{ color: "rgba(255,255,255,0.48)" }}>YouTube Video</div>
+                    <div className="text-xs font-medium truncate" style={{ color: "#1F2328" }}>{v.title}</div>
+                    <div className="text-[10px] mt-0.5" style={{ color: "rgba(31,35,40,0.55)" }}>YouTube Video</div>
                   </div>
                 </Link>
                 </div>
@@ -259,15 +402,15 @@ export default function DashboardHome() {
                 <Link
                   key={cs.id}
                   href="/dashboard/summaries"
-                  className="flex items-center gap-3 rounded-xl px-4 py-3 border transition-all duration-200 hover:border-white/20 hover:bg-white/[0.06]"
-                  style={{ background: "rgba(255,255,255,0.11)", borderColor: "rgba(255,255,255,0.14)" }}
+                  className="flex items-center gap-3 rounded-xl px-4 py-3 border transition-all duration-200 hover:border-white/20 hover:bg-black/[0.04]"
+                  style={{ background: "rgba(0,0,0,0.05)", borderColor: "rgba(0,0,0,0.06)" }}
                 >
-                  <FileText size={14} style={{ color: "rgba(255,255,255,0.52)" }} className="shrink-0" />
+                  <FileText size={14} style={{ color: "rgba(31,35,40,0.6)" }} className="shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm truncate" style={{ color: "white" }}>{cs.title}</div>
-                    <div className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.48)" }}>{cs.driveUrl ? "Drive synced" : "Local"}</div>
+                    <div className="text-sm truncate" style={{ color: "#1F2328" }}>{cs.title}</div>
+                    <div className="text-xs mt-0.5" style={{ color: "rgba(31,35,40,0.55)" }}>{cs.driveUrl ? "Drive synced" : "Local"}</div>
                   </div>
-                  <ChevronRight size={12} style={{ color: "rgba(255,255,255,0.2)" }} />
+                  <ChevronRight size={12} style={{ color: "rgba(31,35,40,0.3)" }} />
                 </Link>
               ))}
             </div>
@@ -278,23 +421,23 @@ export default function DashboardHome() {
       {/* RIGHT — upcoming events panel (hidden on mobile) */}
       <div
         className="hidden lg:flex w-80 shrink-0 flex-col py-9 pr-8"
-        style={{ borderLeft: "1px solid rgba(255,255,255,0.12)" }}
+        style={{ borderLeft: "1px solid rgba(0,0,0,0.05)" }}
       >
         {/* Panel header */}
         <div className="flex items-center justify-between mb-5 pl-6">
           <div>
-            <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(255,255,255,0.42)", marginBottom: 4 }}>Upcoming</div>
-            <div style={{ fontSize: 16, fontWeight: 500, color: "white" }}>
+            <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(31,35,40,0.5)", marginBottom: 4 }}>Upcoming</div>
+            <div style={{ fontSize: 16, fontWeight: 500, color: "#1F2328" }}>
               {allUpcoming.length === 0 ? "No events" : `${allUpcoming.length} event${allUpcoming.length !== 1 ? "s" : ""}`}
             </div>
           </div>
           <Link
             href="/dashboard/calendar"
-            className="flex items-center justify-center w-7 h-7 rounded-lg transition-all hover:bg-[#1A2030]/15"
-            style={{ background: "rgba(255,255,255,0.14)" }}
+            className="flex items-center justify-center w-7 h-7 rounded-lg transition-all hover:bg-[#FFFFFF]/15"
+            style={{ background: "rgba(0,0,0,0.06)" }}
             title="Add event"
           >
-            <Plus size={14} style={{ color: "rgba(255,255,255,0.72)" }} />
+            <Plus size={14} style={{ color: "rgba(31,35,40,0.8)" }} />
           </Link>
         </div>
 
@@ -308,9 +451,9 @@ export default function DashboardHome() {
                 className="text-[10px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-full transition-all duration-150"
                 style={{
                   background: activeFilter === type
-                    ? (type === "all" ? "rgba(255,255,255,0.9)" : TYPE_COLOR[type])
-                    : "rgba(255,255,255,0.12)",
-                  color: activeFilter === type ? "#111110" : "rgba(255,255,255,0.52)",
+                    ? (type === "all" ? "#191918" : TYPE_COLOR[type])
+                    : "rgba(0,0,0,0.05)",
+                  color: activeFilter === type ? (type === "all" ? "#FFFFFF" : "#111110") : "rgba(31,35,40,0.6)",
                 }}
               >
                 {type === "all" ? "All" : TYPE_LABEL[type] ?? type}
@@ -323,14 +466,14 @@ export default function DashboardHome() {
         <div className="flex-1 overflow-y-auto pl-6 flex flex-col gap-2" style={{ scrollbarWidth: "none" }}>
           {displayedEvents.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
-              <Calendar size={28} style={{ color: "rgba(255,255,255,0.18)", marginBottom: 12 }} />
-              <div style={{ fontSize: 13, color: "rgba(255,255,255,0.42)", marginBottom: 4 }}>
+              <Calendar size={28} style={{ color: "rgba(0,0,0,0.08)", marginBottom: 12 }} />
+              <div style={{ fontSize: 13, color: "rgba(31,35,40,0.5)", marginBottom: 4 }}>
                 {activeFilter === "all" ? "No upcoming events" : `No ${TYPE_LABEL[activeFilter]?.toLowerCase()} events`}
               </div>
               <Link
                 href="/dashboard/calendar"
-                className="text-xs mt-1 transition-colors hover:text-white"
-                style={{ color: "rgba(255,255,255,0.48)", textDecoration: "underline" }}
+                className="text-xs mt-1 transition-colors hover:text-gray-900"
+                style={{ color: "rgba(31,35,40,0.55)", textDecoration: "underline" }}
               >
                 Add one
               </Link>
@@ -348,8 +491,8 @@ export default function DashboardHome() {
                   onClick={() => setExpandedEvent(isExpanded ? null : e.id)}
                   className="text-left rounded-xl px-4 py-3 border transition-all duration-200 hover:border-white/20 w-full"
                   style={{
-                    background: glow !== "transparent" ? glow : "rgba(255,255,255,0.09)",
-                    borderColor: isExpanded ? `${color}60` : "rgba(255,255,255,0.14)",
+                    background: glow !== "transparent" ? glow : "rgba(0,0,0,0.04)",
+                    borderColor: isExpanded ? `${color}60` : "rgba(0,0,0,0.06)",
                     borderLeft: `3px solid ${color}`,
                   }}
                 >
@@ -359,33 +502,33 @@ export default function DashboardHome() {
                         {pulse && (
                           <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: color, animation: "pulse 1.5s infinite" }} />
                         )}
-                        <div className="text-sm font-medium truncate" style={{ color: "white" }}>{e.title}</div>
+                        <div className="text-sm font-medium truncate" style={{ color: "#1F2328" }}>{e.title}</div>
                       </div>
-                      <div className="text-[10px] uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.48)" }}>
+                      <div className="text-[10px] uppercase tracking-wider" style={{ color: "rgba(31,35,40,0.55)" }}>
                         {e.course?.code ? `${e.course.code} · ` : ""}{TYPE_LABEL[e.type] ?? e.type}
                       </div>
                     </div>
                     <div className="shrink-0 text-right">
                       <div className="text-xs font-semibold" style={{ color }}>{dayLabel(e.date)}</div>
                       {diff > 1 && (
-                        <div className="text-[10px]" style={{ color: "rgba(255,255,255,0.38)" }}>{format(new Date(e.date), "EEE")}</div>
+                        <div className="text-[10px]" style={{ color: "rgba(31,35,40,0.45)" }}>{format(new Date(e.date), "EEE")}</div>
                       )}
                     </div>
                   </div>
 
                   {/* Expanded detail */}
                   {isExpanded && (
-                    <div className="mt-3 pt-3" style={{ borderTop: "1px solid rgba(255,255,255,0.14)" }}>
-                      <div className="flex items-center gap-1.5 text-xs mb-1" style={{ color: "rgba(255,255,255,0.62)" }}>
+                    <div className="mt-3 pt-3" style={{ borderTop: "1px solid rgba(0,0,0,0.06)" }}>
+                      <div className="flex items-center gap-1.5 text-xs mb-1" style={{ color: "rgba(31,35,40,0.7)" }}>
                         <Clock size={10} />
                         {format(new Date(e.date), "EEEE, MMMM d, yyyy")}
                       </div>
                       {e.description && (
-                        <div className="text-xs leading-relaxed" style={{ color: "rgba(255,255,255,0.52)" }}>{e.description}</div>
+                        <div className="text-xs leading-relaxed" style={{ color: "rgba(31,35,40,0.6)" }}>{e.description}</div>
                       )}
                       <Link
                         href="/dashboard/calendar"
-                        className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider mt-2 transition-colors hover:text-white"
+                        className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider mt-2 transition-colors hover:text-gray-900"
                         style={{ color: `${color}cc` }}
                         onClick={(e: React.MouseEvent) => e.stopPropagation()}
                       >
@@ -401,8 +544,8 @@ export default function DashboardHome() {
           {filtered.length > 8 && (
             <Link
               href="/dashboard/calendar"
-              className="flex items-center justify-center gap-1 rounded-xl py-2.5 text-xs transition-all hover:bg-white/[0.06]"
-              style={{ color: "rgba(255,255,255,0.48)", border: "1px dashed rgba(255,255,255,0.16)" }}
+              className="flex items-center justify-center gap-1 rounded-xl py-2.5 text-xs transition-all hover:bg-black/[0.04]"
+              style={{ color: "rgba(31,35,40,0.55)", border: "1px dashed rgba(0,0,0,0.07)" }}
             >
               +{filtered.length - 8} more <ChevronRight size={12} />
             </Link>
@@ -410,8 +553,8 @@ export default function DashboardHome() {
         </div>
 
         {/* Today's date footer */}
-        <div className="pl-6 pt-5 mt-2" style={{ borderTop: "1px solid rgba(255,255,255,0.11)" }}>
-          <div style={{ fontSize: 11, color: "rgba(255,255,255,0.38)" }}>
+        <div className="pl-6 pt-5 mt-2" style={{ borderTop: "1px solid rgba(0,0,0,0.05)" }}>
+          <div style={{ fontSize: 11, color: "rgba(31,35,40,0.45)" }}>
             {format(new Date(), "EEEE, MMMM d")}
           </div>
         </div>

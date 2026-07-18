@@ -4,20 +4,20 @@ import Link from "next/link";
 import Image from "next/image";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import { Layers } from "lucide-react";
+import { Layers, Mic, GraduationCap, FileText, Youtube, PenLine, Calendar } from "lucide-react";
+
 import { GoogleBanner } from "@/components/GoogleBanner";
-import { UniversityTicker } from "@/components/UniversityTicker";
+import { CapabilityTicker } from "@/components/CapabilityTicker";
+import { HeroQuote, DemoQuote, AfroFace } from "@/components/HeroQuote";
 import { ProductDemo } from "@/components/ProductDemo";
-import { FeaturesShowcase } from "@/components/FeaturesShowcase";
-import { CalendarShowcase } from "@/components/CalendarShowcase";
 import { RecordingDemo } from "@/components/RecordingDemo";
+import { CourseMemoryDemo } from "@/components/CourseMemoryDemo";
+import { ExamModeDemo } from "@/components/ExamModeDemo";
 import { Navbar } from "@/components/Navbar";
 import { RotatingPrompts } from "@/components/RotatingPrompts";
 import { Hero3DLogo } from "@/components/Hero3DLogo";
 import { PricingSection } from "@/components/PricingSection";
 import { ScrollReveal } from "@/components/ScrollReveal";
-import { YoutubeFeatureDemo } from "@/components/YoutubeFeatureDemo";
-import { FilesFeatureDemo } from "@/components/FilesFeatureDemo";
 import { FaqSection } from "@/components/FaqSection";
 
 export default async function LandingPage() {
@@ -63,6 +63,35 @@ export default async function LandingPage() {
 
         {/* hero content — open, no box */}
         <div className="flex flex-col items-center text-center w-full" style={{ position: "relative", maxWidth: 900 }}>
+          {/* Notion-style floating icon tiles (desktop only) */}
+          {[
+            { Icon: Mic,           color: "#4B5FE8", tint: "rgba(75,95,232,0.1)",  style: { top: -30,  left: -60,  rotate: "-8deg" } },
+            { Icon: GraduationCap, color: "#DC2626", tint: "rgba(220,38,38,0.08)", style: { top: -45,  right: -55, rotate: "7deg" } },
+            { Icon: AfroFace,      color: "#D97706", tint: "rgba(217,119,6,0.12)", style: { top: 145,  left: -75, rotate: "-5deg" } },
+            { Icon: Youtube,       color: "#EF4444", tint: "rgba(239,68,68,0.08)", style: { top: 130,  right: -70, rotate: "4deg" } },
+            { Icon: FileText,      color: "#EA580C", tint: "rgba(234,88,12,0.09)", style: { top: 330,  left: -55,  rotate: "5deg" } },
+            { Icon: Layers,        color: "#4B5FE8", tint: "rgba(75,95,232,0.1)",  style: { top: 345,  right: -50, rotate: "-6deg" } },
+            { Icon: PenLine,       color: "#9333EA", tint: "rgba(147,51,234,0.09)",style: { bottom: 15, left: -80, rotate: "9deg" } },
+            { Icon: Calendar,      color: "#0891B2", tint: "rgba(8,145,178,0.09)", style: { bottom: 30, right: -75, rotate: "-9deg" } },
+          ].map(({ Icon, color, tint, style }, i) => (
+            <div
+              key={i}
+              aria-hidden
+              className="hidden lg:flex absolute items-center justify-center w-20 h-20 rounded-3xl pointer-events-none"
+              style={{
+                background: "#FFFFFF",
+                border: "1px solid rgba(0,0,0,0.08)",
+                boxShadow: "0 10px 28px rgba(0,0,0,0.08)",
+                transform: `rotate(${(style as any).rotate})`,
+                ...style,
+              } as React.CSSProperties}
+            >
+              <span className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ background: tint }}>
+                <Icon size={28} style={{ color }} />
+              </span>
+            </div>
+          ))}
+          <HeroQuote />
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-9" style={{ background: "rgba(75,95,232,0.08)", border: "1px solid rgba(75,95,232,0.25)" }}>
             <Layers size={12} style={{ color: "#4B5FE8" }} />
             <span className="text-xs uppercase tracking-[0.2em] font-semibold" style={{ color: "#4B5FE8" }}>
@@ -115,7 +144,10 @@ export default async function LandingPage() {
       {/* Demo */}
       <div className="relative py-14 md:py-20">
         <ScrollReveal className="relative z-10 flex justify-center px-4 md:px-12 pb-12" delay={100}>
-          <ProductDemo />
+          <div className="relative">
+            <DemoQuote quote="wait… it went to EVERY class?? 😭" side="right" top={30} />
+            <ProductDemo />
+          </div>
         </ScrollReveal>
       </div>
 
@@ -149,33 +181,81 @@ export default async function LandingPage() {
         </div>
       </ScrollReveal>
 
-      {/* Recording animation demo */}
+      {/* Capture step — recording demo */}
       <ScrollReveal className="flex flex-col items-center px-4 md:px-12 pb-20 gap-8" delay={150}>
         <div className="text-center max-w-2xl">
-          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: "#6E7FF3", marginBottom: 14 }}>What you get</div>
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: "#6E7FF3", marginBottom: 14 }}>Step 1 — Capture</div>
           <h2 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: "clamp(30px, 5vw, 52px)", color: "#0f1115", letterSpacing: "-0.03em", lineHeight: 1.1, marginBottom: 16 }}>
-            From lecture to study-ready in minutes.
+            One tap in class.<br />Your course memory grows.
           </h2>
           <p style={{ fontSize: 18, color: "rgba(0,0,0,0.5)", lineHeight: 1.65 }}>
-            One recording becomes a transcript, summary, key points, and a review session — automatically.
+            Record the lecture — Flux transcribes every word, pulls the key points, and adds it all to
+            your course&apos;s memory. Files, videos and notes join the same memory automatically.
           </p>
         </div>
-        <RecordingDemo />
+        <div className="relative">
+          <DemoQuote quote="one tap and it's cooking?? bet 🙏" side="left" top={24} />
+          <RecordingDemo />
+        </div>
+      </ScrollReveal>
+
+      {/* The goal — course memory + cited answers */}
+      <div style={{ background: "linear-gradient(180deg, rgba(75,95,232,0.05) 0%, rgba(75,95,232,0.01) 100%)" }}>
+      <ScrollReveal className="flex flex-col items-center px-4 md:px-12 py-16 md:py-24 gap-10">
+        <div className="text-center max-w-2xl">
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: "#6E7FF3", marginBottom: 14 }}>Step 2 — Ask</div>
+          <h2 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: "clamp(30px, 5vw, 52px)", color: "#0f1115", letterSpacing: "-0.03em", lineHeight: 1.1, marginBottom: 16 }}>
+            Ask your course.<br />
+            <span style={{ backgroundImage: "linear-gradient(110deg, #4B5FE8 0%, #6E7FF3 55%, #9F7BFA 100%)", WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent" }}>
+              Get receipts.
+            </span>
+          </h2>
+          <p style={{ fontSize: 18, color: "rgba(0,0,0,0.5)", lineHeight: 1.65 }}>
+            Every answer comes from your own lectures, files and notes — cited to the exact moment,
+            one click from replaying what your professor actually said.
+          </p>
+        </div>
+        <div className="relative">
+          <DemoQuote quote={'it said "Lecture 7 · 32:10" like a receipt 💀'} side="right" top={24} />
+          <CourseMemoryDemo />
+        </div>
+      </ScrollReveal>
+      </div>
+
+      {/* Exam Mode — the payoff before the exam */}
+      <ScrollReveal className="flex flex-col items-center px-4 md:px-12 py-16 md:py-24 gap-10">
+        <div className="text-center max-w-2xl">
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: "#6E7FF3", marginBottom: 14 }}>Step 3 — Exam time</div>
+          <h2 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: "clamp(30px, 5vw, 52px)", color: "#0f1115", letterSpacing: "-0.03em", lineHeight: 1.1, marginBottom: 16 }}>
+            One button before the exam.<br />
+            <span style={{ backgroundImage: "linear-gradient(110deg, #4B5FE8 0%, #6E7FF3 55%, #9F7BFA 100%)", WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent" }}>
+              Flux predicts it.
+            </span>
+          </h2>
+          <p style={{ fontSize: 18, color: "rgba(0,0,0,0.5)", lineHeight: 1.65 }}>
+            Exam Mode reads your entire course memory and builds your prep: the topics your professor
+            leaned on, practice questions with receipts, and a day-by-day plan to exam day.
+          </p>
+        </div>
+        <div className="relative">
+          <DemoQuote quote="not the AI predicting my final 💀🙏" side="left" top={20} />
+          <ExamModeDemo />
+        </div>
       </ScrollReveal>
 
       {/* Tagline */}
       <ScrollReveal className="text-center py-10 px-6">
         <p className="text-sm uppercase tracking-[0.22em] font-semibold mb-3" style={{ color: "rgba(0,0,0,0.8)" }}>
-          Trusted by students at
+          Built for how you actually study
         </p>
         <p className="text-2xl md:text-3xl" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, color: "#0f1115", letterSpacing: "-0.02em" }}>
-          universities across the country.
+          Every class. Every format. Any university.
         </p>
       </ScrollReveal>
 
-      {/* University ticker */}
+      {/* Capability ticker */}
       <ScrollReveal>
-        <UniversityTicker />
+        <CapabilityTicker />
       </ScrollReveal>
 
       {/* Testimonials */}
@@ -233,26 +313,6 @@ export default async function LandingPage() {
         </ScrollReveal>
 
       </div>
-
-      {/* YouTube feature demo */}
-      <ScrollReveal>
-        <YoutubeFeatureDemo />
-      </ScrollReveal>
-
-      {/* Files feature demo */}
-      <ScrollReveal>
-        <FilesFeatureDemo />
-      </ScrollReveal>
-
-      {/* Calendar feature showcase */}
-      <ScrollReveal>
-        <CalendarShowcase />
-      </ScrollReveal>
-
-      {/* Features showcase */}
-      <ScrollReveal>
-        <FeaturesShowcase />
-      </ScrollReveal>
 
       {/* Pricing */}
       <div id="pricing">

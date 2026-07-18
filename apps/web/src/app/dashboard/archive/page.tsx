@@ -45,45 +45,45 @@ export default function ArchivePage() {
     <div className="max-w-2xl">
       <div className="mb-8">
         <h1 className="font-serif italic text-3xl mb-1">Archive</h1>
-        <p className="text-sm text-slate-400">Recordings you've removed. Restore or permanently delete them.</p>
+        <p className="text-sm text-gray-600">Recordings you've removed. Restore or permanently delete them.</p>
       </div>
 
       {isLoading ? (
         <div className="space-y-2">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="bg-[#1A2030] border border-[rgba(148,163,184,0.2)] rounded-xl h-16 animate-pulse" />
+            <div key={i} className="bg-[#FFFFFF] border border-[rgba(0,0,0,0.08)] rounded-xl h-16 animate-pulse" />
           ))}
         </div>
       ) : lectures.length === 0 ? (
-        <div className="bg-[#1A2030] border border-[rgba(148,163,184,0.2)] rounded-2xl p-16 text-center">
-          <Archive size={32} className="mx-auto mb-4" style={{ color: "#ccc" }} />
-          <p className="text-sm text-slate-400 font-medium">Archive is empty</p>
-          <p className="text-xs text-slate-500 mt-1">Deleted recordings will appear here.</p>
+        <div className="bg-[#FFFFFF] border border-[rgba(0,0,0,0.08)] rounded-2xl p-16 text-center">
+          <Archive size={32} className="mx-auto mb-4" style={{ color: "#A8A29E" }} />
+          <p className="text-sm text-gray-600 font-medium">Archive is empty</p>
+          <p className="text-xs text-gray-500 mt-1">Deleted recordings will appear here.</p>
         </div>
       ) : (
         <div className="space-y-8">
           {Object.values(byCourse).map(({ course, items }) => (
             <div key={course?.id ?? "unknown"}>
-              <div className="text-[10px] uppercase tracking-widest text-slate-500 mb-2 px-1">
+              <div className="text-[10px] uppercase tracking-widest text-gray-500 mb-2 px-1">
                 {course?.name ?? "Unknown class"}
               </div>
               <div className="space-y-2">
                 {items.map(l => (
                   <div
                     key={l.id}
-                    className="bg-[#1A2030] border rounded-xl px-4 py-3 transition-all"
+                    className="bg-[#FFFFFF] border rounded-xl px-4 py-3 transition-all"
                     style={{ borderColor: confirmDeleteId === l.id ? "rgba(239,68,68,0.3)" : "rgba(0,0,0,0.08)" }}
                   >
                     {confirmDeleteId === l.id ? (
                       <div className="flex items-center justify-between gap-3">
-                        <p className="text-xs text-slate-400 flex-1">
-                          Permanently delete <span className="font-medium text-slate-100">"{l.title}"</span>? This cannot be undone.
+                        <p className="text-xs text-gray-600 flex-1">
+                          Permanently delete <span className="font-medium text-gray-900">"{l.title}"</span>? This cannot be undone.
                         </p>
                         <div className="flex items-center gap-2 shrink-0">
                           <button
                             onClick={() => setConfirmDeleteId(null)}
                             className="text-xs px-3 py-1.5 rounded-lg"
-                            style={{ background: "rgba(0,0,0,0.05)", color: "#94A3B8" }}
+                            style={{ background: "rgba(0,0,0,0.05)", color: "#6B7280" }}
                           >
                             Cancel
                           </button>
@@ -102,7 +102,7 @@ export default function ArchivePage() {
                           <Mic2 size={12} style={{ color: "#bbb" }} />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="text-sm truncate" style={{ color: "#64748B" }}>{l.title}</div>
+                          <div className="text-sm truncate" style={{ color: "#6B7280" }}>{l.title}</div>
                           <div className="text-xs mt-0.5" style={{ color: "#bbb" }}>
                             {format(new Date(l.recordedAt), "MMM d, yyyy")}
                           </div>
@@ -110,8 +110,8 @@ export default function ArchivePage() {
                         <div className="flex items-center gap-2 shrink-0">
                           <button
                             onClick={() => restore(l.id)}
-                            className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition-colors hover:bg-[#1A1F2B]"
-                            style={{ background: "rgba(0,0,0,0.05)", color: "#F1F5F9" }}
+                            className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition-colors hover:bg-[#F1F0EE]"
+                            style={{ background: "rgba(0,0,0,0.05)", color: "#1F2328" }}
                           >
                             <RotateCcw size={11} />
                             Restore

@@ -154,6 +154,10 @@ export async function indexSource(input: SourceInput): Promise<number> {
       embedding: embeddings[i] as any,
     })),
   });
+  // createMany can't write the pgvector column — copy the Json embeddings over
+  await prisma.$executeRaw`
+    UPDATE "MemoryChunk" SET embedding_vec = embedding::text::vector
+    WHERE "sourceId" = ${input.sourceId} AND "userId" = ${input.userId} AND embedding_vec IS NULL`;
   return pieces.length;
 }
 
@@ -170,30 +174,40 @@ export async function searchCourse(
   k = 8
 ): Promise<RetrievedChunk[]> {
   const [queryEmbedding] = await embedTexts([query]);
-  const chunks = await prisma.memoryChunk.findMany({
-    where: { userId, courseId },
-    select: { id: true, sourceType: true, sourceId: true, sourceTitle: true, content: true, meta: true, embedding: true },
-  });
+  const vec = `[${queryEmbedding.join(",")}]`;
 
-  const scored = chunks
-    .map(c => ({
-      id: c.id,
-      sourceType: c.sourceType,
-      sourceId: c.sourceId,
-      sourceTitle: c.sourceTitle,
-      content: c.content,
-      meta: c.meta as ChunkMeta | null,
-      score: cosineSim(queryEmbedding, c.embedding as unknown as number[]),
-    }))
-    .sort((a, b) => b.score - a.score);
+  // pgvector does the ranking in the database (HNSW index) — only the top-k
+  // rows travel over the wire, so a semester-sized memory stays fast.
+  const top = await prisma.$queryRaw<RetrievedChunk[]>`
+    SELECT id, "sourceType", "sourceId", "sourceTitle", content, meta,
+           1 - (embedding_vec <=> ${vec}::vector) AS score
+    FROM "MemoryChunk"
+    WHERE "userId" = ${userId} AND "courseId" = ${courseId} AND embedding_vec IS NOT NULL
+    ORDER BY embedding_vec <=> ${vec}::vector
+    LIMIT ${k}`;
 
-  const top = scored.slice(0, k);
+  if (!top.length) {
+    // Rows written by an old server version have no vector yet — heal them
+    // once, then retry; if the course is truly empty this returns [] fast.
+    const healed = await prisma.$executeRaw`
+      UPDATE "MemoryChunk" SET embedding_vec = embedding::text::vector
+      WHERE "userId" = ${userId} AND "courseId" = ${courseId} AND embedding_vec IS NULL`;
+    if (healed > 0) return searchCourse(userId, courseId, query, k);
+    return [];
+  }
 
   // The student's own notes often overlap with a video/file on the same topic
   // and lose the ranking to it. If this course has notes but none made the
   // top-k, guarantee the best-matching note chunks a seat at the table.
   if (!top.some(c => c.sourceType === "note")) {
-    const bestNotes = scored.filter(c => c.sourceType === "note").slice(0, 2);
+    const bestNotes = await prisma.$queryRaw<RetrievedChunk[]>`
+      SELECT id, "sourceType", "sourceId", "sourceTitle", content, meta,
+             1 - (embedding_vec <=> ${vec}::vector) AS score
+      FROM "MemoryChunk"
+      WHERE "userId" = ${userId} AND "courseId" = ${courseId}
+        AND "sourceType" = 'note' AND embedding_vec IS NOT NULL
+      ORDER BY embedding_vec <=> ${vec}::vector
+      LIMIT 2`;
     top.push(...bestNotes);
   }
 
