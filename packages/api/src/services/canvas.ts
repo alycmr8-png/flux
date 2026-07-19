@@ -132,7 +132,7 @@ export async function runCanvasSync(userId: string): Promise<SyncResult> {
             if (!dl.ok) { result.filesSkipped++; continue; }
             const buf = Buffer.from(await dl.arrayBuffer());
             const parsed = await pdfParse(buf);
-            const text = (parsed.text ?? "").trim();
+            const text = (parsed.text ?? "").replace(/\u0000/g, " ").trim();
             if (text.length < 100) { result.filesSkipped++; continue; }
             await indexSource({
               userId, courseId: course.id, sourceType: "file",

@@ -300,3 +300,10 @@ model UsageMonth {
 
   @@unique([userId, month])
 }
+
+model WaitlistEmail {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  source    String?
+  createdAt DateTime @default(now())
+}

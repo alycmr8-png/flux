@@ -211,6 +211,8 @@ router.post("/", quotaMiddleware("gen"), upload.single("document"), async (req, 
   } catch (err: any) {
     return res.status(400).json({ error: err?.message ?? "Could not read this file." });
   }
+  // Some PDFs extract NUL bytes — Postgres rejects them, killing the save
+  text = text.replace(/\u0000/g, " ");
 
   if (!text.trim()) {
     return res.status(400).json({
@@ -323,6 +325,7 @@ router.post("/quick-save", quotaMiddleware("gen"), upload.array("documents", 50)
     // Extract text — but never block the save: store the file even if parsing fails.
     let text = "";
     try { text = await extractTextFromFile(file, title); } catch (e: any) { console.error("[quick-save] extract failed:", e?.message); }
+    text = text.replace(/\u0000/g, " ");
 
     const lecture = await prisma.lecture.create({
       data: { userId: user.id, courseId, title, transcript: text || null, status: "ready" },

@@ -26,6 +26,7 @@ import { canvasRouter } from "./routes/canvas";
 import { usageSummary } from "./services/usage";
 import { errorHandler } from "./middleware/errorHandler";
 import { requireAuth } from "./middleware/requireAuth";
+import { waitlistRouter } from "./routes/waitlist";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -39,6 +40,7 @@ app.use(express.json());
 
 app.get("/health", (_req, res) => res.json({ ok: true }));
 
+app.use("/public/waitlist", waitlistRouter);
 app.use("/api", requireAuth);
 app.use("/api/courses", courseRouter);
 app.use("/api/lectures", lectureRouter);

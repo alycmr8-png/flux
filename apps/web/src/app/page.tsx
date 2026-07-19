@@ -9,6 +9,7 @@ import { Layers, Mic, GraduationCap, FileText, Youtube, PenLine, Calendar } from
 import { GoogleBanner } from "@/components/GoogleBanner";
 import { CapabilityTicker } from "@/components/CapabilityTicker";
 import { HeroQuote, DemoQuote, AfroFace } from "@/components/HeroQuote";
+import { WaitlistForm } from "@/components/WaitlistForm";
 import { ProductDemo } from "@/components/ProductDemo";
 import { RecordingDemo } from "@/components/RecordingDemo";
 import { CourseMemoryDemo } from "@/components/CourseMemoryDemo";
@@ -241,6 +242,19 @@ export default async function LandingPage() {
           <DemoQuote quote="not the AI predicting my final 💀🙏" side="left" top={20} />
           <ExamModeDemo />
         </div>
+      </ScrollReveal>
+
+      {/* Waitlist — catch interest right after the strongest demo */}
+      <ScrollReveal className="flex flex-col items-center px-4 md:px-12 py-14 md:py-20 gap-6">
+        <div className="text-center max-w-xl">
+          <h2 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: "clamp(26px, 4vw, 40px)", color: "#0f1115", letterSpacing: "-0.03em", lineHeight: 1.15, marginBottom: 12 }}>
+            Want Flux for your classes?
+          </h2>
+          <p style={{ fontSize: 16, color: "rgba(0,0,0,0.5)", lineHeight: 1.6 }}>
+            We're inviting students in small waves. Leave your email and you'll be in the next one.
+          </p>
+        </div>
+        <WaitlistForm source="landing-exammode" />
       </ScrollReveal>
 
       {/* Tagline */}

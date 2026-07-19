@@ -90,6 +90,21 @@ export async function fetchYouTubeTranscript(videoId: string): Promise<YTTranscr
         if (text) { console.log(`[studybook] captions via Supadata (${text.length} chars)`); return { text, segments }; }
       }
     } catch (_e) { console.log(`[studybook] Supadata failed: ${(_e as any)?.message}`); }
+    // Non-English video — let Supadata pick whatever language the video has
+    try {
+      const url = `https://api.supadata.ai/v1/youtube/transcript?url=https://www.youtube.com/watch?v=${videoId}`;
+      const { data } = await axios.get(url, { timeout: 15000, headers: { "x-api-key": process.env.SUPADATA_API_KEY } });
+      const items: any[] = data?.content ?? [];
+      if (items.length) {
+        const segments = items.map((t: any) => ({
+          start: (t.offset ?? 0) / 1000,
+          end: ((t.offset ?? 0) + (t.duration ?? 5000)) / 1000,
+          text: t.text ?? "",
+        }));
+        const text = segments.map(s => s.text).join(" ").replace(/\s+/g, " ").trim();
+        if (text) { console.log(`[studybook] captions via Supadata any-lang (${text.length} chars)`); return { text, segments }; }
+      }
+    } catch (_e) { console.log(`[studybook] Supadata any-lang failed: ${(_e as any)?.message}`); }
   }
 
   // Strategy 1: youtube-transcript package — returns timestamps
@@ -108,9 +123,9 @@ export async function fetchYouTubeTranscript(videoId: string): Promise<YTTranscr
   } catch (_e) { console.log(`[studybook] youtube-transcript failed: ${(_e as any)?.message}`); }
 
   // Strategy 1.5: Direct timedtext endpoint (auto-generated captions)
-  for (const kind of ["asr", ""]) {
+  for (const lang of ["en", "fr", "es", "de"]) for (const kind of ["asr", ""]) {
     try {
-      const url = `https://www.youtube.com/api/timedtext?v=${videoId}&lang=en&fmt=json3${kind ? `&kind=${kind}` : ""}`;
+      const url = `https://www.youtube.com/api/timedtext?v=${videoId}&lang=${lang}&fmt=json3${kind ? `&kind=${kind}` : ""}`;
       const { data } = await axios.get(url, { timeout: 8000, headers: { "User-Agent": "Mozilla/5.0" } });
       const events: any[] = data?.events ?? [];
       const tSegs = events
@@ -121,7 +136,7 @@ export async function fetchYouTubeTranscript(videoId: string): Promise<YTTranscr
         }))
         .filter((s: any) => s.text);
       const text = tSegs.map((s: any) => s.text).join(" ").replace(/\s+/g, " ").trim();
-      if (text) { console.log(`[studybook] captions via timedtext kind=${kind||"manual"} (${text.length} chars, ${tSegs.length} segments)`); return { text, segments: tSegs }; }
+      if (text) { console.log(`[studybook] captions via timedtext ${lang}/${kind||"manual"} (${text.length} chars, ${tSegs.length} segments)`); return { text, segments: tSegs }; }
     } catch (_e) {}
   }
 
@@ -132,8 +147,9 @@ export async function fetchYouTubeTranscript(videoId: string): Promise<YTTranscr
     { name: "ANDROID", version: "20.10.38",           headers: { "User-Agent": "com.google.android.youtube/20.10.38 (Linux; U; Android 14) gzip" } },
     { name: "TVHTML5", version: "7.20240101.00.00",   headers: { "User-Agent": "Mozilla/5.0 (SMART-TV; Linux; Tizen 6.0) AppleWebKit/538.1" } },
   ];
-  for (const client of captionClients) {
+  for (const attempt of [1, 2]) for (const client of captionClients) {
     try {
+      if (attempt === 2) await new Promise(r => setTimeout(r, 800));
       const { data: player } = await axios.post(
         "https://www.youtube.com/youtubei/v1/player?prettyPrint=false",
         { context: { client: { clientName: client.name, clientVersion: client.version, hl: "en", gl: "US" } }, videoId, contentCheckOk: true, racyCheckOk: true },

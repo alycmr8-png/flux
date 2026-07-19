@@ -2546,66 +2546,29 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack, initialTab, init
               {docError && <div className="px-6 pb-3 text-xs text-red-600">{docError}</div>}
               <div className="px-6 py-4 border-t border-[rgba(0,0,0,0.05)] space-y-3">
                 {!docSaved ? (
-                  docSaveChoice === "none" ? (
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <button onClick={() => setDocSaveChoice("choosing")} disabled={docSaving}
-                        className="flex items-center gap-1.5 text-xs text-white px-4 py-2 rounded-full font-semibold disabled:opacity-40 transition-colors"
-                        style={{ background: "#4B5FE8" }}>
-                        Save to Study Book
-                      </button>
-                      <button onClick={enterEditMode}
-                        className="text-xs text-[rgba(31,35,40,0.7)] hover:text-gray-900 border border-[rgba(0,0,0,0.08)] hover:border-[rgba(31,35,40,0.5)] px-4 py-2 rounded-full transition-colors">
-                        Edit
-                      </button>
-                      <button onClick={regenerateDocument} disabled={docRegenerating}
-                        className="text-xs text-[rgba(31,35,40,0.7)] hover:text-gray-900 border border-[rgba(0,0,0,0.08)] hover:border-[rgba(31,35,40,0.5)] px-4 py-2 rounded-full transition-colors disabled:opacity-40 flex items-center gap-1.5">
-                        {docRegenerating ? <><Loader2 size={10} className="animate-spin" /> Regenerating…</> : "Regenerate"}
-                      </button>
-                      <button onClick={() => { setDocView("idle"); setDocFile(null); setDocResult(null); setDocSaved(false); setDocSaveChoice("none"); setDocTab("summary"); setDocFlipped(new Set()); setDocQuizSelected(null); }}
-                        className="ml-auto text-xs text-[rgba(31,35,40,0.5)] hover:text-[rgba(31,35,40,0.8)] transition-colors">
-                        Upload another
-                      </button>
-                    </div>
-                  ) : docSaveChoice === "choosing" ? (
-                    <div className="space-y-2">
-                      <p className="text-[10px] text-[rgba(31,35,40,0.55)] uppercase tracking-widest">Where to save?</p>
-                      <div className="flex flex-wrap gap-2">
-                        <button onClick={() => saveDocument()} disabled={docSaving}
-                          className="flex items-center gap-1.5 text-xs text-white px-4 py-2 rounded-full font-semibold disabled:opacity-40 transition-colors"
-                          style={{ background: "#4B5FE8" }}>
-                          {docSaving ? <><Loader2 size={10} className="animate-spin" /> Saving…</> : "Create New Study Book"}
-                        </button>
-                        {studyBooks.length > 0 && (
-                          <button onClick={() => setDocSaveChoice("existing")}
-                            className="text-xs text-[rgba(31,35,40,0.7)] hover:text-gray-900 border border-[rgba(0,0,0,0.08)] px-4 py-2 rounded-full transition-colors">
-                            Add to Existing
-                          </button>
-                        )}
-                        <button onClick={() => setDocSaveChoice("none")} className="text-xs text-[rgba(31,35,40,0.55)] hover:text-gray-900 transition-colors px-2">
-                          Cancel
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      <p className="text-[10px] text-[rgba(31,35,40,0.55)] uppercase tracking-widest">Select a study book</p>
-                      <div className="space-y-1.5 max-h-48 overflow-y-auto">
-                        {studyBooks.map((sb: any) => (
-                          <button key={sb.id} onClick={() => saveToExistingStudyBook(sb.id)} disabled={docSaving}
-                            className="w-full text-left px-3 py-2.5 rounded-xl border border-[rgba(0,0,0,0.06)] hover:border-[rgba(31,35,40,0.3)] text-sm text-gray-900 hover:bg-[rgba(0,0,0,0.04)] transition-colors disabled:opacity-40">
-                            {sb.title?.replace(/^Study Book:\s*/, "") ?? "Untitled"}
-                          </button>
-                        ))}
-                      </div>
-                      <button onClick={() => setDocSaveChoice("choosing")} className="text-xs text-[rgba(31,35,40,0.55)] hover:text-gray-900 transition-colors">
-                        ← Back
-                      </button>
-                    </div>
-                  )
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <button onClick={() => saveDocument()} disabled={docSaving}
+                      className="flex items-center gap-1.5 text-xs text-white px-4 py-2 rounded-full font-semibold disabled:opacity-40 transition-colors"
+                      style={{ background: "#4B5FE8" }}>
+                      {docSaving ? <><Loader2 size={10} className="animate-spin" /> Saving…</> : "Save file"}
+                    </button>
+                    <button onClick={enterEditMode}
+                      className="text-xs text-[rgba(31,35,40,0.7)] hover:text-gray-900 border border-[rgba(0,0,0,0.08)] hover:border-[rgba(31,35,40,0.5)] px-4 py-2 rounded-full transition-colors">
+                      Edit
+                    </button>
+                    <button onClick={regenerateDocument} disabled={docRegenerating}
+                      className="text-xs text-[rgba(31,35,40,0.7)] hover:text-gray-900 border border-[rgba(0,0,0,0.08)] hover:border-[rgba(31,35,40,0.5)] px-4 py-2 rounded-full transition-colors disabled:opacity-40 flex items-center gap-1.5">
+                      {docRegenerating ? <><Loader2 size={10} className="animate-spin" /> Regenerating…</> : "Regenerate"}
+                    </button>
+                    <button onClick={() => { setDocView("idle"); setDocFile(null); setDocResult(null); setDocSaved(false); setDocSaveChoice("none"); setDocTab("summary"); setDocFlipped(new Set()); setDocQuizSelected(null); }}
+                      className="ml-auto text-xs text-[rgba(31,35,40,0.5)] hover:text-[rgba(31,35,40,0.8)] transition-colors">
+                      Upload another
+                    </button>
+                  </div>
                 ) : (
                   <div className="flex items-center gap-3">
                     <div className="flex items-center gap-1.5 text-xs text-green-600">
-                      <CheckCircle size={11} /> Saved to Study Book
+                      <CheckCircle size={11} /> File saved
                     </div>
                     <button onClick={() => { setDocView("idle"); setDocFile(null); setDocResult(null); setDocSaved(false); setDocSaveChoice("none"); setDocTab("summary"); setDocFlipped(new Set()); setDocQuizSelected(null); }}
                       className="ml-auto text-xs text-[rgba(31,35,40,0.55)] hover:text-gray-900 transition-colors">

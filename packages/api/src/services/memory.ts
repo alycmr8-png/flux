@@ -140,6 +140,7 @@ export async function indexSource(input: SourceInput): Promise<number> {
   await prisma.memoryChunk.deleteMany({ where: { sourceId: input.sourceId, userId: input.userId } });
   if (!pieces.length) return 0;
 
+  for (const p of pieces) p.content = p.content.replace(/\u0000/g, " ");
   const embeddings = await embedTexts(pieces.map(p => p.content));
 
   await prisma.memoryChunk.createMany({
