@@ -1,7 +1,6 @@
 ﻿export const dynamic = "force-dynamic";
 
 import Link from "next/link";
-import Image from "next/image";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { Layers, Mic, GraduationCap, FileText, Youtube, PenLine, Calendar } from "lucide-react";
@@ -271,62 +270,6 @@ export default async function LandingPage() {
       <ScrollReveal>
         <CapabilityTicker />
       </ScrollReveal>
-
-      {/* Testimonials */}
-      <div className="px-6 md:px-16 py-12 md:py-20 flex flex-col gap-12 md:gap-16">
-
-        {/* Testimonial 1 — Usman */}
-        <ScrollReveal>
-          <div className="flex flex-col md:flex-row items-center md:items-stretch gap-8 md:gap-12">
-            <div className="relative w-[200px] h-[250px] md:w-[240px] md:h-[300px] shrink-0">
-              <Image src="/usman.jpeg" alt="Usman Tariq" fill className="rounded-2xl object-cover" style={{ objectPosition: "center top" }} />
-            </div>
-            <div className="flex flex-col justify-center">
-              <div className="text-5xl mb-4" style={{ color: "rgba(0,0,0,0.2)", fontFamily: "Georgia, serif", lineHeight: 1 }}>"</div>
-              <p className="text-lg md:text-xl leading-relaxed mb-6" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 700, color: "rgba(0,0,0,0.9)", lineHeight: 1.55 }}>
-                By midterms, Flux basically knew my whole business course. The night before an exam I just ask it questions — and it answers from my own lectures, with the exact minute to rewatch.
-              </p>
-              <div className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: "rgba(0,0,0,0.7)" }}>Usman Tariq</div>
-              <div className="text-xs" style={{ color: "rgba(0,0,0,0.45)" }}>Business Student · Queensborough Community College</div>
-            </div>
-          </div>
-        </ScrollReveal>
-
-        {/* Testimonial 2 — Mohamed (centered) */}
-        <ScrollReveal delay={100}>
-          <div className="flex flex-col items-center text-center max-w-xl mx-auto gap-6">
-            <div className="relative w-[260px] h-[320px] md:w-[300px] md:h-[370px] shrink-0">
-              <Image src="/mohamed.jpeg" alt="Mohamed Camara" fill className="rounded-2xl object-cover" style={{ objectPosition: "center 30%" }} />
-            </div>
-            <div className="flex flex-col items-center">
-              <div className="text-5xl mb-4" style={{ color: "rgba(0,0,0,0.2)", fontFamily: "Georgia, serif", lineHeight: 1 }}>"</div>
-              <p className="text-lg md:text-xl leading-relaxed mb-6" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 700, color: "rgba(0,0,0,0.9)", lineHeight: 1.55 }}>
-                Flux se souvient de tout mon semestre — chaque cours, chaque PDF, chaque vidéo. Avant un examen, je lui pose mes questions et il répond à partir de mes propres supports, avec les sources. C'est comme réviser avec quelqu'un qui a assisté à tous mes cours.
-              </p>
-              <div className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: "rgba(0,0,0,0.7)" }}>Mohamed Camara</div>
-              <div className="text-xs" style={{ color: "rgba(0,0,0,0.45)" }}>Étudiant en Génie Civil · Université de Rennes, France</div>
-            </div>
-          </div>
-        </ScrollReveal>
-
-        {/* Testimonial 3 — Sira */}
-        <ScrollReveal delay={100}>
-          <div className="flex flex-col md:flex-row-reverse items-center md:items-stretch gap-8 md:gap-12">
-            <div className="relative w-[200px] h-[250px] md:w-[240px] md:h-[340px] shrink-0">
-              <Image src="/sira.png" alt="Sira Camara" fill className="rounded-2xl object-cover" style={{ objectPosition: "center 25%" }} />
-            </div>
-            <div className="flex flex-col justify-center md:ml-auto">
-              <div className="text-5xl mb-4" style={{ color: "rgba(0,0,0,0.2)", fontFamily: "Georgia, serif", lineHeight: 1 }}>"</div>
-              <p className="text-lg md:text-xl leading-relaxed mb-6" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 700, color: "rgba(0,0,0,0.9)", lineHeight: 1.55 }}>
-                Between clinicals I don&apos;t have time to re-watch lectures. I just ask Flux and it pulls the answer from my recordings and slides — and shows me exactly where it came from. It&apos;s like a study partner who went to every class.
-              </p>
-              <div className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: "rgba(0,0,0,0.7)" }}>Sira Camara</div>
-              <div className="text-xs" style={{ color: "rgba(0,0,0,0.45)" }}>Nursing Student · LaGuardia Community College</div>
-            </div>
-          </div>
-        </ScrollReveal>
-
-      </div>
 
       {/* Pricing */}
       <div id="pricing">
