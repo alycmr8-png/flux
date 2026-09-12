@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import {
   Home, Layers, Calendar, CreditCard, Archive, HelpCircle,
-  Mic, Mic2, BookMarked, FileUp, PenLine, Youtube,
+  Mic, Mic2, BookMarked, PenLine,
   Square, Plus, Zap, Sparkles, CheckCircle2,
 } from "lucide-react";
 
@@ -12,8 +12,6 @@ const STEPS = [
   { view: "classes", tab: "record",    phase: "idle",      dur: 2000 },
   { view: "class",   tab: "record",    phase: "recording", dur: 2600 },
   { view: "class",   tab: "record",    phase: "done",      dur: 1800 },
-  { view: "class",   tab: "video",     phase: "idle",      dur: 2000 },
-  { view: "class",   tab: "video",     phase: "keypoints", dur: 3000 },
   { view: "class",   tab: "ask",       phase: "question",  dur: 2200 },
   { view: "class",   tab: "ask",       phase: "answer",    dur: 4800 }, // the hero — longest dwell
   { view: "class",   tab: "studybook", phase: "done",      dur: 2600 },
@@ -24,8 +22,6 @@ const CAPTIONS: Record<string, { icon: any; title: string; desc: string; flagshi
   "classes-record-idle":    { icon: Layers,       title: "Your classes, organized for you", desc: "Every course in one place — Flux files everything automatically. No folders to manage." },
   "class-record-recording": { icon: Mic,          title: "Record lectures live",            desc: "Hit record in class. Flux transcribes every word as your professor speaks." },
   "class-record-done":      { icon: CheckCircle2, title: "Transcribed & remembered",        desc: "Seconds later it's a clean transcript, summary, and key points — saved to the course." },
-  "class-video-idle":       { icon: Youtube,      title: "Add any YouTube lecture",         desc: "Paste a link and Flux pulls the full transcript into your course memory." },
-  "class-video-keypoints":  { icon: Zap,          title: "Key points, extracted instantly", desc: "Definitions, examples, and exam-critical points — pulled out and labeled for you." },
   "class-ask-question":     { icon: Sparkles,     title: "Ask your course anything",         desc: "One chat box per class, on top of everything you've captured all semester.", flagship: true },
   "class-ask-answer":       { icon: Sparkles,     title: "Answers — with real sources",      desc: "Every answer cites the exact lecture minute or file it came from. No guessing.", flagship: true },
   "class-studybook-done":   { icon: BookMarked,   title: "A full study book, auto-built",    desc: "Chapters, glossary, and practice — generated from your whole course memory." },
@@ -45,8 +41,6 @@ const NAV = [
 const CLASS_TABS = [
   { key: "ask",       label: "Ask",          icon: Sparkles  },
   { key: "record",    label: "Record",       icon: Mic2      },
-  { key: "files",     label: "Upload Files", icon: FileUp    },
-  { key: "video",     label: "Upload Video", icon: Youtube   },
   { key: "studybook", label: "Study Book",   icon: BookMarked },
   { key: "note",      label: "Take Note",    icon: PenLine   },
 ] as const;
@@ -62,12 +56,6 @@ const RECORDINGS = [
   "Week 4 — Social Psychology",
   "Week 3 — Memory & Cognition",
   "Week 2 — Behavioral Theory",
-];
-
-const KEY_POINTS = [
-  { cat: "Definition", text: "Cognitive dissonance is mental conflict from contradictory beliefs", color: "#6E7FF3", bg: "rgba(110,127,243,0.12)" },
-  { cat: "Important",  text: "The brain resolves dissonance by changing beliefs or adding new ones", color: "#f97316", bg: "rgba(249,115,22,0.12)" },
-  { cat: "Example",    text: "Pavlov's dogs — conditioned response through repeated stimulus pairing", color: "#22c55e", bg: "rgba(34,197,94,0.12)" },
 ];
 
 const ASK_QUESTION = "What did the professor say about cognitive dissonance?";
@@ -196,43 +184,6 @@ function ClassView({ tab, phase, refs }: {
           </div>
         )}
 
-        {/* UPLOAD VIDEO TAB */}
-        {tab === "video" && phase === "idle" && (
-          <div style={{ maxWidth: 440 }}>
-            <div className="flex gap-2 mb-3">
-              <div className="flex-1 flex items-center gap-2 px-3 py-2.5 rounded-xl" style={{ background: "rgba(75,95,232,0.1)", border: "1px solid rgba(75,95,232,0.28)" }}>
-                <Youtube size={13} style={{ color: "#ef4444" }} />
-                <span style={{ fontSize: 11, color: "rgba(31,35,40,0.68)" }}>youtube.com/watch?v=lecture</span>
-              </div>
-              <div className="px-4 py-2.5 rounded-xl font-semibold" style={{ background: "#4B5FE8", color: "white", fontSize: 11 }}>Load</div>
-            </div>
-            <div className="rounded-xl overflow-hidden mb-3" style={{ aspectRatio: "16/9", background: "rgba(0,0,0,0.03)", border: "1px solid rgba(0,0,0,0.06)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: "rgba(239,68,68,0.9)" }}>
-                <Youtube size={22} style={{ color: "white" }} />
-              </div>
-            </div>
-            <div className="flex gap-1 p-1 rounded-lg" style={{ background: "rgba(75,95,232,0.1)", border: "1px solid rgba(75,95,232,0.18)" }}>
-              {["Transcript","Summary","Key Points","Chatbot"].map(t => (
-                <div key={t} className="flex-1 text-center py-1.5 rounded-md" style={{ fontSize: 9, color: "rgba(31,35,40,0.68)" }}>{t}</div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {tab === "video" && phase === "keypoints" && (
-          <div style={{ maxWidth: 460 }}>
-            <div style={{ fontSize: 9, textTransform: "uppercase", letterSpacing: "0.12em", color: "#4B5FE8", marginBottom: 10, fontWeight: 600 }}>Key Points</div>
-            <div className="space-y-2.5">
-              {KEY_POINTS.map((kp, i) => (
-                <div key={i} className="flex gap-2.5 items-start rounded-xl px-3.5 py-3" style={{ background: kp.bg, border: `1px solid ${kp.color}33` }}>
-                  <span className="text-[8px] font-bold uppercase tracking-widest shrink-0 mt-0.5 px-2 py-0.5 rounded" style={{ color: kp.color, background: `${kp.color}2e` }}>{kp.cat}</span>
-                  <span style={{ fontSize: 12, color: "rgba(31,35,40,0.9)", lineHeight: 1.5 }}>{kp.text}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
         {/* ASK TAB — the hero feature */}
         {tab === "ask" && (
           <div className="flex flex-col gap-3 mx-auto" style={{ maxWidth: 480 }}>
@@ -241,7 +192,7 @@ function ClassView({ tab, phase, refs }: {
                 <Sparkles size={12} style={{ color: "#4B5FE8" }} />
                 <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.04em", color: "#C7CEFB" }}>Ask your course</span>
               </div>
-              <span style={{ fontSize: 10, color: "rgba(31,35,40,0.6)", marginLeft: "auto" }}>In memory: 12 lectures · 8 files · 5 notes</span>
+              <span style={{ fontSize: 10, color: "rgba(31,35,40,0.6)", marginLeft: "auto" }}>In memory: 12 lectures · 5 notes</span>
             </div>
 
             {/* User question */}
@@ -332,8 +283,6 @@ export function ProductDemo() {
   const refs = {
     ask:       useRef<HTMLDivElement>(null),
     record:    useRef<HTMLDivElement>(null),
-    files:     useRef<HTMLDivElement>(null),
-    video:     useRef<HTMLDivElement>(null),
     studybook: useRef<HTMLDivElement>(null),
     note:      useRef<HTMLDivElement>(null),
     mic:       useRef<HTMLDivElement>(null),
@@ -352,8 +301,6 @@ export function ProductDemo() {
     "classes-record-idle":      classCardRef,
     "class-record-recording":   refs.mic,
     "class-record-done":        refs.record,
-    "class-video-idle":         refs.video,
-    "class-video-keypoints":    refs.video,
     "class-ask-question":       refs.ask,
     "class-ask-answer":         refs.ask,
     "class-studybook-done":     refs.studybook,

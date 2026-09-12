@@ -1,8 +1,8 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import {
-  Mic, Mic2, Square, Pause, Play, FileUp, BookOpen, BookMarked,
-  PenLine, Youtube, CheckCircle, Loader2, Sparkles, Home,
+  Mic, Mic2, Square, Pause, Play, BookOpen, BookMarked,
+  PenLine, CheckCircle, Loader2, Sparkles, Home,
   Layers, Calendar, Archive, CreditCard, HelpCircle,
 } from "lucide-react";
 
@@ -20,9 +20,7 @@ const NAV = [
 
 const TABS = [
   { icon: Mic2,      label: "Record"         },
-  { icon: FileUp,    label: "Upload Files"   },
   { icon: BookOpen,  label: "Quizzes"        },
-  { icon: Youtube,   label: "Upload Video"   },
   { icon: BookMarked,label: "Review"         },
   { icon: PenLine,   label: "Take Note"      },
 ];

@@ -1,4 +1,4 @@
-import { ScrollView, View, Text, StyleSheet, TouchableOpacity, StatusBar, Image } from "react-native";
+import { ScrollView, View, Text, StyleSheet, TouchableOpacity, StatusBar } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -39,7 +39,6 @@ export default function HomeScreen() {
 
   const { data: eventsData } = useSWR(`/api/events?from=${range.from}&to=${range.to}`, fetcher);
   const { data: coursesData } = useSWR("/api/courses", fetcher);
-  const { data: videosData } = useSWR("/api/studybook/recent-videos", fetcher);
   const { data: sheetsData } = useSWR("/api/cheatsheets", fetcher);
 
   const events: any[] = (eventsData?.data ?? [])
@@ -47,7 +46,6 @@ export default function HomeScreen() {
     .sort((x: any, y: any) => new Date(x.date).getTime() - new Date(y.date).getTime())
     .slice(0, 3);
   const courses: any[] = coursesData?.data ?? [];
-  const videos: any[] = (videosData?.data ?? []).slice(0, 4);
   const notes: any[] = (sheetsData?.data ?? []).slice(0, 3);
 
   const firstName = user?.firstName ?? "";
@@ -112,24 +110,6 @@ export default function HomeScreen() {
           ))
         )}
 
-        {/* Recent videos */}
-        {videos.length > 0 && (
-          <>
-            <Text style={s.sectionLbl}>Recent videos</Text>
-            <View style={s.videoGrid}>
-              {videos.map((v: any) => (
-                <TouchableOpacity key={v.videoId ?? v.title} style={s.videoCard}
-                  onPress={() => router.push("/(tabs)/record" as any)} activeOpacity={0.7}>
-                  {v.thumbnail
-                    ? <Image source={{ uri: v.thumbnail }} style={s.thumb} />
-                    : <View style={[s.thumb, s.thumbEmpty]}><Ionicons name="logo-youtube" size={18} color="#444" /></View>}
-                  <Text style={s.videoTitle} numberOfLines={2}>{v.title}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </>
-        )}
-
         {/* Saved notes */}
         {notes.length > 0 && (
           <>
@@ -168,11 +148,6 @@ const s = StyleSheet.create({
   classIc: { width: 36, height: 36, borderRadius: 11, backgroundColor: "rgba(37,99,235,0.14)", alignItems: "center", justifyContent: "center" },
   className: { fontSize: 14, color: "#fff", fontWeight: "600" },
   classCode: { fontSize: 11, color: "#555", marginTop: 1 },
-  videoGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10, marginBottom: 10 },
-  videoCard: { width: "47.5%" },
-  thumb: { width: "100%", aspectRatio: 16 / 9, borderRadius: 12, backgroundColor: "#161616" },
-  thumbEmpty: { alignItems: "center", justifyContent: "center" },
-  videoTitle: { fontSize: 11.5, color: "#ccc", fontWeight: "500", marginTop: 6, lineHeight: 15 },
   noteRow: { flexDirection: "row", alignItems: "center", gap: 11, backgroundColor: "rgba(255,255,255,0.04)", borderWidth: 0.5, borderColor: "#1e1e1e", borderRadius: 14, padding: 13, marginBottom: 8 },
   noteName: { flex: 1, fontSize: 12.5, color: "#ddd", fontWeight: "500" },
 });

@@ -1,9 +1,9 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Mic2, FileText, Youtube, PenLine, Sparkles, Play, Layers } from "lucide-react";
+import { Mic2, FileText, PenLine, Sparkles, Play, Layers } from "lucide-react";
 
 /**
- * The goal demo: a course memory fills up (lecture, slides, video, notes),
+ * The goal demo: a course memory fills up (lecture, slides, notes),
  * then the student asks a question, gets a cited answer, and a citation
  * click replays the professor at the exact moment. Loops forever.
  */
@@ -11,7 +11,6 @@ import { Mic2, FileText, Youtube, PenLine, Sparkles, Play, Layers } from "lucide
 const CAPTURES = [
   { icon: Mic2,     tint: "#4B5FE8", title: "Week 1 — Cell Structure",      meta: "Recorded lecture · 48 min" },
   { icon: FileText, tint: "#F97316", title: "Week 2 — Membranes.pdf",       meta: "Slides · 24 pages" },
-  { icon: Youtube,  tint: "#EF4444", title: "The Krebs Cycle, Explained",   meta: "YouTube · 14:32" },
   { icon: PenLine,  tint: "#10B981", title: "My notes — ATP & energy",      meta: "Note" },
 ];
 
@@ -30,7 +29,7 @@ export function CourseMemoryDemo() {
   }, [step]);
 
   const faded = step === STEPS.length - 1;
-  const visibleCaptures = Math.min(step + 1, 4);
+  const visibleCaptures = Math.min(step + 1, CAPTURES.length);
   const memoryReady = step >= 4;
   const showQuestion = step >= 5;
   const thinking = step === 6;
@@ -96,7 +95,7 @@ export function CourseMemoryDemo() {
             }}>
             <Sparkles size={12} style={{ color: memoryReady ? "#4B5FE8" : "rgba(15,17,21,0.35)" }} />
             <span style={{ fontSize: 11, fontWeight: 600, color: memoryReady ? "#4B5FE8" : "rgba(15,17,21,0.45)" }}>
-              {memoryReady ? "In memory: 4 sources · 118 chunks — ask anything" : "Building course memory…"}
+              {memoryReady ? "In memory: 3 sources · 118 chunks — ask anything" : "Building course memory…"}
             </span>
           </div>
         </div>

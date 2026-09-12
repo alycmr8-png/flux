@@ -84,11 +84,11 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
   const api = useApi();
   const { getToken } = useAuth();
   const fetcher = makeApiFetcher(getToken);
-  const [tab, setTab] = useState<"ask" | "record" | "files" | "video" | "studybook" | "note">("ask");
+  const [tab, setTab] = useState<"ask" | "record" | "studybook" | "note">("ask");
 
   const { data: lecturesData, mutate: mutateLectures } = useSWR(`/api/lectures?courseId=${course.id}`, fetcher);
   const lectures: any[] = lecturesData?.data ?? [];
-  const { data: sheetsData, mutate: mutateSheets } = useSWR(`/api/cheatsheets?courseId=${course.id}`, fetcher);
+  const { data: sheetsData } = useSWR(`/api/cheatsheets?courseId=${course.id}`, fetcher);
   const studyBooks: any[] = (sheetsData?.data ?? []).filter((s: any) => s.title?.startsWith("Study Book:"));
   const [expandedBook, setExpandedBook] = useState<string | null>(null);
   // ── ask your course (RAG chat over everything captured) ──
@@ -340,89 +340,6 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
   const fmt = (s: number) =>
     `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
 
-  // ── file upload ──
-  const [docUri, setDocUri] = useState<string | null>(null);
-  const [docName, setDocName] = useState("");
-  const [docTitle, setDocTitle] = useState("");
-  const [docProcessing, setDocProcessing] = useState(false);
-  const [docDone, setDocDone] = useState(false);
-
-  async function pickDoc() {
-    const r = await DocumentPicker.getDocumentAsync({ type: ["application/pdf", "text/plain"] });
-    if (!r.canceled) { setDocUri(r.assets[0].uri); setDocName(r.assets[0].name); }
-  }
-
-  async function uploadDoc() {
-    if (!docUri) return;
-    setDocProcessing(true);
-    try {
-      const fd = new FormData();
-      fd.append("document", { uri: docUri, name: docName, type: "application/pdf" } as any);
-      fd.append("title", docTitle.trim() || docName.replace(/\.[^.]+$/, ""));
-      fd.append("courseId", course.id);
-      await api.post("/api/documents", fd, { headers: { "Content-Type": "multipart/form-data" } });
-      setDocDone(true);
-    } catch (e: any) {
-      Alert.alert("Failed", e?.response?.data?.message ?? e?.message ?? "Unknown error");
-    } finally {
-      setDocProcessing(false);
-    }
-  }
-
-  // ── youtube video ──
-  const [ytUrl, setYtUrl] = useState("");
-  const [ytLoading, setYtLoading] = useState(false);
-  const [ytJobId, setYtJobId] = useState<string | null>(null);
-  const [ytResult, setYtResult] = useState<any | null>(null);
-  const [ytError, setYtError] = useState("");
-  const ytPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  useEffect(() => {
-    if (!ytJobId) return;
-    let failCount = 0;
-    ytPollRef.current = setInterval(async () => {
-      try {
-        const res = await api.get(`/api/studybook/job/${ytJobId}`);
-        const job = res.data;
-        failCount = 0;
-        if (job.status === "ready") {
-          clearInterval(ytPollRef.current!);
-          setYtJobId(null);
-          setYtLoading(false);
-          setYtResult({ ...job.data, title: job.title, generatedAt: new Date().toISOString() });
-          mutateSheets();
-        } else if (job.status === "error") {
-          clearInterval(ytPollRef.current!);
-          setYtJobId(null);
-          setYtLoading(false);
-          setYtError(job.error ?? "Processing failed");
-        }
-      } catch (_) {
-        if (++failCount >= 3) {
-          clearInterval(ytPollRef.current!);
-          setYtJobId(null);
-          setYtLoading(false);
-          setYtError("Lost connection to server. Please try again.");
-        }
-      }
-    }, 4000);
-    return () => { if (ytPollRef.current) clearInterval(ytPollRef.current); };
-  }, [ytJobId]);
-
-  async function generateFromYouTube() {
-    if (!ytUrl.trim()) return;
-    setYtLoading(true);
-    setYtError("");
-    try {
-      const res = await api.post("/api/studybook/from-youtube", { url: ytUrl.trim(), courseId: course.id });
-      setYtUrl("");
-      setYtJobId(res.data?.jobId);
-    } catch (e: any) {
-      setYtError(e?.response?.data?.error ?? e?.message ?? "Failed to start processing");
-      setYtLoading(false);
-    }
-  }
-
   // ── notes (in-memory) ──
   type NoteEntry = { id: string; name: string; text: string; updatedAt: string };
   const [notes, setNotes] = useState<NoteEntry[]>([]);
@@ -472,8 +389,6 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
   const TABS = [
     { key: "ask",       icon: "sparkles-outline",      label: "Ask"           },
     { key: "record",    icon: "mic-outline",           label: "Record"        },
-    { key: "files",     icon: "document-text-outline", label: "Upload Files"  },
-    { key: "video",     icon: "logo-youtube",          label: "Upload Video"  },
     { key: "studybook", icon: "bookmark-outline",      label: "Study Book"    },
     { key: "note",      icon: "create-outline",        label: "Take Note"     },
   ] as const;
@@ -818,138 +733,6 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
         </>
       )}
 
-      {/* ── FILES ── */}
-      {tab === "files" && (
-        <>
-          {docDone ? (
-            <View style={w.doneCard}>
-              <View style={w.doneIcon}><Ionicons name="checkmark" size={24} color="#000" /></View>
-              <Text style={w.doneTitle}>Saved to {course.name}</Text>
-              <Text style={w.doneSub}>Your structured learning file is in Summaries.</Text>
-              <TouchableOpacity onPress={() => { setDocDone(false); setDocUri(null); setDocTitle(""); }} style={w.againBtn}>
-                <Text style={w.againTxt}>Upload another</Text>
-              </TouchableOpacity>
-            </View>
-          ) : (
-            <>
-              <View style={w.card}>
-                <Text style={w.cardDesc}>
-                  Upload slides, notes, or a PDF — AI will generate a structured learning file for <Text style={{ color: "#fff" }}>{course.name}</Text>.
-                </Text>
-                <TextInput
-                  style={[w.titleInput, { marginTop: 12 }]}
-                  value={docTitle}
-                  onChangeText={setDocTitle}
-                  placeholder="Document title (optional)"
-                  placeholderTextColor="#333"
-                />
-                <TouchableOpacity style={[w.attachRow, { marginTop: 10 }]} onPress={pickDoc} activeOpacity={0.7}>
-                  <Ionicons name="document-attach-outline" size={15} color={docUri ? "#fff" : "#555"} />
-                  <Text style={[w.attachTxt, docUri && { color: "#fff" }]}>
-                    {docUri ? docName : "Select PDF or text file"}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-              <TouchableOpacity
-                style={[w.primaryBtn, (!docUri || docProcessing) && { opacity: 0.4 }]}
-                onPress={uploadDoc}
-                disabled={!docUri || docProcessing}
-                activeOpacity={0.8}
-              >
-                {docProcessing
-                  ? <><ActivityIndicator size="small" color="#000" /><Text style={w.primaryBtnTxt}>  Generating…</Text></>
-                  : <Text style={w.primaryBtnTxt}>Generate Learning File</Text>
-                }
-              </TouchableOpacity>
-            </>
-          )}
-        </>
-      )}
-
-      {/* ── UPLOAD VIDEO ── */}
-      {tab === "video" && (
-        <>
-          {!ytResult && (
-            <View style={w.card}>
-              <Text style={w.listLbl}>YouTube URL</Text>
-              <TextInput
-                style={w.titleInput}
-                value={ytUrl}
-                onChangeText={setYtUrl}
-                placeholder="https://youtube.com/watch?v=…"
-                placeholderTextColor="#333"
-                autoCapitalize="none"
-                keyboardType="url"
-              />
-              {!!ytError && (
-                <Text style={{ fontSize: 11, color: "#f87171", marginBottom: 10 }}>{ytError}</Text>
-              )}
-              <TouchableOpacity
-                style={[w.primaryBtn, (!ytUrl.trim() || ytLoading) && { opacity: 0.4 }]}
-                onPress={generateFromYouTube}
-                disabled={!ytUrl.trim() || ytLoading}
-                activeOpacity={0.8}
-              >
-                {ytLoading
-                  ? <><ActivityIndicator size="small" color="#000" /><Text style={w.primaryBtnTxt}>  Building chapters…</Text></>
-                  : <Text style={w.primaryBtnTxt}>Generate Study Book</Text>
-                }
-              </TouchableOpacity>
-              {ytLoading && (
-                <Text style={[w.cardDesc, { textAlign: "center", marginTop: 8, color: "#333" }]}>
-                  Long videos can take up to 30 seconds
-                </Text>
-              )}
-            </View>
-          )}
-
-          {ytResult && (
-            <View style={w.card}>
-              {/* Header */}
-              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
-                <View style={{ flex: 1, marginRight: 8 }}>
-                  <Text style={[w.listTitle, { color: "#fff", fontSize: 13 }]} numberOfLines={2}>{ytResult.title ?? "YouTube Study Book"}</Text>
-                  <Text style={[w.listSub, { marginTop: 2 }]}>
-                    {new Date(ytResult.generatedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                  </Text>
-                </View>
-                <Text style={{ fontSize: 10, color: "#4ade80" }}>✓ Saved</Text>
-              </View>
-
-              {/* Chapters */}
-              {(ytResult.chapters ?? []).length > 0 && (
-                <View style={{ marginBottom: 12 }}>
-                  <Text style={[w.listLbl, { marginTop: 0, marginBottom: 8 }]}>Chapters</Text>
-                  {(ytResult.chapters ?? []).map((ch: any, i: number) => (
-                    <View key={i} style={{ marginBottom: 10 }}>
-                      <Text style={[w.listTitle, { color: "#fff", marginBottom: 2 }]}>{i + 1}. {ch.title}</Text>
-                      {ch.summary && <Text style={w.cardDesc} numberOfLines={3}>{ch.summary}</Text>}
-                      {(ch.keyPoints ?? []).slice(0, 2).map((kp: string, j: number) => (
-                        <Text key={j} style={[w.cardDesc, { marginTop: 3 }]} numberOfLines={1}>· {kp}</Text>
-                      ))}
-                    </View>
-                  ))}
-                </View>
-              )}
-
-              {/* Stats */}
-              <View style={{ flexDirection: "row", gap: 12, marginBottom: 12 }}>
-                {(ytResult.flashcards ?? []).length > 0 && (
-                  <Text style={w.listSub}>{ytResult.flashcards.length} flashcards</Text>
-                )}
-                {(ytResult.glossary ?? []).length > 0 && (
-                  <Text style={w.listSub}>{ytResult.glossary.length} glossary terms</Text>
-                )}
-              </View>
-
-              <TouchableOpacity onPress={() => { setYtResult(null); setYtError(""); }} style={w.againBtn}>
-                <Text style={w.againTxt}>Generate another</Text>
-              </TouchableOpacity>
-            </View>
-          )}
-        </>
-      )}
-
       {/* ── STUDY BOOK ── */}
       {tab === "studybook" && (
         <>
@@ -957,7 +740,7 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
             <View style={w.doneCard}>
               <Ionicons name="bookmark-outline" size={28} color="#333" style={{ marginBottom: 12 }} />
               <Text style={w.doneTitle}>No study books yet</Text>
-              <Text style={w.doneSub}>Use the Upload Video tab to generate one from YouTube.</Text>
+              <Text style={w.doneSub}>Record a lecture, then generate a Study Book from your course.</Text>
             </View>
           ) : (
             studyBooks.map((sb: any) => {

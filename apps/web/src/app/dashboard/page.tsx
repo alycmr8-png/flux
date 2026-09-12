@@ -4,9 +4,8 @@ import { useUser, useAuth } from "@clerk/nextjs";
 import { useT } from "@/lib/useT";
 import Link from "next/link";
 import useSWR, { useSWRConfig } from "swr";
-import Image from "next/image";
 import { useApiSWRFetcher, useApiFetch } from "@/lib/apiFetch";
-import { FileText, Calendar, ChevronRight, Plus, Clock, Layers, Youtube, X, Link2, RefreshCw, Loader2, CheckCircle } from "lucide-react";
+import { FileText, Calendar, ChevronRight, Plus, Clock, Layers, Link2, RefreshCw, Loader2, CheckCircle } from "lucide-react";
 import { startOfDay, format, differenceInCalendarDays } from "date-fns";
 
 const TYPE_COLOR: Record<string, string> = {
@@ -179,7 +178,6 @@ export default function DashboardHome() {
   const firstName = user?.firstName ?? user?.username ?? "";
   const t = useT();
   const fetcher = useApiSWRFetcher();
-  const apiFetch = useApiFetch();
   const SWR_OPTS = { revalidateOnFocus: false, dedupingInterval: 60000 } as const;
   // Only fetch once Clerk has resolved the user id — otherwise the first
   // request goes out with an empty auth header, gets a 401, and SWR waits on
@@ -192,14 +190,6 @@ export default function DashboardHome() {
   // Stable date range — must not be computed inline or the SWR key changes every render
   const [eventsFrom] = useState(() => startOfDay(new Date()).toISOString());
   const [eventsTo] = useState(() => new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString());
-
-  const { data: recentVideosData, mutate: mutateVideos } = useSWR(ready ? `${BASE}/api/studybook/recent-videos` : null, fetcher, SWR_OPTS);
-  const recentVideos: any[] = recentVideosData?.data ?? [];
-
-  async function archiveVideo(lectureId: string) {
-    await apiFetch(`/api/lectures/${lectureId}/archive`, { method: "PATCH" });
-    mutateVideos();
-  }
 
   const { data: eventsData, isLoading: eventsLoading } = useSWR(
     ready ? `${BASE}/api/events?from=${eventsFrom}&to=${eventsTo}` : null,
@@ -339,59 +329,6 @@ export default function DashboardHome() {
         </div>
 
         <CanvasCard />
-
-        {/* Recent Videos */}
-        {recentVideos.length > 0 && (
-          <>
-            <p className="text-xs uppercase tracking-widest mb-3" style={{ color: "#6E7FF3" }}>{t.home.recentVideos}</p>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
-              {recentVideos.slice(0, 8).map((v: any) => (
-                <div key={v.videoId ?? v.title} className="relative group/card">
-                {v.lectureId && (
-                  <button
-                    onClick={() => archiveVideo(v.lectureId)}
-                    className="absolute top-2 right-2 z-10 w-6 h-6 rounded-full flex items-center justify-center opacity-0 group-hover/card:opacity-100 transition-opacity"
-                    style={{ background: "rgba(0,0,0,0.6)" }}
-                    title={t.home.removeFromHome}
-                  >
-                    <X size={11} style={{ color: "#1F2328" }} />
-                  </button>
-                )}
-                <Link
-                  href={v.videoId ? `/dashboard/record?videoId=${v.videoId}&courseId=${v.courseId}` : `/dashboard/record`}
-                  className="rounded-2xl overflow-hidden border transition-all duration-200 hover:border-white/20 hover:scale-[1.02] group block"
-                  style={{ background: "rgba(0,0,0,0.05)", borderColor: "rgba(0,0,0,0.06)" }}
-                >
-                  <div className="relative w-full" style={{ paddingBottom: "56.25%" }}>
-                    {v.thumbnail ? (
-                      <Image
-                        src={v.thumbnail}
-                        alt={v.title}
-                        fill
-                        className="object-cover"
-                        unoptimized
-                      />
-                    ) : (
-                      <div className="absolute inset-0 flex items-center justify-center" style={{ background: "rgba(0,0,0,0.04)" }}>
-                        <Youtube size={20} style={{ color: "rgba(31,35,40,0.5)" }} />
-                      </div>
-                    )}
-                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity" style={{ background: "rgba(0,0,0,0.4)" }}>
-                      <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: "#4B5FE8" }}>
-                        <Youtube size={14} style={{ color: "#1F2328" }} />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="px-3 py-2.5">
-                    <div className="text-xs font-medium truncate" style={{ color: "#1F2328" }}>{v.title}</div>
-                    <div className="text-[10px] mt-0.5" style={{ color: "rgba(31,35,40,0.55)" }}>YouTube Video</div>
-                  </div>
-                </Link>
-                </div>
-              ))}
-            </div>
-          </>
-        )}
 
         {/* Saved notes */}
         {notes.length > 0 && (

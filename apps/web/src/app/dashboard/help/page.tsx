@@ -1,14 +1,10 @@
 "use client";
-import { Mail, MessageCircle, BookOpen, Mic, Youtube, Calendar, FileText } from "lucide-react";
+import { Mail, MessageCircle, BookOpen, Mic, Calendar } from "lucide-react";
 
 const FAQS = [
   {
     q: "How do I record a lecture?",
     a: "Go to Workspace → Record tab. Name your lecture, then press Start Recording. When done, press Stop — Flux will automatically generate your cheat sheet.",
-  },
-  {
-    q: "How do I add a YouTube lecture?",
-    a: "Go to Workspace → Upload Video tab. Paste any YouTube link and press Load. You'll get a transcript, summary, flashcards, and quiz instantly.",
   },
   {
     q: "How do I add events to my Calendar?",
@@ -19,10 +15,6 @@ const FAQS = [
     a: "A Study Book is a full AI-generated guide from your lecture — with chapters, key terms, flashcards, and practice questions. Find them in Workspace → Study Book.",
   },
   {
-    q: "Can I upload a PDF or document?",
-    a: "Yes. Go to Workspace → Files tab, upload your PDF or text file, then click Generate to turn it into a structured study guide.",
-  },
-  {
     q: "How do I change the language?",
     a: "Use the language switcher at the bottom of the sidebar. Flux will generate all study materials in your selected language.",
   },
@@ -30,8 +22,6 @@ const FAQS = [
 
 const FEATURES = [
   { icon: Mic,        label: "Record",       desc: "Record lectures and get instant cheat sheets" },
-  { icon: Youtube,    label: "Video",        desc: "Paste a YouTube link for summaries and quizzes" },
-  { icon: FileText,   label: "Files",        desc: "Upload PDFs and documents to study" },
   { icon: BookOpen,   label: "Study Book",   desc: "Full AI-generated study guides per lecture" },
   { icon: Calendar,   label: "Calendar",     desc: "Track exams, assignments, and deadlines" },
 ];
