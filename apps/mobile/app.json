@@ -1,4 +1,4 @@
-﻿{
+{
   "expo": {
     "entryPoint": "./index.js",
     "name": "Flux",
@@ -8,20 +8,24 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "splash": {
-      "backgroundColor": "#000000"
+      "backgroundColor": "#FFFFFF"
     },
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.Flux.app",
       "infoPlist": {
         "NSMicrophoneUsageDescription": "Flux records your lectures to generate cheat sheets.",
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSCameraUsageDescription": "Flux lets you photograph the board or slides during a lecture.",
+        "NSPhotoLibraryUsageDescription": "Flux lets you attach existing photos of the board or slides to a lecture."
       }
     },
     "android": {
       "package": "com.Flux.app",
       "permissions": [
-        "RECORD_AUDIO"
+        "RECORD_AUDIO",
+        "CAMERA",
+        "READ_MEDIA_IMAGES"
       ]
     },
     "plugins": [
@@ -31,11 +35,20 @@
         "expo-notifications",
         {
           "icon": "./assets/icon.png",
-          "color": "#ffffff"
+          "color": "#4B5FE8"
         }
       ],
       "expo-secure-store",
-      "expo-web-browser"
+      "expo-web-browser",
+      "expo-status-bar",
+      "expo-audio",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Flux lets you attach photos of the board or slides to a lecture.",
+          "cameraPermission": "Flux lets you photograph the board or slides during a lecture."
+        }
+      ]
     ],
     "extra": {
       "router": {},
@@ -45,4 +58,3 @@
     }
   }
 }
-

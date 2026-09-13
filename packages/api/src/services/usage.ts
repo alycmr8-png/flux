@@ -42,6 +42,10 @@ const KIND_FIELD: Record<UsageKind, "lectureCount" | "askCount" | "genCount"> = 
 // Throws QuotaError when the user is at their monthly limit; otherwise counts
 // this use. Small races just overshoot by one — fine for cost control.
 export async function consumeQuota(userId: string, kind: UsageKind): Promise<void> {
+  // Local development would otherwise burn the founder's own monthly allowance
+  // while testing. Never set this in production.
+  if (process.env.DISABLE_QUOTAS === "true") return;
+
   const month = currentMonth();
   const plan = await planFor(userId);
   const limit = LIMITS[plan][kind];

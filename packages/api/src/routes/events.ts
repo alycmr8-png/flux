@@ -14,7 +14,7 @@ router.get("/", async (req, res) => {
   }
   const events = await prisma.calendarEvent.findMany({
     where,
-    include: { course: { select: { id: true, name: true, code: true } } },
+    include: { course: { select: { id: true, name: true, code: true, color: true } } },
     orderBy: { date: "asc" },
   });
   res.json({ data: events });
@@ -35,7 +35,7 @@ router.post("/", async (req, res) => {
       courseId: courseId || null,
       description: description?.trim() || null,
     },
-    include: { course: { select: { id: true, name: true, code: true } } },
+    include: { course: { select: { id: true, name: true, code: true, color: true } } },
   });
   res.json({ data: event });
 });
@@ -54,7 +54,7 @@ router.patch("/:id", async (req, res) => {
       ...(courseId !== undefined && { courseId: courseId || null }),
       ...(description !== undefined && { description: description?.trim() || null }),
     },
-    include: { course: { select: { id: true, name: true, code: true } } },
+    include: { course: { select: { id: true, name: true, code: true, color: true } } },
   });
   res.json({ data: event });
 });

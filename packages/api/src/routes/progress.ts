@@ -35,11 +35,11 @@ progressRouter.get("/", async (req, res) => {
       ? Math.round(attempts.reduce((acc, a) => acc + a.score, 0) / attempts.length)
       : 0;
 
-  const retentionByCourse: Record<string, { name: string; code: string; avg: number; count: number }> = {};
+  const retentionByCourse: Record<string, { name: string; code: string; color: string | null; avg: number; count: number }> = {};
   for (const attempt of attempts) {
     const course = attempt.quiz.lecture.course;
     if (!retentionByCourse[course.id]) {
-      retentionByCourse[course.id] = { name: course.name, code: course.code, avg: 0, count: 0 };
+      retentionByCourse[course.id] = { name: course.name, code: course.code, color: course.color, avg: 0, count: 0 };
     }
     retentionByCourse[course.id].avg += attempt.score;
     retentionByCourse[course.id].count++;
