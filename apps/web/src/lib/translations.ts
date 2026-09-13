@@ -58,7 +58,6 @@ const translations = {
       tabs: {
         record: "Record",
         quizzes: "Quizzes",
-        studybook: "Study Book",
         note: "Take Note",
         ask: "Ask",
       },
@@ -222,7 +221,6 @@ const translations = {
       tabs: {
         record: "Enregistrer",
         quizzes: "Quiz",
-        studybook: "Livre d'étude",
         note: "Prendre des notes",
         ask: "Demander",
       },

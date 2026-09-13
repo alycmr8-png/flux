@@ -7,6 +7,22 @@ import { useApiSWRFetcher } from "@/lib/apiFetch";
 
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
+const BRAND = "#4B5FE8";
+const INK = "#0f1115";
+const HAIRLINE = "rgba(0,0,0,0.08)";
+
+// Class identity mirrors mobile: solid circle in the class colour, white letter.
+const classColor = (c: any) => (c?.color as string) || BRAND;
+const classInitial = (name?: string) => (name ?? "?").trim().charAt(0).toUpperCase() || "?";
+
+function ClassBadge({ name, color, size = 34 }: { name?: string; color?: string | null; size?: number }) {
+  return (
+    <span className="rounded-full flex items-center justify-center shrink-0" style={{ width: size, height: size, background: color || BRAND }}>
+      <span style={{ color: "#fff", fontSize: Math.round(size * 0.45), fontWeight: 800, lineHeight: 1 }}>{classInitial(name)}</span>
+    </span>
+  );
+}
+
 function ScheduleButton({ lectureId }: { lectureId: string }) {
   const { getToken } = useAuth();
   const [state, setState] = useState<"idle" | "loading" | "done" | "error">("idle");
@@ -32,8 +48,8 @@ function ScheduleButton({ lectureId }: { lectureId: string }) {
   }
 
   if (state === "done") return (
-    <div className="flex items-center gap-1 text-[10px]" style={{ color: "rgba(31,35,40,0.6)" }}>
-      <Check size={10} className="text-green-600" /> Scheduled
+    <div className="flex items-center gap-1.5" style={{ fontSize: 13, color: "rgba(15,17,21,0.65)" }}>
+      <Check size={13} style={{ color: "#16A34A" }} /> Scheduled
     </div>
   );
 
@@ -41,29 +57,29 @@ function ScheduleButton({ lectureId }: { lectureId: string }) {
     <div className="relative">
       <button
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-1 text-xs rounded-full px-2.5 py-1 border transition-colors"
-        style={{ color: "rgba(31,35,40,0.7)", borderColor: "rgba(0,0,0,0.08)" }}
+        className="flex items-center gap-1.5 rounded-full px-3.5 py-1.5 border transition-colors hover:bg-[rgba(0,0,0,0.03)]"
+        style={{ fontSize: 13, fontWeight: 600, color: "rgba(15,17,21,0.72)", borderColor: HAIRLINE }}
       >
-        <CalendarPlus size={10} /> Schedule
+        <CalendarPlus size={12} /> Schedule
       </button>
       {open && (
-        <div className="absolute right-0 top-8 z-10 rounded-xl p-3 w-52 border" style={{ background: "#FFFFFF", borderColor: "rgba(0,0,0,0.08)", boxShadow: "0 16px 48px rgba(0,0,0,0.14)" }}>
-          <p className="text-[10px] mb-2" style={{ color: "rgba(31,35,40,0.6)" }}>Optional: set your exam date</p>
+        <div className="absolute right-0 top-10 z-10 rounded-2xl p-4 w-60 border" style={{ background: "#FFFFFF", borderColor: HAIRLINE, boxShadow: "0 16px 48px rgba(15,17,21,0.14)" }}>
+          <p className="mb-2.5" style={{ fontSize: 13, color: "rgba(15,17,21,0.65)" }}>Optional: set your exam date</p>
           <input
             type="date"
             value={examDate}
             onChange={e => setExamDate(e.target.value)}
-            className="w-full rounded-lg px-2 py-1.5 text-xs mb-2 outline-none border"
-            style={{ background: "rgba(0,0,0,0.05)", borderColor: "rgba(0,0,0,0.07)", color: "#1F2328" }}
+            className="w-full rounded-xl px-3 py-2 mb-2.5 outline-none border"
+            style={{ background: "#FFFFFF", borderColor: HAIRLINE, color: INK, fontSize: 14 }}
           />
-          {state === "error" && <p className="text-[10px] text-red-600 mb-2">Failed — is Google Calendar connected?</p>}
+          {state === "error" && <p className="mb-2" style={{ fontSize: 13, color: "#DC2626" }}>Failed — is Google Calendar connected?</p>}
           <button
             onClick={schedule}
             disabled={state === "loading"}
-            className="w-full text-xs font-medium py-1.5 rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center gap-1"
-            style={{ background: "#4B5FE8", color: "white" }}
+            className="w-full py-2.5 rounded-xl transition-opacity hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-1.5"
+            style={{ background: BRAND, color: "white", fontSize: 14, fontWeight: 600 }}
           >
-            {state === "loading" ? <><Loader2 size={10} className="animate-spin" /> Scheduling…</> : "Schedule review sessions"}
+            {state === "loading" ? <><Loader2 size={12} className="animate-spin" /> Scheduling…</> : "Schedule review sessions"}
           </button>
         </div>
       )}
@@ -74,107 +90,121 @@ function ScheduleButton({ lectureId }: { lectureId: string }) {
 export default function SummariesPage() {
   const fetcher = useApiSWRFetcher();
   const { data, isLoading } = useSWR(`${BASE}/api/cheatsheets`, fetcher);
-  const sheets = data?.data?.filter((cs: any) => !cs.title?.startsWith("Study Book:")) ?? [];
+  // Study Book was removed; its old rows have no renderer, so keep them out of the list.
+  const sheets = (data?.data ?? []).filter((cs: any) => !cs.title?.startsWith("Study Book:"));
+
+  const label = { fontSize: 12, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase" as const, color: "rgba(15,17,21,0.6)", marginBottom: 10 };
 
   return (
-    <div className="p-8 max-w-2xl">
-      <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(31,35,40,0.5)", marginBottom: 6 }}>Summaries</div>
-      <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 30, color: "#1F2328", marginBottom: 28 }}>Cheat Sheets</h1>
+    <div style={{ maxWidth: 760 }}>
+      <div style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", color: BRAND, marginBottom: 8 }}>Summaries</div>
+      <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 34, letterSpacing: "-0.5px", color: INK, marginBottom: 28 }}>Cheat Sheets</h1>
 
-      {isLoading && <p className="text-sm" style={{ color: "rgba(31,35,40,0.6)" }}>Loading…</p>}
+      {isLoading && <p style={{ fontSize: 15, color: "rgba(15,17,21,0.65)" }}>Loading…</p>}
       {!isLoading && !sheets.length && (
-        <p className="text-sm" style={{ color: "rgba(31,35,40,0.6)" }}>No cheat sheets yet. Record a lecture to get started.</p>
+        <p style={{ fontSize: 15, color: "rgba(15,17,21,0.65)" }}>No cheat sheets yet. Record a lecture to get started.</p>
       )}
 
-      <div className="space-y-4">
-        {sheets.map((cs: any) => (
-          <div key={cs.id} className="rounded-2xl p-5 border" style={{ background: "#FFFFFF", borderColor: "rgba(0,0,0,0.07)", boxShadow: "0 1px 2px rgba(0,0,0,0.03)" }}>
-            <div className="flex items-start justify-between mb-4">
-              <div>
-                <div className="font-medium text-sm" style={{ color: "#1F2328" }}>{cs.title}</div>
-                {cs.lecture?.course?.code && (
-                  <div className="text-xs mt-0.5" style={{ color: "rgba(31,35,40,0.55)" }}>{cs.lecture.course.code}</div>
-                )}
-              </div>
-              <div className="flex items-center gap-2">
-                {cs.lectureId && <ScheduleButton lectureId={cs.lectureId} />}
-                {cs.driveUrl && (
-                  <a href={cs.driveUrl} target="_blank" rel="noopener"
-                    className="flex items-center gap-1 text-xs rounded-full px-2.5 py-1 border transition-colors"
-                    style={{ color: "rgba(31,35,40,0.7)", borderColor: "rgba(0,0,0,0.08)" }}>
-                    <ExternalLink size={10} /> Drive
-                  </a>
-                )}
-              </div>
-            </div>
-
-            {cs.content?.actionItems?.length > 0 && (
-              <div className="rounded-xl p-3 mb-4 border" style={{ background: "rgba(0,0,0,0.04)", borderColor: "rgba(0,0,0,0.05)" }}>
-                <div className="flex items-center gap-1.5 mb-2.5">
-                  <AlarmClock size={10} style={{ color: "rgba(31,35,40,0.8)" }} />
-                  <span className="text-[9px] font-bold uppercase tracking-widest" style={{ color: "rgba(31,35,40,0.8)" }}>Action items</span>
+      <div className="flex flex-col gap-4">
+        {sheets.map((cs: any) => {
+          const course = cs.lecture?.course;
+          const tint = classColor(course);
+          return (
+            <div
+              key={cs.id}
+              className="rounded-[20px] p-5 border"
+              style={{ background: "#FFFFFF", borderColor: HAIRLINE, ...(course ? { borderLeft: `5px solid ${tint}` } : {}) }}
+            >
+              <div className="flex items-start justify-between gap-3 mb-4">
+                <div className="flex items-center gap-3 min-w-0">
+                  {course && <ClassBadge name={course.name} color={tint} size={34} />}
+                  <div className="min-w-0">
+                    <div className="truncate" style={{ fontSize: 16, fontWeight: 700, color: INK }}>{cs.title}</div>
+                    {course?.code && (
+                      <div style={{ fontSize: 13.5, color: "rgba(15,17,21,0.6)", marginTop: 2 }}>{course.code}</div>
+                    )}
+                  </div>
                 </div>
-                <div className="space-y-1.5">
-                  {cs.content.actionItems.map((item: any, i: number) => {
-                    const Icon = item.type === "exam" ? School : item.type === "deadline" ? Clock : item.type === "reading" ? BookOpen : CheckSquare;
-                    return (
-                      <div key={i} className="flex items-start gap-2 text-xs" style={{ color: "rgba(31,35,40,0.66)" }}>
-                        <Icon size={11} className="shrink-0 mt-0.5" style={{ color: "rgba(31,35,40,0.55)" }} />
-                        <span>{item.text}{item.dueDate ? <span style={{ color: "rgba(31,35,40,0.55)" }}> — {item.dueDate}</span> : ""}</span>
+                <div className="flex items-center gap-2 shrink-0">
+                  {cs.lectureId && <ScheduleButton lectureId={cs.lectureId} />}
+                  {cs.driveUrl && (
+                    <a href={cs.driveUrl} target="_blank" rel="noopener"
+                      className="flex items-center gap-1.5 rounded-full px-3.5 py-1.5 border transition-colors hover:bg-[rgba(0,0,0,0.03)]"
+                      style={{ fontSize: 13, fontWeight: 600, color: "rgba(15,17,21,0.72)", borderColor: HAIRLINE }}>
+                      <ExternalLink size={12} /> Drive
+                    </a>
+                  )}
+                </div>
+              </div>
+
+              {cs.content?.actionItems?.length > 0 && (
+                <div className="rounded-[16px] p-4 mb-4 border" style={{ background: "rgba(0,0,0,0.02)", borderColor: HAIRLINE }}>
+                  <div className="flex items-center gap-2 mb-3">
+                    <AlarmClock size={13} style={{ color: "rgba(15,17,21,0.75)" }} />
+                    <span style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.12em", color: "rgba(15,17,21,0.75)" }}>Action items</span>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    {cs.content.actionItems.map((item: any, i: number) => {
+                      const Icon = item.type === "exam" ? School : item.type === "deadline" ? Clock : item.type === "reading" ? BookOpen : CheckSquare;
+                      return (
+                        <div key={i} className="flex items-start gap-2.5" style={{ fontSize: 14, color: "rgba(15,17,21,0.72)" }}>
+                          <Icon size={13} className="shrink-0 mt-0.5" style={{ color: "rgba(15,17,21,0.6)" }} />
+                          <span>{item.text}{item.dueDate ? <span style={{ color: "rgba(15,17,21,0.6)" }}> — {item.dueDate}</span> : ""}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {cs.content?.sections?.slice(0, 2).map((s: any, i: number) => (
+                <div key={i} className="mb-4">
+                  <div style={label}>{s.heading}</div>
+                  <div className="flex flex-col gap-1.5">
+                    {s.bullets?.slice(0, 3).map((b: string, j: number) => (
+                      <div key={j} className="flex gap-2.5" style={{ fontSize: 14.5, color: "rgba(15,17,21,0.75)" }}>
+                        <span className="shrink-0 mt-2 w-1.5 h-1.5 rounded-full" style={{ background: tint }} />
+                        {b}
                       </div>
-                    );
-                  })}
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              ))}
 
-            {cs.content?.sections?.slice(0, 2).map((s: any, i: number) => (
-              <div key={i} className="mb-3">
-                <div className="text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: "rgba(31,35,40,0.55)" }}>{s.heading}</div>
-                <div className="space-y-1">
-                  {s.bullets?.slice(0, 3).map((b: string, j: number) => (
-                    <div key={j} className="flex gap-2 text-xs" style={{ color: "rgba(31,35,40,0.7)" }}>
-                      <span className="shrink-0 mt-1.5 w-1 h-1 rounded-full" style={{ background: "rgba(31,35,40,0.3)" }} />
-                      {b}
-                    </div>
-                  ))}
+              {cs.content?.keyTerms?.length > 0 && (
+                <div className="mb-4">
+                  <div style={label}>Key Terms</div>
+                  <div className="flex flex-col gap-1.5">
+                    {cs.content.keyTerms.slice(0, 4).map((kt: any, i: number) => (
+                      <div key={i} style={{ fontSize: 14.5 }}>
+                        <span style={{ fontWeight: 700, color: INK }}>{kt.term}</span>
+                        <span style={{ color: "rgba(15,17,21,0.7)" }}> — {kt.definition}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ))}
+              )}
 
-            {cs.content?.keyTerms?.length > 0 && (
-              <div className="mb-3">
-                <div className="text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: "rgba(31,35,40,0.55)" }}>Key Terms</div>
-                <div className="space-y-1">
-                  {cs.content.keyTerms.slice(0, 4).map((kt: any, i: number) => (
-                    <div key={i} className="text-xs">
-                      <span className="font-medium" style={{ color: "#1F2328" }}>{kt.term}</span>
-                      <span style={{ color: "rgba(31,35,40,0.66)" }}> — {kt.definition}</span>
-                    </div>
-                  ))}
+              {cs.content?.formulas?.length > 0 && (
+                <div className="mb-4">
+                  <div style={label}>Formulas</div>
+                  <div className="flex flex-col gap-1.5">
+                    {cs.content.formulas.map((f: string, i: number) => (
+                      <div key={i} className="font-mono" style={{ fontSize: 14, color: "rgba(15,17,21,0.7)" }}>{f}</div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {cs.content?.formulas?.length > 0 && (
-              <div className="mb-3">
-                <div className="text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: "rgba(31,35,40,0.55)" }}>Formulas</div>
-                <div className="space-y-1">
-                  {cs.content.formulas.map((f: string, i: number) => (
-                    <div key={i} className="text-xs font-mono" style={{ color: "rgba(31,35,40,0.6)" }}>{f}</div>
-                  ))}
+              {cs.content?.examTips?.[0] && (
+                <div className="rounded-[16px] p-4 mt-2 border" style={{ background: "rgba(0,0,0,0.02)", borderColor: HAIRLINE }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.12em", color: "rgba(15,17,21,0.72)", marginBottom: 6 }}>Exam tip</div>
+                  <div className="leading-relaxed" style={{ fontSize: 14.5, color: "rgba(15,17,21,0.72)" }}>{cs.content.examTips[0]}</div>
                 </div>
-              </div>
-            )}
-
-            {cs.content?.examTips?.[0] && (
-              <div className="rounded-xl p-3 mt-2 border" style={{ background: "rgba(0,0,0,0.04)", borderColor: "rgba(0,0,0,0.05)" }}>
-                <div className="text-[9px] font-bold uppercase tracking-widest mb-1" style={{ color: "rgba(31,35,40,0.7)" }}>Exam tip</div>
-                <div className="text-xs leading-relaxed" style={{ color: "rgba(31,35,40,0.66)" }}>{cs.content.examTips[0]}</div>
-              </div>
-            )}
-          </div>
-        ))}
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );

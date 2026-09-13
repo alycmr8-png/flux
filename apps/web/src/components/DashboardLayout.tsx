@@ -2,10 +2,16 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { UserButton } from "@clerk/nextjs";
-import { Home, Layers, HelpCircle, Calendar, CreditCard, Archive } from "lucide-react";
+import { Home, Layers, HelpCircle, Calendar, CreditCard, Archive, User } from "lucide-react";
 import { LanguageSwitcher } from "@/components/I18nProvider";
 import { useState, useEffect } from "react";
 import { useT } from "@/lib/useT";
+
+// Design language is shared with the mobile app: white ground, #0f1115 text,
+// #4B5FE8 brand blue, hairline rgba(0,0,0,0.08) borders.
+const BRAND = "#4B5FE8";
+const INK = "#0f1115";
+const HAIRLINE = "rgba(0,0,0,0.08)";
 
 // nav labels are translated inside the component via useT()
 
@@ -19,35 +25,39 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     { href: "/dashboard/record",   icon: Layers,      label: t.nav.workspace },
     { href: "/dashboard/calendar", icon: Calendar,    label: t.nav.calendar  },
     { href: "/dashboard/archive",  icon: Archive,     label: t.nav.archive   },
+    { href: "/dashboard/account",  icon: User,        label: t.nav.account   },
     { href: "/dashboard/billing",  icon: CreditCard,  label: t.nav.billing   },
     { href: "/dashboard/help",     icon: HelpCircle,  label: t.nav.help      },
   ];
+  // The phone-width tab bar mirrors the native app's five tabs; Billing and
+  // Help stay reachable from the Account page rows.
+  const tabs = nav.filter(n => n.href !== "/dashboard/billing" && n.href !== "/dashboard/help");
+
+  const isActive = (href: string) =>
+    pathname === href || (href !== "/dashboard" && pathname.startsWith(href));
 
   return (
-    <div
-      className="flex flex-col md:flex-row h-screen overflow-hidden"
-      style={{
-        background:
-          "radial-gradient(90% 60% at 70% -10%, rgba(75,95,232,0.05) 0%, rgba(75,95,232,0) 55%), #FBFBFA",
-      }}
-    >
+    <div className="flex flex-col md:flex-row h-screen overflow-hidden" style={{ background: "#FFFFFF" }}>
 
       {/* Sidebar — desktop only */}
       <aside
-        className="hidden md:flex w-52 shrink-0 flex-col py-7"
-        style={{ background: "#F7F6F4", borderRight: "1px solid rgba(0,0,0,0.07)" }}
+        className="hidden md:flex w-60 shrink-0 flex-col py-7"
+        style={{ background: "#FFFFFF", borderRight: `1px solid ${HAIRLINE}` }}
       >
         {/* Logo */}
-        <div className="px-6 pb-6 mb-3" style={{ borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "linear-gradient(135deg,#4B5FE8,#6E7FF3)", boxShadow: "0 4px 14px rgba(75,95,232,0.35)" }}>
-              <Layers size={17} style={{ color: "white" }} />
+        <div className="px-6 pb-6 mb-3" style={{ borderBottom: `1px solid ${HAIRLINE}` }}>
+          <div className="flex items-center gap-3">
+            <div
+              className="w-10 h-10 rounded-full flex items-center justify-center shrink-0"
+              style={{ background: BRAND }}
+            >
+              <Layers size={19} style={{ color: "white" }} />
             </div>
             <div>
-              <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 20, color: "#1F2328", letterSpacing: "-0.5px", lineHeight: 1.1 }}>
+              <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 22, color: INK, letterSpacing: "-0.5px", lineHeight: 1.1 }}>
                 Flux
               </div>
-              <div style={{ fontSize: 9, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(31,35,40,0.5)" }}>
+              <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(15,17,21,0.55)" }}>
                 Study Assistant
               </div>
             </div>
@@ -55,29 +65,26 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 px-3 pt-2 flex flex-col gap-1">
-          <div style={{ fontSize: 9, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(31,35,40,0.45)", padding: "8px 10px 6px" }}>
+        <nav className="flex-1 px-3 pt-2 flex flex-col gap-1 overflow-y-auto">
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(15,17,21,0.55)", padding: "8px 10px 8px" }}>
             {t.nav.menu}
           </div>
           {nav.map(({ href, icon: Icon, label }) => {
-            const active = pathname === href || (href !== "/dashboard" && pathname.startsWith(href));
+            const active = isActive(href);
             return (
               <Link
                 key={href}
                 href={href}
-                className="flex items-center gap-3 px-3 py-3 rounded-xl transition-all"
+                className="flex items-center gap-3 px-3.5 py-3 rounded-2xl transition-colors"
                 style={{
                   fontSize: 15,
-                  background: active
-                    ? "linear-gradient(135deg, rgba(75,95,232,0.26) 0%, rgba(110,127,243,0.12) 100%)"
-                    : "transparent",
-                  border: active ? "1px solid rgba(110,127,243,0.28)" : "1px solid transparent",
-                  boxShadow: active ? "0 4px 18px rgba(75,95,232,0.18)" : "none",
-                  color: active ? "#3D4ED0" : "rgba(31,35,40,0.6)",
-                  fontWeight: active ? 600 : 500,
+                  background: active ? "rgba(75,95,232,0.10)" : "transparent",
+                  border: active ? "1px solid rgba(75,95,232,0.22)" : "1px solid transparent",
+                  color: active ? BRAND : "rgba(15,17,21,0.68)",
+                  fontWeight: active ? 700 : 500,
                 }}
               >
-                <Icon size={17} />
+                <Icon size={19} />
                 {label}
               </Link>
             );
@@ -85,7 +92,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </nav>
 
         {/* Footer */}
-        <div className="px-3 pt-3 flex flex-col gap-3" style={{ borderTop: "1px solid rgba(0,0,0,0.05)" }}>
+        <div className="px-3 pt-4 mt-2 flex flex-col gap-3" style={{ borderTop: `1px solid ${HAIRLINE}` }}>
           <LanguageSwitcher />
           <div className="px-2">
             {mounted && <UserButton appearance={{ elements: { avatarBox: "w-8 h-8" } }} />}
@@ -101,26 +108,22 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       {/* Bottom tab bar — mobile only */}
       <nav
         className="md:hidden fixed bottom-0 left-0 right-0 flex items-center justify-around px-1 pt-2 z-50 safe-bottom"
-        style={{ background: "rgba(251,251,250,0.94)", backdropFilter: "blur(14px)", borderTop: "1px solid rgba(0,0,0,0.07)", paddingBottom: "calc(env(safe-area-inset-bottom) + 8px)" }}
+        style={{ background: "rgba(255,255,255,0.96)", backdropFilter: "blur(14px)", borderTop: `1px solid ${HAIRLINE}`, paddingBottom: "calc(env(safe-area-inset-bottom) + 8px)" }}
       >
-        {nav.map(({ href, icon: Icon, label }) => {
-          const active = pathname === href || (href !== "/dashboard" && pathname.startsWith(href));
+        {tabs.map(({ href, icon: Icon, label }) => {
+          const active = isActive(href);
           return (
             <Link
               key={href}
               href={href}
-              className="flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-xl transition-all"
-              style={{ color: active ? "#4B5FE8" : "rgba(31,35,40,0.5)" }}
+              className="flex flex-col items-center gap-1 px-2 py-1.5 rounded-xl transition-colors"
+              style={{ color: active ? BRAND : "rgba(15,17,21,0.55)" }}
             >
-              <Icon size={19} />
-              <span className="text-[9px] font-medium">{label}</span>
+              <Icon size={21} />
+              <span style={{ fontSize: 10.5, fontWeight: active ? 700 : 500 }}>{label}</span>
             </Link>
           );
         })}
-        <div className="flex flex-col items-center gap-0.5 px-2 py-1.5">
-          {mounted && <UserButton appearance={{ elements: { avatarBox: "w-5 h-5" } }} />}
-          <span className="text-[9px] font-medium" style={{ color: "rgba(31,35,40,0.58)" }}>{t.nav.account}</span>
-        </div>
       </nav>
     </div>
   );
