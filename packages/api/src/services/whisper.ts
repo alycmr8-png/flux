@@ -103,20 +103,32 @@ export async function transcribeAudio(filePath: string): Promise<TranscriptionRe
   }
 
   try {
+    // Offsets are known up front from each chunk's duration, so chunks can be
+    // transcribed concurrently and still stitch back in the right order.
+    const offsets: number[] = [];
+    let running = 0;
+    for (const chunk of chunks) {
+      offsets.push(running);
+      running += chunkDurationSec(chunk);
+    }
+
+    const CONCURRENCY = 3;
+    const results: TranscriptionResult[] = new Array(chunks.length);
+    for (let i = 0; i < chunks.length; i += CONCURRENCY) {
+      const slice = chunks.slice(i, i + CONCURRENCY);
+      const done = await Promise.all(slice.map((c) => transcribeOne(c)));
+      done.forEach((r, j) => { results[i + j] = r; });
+    }
+
     const allSegments: TranscriptSegment[] = [];
     const allText: string[] = [];
-    let offset = 0;
-    let prevTail = "";
-
-    for (const chunk of chunks) {
-      const result = await transcribeOne(chunk, prevTail || undefined);
+    results.forEach((result, i) => {
+      const offset = offsets[i];
       for (const s of result.segments) {
         allSegments.push({ start: s.start + offset, end: s.end + offset, text: s.text });
       }
       allText.push(result.text.trim());
-      prevTail = result.text.slice(-200); // context so sentences continue cleanly across cuts
-      offset += chunkDurationSec(chunk);
-    }
+    });
 
     console.log(`[whisper] chunked transcription done — ${chunks.length} chunks, ${allSegments.length} segments`);
     return { text: allText.filter(Boolean).join(" "), segments: allSegments };

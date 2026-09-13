@@ -1,7 +1,7 @@
 import fs from "fs";
 import { prisma } from "../lib/prisma";
 import { transcribeAudio } from "./whisper";
-import { condenseTranscript, generateCheatSheet, generateQuiz, correctTranscript } from "./claude";
+import { condenseTranscript, generateCheatSheet, generateQuiz, generateKeyPoints, generateFlashcardsFromTranscript, correctTranscript, describeLectureImage } from "./claude";
 import { syncToDrive } from "./google";
 import { scheduleSpacedRepetition } from "./spaced-repetition";
 import { indexSource } from "./memory";
@@ -119,6 +119,34 @@ export async function processLecture(lectureId: string, userId: string) {
       }
     }
 
+    // ── Read photos taken during the lecture and append what they show (non-fatal) ──
+    // Whiteboards and slides carry the formulas the lecturer never said out loud,
+    // so this runs before generation and feeds the same transcript.
+    let extractedImageText = "";
+    const imagePaths: string[] = ((lecture as any).imageUrls ?? []).filter((f: string) => f && fs.existsSync(f));
+    if (imagePaths.length) {
+      const lang = (await prisma.user.findUnique({ where: { id: userId }, select: { language: true } }))?.language ?? "en";
+      const mimeFor = (f: string) => {
+        const e = require("path").extname(f).toLowerCase();
+        return e === ".png" ? "image/png" : e === ".webp" ? "image/webp" : e === ".heic" ? "image/heic" : "image/jpeg";
+      };
+      const parts: string[] = [];
+      for (let i = 0; i < imagePaths.length; i++) {
+        try {
+          const b64 = fs.readFileSync(imagePaths[i]).toString("base64");
+          const text = await describeLectureImage(b64, mimeFor(imagePaths[i]), lang);
+          if (text.trim()) parts.push(`[PHOTO ${i + 1}]\n${text.trim()}`);
+        } catch (imgErr) {
+          console.error(`[processLecture] photo ${i + 1} unreadable (non-fatal):`, (imgErr as any)?.message);
+        }
+      }
+      if (parts.length) {
+        extractedImageText = parts.join("\n\n");
+        transcript = `${transcript}\n\n[PHOTOS TAKEN IN CLASS]\n${extractedImageText}`;
+        console.log(`[processLecture] appended ${parts.length} photo transcription(s)`);
+      }
+    }
+
     await safeStatusUpdate(lectureId, { transcript, status: "generating", segments: (segments as any) ?? undefined } as any);
 
     // ── Index into course memory for "Ask your course" (non-fatal) ──
@@ -133,6 +161,16 @@ export async function processLecture(lectureId: string, userId: string) {
         segments,
       });
       console.log(`[processLecture] indexed ${count} memory chunks`);
+      if (extractedImageText.trim()) {
+        await indexSource({
+          userId,
+          courseId: lecture.courseId,
+          sourceType: "lecture",
+          sourceId: `${lectureId}_photos`,
+          sourceTitle: `${lecture.title} — photos`,
+          text: extractedImageText,
+        });
+      }
       if (extractedSlideText.trim()) {
         await indexSource({
           userId,
@@ -153,10 +191,17 @@ export async function processLecture(lectureId: string, userId: string) {
     // Condense long transcripts via Map-Reduce before passing to generate functions
     const source = await condenseTranscript(transcript, segments, lecture.title, language);
 
-    const [cheatSheetContent, quizData] = await Promise.all([
+    const [cheatSheetContent, quizData, keyPoints, flashcards] = await Promise.all([
       generateCheatSheet(source, lecture.title, language),
       generateQuiz(source, lecture.title, language),
+      generateKeyPoints(source, language).catch(() => []),
+      generateFlashcardsFromTranscript(source, language).catch(() => []),
     ]);
+
+    await prisma.lecture.update({
+      where: { id: lectureId },
+      data: { keyPoints: keyPoints as any, flashcards: flashcards as any },
+    });
 
     const [cheatSheet, quiz] = await Promise.all([
       prisma.cheatSheet.create({

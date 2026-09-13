@@ -61,7 +61,7 @@ lectureRouter.get("/:id", async (req, res) => {
 lectureRouter.post(
   "/",
   quotaMiddleware("lecture"),
-  upload.fields([{ name: "audio", maxCount: 1 }, { name: "slides", maxCount: 1 }]),
+  upload.fields([{ name: "audio", maxCount: 1 }, { name: "slides", maxCount: 1 }, { name: "images", maxCount: 12 }]),
   async (req, res) => {
     const user = (req as any).user;
     const { courseId, title } = z
@@ -71,6 +71,7 @@ lectureRouter.post(
     const files = req.files as Record<string, Express.Multer.File[]>;
     const audioFile = files?.audio?.[0];
     const slidesFile = files?.slides?.[0];
+    const imageFiles = files?.images ?? [];
 
     const lecture = await prisma.lecture.create({
       data: {
@@ -80,6 +81,7 @@ lectureRouter.post(
         status: "processing",
         audioUrl: audioFile?.path,
         slidesUrl: slidesFile?.path,
+        imageUrls: imageFiles.map(f => f.path),
       },
     });
 

@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import { toMathNotation } from "@sano/shared";
 
 let _openai: OpenAI | null = null;
 function getClient() {
@@ -7,7 +8,7 @@ function getClient() {
 }
 
 async function createWithRetry(params: any, retries = 3): Promise<any> {
-  const models = [params.model, "gpt-3.5-turbo"];
+  const models = [params.model, "gpt-4o-mini"];
   let modelIdx = 0;
   for (let i = 0; i < retries; i++) {
     try {
@@ -35,6 +36,19 @@ async function createWithRetry(params: any, retries = 3): Promise<any> {
   }
 }
 
+// The model follows MATH_STYLE most of the time but not always, so every string
+// it produces also goes through the deterministic converter.
+function mathify<T>(value: T): T {
+  if (typeof value === "string") return toMathNotation(value) as unknown as T;
+  if (Array.isArray(value)) return value.map(mathify) as unknown as T;
+  if (value && typeof value === "object") {
+    const out: any = {};
+    for (const [k, v] of Object.entries(value as any)) out[k] = mathify(v);
+    return out;
+  }
+  return value;
+}
+
 function extractText(msg: any): string {
   return msg?.choices?.[0]?.message?.content ?? "";
 }
@@ -51,6 +65,23 @@ async function batchPromises<T>(tasks: (() => Promise<T>)[], limit: number): Pro
 const LANG_NAMES: Record<string, string> = {
   en: "English", fr: "French", ar: "Arabic", es: "Spanish", pt: "Portuguese",
 };
+
+// Transcripts come from speech recognition, so formulas arrive as words
+// ("the integral of x squared"). Rendering targets are plain <Text> in the mobile
+// app, so notation must be real Unicode characters — never LaTeX markup.
+const MATH_STYLE = `SCIENTIFIC NOTATION — MANDATORY:
+The transcript comes from speech recognition, so every formula arrives spelled out in words. You MUST rewrite each one in real symbols. Leaving maths in words is an error.
+Convert exactly like these:
+- "the integral from zero to one of x squared d x" → ∫₀¹ x² dx
+- "the sum from i equals one to n of i equals n times n plus one over two" → ∑ᵢ₌₁ⁿ i = n(n+1)/2
+- "f prime of g of x times g prime of x" → f′(g(x)) · g′(x)
+- "delta E equals m c squared" → ΔE = mc²
+- "water is H two O, sulfuric acid is H two S O four" → H₂O, H₂SO₄
+- "theta between zero and pi" → θ ∈ [0, π]
+- "x squared plus y squared equals r squared" → x² + y² = r²
+Use these characters: superscripts ⁰¹²³⁴⁵⁶⁷⁸⁹ⁿ⁻, subscripts ₀₁₂₃₄₅₆₇₈₉ᵢₙ, Greek α β γ δ ε θ λ μ π ρ σ τ φ ω Δ Σ Ω Π, operators × ÷ · ± ≤ ≥ ≠ ≈ ∝ → ⇒ ∞, calculus ∫ ∑ ∏ ∂ ∇ √, sets ∈ ∉ ⊂ ∪ ∩ ∀ ∃.
+Never output LaTeX or markdown maths (no \\frac, no \\int, no $...$). Write fractions as a/b or ½.
+Keep ordinary prose in words — only the maths becomes symbols.`;
 
 // ─── Map-Reduce pipeline for long transcripts ────────────────────────────────
 
@@ -73,7 +104,7 @@ async function summarizeChunk(
 ): Promise<string> {
   const langName = LANG_NAMES[language] ?? "English";
   const msg = await createWithRetry({
-    model: "gpt-3.5-turbo",
+    model: "gpt-4o-mini",
     max_tokens: 900,
     system: `Extract and preserve all important content from this lecture segment. Write in ${langName}.
 Return structured notes with clearly labeled sections:
@@ -81,7 +112,9 @@ TOPICS: main topics covered
 KEY POINTS: every important point (preserve technical detail, examples, numbers)
 KEY TERMS: term — definition for any defined concepts
 FORMULAS: any equations or formulas (write them out explicitly)
-Preserve specifics. Do not paraphrase away detail.`,
+Preserve specifics. Do not paraphrase away detail.
+
+${MATH_STYLE}`,
     messages: [{
       role: "user",
       content: `"${title}" — Part ${part}/${total} (${timeRange})\n\n${text.slice(0, 8000)}`,
@@ -157,6 +190,38 @@ export async function condenseTranscript(
 
 // ─── Generate functions (unchanged — receive condensed or raw transcript) ─────
 
+/**
+ * Reads a photo a student took during the lecture (whiteboard, projected slide,
+ * a page of the textbook) and returns its content as text so it can be folded
+ * into the transcript before anything is generated.
+ */
+export async function describeLectureImage(
+  base64: string,
+  mimeType: string,
+  language = "en"
+): Promise<string> {
+  const langName = LANG_NAMES[language] ?? "English";
+  const msg = await createWithRetry({
+    model: "gpt-4o",
+    max_tokens: 1200,
+    system: `You are reading a photo taken during a university lecture — typically a whiteboard, a projected slide, or a page of notes.
+Transcribe everything legible: headings, bullet points, diagrams (describe them briefly), and every formula.
+Write in ${langName}. Return plain text only — no preamble, no commentary about the image quality.
+If the photo contains no readable lecture content, return exactly: NO_CONTENT
+
+${MATH_STYLE}`,
+    messages: [{
+      role: "user",
+      content: [
+        { type: "text", text: "Transcribe this lecture photo." },
+        { type: "image_url", image_url: { url: `data:${mimeType};base64,${base64}` } },
+      ],
+    }],
+  });
+  const text = extractText(msg).trim();
+  return text === "NO_CONTENT" ? "" : toMathNotation(text);
+}
+
 export async function generateCheatSheet(transcript: string, lectureTitle: string, language = "en") {
   const langName = LANG_NAMES[language] ?? "English";
   const message = await createWithRetry({
@@ -179,7 +244,9 @@ Match the depth the lecturer used — if they elaborated on something, you elabo
 - keyTerms: 10-15 terms with thorough definitions (2-3 sentences each)
 - examTips: 5-8 specific, actionable tips based on what was emphasized
 - formulas: every equation or formula mentioned
-- actionItems: ONLY explicit deadlines/assignments mentioned; empty array if none`,
+- actionItems: ONLY explicit deadlines/assignments mentioned; empty array if none
+
+${MATH_STYLE}`,
     messages: [
       {
         role: "user",
@@ -189,61 +256,7 @@ Match the depth the lecturer used — if they elaborated on something, you elabo
   });
 
   const json = extractText(message).match(/\{[\s\S]*\}/)?.[0] ?? "{}";
-  return JSON.parse(json);
-}
-
-export async function generateStudyBook(transcript: string, lectureTitle: string, language = "en") {
-  const langName = LANG_NAMES[language] ?? "English";
-  const transcriptInput = transcript.slice(0, 80000);
-
-  const msg = await createWithRetry({
-    model: "gpt-4o",
-    max_tokens: 3500,
-    system: `You are a study coach creating a focused review session from class materials.
-Write ALL text in ${langName}.
-Return ONLY valid JSON — no markdown, no commentary.
-
-Schema:
-{
-  "_type": "review",
-  "summary": string,
-  "keyTakeaways": string[],
-  "keyTerms": [{ "term": string, "definition": string }],
-  "practiceQuestions": [{
-    "question": string,
-    "type": "mcq" | "short",
-    "options": string[] | null,
-    "answer": string
-  }]
-}
-
-Rules:
-- summary: 2-3 sentences. What was covered and why it matters. No filler.
-- keyTakeaways: 6-10 bullet points. Each a complete, standalone insight from the material.
-- keyTerms: 6-12 important terms with clear 1-sentence definitions.
-- practiceQuestions: 4-6 questions. Mix MCQ and short-answer. MCQ options = ["A. ...", "B. ...", "C. ...", "D. ..."], answer = "A"/"B"/"C"/"D". Short-answer: options = null, answer = 1-2 sentence model answer.
-- Be concise. This is a review session, not a textbook.`,
-    messages: [{
-      role: "user",
-      content: `Class: "${lectureTitle}"\n\nMaterials:\n${transcriptInput}`,
-    }],
-  });
-
-  const raw = extractText(msg);
-  const json = raw.match(/\{[\s\S]*\}/)?.[0] ?? "{}";
-  let parsed: any = {};
-  try {
-    parsed = JSON.parse(json);
-  } catch {
-    try { parsed = JSON.parse(json.replace(/,?\s*[\[{][^{}\[\]]*$/, "") + "]}"); } catch { /* unrecoverable */ }
-  }
-  if (!parsed.summary && !parsed.keyTakeaways?.length) {
-    console.error("[generateStudyBook] empty response, raw:", raw.slice(0, 300));
-    throw new Error("Review session generation failed — please try again.");
-  }
-  // Ensure _type is set for display routing
-  parsed._type = "review";
-  return parsed;
+  return mathify(JSON.parse(json));
 }
 
 export async function streamSocraticResponse(
@@ -370,7 +383,9 @@ Return ONLY valid JSON array — no markdown, no code blocks, no commentary. Sch
   "explanation": string,
   "timestampSeconds": number | null
 }]
-Questions should test deep understanding, not just memorization.`,
+Questions should test deep understanding, not just memorization.
+
+${MATH_STYLE}`,
     messages: [
       {
         role: "user",
@@ -380,45 +395,26 @@ Questions should test deep understanding, not just memorization.`,
   });
 
   const json = extractText(message).match(/\[[\s\S]*\]/)?.[0] ?? "[]";
-  return JSON.parse(json);
+  return mathify(JSON.parse(json));
 }
 
-export async function summarizeTranscript(transcript: string, title: string, language = "en"): Promise<string> {
-  const langName = LANG_NAMES[language] ?? "English";
-  const msg = await createWithRetry({
-    model: "gpt-3.5-turbo",
-    max_tokens: 400,
-    system: `You are a study assistant. Write a short 2-paragraph summary of the lecture in ${langName}. First paragraph: what the lecture was about. Second paragraph: the 2-3 most important takeaways. Be brief and direct. Never refuse or comment on transcript quality.`,
-    messages: [{ role: "user", content: `Lecture: "${title}"\n\nTranscript:\n${transcript.slice(0, 12000)}` }],
-  });
-  return extractText(msg);
-}
-
-export async function generateFlashcardsFromTranscript(transcript: string, language = "en"): Promise<{ front: string; back: string }[]> {
-  const langName = LANG_NAMES[language] ?? "English";
-  const msg = await createWithRetry({
-    model: "gpt-3.5-turbo",
-    max_tokens: 2000,
-    system: `Generate 8-12 flashcards from this lecture in ${langName}. Return ONLY valid JSON array — no markdown, no code blocks.\n[{"front": string, "back": string}]`,
-    messages: [{ role: "user", content: `Transcript:\n${transcript.slice(0, 12000)}` }],
-  });
-  const json = extractText(msg).match(/\[[\s\S]*\]/)?.[0] ?? "[]";
-  return JSON.parse(json);
-}
-
-export async function generateInlineQuiz(
+export async function generateFlashcardsFromTranscript(
   transcript: string,
   language = "en"
-): Promise<{ question: string; options: string[]; answer: string; explanation: string }[]> {
+): Promise<{ front: string; back: string }[]> {
   const langName = LANG_NAMES[language] ?? "English";
   const msg = await createWithRetry({
-    model: "gpt-3.5-turbo",
+    model: "gpt-4o-mini",
     max_tokens: 2000,
-    system: `Generate 6 multiple-choice quiz questions from this lecture in ${langName}. Return ONLY valid JSON array — no markdown, no code blocks.\n[{"question": string, "options": ["A. ...", "B. ...", "C. ...", "D. ..."], "answer": "A"|"B"|"C"|"D", "explanation": string}]`,
+    system: `Generate 10-14 flashcards from this lecture in ${langName}. Each card tests one idea: a definition, a formula, a mechanism or a worked relationship. Keep the front short and answerable; keep the back precise.
+Return ONLY valid JSON array — no markdown, no code blocks.
+[{"front": string, "back": string}]
+
+${MATH_STYLE}`,
     messages: [{ role: "user", content: `Transcript:\n${transcript.slice(0, 12000)}` }],
   });
   const json = extractText(msg).match(/\[[\s\S]*\]/)?.[0] ?? "[]";
-  return JSON.parse(json);
+  return mathify(JSON.parse(json));
 }
 
 export async function generateKeyPoints(
@@ -427,13 +423,13 @@ export async function generateKeyPoints(
 ): Promise<{ point: string; category: string }[]> {
   const langName = LANG_NAMES[language] ?? "English";
   const msg = await createWithRetry({
-    model: "gpt-3.5-turbo",
+    model: "gpt-4o-mini",
     max_tokens: 1500,
-    system: `Extract 10-15 key points from this lecture in ${langName}. Categorize each as one of: "Definition", "Important", "Formula", "Example", "Warning". Return ONLY valid JSON array — no markdown, no code blocks.\n[{"point": string, "category": "Definition"|"Important"|"Formula"|"Example"|"Warning"}]`,
+    system: `Extract 10-15 key points from this lecture in ${langName}. Categorize each as one of: "Definition", "Important", "Formula", "Example", "Warning". Return ONLY valid JSON array — no markdown, no code blocks.\n[{"point": string, "category": "Definition"|"Important"|"Formula"|"Example"|"Warning"}]\n\n${MATH_STYLE}`,
     messages: [{ role: "user", content: `Transcript:\n${transcript.slice(0, 12000)}` }],
   });
   const json = extractText(msg).match(/\[[\s\S]*\]/)?.[0] ?? "[]";
-  return JSON.parse(json);
+  return mathify(JSON.parse(json));
 }
 
 export async function answerVideoQuestion(
@@ -444,12 +440,12 @@ export async function answerVideoQuestion(
 ): Promise<string> {
   const langName = LANG_NAMES[language] ?? "English";
   const msg = await createWithRetry({
-    model: "gpt-3.5-turbo",
+    model: "gpt-4o-mini",
     max_tokens: 512,
     system: `You are a helpful tutor for the lecture "${title}". Answer questions about it clearly and concisely in ${langName}. Only use information from the transcript.\n\nTranscript:\n${transcript.slice(0, 8000)}`,
     messages,
   });
-  return extractText(msg);
+  return toMathNotation(extractText(msg));
 }
 
 // ─── Course memory Q&A ("Ask your course") ──────────────────────────────────
@@ -486,7 +482,7 @@ SOURCES:
 ${sourceBlock}`,
     messages,
   });
-  return extractText(msg);
+  return toMathNotation(extractText(msg));
 }
 
 // ─── Exam Mode ────────────────────────────────────────────────────────────────
@@ -532,7 +528,7 @@ ${sourceBlock}`,
   });
 
   const json = extractText(message).match(/\{[\s\S]*\}/)?.[0] ?? "{}";
-  return JSON.parse(json);
+  return mathify(JSON.parse(json));
 }
 
 // ─── Transcript corrector ─────────────────────────────────────────────────────
@@ -550,10 +546,12 @@ Rules:
 - Rejoin words that were split incorrectly (e.g. "mito chondria" → "mitochondria").
 - Preserve all technical, scientific, and academic vocabulary.
 - Do NOT add, remove, or change the meaning of any content.
-- Return ONLY the corrected transcript — no explanations, no preamble.`,
+- Return ONLY the corrected transcript — no explanations, no preamble.
+
+${MATH_STYLE}`,
     messages: [{ role: "user", content: text }],
   });
-  return extractText(msg).trim() || text;
+  return toMathNotation(extractText(msg).trim() || text);
 }
 
 export async function correctTranscript(transcript: string): Promise<string> {
@@ -581,7 +579,7 @@ export async function correctTranscript(transcript: string): Promise<string> {
   try {
     const corrected = await batchPromises(
       chunks.map(c => () => correctChunk(c)),
-      3
+      6
     );
     return corrected.join(" ");
   } catch {

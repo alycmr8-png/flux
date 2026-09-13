@@ -13,6 +13,8 @@ model User {
   email     String   @unique
   name      String
   language  String   @default("en")
+  avatar      String?  // emoji the student picks for their profile
+  avatarColor String?  // hex background behind that emoji
   createdAt DateTime @default(now())
 
   courses       Course[]
@@ -153,6 +155,9 @@ model Lecture {
   durationSeconds Int           @default(0)
   audioUrl        String?
   slidesUrl       String?
+  imageUrls       String[]      @default([])  // board/slide photos taken during the lecture
+  keyPoints       Json?         // generated once at processing time, never regenerated
+  flashcards      Json?         // generated once at processing time, never regenerated
   transcript      String?       @db.Text
   segments        Json?         // [{start,end,text}] — preserves citation timestamps across re-indexing
   status          LectureStatus @default(recording)

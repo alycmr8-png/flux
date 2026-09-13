@@ -2,8 +2,9 @@ import "express-async-errors";
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+import path from "path";
 
-dotenv.config();
+dotenv.config({ path: path.resolve(__dirname, "../../../.env") });
 
 import { webhookRouter } from "./routes/webhooks";
 import { stripeWebhookRouter } from "./routes/stripe-webhook";
@@ -24,6 +25,7 @@ import { examPrepRouter } from "./routes/examprep";
 import { canvasRouter } from "./routes/canvas";
 import { usageSummary } from "./services/usage";
 import { errorHandler } from "./middleware/errorHandler";
+import { attachLiveTranscribe } from "./lib/liveTranscribe";
 import { requireAuth } from "./middleware/requireAuth";
 import { waitlistRouter } from "./routes/waitlist";
 
@@ -63,4 +65,5 @@ app.get("/api/usage", async (req, res) => {
 
 app.use(errorHandler);
 
-app.listen(Number(PORT), "0.0.0.0", () => console.log(`API running on http://0.0.0.0:${PORT}`));
+const server = app.listen(Number(PORT), "0.0.0.0", () => console.log(`API running on http://0.0.0.0:${PORT}`));
+attachLiveTranscribe(server);
