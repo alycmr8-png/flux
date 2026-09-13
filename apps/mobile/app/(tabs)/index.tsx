@@ -52,7 +52,7 @@ export default function HomeScreen() {
 
   return (
     <>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle="dark-content" />
       <ScrollView style={s.root} contentContainerStyle={[s.content, { paddingTop: insets.top + 20 }]}>
         <Text style={s.eyebrow}>Overview</Text>
         <Text style={s.h1}>{greeting()}{firstName ? `, ${firstName}` : ""}.</Text>
@@ -61,7 +61,7 @@ export default function HomeScreen() {
         <Text style={s.sectionLbl}>Coming up</Text>
         {events.length === 0 ? (
           <TouchableOpacity style={s.emptyRow} onPress={() => router.push("/(tabs)/calendar" as any)} activeOpacity={0.7}>
-            <Ionicons name="add" size={14} color="#555" />
+            <Ionicons name="add" size={16} color="rgba(15,17,21,0.55)" />
             <Text style={s.emptyTxt}>No upcoming events — add one in Calendar</Text>
           </TouchableOpacity>
         ) : (
@@ -78,10 +78,10 @@ export default function HomeScreen() {
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={s.eventTitle} numberOfLines={1}>{e.title}</Text>
-                  <Text style={s.eventSub}>{e.type}{e.course?.code ? ` · ${e.course.code}` : ""}</Text>
+                  <Text style={s.eventSub}>{e.type}{e.course?.name ? ` · ${e.course.name}` : ""}</Text>
                 </View>
-                <View style={[s.countChip, { backgroundColor: diff === 0 ? "rgba(239,68,68,0.14)" : "rgba(255,255,255,0.06)" }]}>
-                  <Text style={[s.countTxt, diff === 0 && { color: "#F87171" }]}>
+                <View style={[s.countChip, { backgroundColor: diff === 0 ? "rgba(239,68,68,0.12)" : "rgba(15,17,21,0.06)" }]}>
+                  <Text style={[s.countTxt, diff === 0 && { color: "#DC2626" }]}>
                     {diff === 0 ? "Today" : diff === 1 ? "Tomorrow" : `In ${diff} days`}
                   </Text>
                 </View>
@@ -94,18 +94,24 @@ export default function HomeScreen() {
         <Text style={s.sectionLbl}>My classes</Text>
         {courses.length === 0 ? (
           <TouchableOpacity style={s.emptyRow} onPress={() => router.push("/(tabs)/record" as any)} activeOpacity={0.7}>
-            <Ionicons name="add" size={14} color="#555" />
+            <Ionicons name="add" size={16} color="rgba(15,17,21,0.55)" />
             <Text style={s.emptyTxt}>Create your first class</Text>
           </TouchableOpacity>
         ) : (
           courses.map((c: any) => (
-            <TouchableOpacity key={c.id} style={s.classCard} onPress={() => router.push("/(tabs)/record" as any)} activeOpacity={0.7}>
-              <View style={s.classIc}><Ionicons name="layers-outline" size={16} color="#60A5FA" /></View>
+            <TouchableOpacity
+              key={c.id}
+              style={s.classCard}
+              onPress={() => router.push({ pathname: "/(tabs)/record", params: { courseId: c.id, courseName: c.name, courseCode: c.code, courseColor: c.color ?? "" } } as any)}
+              activeOpacity={0.7}
+            >
+              <View style={[s.classIc, { backgroundColor: c.color || "#4B5FE8", borderColor: c.color || "#4B5FE8" }]}>
+                <Text style={s.classIcTxt}>{(c.name ?? "?").trim().charAt(0).toUpperCase()}</Text>
+              </View>
               <View style={{ flex: 1 }}>
                 <Text style={s.className}>{c.name}</Text>
-                <Text style={s.classCode}>{c.code}</Text>
               </View>
-              <Ionicons name="chevron-forward" size={14} color="#333" />
+              <Ionicons name="chevron-forward" size={16} color="rgba(15,17,21,0.35)" />
             </TouchableOpacity>
           ))
         )}
@@ -116,9 +122,9 @@ export default function HomeScreen() {
             <Text style={s.sectionLbl}>Saved notes</Text>
             {notes.map((cs: any) => (
               <View key={cs.id} style={s.noteRow}>
-                <Ionicons name="document-text-outline" size={15} color="#666" />
+                <Ionicons name="document-text-outline" size={17} color="rgba(15,17,21,0.55)" />
                 <Text style={s.noteName} numberOfLines={1}>{cs.title}</Text>
-                <Ionicons name="chevron-forward" size={13} color="#333" />
+                <Ionicons name="chevron-forward" size={15} color="rgba(15,17,21,0.35)" />
               </View>
             ))}
           </>
@@ -129,25 +135,25 @@ export default function HomeScreen() {
 }
 
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#0F0F0E" },
-  content: { paddingHorizontal: 18, paddingBottom: 120 },
-  eyebrow: { fontSize: 10, fontWeight: "700", letterSpacing: 2, textTransform: "uppercase", color: "#60A5FA", marginBottom: 8 },
-  h1: { fontSize: 27, color: "#fff", fontWeight: "800", letterSpacing: -0.5, marginBottom: 26 },
-  sectionLbl: { fontSize: 10, color: "#60A5FA", textTransform: "uppercase", letterSpacing: 1.6, fontWeight: "700", marginBottom: 10, marginTop: 8 },
-  emptyRow: { flexDirection: "row", alignItems: "center", gap: 8, borderWidth: 1, borderColor: "#222", borderStyle: "dashed", borderRadius: 16, padding: 15, marginBottom: 18 },
-  emptyTxt: { color: "#666", fontSize: 12 },
-  eventCard: { flexDirection: "row", alignItems: "center", gap: 13, backgroundColor: "rgba(255,255,255,0.04)", borderWidth: 0.5, borderColor: "#1e1e1e", borderLeftWidth: 3, borderRadius: 16, padding: 13, marginBottom: 9 },
-  dateBlock: { width: 40, alignItems: "center" },
-  dateDay: { fontSize: 19, fontWeight: "800", color: "#fff", lineHeight: 22 },
-  dateMon: { fontSize: 9, textTransform: "uppercase", letterSpacing: 1, color: "#555", marginTop: 1 },
-  eventTitle: { fontSize: 13.5, fontWeight: "600", color: "#fff" },
-  eventSub: { fontSize: 11, color: "#555", marginTop: 2, textTransform: "capitalize" },
+  root: { flex: 1, backgroundColor: "#FFFFFF" },
+  content: { paddingHorizontal: 18, paddingBottom: 142 },
+  eyebrow: { fontSize: 11.5, fontWeight: "700", letterSpacing: 2, textTransform: "uppercase", color: "#4B5FE8", marginBottom: 8 },
+  h1: { fontSize: 31, color: "#0f1115", fontWeight: "800", letterSpacing: -0.5, marginBottom: 26 },
+  sectionLbl: { fontSize: 12, color: "#4B5FE8", textTransform: "uppercase", letterSpacing: 1.6, fontWeight: "700", marginBottom: 10, marginTop: 8 },
+  emptyRow: { flexDirection: "row", alignItems: "center", gap: 8, borderWidth: 1, borderColor: "rgba(0,0,0,0.12)", borderStyle: "dashed", borderRadius: 16, padding: 15, marginBottom: 18 },
+  emptyTxt: { color: "rgba(15,17,21,0.6)", fontSize: 13.5 },
+  eventCard: { flexDirection: "row", alignItems: "center", gap: 13, backgroundColor: "#FFFFFF", borderWidth: 1, borderColor: "rgba(0,0,0,0.08)", borderLeftWidth: 3, borderRadius: 16, padding: 13, marginBottom: 9 },
+  dateBlock: { width: 44, alignItems: "center" },
+  dateDay: { fontSize: 22, fontWeight: "800", color: "#0f1115", lineHeight: 25 },
+  dateMon: { fontSize: 10.5, textTransform: "uppercase", letterSpacing: 1, color: "rgba(15,17,21,0.55)", marginTop: 1 },
+  eventTitle: { fontSize: 15.5, fontWeight: "600", color: "#0f1115" },
+  eventSub: { fontSize: 12.5, color: "rgba(15,17,21,0.55)", marginTop: 2, textTransform: "capitalize" },
   countChip: { borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5 },
-  countTxt: { fontSize: 10.5, fontWeight: "700", color: "#999" },
-  classCard: { flexDirection: "row", alignItems: "center", gap: 13, backgroundColor: "rgba(255,255,255,0.04)", borderWidth: 0.5, borderColor: "#1e1e1e", borderRadius: 16, padding: 14, marginBottom: 9 },
-  classIc: { width: 36, height: 36, borderRadius: 11, backgroundColor: "rgba(37,99,235,0.14)", alignItems: "center", justifyContent: "center" },
-  className: { fontSize: 14, color: "#fff", fontWeight: "600" },
-  classCode: { fontSize: 11, color: "#555", marginTop: 1 },
-  noteRow: { flexDirection: "row", alignItems: "center", gap: 11, backgroundColor: "rgba(255,255,255,0.04)", borderWidth: 0.5, borderColor: "#1e1e1e", borderRadius: 14, padding: 13, marginBottom: 8 },
-  noteName: { flex: 1, fontSize: 12.5, color: "#ddd", fontWeight: "500" },
+  countTxt: { fontSize: 11.5, fontWeight: "700", color: "rgba(15,17,21,0.55)" },
+  classCard: { flexDirection: "row", alignItems: "center", gap: 13, backgroundColor: "#FFFFFF", borderWidth: 1, borderColor: "rgba(0,0,0,0.08)", borderRadius: 16, padding: 14, marginBottom: 9 },
+  classIc: { width: 36, height: 36, borderRadius: 18, backgroundColor: "rgba(75,95,232,0.1)", borderWidth: 1, borderColor: "rgba(75,95,232,0.2)", alignItems: "center", justifyContent: "center" },
+  classIcTxt: { color: "#fff", fontSize: 16, fontWeight: "800" },
+  className: { fontSize: 16, color: "#0f1115", fontWeight: "600" },
+  noteRow: { flexDirection: "row", alignItems: "center", gap: 11, backgroundColor: "#FFFFFF", borderWidth: 1, borderColor: "rgba(0,0,0,0.08)", borderRadius: 14, padding: 13, marginBottom: 8 },
+  noteName: { flex: 1, fontSize: 14.5, color: "#0f1115", fontWeight: "500" },
 });

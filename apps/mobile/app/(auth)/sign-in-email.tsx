@@ -25,8 +25,8 @@ export default function SignInEmailScreen() {
     <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={s.root}>
       <Text style={s.title}>Sign in</Text>
       {error ? <Text style={s.err}>{error}</Text> : null}
-      <TextInput style={s.input} placeholder="Email" placeholderTextColor="#444" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" />
-      <TextInput style={s.input} placeholder="Password" placeholderTextColor="#444" value={password} onChangeText={setPassword} secureTextEntry />
+      <TextInput style={s.input} placeholder="Email" placeholderTextColor="rgba(15,17,21,0.35)" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" />
+      <TextInput style={s.input} placeholder="Password" placeholderTextColor="rgba(15,17,21,0.35)" value={password} onChangeText={setPassword} secureTextEntry />
       <TouchableOpacity style={s.btn} onPress={handleSignIn}>
         <Text style={s.btnTxt}>Sign in</Text>
       </TouchableOpacity>
@@ -38,12 +38,12 @@ export default function SignInEmailScreen() {
 }
 
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#000", padding: 24, justifyContent: "center" },
-  title: { fontSize: 32, color: "#fff", fontFamily: "serif", marginBottom: 28 },
-  err: { fontSize: 12, color: "#f55", marginBottom: 12 },
-  input: { borderWidth: 0.5, borderColor: "#222", borderRadius: 12, padding: 14, color: "#fff", fontSize: 14, marginBottom: 10, backgroundColor: "#111" },
-  btn: { backgroundColor: "#fff", borderRadius: 14, padding: 16, alignItems: "center", marginTop: 4 },
-  btnTxt: { fontSize: 15, color: "#000", fontFamily: "sans-serif-medium" },
+  root: { flex: 1, backgroundColor: "#FFFFFF", padding: 24, justifyContent: "center" },
+  title: { fontSize: 32, color: "#0f1115", fontFamily: "serif", marginBottom: 28 },
+  err: { fontSize: 12, color: "#DC2626", marginBottom: 12 },
+  input: { borderWidth: 1, borderColor: "rgba(0,0,0,0.08)", borderRadius: 12, padding: 14, color: "#0f1115", fontSize: 14, marginBottom: 10, backgroundColor: "#FFFFFF" },
+  btn: { backgroundColor: "#4B5FE8", borderRadius: 14, padding: 16, alignItems: "center", marginTop: 4 },
+  btnTxt: { fontSize: 15, color: "#fff", fontFamily: "sans-serif-medium" },
   back: { marginTop: 20, alignItems: "center" },
-  backTxt: { fontSize: 13, color: "#444" },
+  backTxt: { fontSize: 13, color: "rgba(15,17,21,0.55)" },
 });

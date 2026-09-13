@@ -31,7 +31,7 @@ export default function ArchiveScreen() {
 
   return (
     <>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle="dark-content" />
       <ScrollView style={s.root} contentContainerStyle={[s.content, { paddingTop: insets.top + 20 }]}>
         <Text style={s.eyebrow}>Archive</Text>
         <Text style={s.h1}>Archived items</Text>
@@ -40,14 +40,14 @@ export default function ArchiveScreen() {
           <Text style={s.muted}>Loading…</Text>
         ) : lectures.length === 0 ? (
           <View style={s.emptyBox}>
-            <Ionicons name="archive-outline" size={26} color="#333" style={{ marginBottom: 10 }} />
+            <Ionicons name="archive-outline" size={26} color="rgba(15,17,21,0.35)" style={{ marginBottom: 10 }} />
             <Text style={s.muted}>Nothing archived. Deleted recordings and videos land here first.</Text>
           </View>
         ) : (
           lectures.map((l: any) => (
             <View key={l.id} style={s.row}>
               <View style={s.rowIc}>
-                <Ionicons name={/youtube\.com|youtu\.be/.test(l.audioUrl ?? "") ? "logo-youtube" : "mic-outline"} size={15} color="#888" />
+                <Ionicons name={/youtube\.com|youtu\.be/.test(l.audioUrl ?? "") ? "logo-youtube" : "mic-outline"} size={15} color="#4B5FE8" />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={s.rowTitle} numberOfLines={1}>{l.title}</Text>
@@ -68,16 +68,16 @@ export default function ArchiveScreen() {
 }
 
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#0F0F0E" },
-  content: { paddingHorizontal: 18, paddingBottom: 120 },
-  eyebrow: { fontSize: 10, fontWeight: "700", letterSpacing: 2, textTransform: "uppercase", color: "#60A5FA", marginBottom: 8 },
-  h1: { fontSize: 27, color: "#fff", fontWeight: "800", letterSpacing: -0.5, marginBottom: 22 },
-  muted: { color: "#666", fontSize: 12.5, textAlign: "center", lineHeight: 18 },
-  emptyBox: { alignItems: "center", backgroundColor: "rgba(255,255,255,0.04)", borderWidth: 0.5, borderColor: "#1e1e1e", borderRadius: 18, padding: 28 },
-  row: { flexDirection: "row", alignItems: "center", gap: 11, backgroundColor: "rgba(255,255,255,0.04)", borderWidth: 0.5, borderColor: "#1e1e1e", borderRadius: 14, padding: 12, marginBottom: 8 },
-  rowIc: { width: 34, height: 34, borderRadius: 10, backgroundColor: "rgba(255,255,255,0.06)", alignItems: "center", justifyContent: "center" },
-  rowTitle: { fontSize: 13, color: "#fff", fontWeight: "500" },
-  rowSub: { fontSize: 10.5, color: "#555", marginTop: 1 },
+  root: { flex: 1, backgroundColor: "#FFFFFF" },
+  content: { paddingHorizontal: 18, paddingBottom: 142 },
+  eyebrow: { fontSize: 10, fontWeight: "700", letterSpacing: 2, textTransform: "uppercase", color: "#4B5FE8", marginBottom: 8 },
+  h1: { fontSize: 27, color: "#0f1115", fontWeight: "800", letterSpacing: -0.5, marginBottom: 22 },
+  muted: { color: "rgba(15,17,21,0.55)", fontSize: 12.5, textAlign: "center", lineHeight: 18 },
+  emptyBox: { alignItems: "center", backgroundColor: "#FFFFFF", borderWidth: 1, borderColor: "rgba(0,0,0,0.08)", borderRadius: 18, padding: 28 },
+  row: { flexDirection: "row", alignItems: "center", gap: 11, backgroundColor: "#FFFFFF", borderWidth: 1, borderColor: "rgba(0,0,0,0.08)", borderRadius: 14, padding: 12, marginBottom: 8 },
+  rowIc: { width: 34, height: 34, borderRadius: 10, backgroundColor: "rgba(75,95,232,0.1)", borderWidth: 1, borderColor: "rgba(75,95,232,0.2)", alignItems: "center", justifyContent: "center" },
+  rowTitle: { fontSize: 13, color: "#0f1115", fontWeight: "500" },
+  rowSub: { fontSize: 10.5, color: "rgba(15,17,21,0.55)", marginTop: 1 },
   actionBtn: { paddingHorizontal: 8, paddingVertical: 6 },
-  restoreTxt: { color: "#60A5FA", fontSize: 12, fontWeight: "600" },
+  restoreTxt: { color: "#4B5FE8", fontSize: 12, fontWeight: "600" },
 });
