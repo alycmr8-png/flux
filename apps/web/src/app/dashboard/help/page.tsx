@@ -1,5 +1,5 @@
 "use client";
-import { Mail, MessageCircle, BookOpen, Mic, Calendar } from "lucide-react";
+import { Mail, MessageCircle, GraduationCap, Mic, Calendar } from "lucide-react";
 
 const FAQS = [
   {
@@ -11,8 +11,8 @@ const FAQS = [
     a: "Go to Calendar, click any future day, then press Add. Fill in the title, type (Exam, Assignment, etc.), and date. Flux will remind you as the date approaches.",
   },
   {
-    q: "What is a Study Book?",
-    a: "A Study Book is a full AI-generated guide from your lecture — with chapters, key terms, flashcards, and practice questions. Find them in Workspace → Study Book.",
+    q: "What is Exam Mode?",
+    a: "Exam Mode reads everything you've saved for a class — recordings, notes and files — and builds likely topics, predicted questions, gaps in your notes, and a study plan. Find it in Workspace → Exam Mode.",
   },
   {
     q: "How do I change the language?",
@@ -22,7 +22,7 @@ const FAQS = [
 
 const FEATURES = [
   { icon: Mic,        label: "Record",       desc: "Record lectures and get instant cheat sheets" },
-  { icon: BookOpen,   label: "Study Book",   desc: "Full AI-generated study guides per lecture" },
+  { icon: GraduationCap, label: "Exam Mode", desc: "Likely topics, predicted questions and a study plan" },
   { icon: Calendar,   label: "Calendar",     desc: "Track exams, assignments, and deadlines" },
 ];
 

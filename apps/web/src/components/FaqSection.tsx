@@ -3,14 +3,12 @@ import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 
 const FAQS = [
-  { q: "What is Flux?", a: "Flux is a course memory — not a note-taking app. Everything you capture for a class (lectures, files, videos, notes) becomes one knowledge base you can ask questions, and every answer is cited back to your actual materials." },
-  { q: "How does the recording feature work?", a: "You record your lecture directly in the browser. Flux transcribes the audio, generates a summary and key points, and adds the whole lecture to your course memory — all within minutes." },
-  { q: "Can I upload YouTube videos?", a: "Yes. Paste any YouTube link and Flux fetches the transcript, then gives you a summary, key points, flashcards, and a chatbot — and the video becomes part of your course memory." },
-  { q: "What file types can I upload?", a: "Flux supports PDF, Word (.docx, .doc), PowerPoint (.pptx, .ppt), Excel (.xlsx, .xls), OpenDocument files (.odt, .odp, .ods), images, and plain text files." },
+  { q: "What is Flux?", a: "Flux helps you take notes faster. Record a lecture and Flux transcribes it, then turns it into clean, organized notes automatically — so you can ask questions and get answers cited back to the exact moment your professor said it." },
+  { q: "How does the recording feature work?", a: "You record your lecture directly in the browser. Flux transcribes the audio, generates a summary and key points, and turns it into ready-to-study notes — all within minutes." },
   { q: "Is there a free trial?", a: "Yes — you get a 7-day free trial on all plans. No credit card required to start." },
   { q: "How much does Flux cost?", a: "Flux is $9.99/month — or less on longer plans: $6.99/month billed every 6 months, or $5.99/month billed yearly. Every plan includes everything. Cancel anytime." },
-  { q: "Does Flux work for any subject?", a: "Yes. Flux works for any subject — biology, law, history, engineering, business, and more. The AI adapts to the content of your lecture or document." },
-  { q: "Is my data private?", a: "Your recordings and documents are processed securely and never shared with other users. You can delete your data at any time from your account." },
+  { q: "Does Flux work for any subject?", a: "Yes. Flux works for any subject — biology, law, history, engineering, business, and more. The AI adapts to the content of your lecture." },
+  { q: "Is my data private?", a: "Your recordings and notes are processed securely and never shared with other users. You can delete your data at any time from your account." },
 ];
 
 export function FaqSection() {

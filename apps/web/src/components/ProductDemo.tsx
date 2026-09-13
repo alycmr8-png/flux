@@ -2,8 +2,8 @@
 import { useState, useEffect, useRef } from "react";
 import {
   Home, Layers, Calendar, CreditCard, Archive, HelpCircle,
-  Mic, Mic2, BookMarked, PenLine,
-  Square, Plus, Zap, Sparkles, CheckCircle2,
+  Mic, Mic2, PenLine,
+  Square, Plus, Sparkles, CheckCircle2,
 } from "lucide-react";
 
 // ── Steps: what the demo cycles through ────────────────────────────────────
@@ -14,7 +14,6 @@ const STEPS = [
   { view: "class",   tab: "record",    phase: "done",      dur: 1800 },
   { view: "class",   tab: "ask",       phase: "question",  dur: 2200 },
   { view: "class",   tab: "ask",       phase: "answer",    dur: 4800 }, // the hero — longest dwell
-  { view: "class",   tab: "studybook", phase: "done",      dur: 2600 },
 ] as const;
 
 // Big, readable captions for each step (what was previously tiny & missable).
@@ -24,7 +23,6 @@ const CAPTIONS: Record<string, { icon: any; title: string; desc: string; flagshi
   "class-record-done":      { icon: CheckCircle2, title: "Transcribed & remembered",        desc: "Seconds later it's a clean transcript, summary, and key points — saved to the course." },
   "class-ask-question":     { icon: Sparkles,     title: "Ask your course anything",         desc: "One chat box per class, on top of everything you've captured all semester.", flagship: true },
   "class-ask-answer":       { icon: Sparkles,     title: "Answers — with real sources",      desc: "Every answer cites the exact lecture minute or file it came from. No guessing.", flagship: true },
-  "class-studybook-done":   { icon: BookMarked,   title: "A full study book, auto-built",    desc: "Chapters, glossary, and practice — generated from your whole course memory." },
 };
 
 const ACCENT = "#6E7FF3";
@@ -41,7 +39,6 @@ const NAV = [
 const CLASS_TABS = [
   { key: "ask",       label: "Ask",          icon: Sparkles  },
   { key: "record",    label: "Record",       icon: Mic2      },
-  { key: "studybook", label: "Study Book",   icon: BookMarked },
   { key: "note",      label: "Take Note",    icon: PenLine   },
 ] as const;
 
@@ -63,12 +60,6 @@ const ASK_ANSWER = "She defined it as the mental discomfort from holding contrad
 const ASK_CITATIONS = [
   { n: 1, label: "Lecture: Week 4 · 32:10" },
   { n: 2, label: "File: Week 4 slides" },
-];
-
-const STUDY_BOOKS = [
-  { title: "Midterm Complete Study Guide", chapters: 6, terms: 24, color: "#6E7FF3" },
-  { title: "Week 3 — Memory and Cognition", chapters: 4, terms: 16, color: "#a78bfa" },
-  { title: "Final Exam Master Book",        chapters: 8, terms: 36, color: "#10b981" },
 ];
 
 // ── Sidebar ─────────────────────────────────────────────────────────────────
@@ -239,23 +230,6 @@ function ClassView({ tab, phase, refs }: {
           </div>
         )}
 
-        {/* STUDY BOOK TAB */}
-        {tab === "studybook" && (
-          <div className="space-y-2.5" style={{ maxWidth: 440 }}>
-            {STUDY_BOOKS.map((book, i) => (
-              <div key={i} className="flex overflow-hidden rounded-xl" style={{ background: "rgba(0,0,0,0.04)", border: "1px solid rgba(0,0,0,0.05)" }}>
-                <div className="w-2 shrink-0" style={{ background: book.color }} />
-                <div className="px-3.5 py-3.5 flex-1 flex items-center justify-between gap-3">
-                  <div>
-                    <div style={{ fontSize: 12.5, fontWeight: 600, color: "white", marginBottom: 3 }}>{book.title}</div>
-                    <div style={{ fontSize: 10, color: "rgba(31,35,40,0.6)" }}>{book.chapters} chapters · {book.terms} key terms</div>
-                  </div>
-                  <Zap size={13} style={{ color: book.color, flexShrink: 0 }} />
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
       </div>
     </div>
   );
@@ -283,7 +257,6 @@ export function ProductDemo() {
   const refs = {
     ask:       useRef<HTMLDivElement>(null),
     record:    useRef<HTMLDivElement>(null),
-    studybook: useRef<HTMLDivElement>(null),
     note:      useRef<HTMLDivElement>(null),
     mic:       useRef<HTMLDivElement>(null),
   };
@@ -303,7 +276,6 @@ export function ProductDemo() {
     "class-record-done":        refs.record,
     "class-ask-question":       refs.ask,
     "class-ask-answer":         refs.ask,
-    "class-studybook-done":     refs.studybook,
   };
 
   const stepKey = `${step.view}-${step.tab}-${step.phase}`;

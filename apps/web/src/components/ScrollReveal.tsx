@@ -5,9 +5,10 @@ interface Props {
   children: React.ReactNode;
   className?: string;
   delay?: number; // ms
+  id?: string;
 }
 
-export function ScrollReveal({ children, className = "", delay = 0 }: Props) {
+export function ScrollReveal({ children, className = "", delay = 0, id }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
 
@@ -25,6 +26,7 @@ export function ScrollReveal({ children, className = "", delay = 0 }: Props) {
   return (
     <div
       ref={ref}
+      id={id}
       className={className}
       style={{
         opacity: visible ? 1 : 0,

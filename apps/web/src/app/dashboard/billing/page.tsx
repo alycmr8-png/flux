@@ -10,8 +10,8 @@ const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 const SHARED_FEATURES = [
   "Ask your course — answers with sources",
   "Unlimited recordings & uploads",
-  "AI summaries, key points & flashcards",
-  "Study books from your course memory",
+  "AI summaries & key points",
+  "Exam Mode — likely topics & predicted questions",
   "Calendar, notes & YouTube import",
 ];
 

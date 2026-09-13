@@ -3,9 +3,9 @@ import { useEffect, useState } from "react";
 import { Sparkles } from "lucide-react";
 
 const PROMPTS = [
-  "Explain the Chain Rule the same way my professor did.",
-  "Show me where integration by parts was mentioned.",
-  "Generate a practice exam from everything we've covered.",
+  "Turn today's lecture into study notes.",
+  "Summarize the key points from Chapter 4.",
+  "Generate a practice quiz from my notes.",
 ];
 
 export function RotatingPrompts() {

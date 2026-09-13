@@ -1,11 +1,10 @@
 "use client";
 import { useState } from "react";
-import { Mic2, BookOpen, BookMarked, PenLine } from "lucide-react";
+import { Mic2, BookOpen, PenLine } from "lucide-react";
 
 const TABS = [
   { key: "record",    label: "Record",       icon: Mic2       },
   { key: "quiz",      label: "Quizzes",      icon: BookOpen   },
-  { key: "studybook", label: "Study Book",   icon: BookMarked },
   { key: "note",      label: "Take Note",    icon: PenLine    },
 ] as const;
 
@@ -104,36 +103,9 @@ function QuizPreview() {
   );
 }
 
-function StudyBookPreview() {
-  const spines = ["#8fa389", "#b0a08a", "#a08ab0", "#8ab0b0"];
-  return (
-    <div className="space-y-3">
-      {[
-        { title: "Midterm Complete Study Guide", chapters: 6, terms: 24, flashcards: 18 },
-        { title: "Week 3 - Memory & Cognition",  chapters: 4, terms: 16, flashcards: 12 },
-        { title: "Final Exam Master Book",        chapters: 8, terms: 36, flashcards: 24 },
-      ].map((book, i) => (
-        <div key={i} className="flex overflow-hidden rounded-2xl" style={{ background: "rgba(0,0,0,0.05)", border: "1px solid rgba(0,0,0,0.08)" }}>
-          <div className="w-3 shrink-0" style={{ background: spines[i % spines.length] }} />
-          <div className="px-5 py-4 flex-1 flex items-center justify-between gap-4">
-            <div>
-              <div className="text-sm font-medium mb-1" style={{ color: "#0f1115" }}>{book.title}</div>
-              <div className="text-xs" style={{ color: "rgba(0,0,0,0.4)" }}>
-                {book.chapters} chapters · {book.terms} terms · {book.flashcards} flashcards
-              </div>
-            </div>
-            <div className="text-lg shrink-0" style={{ color: "rgba(0,0,0,0.2)" }}>›</div>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
 const PREVIEWS: Record<string, React.ReactNode> = {
   record:    <RecordPreview />,
   quiz:      <QuizPreview />,
-  studybook: <StudyBookPreview />,
   note:      <NotePreview />,
 };
 
@@ -150,7 +122,7 @@ export function FeaturesShowcase() {
             Everything to ace the semester.
           </h2>
           <p className="text-base md:text-lg mt-3 max-w-xl mx-auto" style={{ color: "rgba(0,0,0,0.5)" }}>
-            One recording. Cheat sheets, quizzes, study books — generated instantly.
+            One recording. Transcript, cheat sheet and quizzes — generated instantly.
           </p>
         </div>
 

@@ -30,7 +30,7 @@ export function Navbar() {
         {/* Nav links */}
         <nav className="hidden md:flex items-center gap-8">
           {[
-            { label: "Features", href: "#features" },
+            { label: "How it works", href: "#how-it-works" },
             { label: "Pricing",  href: "#pricing"  },
             { label: "FAQ",      href: "#faq"      },
           ].map(({ label, href }) => (

@@ -32,7 +32,7 @@ export function LanguageSwitcher() {
   async function change(lang: Language) {
     setOpen(false);
     localStorage.setItem("lang", lang);
-    // Persist to the API so AI answers (Ask, summaries, study books) match the UI language
+    // Persist to the API so AI answers (Ask, summaries, exam prep) match the UI language
     try {
       const token = await getToken();
       if (token) {
