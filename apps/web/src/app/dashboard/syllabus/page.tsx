@@ -48,12 +48,12 @@ function SemesterProgress({ start, end }: { start: string; end: string }) {
     <div className="rounded-[20px] p-5 mb-5" style={cardStyle}>
       <div className="flex items-center justify-between mb-3">
         <div>
-          <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(15,17,21,0.6)", marginBottom: 4 }}>Semester Progress</div>
-          <div style={{ fontSize: 15.5, fontWeight: 600, color: INK }}>Week {currentWeek} of {totalWeeks}</div>
+          <div style={{ fontSize: 13.5, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(15,17,21, 0.75)", marginBottom: 4 }}>Semester Progress</div>
+          <div style={{ fontSize: 16.5, fontWeight: 600, color: INK }}>Week {currentWeek} of {totalWeeks}</div>
         </div>
         <div className="text-right">
           <div style={{ fontSize: 26, fontWeight: 800, color: INK, lineHeight: 1 }}>{Math.round(pct)}%</div>
-          <div style={{ fontSize: 13, color: "rgba(15,17,21,0.6)", marginTop: 4 }}>{daysLeft} days left</div>
+          <div style={{ fontSize: 14.5, color: "rgba(15,17,21, 0.75)", marginTop: 4 }}>{daysLeft} days left</div>
         </div>
       </div>
       <div className="h-2.5 rounded-full overflow-hidden" style={{ background: "rgba(0,0,0,0.06)" }}>
@@ -63,8 +63,8 @@ function SemesterProgress({ start, end }: { start: string; end: string }) {
         />
       </div>
       <div className="flex justify-between mt-2">
-        <span style={{ fontSize: 12.5, color: "rgba(15,17,21,0.6)" }}>{new Date(start).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
-        <span style={{ fontSize: 12.5, color: "rgba(15,17,21,0.6)" }}>{new Date(end).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
+        <span style={{ fontSize: 14, color: "rgba(15,17,21, 0.75)" }}>{new Date(start).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
+        <span style={{ fontSize: 14, color: "rgba(15,17,21, 0.75)" }}>{new Date(end).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
       </div>
     </div>
   );
@@ -108,14 +108,14 @@ function GradeCalculator({ weights }: { weights: { category: string; weight: num
       >
         <div className="flex items-center gap-2.5">
           <Star size={15} style={{ color: BRAND }} />
-          <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(15,17,21,0.65)" }}>Grade Calculator</span>
+          <span style={{ fontSize: 13.5, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(15,17,21, 0.78)" }}>Grade Calculator</span>
           {projected !== null && (
-            <span className="rounded-full px-2.5 py-1" style={{ fontSize: 12.5, fontWeight: 600, background: "rgba(0,0,0,0.04)", color: "rgba(15,17,21,0.7)" }}>
+            <span className="rounded-full px-2.5 py-1" style={{ fontSize: 14, fontWeight: 600, background: "rgba(0,0,0,0.04)", color: "rgba(15,17,21, 0.8)" }}>
               {projected.toFixed(1)}% · {letterGrade(projected)}
             </span>
           )}
         </div>
-        <ChevronDown size={16} className={`transition-transform ${open ? "rotate-180" : ""}`} style={{ color: "rgba(15,17,21,0.6)" }} />
+        <ChevronDown size={16} className={`transition-transform ${open ? "rotate-180" : ""}`} style={{ color: "rgba(15,17,21, 0.75)" }} />
       </button>
 
       {open && (
@@ -124,8 +124,8 @@ function GradeCalculator({ weights }: { weights: { category: string; weight: num
             {weights.map(w => (
               <div key={w.category} className="flex items-center gap-3">
                 <div className="flex-1 min-w-0">
-                  <div className="truncate" style={{ fontSize: 14.5, fontWeight: 600, color: INK }}>{w.category}</div>
-                  <div style={{ fontSize: 12.5, color: "rgba(15,17,21,0.6)", marginTop: 2 }}>{w.weight}% of grade</div>
+                  <div className="truncate" style={{ fontSize: 16, fontWeight: 600, color: INK }}>{w.category}</div>
+                  <div style={{ fontSize: 14, color: "rgba(15,17,21, 0.75)", marginTop: 2 }}>{w.weight}% of grade</div>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <input
@@ -135,9 +135,9 @@ function GradeCalculator({ weights }: { weights: { category: string; weight: num
                     onChange={e => setGrades(g => ({ ...g, [w.category]: e.target.value }))}
                     placeholder="—"
                     className="w-16 text-center rounded-xl px-2 py-1.5 outline-none border"
-                    style={{ borderColor: HAIRLINE, background: "#FFFFFF", color: INK, fontSize: 14.5 }}
+                    style={{ borderColor: HAIRLINE, background: "#FFFFFF", color: INK, fontSize: 16 }}
                   />
-                  <span style={{ fontSize: 14, color: "rgba(15,17,21,0.6)" }}>%</span>
+                  <span style={{ fontSize: 15.5, color: "rgba(15,17,21, 0.75)" }}>%</span>
                 </div>
                 {/* Weight bar */}
                 <div className="w-16 h-2 rounded-full overflow-hidden" style={{ background: "rgba(0,0,0,0.06)" }}>
@@ -149,12 +149,12 @@ function GradeCalculator({ weights }: { weights: { category: string; weight: num
 
           {projected !== null && (
             <div className="border-t pt-3 flex flex-wrap items-center justify-between gap-3" style={{ borderColor: HAIRLINE }}>
-              <div style={{ fontSize: 13.5, color: "rgba(15,17,21,0.65)" }}>
+              <div style={{ fontSize: 15, color: "rgba(15,17,21, 0.78)" }}>
                 Based on {filled} of {weights.length} categories ({totalWeight}% of grade)
               </div>
               <div className="text-right">
                 <div style={{ fontSize: 22, fontWeight: 800, color: INK, lineHeight: 1 }}>{projected.toFixed(1)}%</div>
-                <div style={{ fontSize: 13, color: "rgba(15,17,21,0.65)", marginTop: 4 }}>{letterGrade(projected)}</div>
+                <div style={{ fontSize: 14.5, color: "rgba(15,17,21, 0.78)", marginTop: 4 }}>{letterGrade(projected)}</div>
               </div>
             </div>
           )}
@@ -191,18 +191,18 @@ function DeadlinesList({ schedule }: { schedule: any[] }) {
       <div className="px-5 py-4 border-b flex flex-wrap items-center justify-between gap-2" style={{ borderColor: HAIRLINE }}>
         <div className="flex items-center gap-2.5">
           <ClipboardList size={15} style={{ color: BRAND }} />
-          <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(15,17,21,0.65)" }}>
+          <span style={{ fontSize: 13.5, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(15,17,21, 0.78)" }}>
             Deadlines at a Glance
           </span>
-          <span className="rounded-full px-2.5 py-1" style={{ fontSize: 12, fontWeight: 600, background: "rgba(0,0,0,0.04)", color: "rgba(15,17,21,0.7)" }}>{upcoming.length} upcoming</span>
+          <span className="rounded-full px-2.5 py-1" style={{ fontSize: 13.5, fontWeight: 600, background: "rgba(0,0,0,0.04)", color: "rgba(15,17,21, 0.8)" }}>{upcoming.length} upcoming</span>
         </div>
         {past.length > 0 && (
-          <span style={{ fontSize: 12.5, color: "rgba(15,17,21,0.6)" }}>{past.length} past</span>
+          <span style={{ fontSize: 14, color: "rgba(15,17,21, 0.75)" }}>{past.length} past</span>
         )}
       </div>
 
       {upcoming.length === 0 ? (
-        <div className="px-5 py-10 text-center" style={{ fontSize: 15, color: "rgba(15,17,21,0.65)" }}>No upcoming deadlines.</div>
+        <div className="px-5 py-10 text-center" style={{ fontSize: 16, color: "rgba(15,17,21, 0.78)" }}>No upcoming deadlines.</div>
       ) : (
         <div>
           {displayed.map((item, i) => {
@@ -215,28 +215,28 @@ function DeadlinesList({ schedule }: { schedule: any[] }) {
 
                 {/* Date */}
                 <div className="w-16 shrink-0 text-center">
-                  <div style={{ fontSize: 13.5, fontWeight: 700, color: INK }}>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: INK }}>
                     {new Date(item.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                   </div>
-                  <div style={{ fontSize: 12.5, fontWeight: 600, color: urgencyColor(days), marginTop: 2 }}>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: urgencyColor(days), marginTop: 2 }}>
                     {days === 0 ? "Today" : days === 1 ? "Tomorrow" : `${days}d`}
                   </div>
                 </div>
 
                 <div className="flex-1 min-w-0">
-                  <div className="truncate" style={{ fontSize: 15, fontWeight: 600, color: INK }}>{item.title}</div>
+                  <div className="truncate" style={{ fontSize: 16, fontWeight: 600, color: INK }}>{item.title}</div>
                   {item.description && (
-                    <div className="truncate" style={{ fontSize: 13, color: "rgba(15,17,21,0.62)", marginTop: 3 }}>{item.description}</div>
+                    <div className="truncate" style={{ fontSize: 14.5, color: "rgba(15,17,21, 0.76)", marginTop: 3 }}>{item.description}</div>
                   )}
                   {item.raw_date_text && (
-                    <div className="italic" style={{ fontSize: 12.5, color: "rgba(15,17,21,0.55)", marginTop: 3 }}>&quot;{item.raw_date_text}&quot;</div>
+                    <div className="italic" style={{ fontSize: 14, color: "rgba(15,17,21, 0.73)", marginTop: 3 }}>&quot;{item.raw_date_text}&quot;</div>
                   )}
                 </div>
 
                 {/* Type badge */}
                 <div
                   className="shrink-0 rounded-full px-3 py-1.5"
-                  style={{ fontSize: 11.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", background: tint, color: "#FFFFFF" }}
+                  style={{ fontSize: 13.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", background: tint, color: "#FFFFFF" }}
                 >
                   {item.type}
                 </div>
@@ -253,7 +253,7 @@ function DeadlinesList({ schedule }: { schedule: any[] }) {
 
       {upcoming.length > 8 && (
         <div className="px-5 py-3.5 border-t" style={{ borderColor: HAIRLINE }}>
-          <button onClick={() => setShowAll(s => !s)} className="transition-opacity hover:opacity-80" style={{ fontSize: 14, fontWeight: 600, color: BRAND }}>
+          <button onClick={() => setShowAll(s => !s)} className="transition-opacity hover:opacity-80" style={{ fontSize: 15.5, fontWeight: 600, color: BRAND }}>
             {showAll ? "Show less" : `Show all ${upcoming.length} deadlines`}
           </button>
         </div>
@@ -277,11 +277,11 @@ function WeeklyGantt({ topics, semesterStart, totalWeeks }: { topics: any[]; sem
       >
         <div className="flex items-center gap-2.5">
           <Calendar size={15} style={{ color: BRAND }} />
-          <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(15,17,21,0.65)" }}>
+          <span style={{ fontSize: 13.5, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(15,17,21, 0.78)" }}>
             Semester Timeline
           </span>
         </div>
-        <ChevronDown size={16} className={`transition-transform ${open ? "rotate-180" : ""}`} style={{ color: "rgba(15,17,21,0.6)" }} />
+        <ChevronDown size={16} className={`transition-transform ${open ? "rotate-180" : ""}`} style={{ color: "rgba(15,17,21, 0.75)" }} />
       </button>
 
       {open && (
@@ -296,7 +296,7 @@ function WeeklyGantt({ topics, semesterStart, totalWeeks }: { topics: any[]; sem
                     key={i}
                     className="flex-1 text-center py-1 rounded-md"
                     style={{
-                      fontSize: 11,
+                      fontSize: 13,
                       fontWeight: 700,
                       background: i + 1 === currentWeek ? BRAND : "transparent",
                       color: i + 1 === currentWeek ? "#FFFFFF" : "rgba(15,17,21,0.6)",
@@ -311,7 +311,7 @@ function WeeklyGantt({ topics, semesterStart, totalWeeks }: { topics: any[]; sem
             {/* Topics */}
             {topics.slice(0, 16).map((t, i) => (
               <div key={i} className="flex items-center mb-1.5">
-                <div className="w-36 shrink-0 truncate pr-3" style={{ fontSize: 12.5, color: "rgba(15,17,21,0.68)" }}>{t.title}</div>
+                <div className="w-36 shrink-0 truncate pr-3" style={{ fontSize: 14, color: "rgba(15,17,21, 0.79)" }}>{t.title}</div>
                 <div className="flex-1 flex">
                   {Array.from({ length: totalWeeks }, (_, wi) => (
                     <div
@@ -326,7 +326,7 @@ function WeeklyGantt({ topics, semesterStart, totalWeeks }: { topics: any[]; sem
 
             {/* Current week indicator */}
             <div className="flex mt-3">
-              <div className="w-36 shrink-0" style={{ fontSize: 12.5, fontWeight: 700, color: INK }}>Today →</div>
+              <div className="w-36 shrink-0" style={{ fontSize: 14, fontWeight: 700, color: INK }}>Today →</div>
               <div className="flex-1 flex">
                 {Array.from({ length: totalWeeks }, (_, i) => (
                   <div key={i} className="flex-1 h-1" style={{ background: i + 1 <= currentWeek ? BRAND : "rgba(0,0,0,0.06)" }} />
@@ -385,13 +385,13 @@ export default function SyllabusPage() {
 
   return (
     <div style={{ maxWidth: 900 }}>
-      <div style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", color: BRAND, marginBottom: 8 }}>
+      <div style={{ fontSize: 13.5, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", color: BRAND, marginBottom: 8 }}>
         Syllabus
       </div>
       <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 34, letterSpacing: "-0.5px", color: INK, marginBottom: 8 }}>
         Syllabus Parser
       </h1>
-      <p className="mb-8" style={{ fontSize: 15, color: "rgba(15,17,21,0.65)", maxWidth: 620 }}>
+      <p className="mb-8" style={{ fontSize: 16, color: "rgba(15,17,21, 0.78)", maxWidth: 620 }}>
         Upload your syllabus — AI extracts every deadline, resolves &quot;Week X&quot; into real dates, and builds your dashboard.
       </p>
 
@@ -399,8 +399,8 @@ export default function SyllabusPage() {
         <div className="flex flex-col gap-5" style={{ maxWidth: 560 }}>
           {courses.length > 0 && (
             <div>
-              <label className="block mb-2.5" style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(15,17,21,0.6)" }}>
-                Class <span style={{ textTransform: "none", letterSpacing: 0, fontWeight: 500, color: "rgba(15,17,21,0.55)" }}>— optional</span>
+              <label className="block mb-2.5" style={{ fontSize: 13.5, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(15,17,21, 0.75)" }}>
+                Class <span style={{ textTransform: "none", letterSpacing: 0, fontWeight: 500, color: "rgba(15,17,21, 0.73)" }}>— optional</span>
               </label>
               <div className="flex flex-wrap gap-2">
                 {courses.map((c: any) => {
@@ -418,7 +418,7 @@ export default function SyllabusPage() {
                       }}
                     >
                       <ClassBadge name={c.name} color={tint} size={28} />
-                      <span style={{ fontSize: 14.5, fontWeight: on ? 700 : 500, color: INK }}>{c.name}</span>
+                      <span style={{ fontSize: 16, fontWeight: on ? 700 : 500, color: INK }}>{c.name}</span>
                     </button>
                   );
                 })}
@@ -427,15 +427,15 @@ export default function SyllabusPage() {
           )}
 
           <div>
-            <label className="block mb-2.5" style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(15,17,21,0.6)" }}>
-              Semester start date <span style={{ textTransform: "none", letterSpacing: 0, fontWeight: 500, color: "rgba(15,17,21,0.55)" }}>— helps resolve &quot;Week X&quot; dates</span>
+            <label className="block mb-2.5" style={{ fontSize: 13.5, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(15,17,21, 0.75)" }}>
+              Semester start date <span style={{ textTransform: "none", letterSpacing: 0, fontWeight: 500, color: "rgba(15,17,21, 0.73)" }}>— helps resolve &quot;Week X&quot; dates</span>
             </label>
             <input
               type="date"
               value={semesterStart}
               onChange={e => setSemesterStart(e.target.value)}
               className="w-full rounded-2xl px-4 py-3 outline-none"
-              style={{ background: "#FFFFFF", border: `1px solid ${HAIRLINE}`, color: INK, fontSize: 15 }}
+              style={{ background: "#FFFFFF", border: `1px solid ${HAIRLINE}`, color: INK, fontSize: 16 }}
             />
           </div>
 
@@ -445,19 +445,19 @@ export default function SyllabusPage() {
           >
             <FileUp size={30} />
             <div className="text-center">
-              <div style={{ fontSize: 15.5, fontWeight: 600 }}>{file ? file.name : "Click to upload your syllabus"}</div>
-              {!file && <div style={{ fontSize: 13.5, color: "rgba(15,17,21,0.6)", marginTop: 6 }}>PDF files only</div>}
+              <div style={{ fontSize: 16.5, fontWeight: 600 }}>{file ? file.name : "Click to upload your syllabus"}</div>
+              {!file && <div style={{ fontSize: 15, color: "rgba(15,17,21, 0.75)", marginTop: 6 }}>PDF files only</div>}
             </div>
             <input type="file" accept=".pdf" className="hidden" onChange={e => setFile(e.target.files?.[0] ?? null)} />
           </label>
 
-          {error && <p style={{ fontSize: 14, color: "#DC2626" }}>{error}</p>}
+          {error && <p style={{ fontSize: 15.5, color: "#DC2626" }}>{error}</p>}
 
           <button
             onClick={parse}
             disabled={!file || loading}
             className="w-full rounded-2xl py-3.5 disabled:opacity-40 flex items-center justify-center gap-2 transition-opacity hover:opacity-90"
-            style={{ background: selectedCourse ? classColor(selectedCourse) : BRAND, color: "#FFFFFF", fontSize: 16, fontWeight: 700 }}
+            style={{ background: selectedCourse ? classColor(selectedCourse) : BRAND, color: "#FFFFFF", fontSize: 17, fontWeight: 700 }}
           >
             {loading
               ? <><Loader2 size={16} className="animate-spin" /> Analysing syllabus…</>
@@ -478,10 +478,10 @@ export default function SyllabusPage() {
                 <h2 className="truncate" style={{ fontSize: 20, fontWeight: 700, color: INK }}>{meta?.courseName ?? "Your Course"}</h2>
                 <div className="flex flex-wrap items-center gap-3 mt-1">
                   {meta?.professor && (
-                    <span style={{ fontSize: 14, color: "rgba(15,17,21,0.65)" }}>Prof. {meta.professor}</span>
+                    <span style={{ fontSize: 15.5, color: "rgba(15,17,21, 0.78)" }}>Prof. {meta.professor}</span>
                   )}
                   {meta?.officeHours && (
-                    <span className="flex items-center gap-1.5" style={{ fontSize: 14, color: "rgba(15,17,21,0.65)" }}>
+                    <span className="flex items-center gap-1.5" style={{ fontSize: 15.5, color: "rgba(15,17,21, 0.78)" }}>
                       <Clock size={12} /> {meta.officeHours}
                     </span>
                   )}
@@ -491,7 +491,7 @@ export default function SyllabusPage() {
             <button
               onClick={() => { setResult(null); setFile(null); setError(""); }}
               className="transition-opacity hover:opacity-80"
-              style={{ fontSize: 14, fontWeight: 600, color: BRAND }}
+              style={{ fontSize: 15.5, fontWeight: 600, color: BRAND }}
             >
               ← Upload another
             </button>
@@ -518,8 +518,8 @@ export default function SyllabusPage() {
             <div className="rounded-[20px] px-5 py-4 flex items-center gap-3" style={cardStyle}>
               <Clock size={15} className="shrink-0" style={{ color: BRAND }} />
               <div>
-                <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(15,17,21,0.6)", marginBottom: 4 }}>Office Hours</div>
-                <div style={{ fontSize: 15, color: INK }}>{meta.officeHours}</div>
+                <div style={{ fontSize: 13.5, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(15,17,21, 0.75)", marginBottom: 4 }}>Office Hours</div>
+                <div style={{ fontSize: 16, color: INK }}>{meta.officeHours}</div>
               </div>
             </div>
           )}

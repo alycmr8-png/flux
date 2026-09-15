@@ -1,13 +1,17 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import {
-  Mic, Mic2, Square, Pause, Play, BookOpen, BookMarked,
-  PenLine, CheckCircle, Loader2, Sparkles, Home,
-  Layers, Calendar, Archive, CreditCard, HelpCircle,
+  Mic2, Sparkles, Pause, Camera, StopCircle, PenLine,
+  Home, Layers, Calendar, Archive, CreditCard, HelpCircle,
 } from "lucide-react";
 
-const TITLE = "Cognitive Psychology — Week 4";
-type Phase = "idle" | "typing" | "recording" | "paused" | "processing" | "done" | "hold";
+// Live-recording demo: the transcript writes itself while the professor talks,
+// board photos get folded in, and it ends on the one Process Lecture button.
+
+const TITLE = "Lecture 7 — Definite Integrals";
+const CLASS_COLOR = "#4B5FE8";
+
+type Phase = "live" | "saved" | "press" | "hold";
 
 const NAV = [
   { icon: Home,       label: "Home"      },
@@ -19,118 +23,112 @@ const NAV = [
 ];
 
 const TABS = [
-  { icon: Mic2,      label: "Record"         },
-  { icon: BookOpen,  label: "Quizzes"        },
-  { icon: BookMarked,label: "Review"         },
-  { icon: PenLine,   label: "Take Note"      },
+  { icon: Sparkles,       label: "Ask"       },
+  { icon: Mic2,           label: "Record"    },
+  { icon: Camera,         label: "Add Photo" },
+  { icon: PenLine,        label: "Take Note" },
 ];
 
-const WAVE_HEIGHTS = Array.from({ length: 20 }, () => 0.35 + Math.random() * 0.65);
-const WAVE_DURATIONS = Array.from({ length: 20 }, () => 0.4 + Math.random() * 0.7);
+// What the professor is saying — speech, already written as real notation.
+const SCRIPT =
+  "So the area under this curve between zero and one — we write that as ∫₀¹ x² dx. " +
+  "Evaluate it with the Fundamental Theorem and you get exactly one third. " +
+  "Same trick for the sum on the board, ∑ᵢ₌₁ⁿ i = n(n+1)/2, " +
+  "and for Thursday's example keep θ ∈ [0, π].";
 
-const RESULT_CARDS = [
-  { label: "Transcript",  color: "#6E7FF3", desc: "Full text ready"         },
-  { label: "Summary",     color: "#a855f7", desc: "Key concepts extracted"  },
-  { label: "Key Points",  color: "#f97316", desc: "15 points identified"    },
-  { label: "Quiz",        color: "#22c55e", desc: "8 questions generated"   },
+const WORDS = SCRIPT.split(" ");
+const WORD_MS = 115;
+// Words still being revised stay grey until the model settles them.
+const PENDING = 4;
+
+// Board photos the student snaps mid-lecture, and when they appear.
+const PHOTOS = [
+  { at: 14, line1: "∫₀¹ x² dx", line2: "= ⅓" },
+  { at: 34, line1: "∑ᵢ₌₁ⁿ i", line2: "= n(n+1)/2" },
 ];
+
+const START_SEC = 18 * 60 + 24;
 
 function fmt(s: number) {
   return `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
 }
 
 export function RecordingDemo() {
-  const [phase, setPhase]   = useState<Phase>("idle");
-  const [typed, setTyped]   = useState("");
-  const [seconds, setSeconds] = useState(0);
-  const [visibleCards, setVisible] = useState(0);
-  const phaseRef = useRef(phase);
-  phaseRef.current = phase;
+  const [phase, setPhase] = useState<Phase>("live");
+  const [spoken, setSpoken] = useState(0);
+  const [seconds, setSeconds] = useState(START_SEC);
 
-  // Main phase sequencer
+  // Words stream in while recording, then the lecture is saved.
   useEffect(() => {
-    const timers: ReturnType<typeof setTimeout>[] = [];
-    const schedule = (fn: () => void, ms: number) => { const t = setTimeout(fn, ms); timers.push(t); return t; };
-
-    if (phase === "idle") {
-      schedule(() => setPhase("typing"), 900);
-    }
-    if (phase === "recording") {
-      schedule(() => setPhase("processing"), 5800);
-    }
-    if (phase === "processing") {
-      schedule(() => { setPhase("done"); setVisible(0); }, 3000);
-    }
-    if (phase === "done") {
-      schedule(() => setPhase("hold"), 4500);
-    }
-    if (phase === "hold") {
-      schedule(() => { setPhase("idle"); setTyped(""); setSeconds(0); setVisible(0); }, 1200);
-    }
-    return () => timers.forEach(clearTimeout);
-  }, [phase]);
-
-  // Typing animation
-  useEffect(() => {
-    if (phase !== "typing") return;
-    if (typed.length < TITLE.length) {
-      const t = setTimeout(() => setTyped(TITLE.slice(0, typed.length + 1)), 55);
-      return () => clearTimeout(t);
-    } else {
-      const t = setTimeout(() => setPhase("recording"), 600);
+    if (phase !== "live") return;
+    if (spoken < WORDS.length) {
+      const t = setTimeout(() => setSpoken(n => n + 1), WORD_MS);
       return () => clearTimeout(t);
     }
-  }, [phase, typed]);
+    const t = setTimeout(() => setPhase("saved"), 1100);
+    return () => clearTimeout(t);
+  }, [phase, spoken]);
 
-  // Timer
+  // Elapsed timer
   useEffect(() => {
-    if (phase !== "recording") return;
+    if (phase !== "live") return;
     const t = setInterval(() => setSeconds(s => s + 1), 1000);
     return () => clearInterval(t);
   }, [phase]);
 
-  // Result cards stagger
+  // Saved → the tap on Process Lecture → loop
   useEffect(() => {
-    if (phase !== "done") return;
-    if (visibleCards >= RESULT_CARDS.length) return;
-    const t = setTimeout(() => setVisible(v => v + 1), visibleCards === 0 ? 300 : 400);
-    return () => clearTimeout(t);
-  }, [phase, visibleCards]);
+    if (phase === "saved") {
+      const t = setTimeout(() => setPhase("press"), 2900);
+      return () => clearTimeout(t);
+    }
+    if (phase === "press") {
+      const t = setTimeout(() => setPhase("hold"), 900);
+      return () => clearTimeout(t);
+    }
+    if (phase === "hold") {
+      const t = setTimeout(() => { setPhase("live"); setSpoken(0); setSeconds(START_SEC); }, 900);
+      return () => clearTimeout(t);
+    }
+  }, [phase]);
+
+  const live = phase === "live";
+  // Once the recording stops there is nothing left to revise — it all settles.
+  const settled = live ? WORDS.slice(0, Math.max(0, spoken - PENDING)).join(" ") : SCRIPT;
+  const pending = live ? WORDS.slice(Math.max(0, spoken - PENDING), spoken).join(" ") : "";
+  const photos = PHOTOS.filter(p => !live || spoken >= p.at);
 
   return (
     <div className="w-full select-none" style={{ maxWidth: 900 }}>
       <style>{`
-        @keyframes rdBlink { 0%,100%{opacity:1} 50%{opacity:0} }
-        @keyframes rdPulse  { 0%,100%{opacity:1} 50%{opacity:0.25} }
-        @keyframes rdWave   { 0%,100%{transform:scaleY(0.25)} 50%{transform:scaleY(1)} }
-        @keyframes rdFade   { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
-        @keyframes rdRing   { 0%{transform:scale(1);opacity:0.5} 100%{transform:scale(2.4);opacity:0} }
-        @keyframes rdSpin   { to{transform:rotate(360deg)} }
+        @keyframes rdPulse { 0%,100%{opacity:1} 50%{opacity:0.25} }
+        @keyframes rdFade  { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes rdPop   { from{opacity:0;transform:scale(0.86)} to{opacity:1;transform:scale(1)} }
       `}</style>
 
-      <div className="rounded-2xl overflow-hidden shadow-2xl" style={{ background: "#FFFFFF", border: "1px solid rgba(0,0,0,0.05)" }}>
+      <div className="rounded-2xl overflow-hidden shadow-2xl" style={{ background: "#FFFFFF", border: "1px solid rgba(0,0,0,0.08)" }}>
 
         {/* Title bar */}
-        <div className="flex items-center gap-2 px-5 py-3" style={{ background: "rgba(0,0,0,0.025)", borderBottom: "1px solid rgba(0,0,0,0.04)" }}>
+        <div className="flex items-center gap-2 px-5 py-3" style={{ background: "rgba(0,0,0,0.025)", borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
           <span className="w-3 h-3 rounded-full" style={{ background: "#ff5f57" }} />
           <span className="w-3 h-3 rounded-full" style={{ background: "#febc2e" }} />
           <span className="w-3 h-3 rounded-full" style={{ background: "#28c840" }} />
-          <span className="mx-auto text-xs" style={{ color: "rgba(31,35,40,0.38)", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Flux — Workspace</span>
+          <span className="mx-auto text-xs" style={{ color: "rgba(15,17,21,0.45)", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Flux — Workspace</span>
         </div>
 
-        <div className="flex" style={{ height: 420 }}>
+        <div className="flex" style={{ height: 480 }}>
 
           {/* Sidebar */}
-          <div className="hidden sm:flex w-44 shrink-0 flex-col py-5" style={{ background: "rgba(0,0,0,0.02)", borderRight: "1px solid rgba(0,0,0,0.04)" }}>
-            <div className="px-4 pb-4 mb-2" style={{ borderBottom: "1px solid rgba(0,0,0,0.04)" }}>
-              <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 17, color: "#191918" }}>Flux</div>
-              <div style={{ fontSize: 7.5, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(31,35,40,0.42)", marginTop: 1 }}>Study Assistant</div>
+          <div className="hidden sm:flex w-44 shrink-0 flex-col py-5" style={{ background: "rgba(0,0,0,0.02)", borderRight: "1px solid rgba(0,0,0,0.06)" }}>
+            <div className="px-4 pb-4 mb-2" style={{ borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
+              <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 17, color: "#0f1115" }}>Flux</div>
+              <div style={{ fontSize: 7.5, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(15,17,21,0.45)", marginTop: 1 }}>Study Assistant</div>
             </div>
             <div className="flex-1 px-2">
-              <div style={{ fontSize: 8, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(31,35,40,0.38)", padding: "6px 8px 4px" }}>Menu</div>
+              <div style={{ fontSize: 8, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(15,17,21,0.4)", padding: "6px 8px 4px" }}>Menu</div>
               {NAV.map(({ icon: Icon, label }) => (
                 <div key={label} className="flex items-center gap-2 px-2.5 py-2 rounded-lg"
-                  style={{ background: label === "Workspace" ? "rgba(75,95,232,0.18)" : "transparent", color: label === "Workspace" ? "#4B5FE8" : "rgba(31,35,40,0.5)" }}>
+                  style={{ background: label === "Workspace" ? "rgba(75,95,232,0.12)" : "transparent", color: label === "Workspace" ? CLASS_COLOR : "rgba(15,17,21,0.55)" }}>
                   <Icon size={11} />
                   <span style={{ fontSize: 10, fontWeight: label === "Workspace" ? 600 : 400 }}>{label}</span>
                 </div>
@@ -141,151 +139,151 @@ export function RecordingDemo() {
           {/* Main content */}
           <div className="flex-1 flex flex-col overflow-hidden">
 
-            {/* Class pills + workspace label */}
-            <div className="px-5 pt-4 pb-0">
+            {/* Class pills */}
+            <div className="px-5 pt-4">
               <div style={{ fontSize: 8, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "#6E7FF3", marginBottom: 8 }}>Workspace</div>
               <div className="flex gap-1.5 flex-wrap">
-                {["Cognitive Psych", "Biology 101", "Econ 202"].map((c, i) => (
-                  <div key={c} className="px-3 py-1 rounded-full" style={{
+                {[
+                  { name: "Calculus II",   tint: CLASS_COLOR },
+                  { name: "Biology 101",   tint: "#16A34A"   },
+                  { name: "History 201",   tint: "#EA580C"   },
+                ].map((c, i) => (
+                  <div key={c.name} className="flex items-center gap-1.5 px-3 py-1 rounded-full" style={{
                     fontSize: 10, fontWeight: i === 0 ? 700 : 400,
-                    background: i === 0 ? "#4B5FE8" : "rgba(0,0,0,0.03)",
-                    color: i === 0 ? "white" : "rgba(31,35,40,0.55)",
-                    border: i === 0 ? "none" : "1px solid rgba(0,0,0,0.04)",
-                  }}>{c}</div>
+                    background: i === 0 ? c.tint : "transparent",
+                    color: i === 0 ? "white" : "rgba(15,17,21,0.7)",
+                    border: i === 0 ? `1px solid ${c.tint}` : "1px solid rgba(0,0,0,0.08)",
+                  }}>
+                    {i !== 0 && <span className="w-1.5 h-1.5 rounded-full" style={{ background: c.tint }} />}
+                    {c.name}
+                  </div>
                 ))}
               </div>
             </div>
 
-            {/* Feature tabs */}
-            <div className="px-5 pt-3 pb-0">
-              <div className="flex gap-0.5 p-0.5 rounded-xl w-fit" style={{ background: "rgba(75,95,232,0.1)", border: "1px solid rgba(75,95,232,0.15)" }}>
+            {/* Class tabs */}
+            <div className="px-5 pt-3">
+              <div className="flex gap-1.5 flex-wrap">
                 {TABS.map(({ icon: Icon, label }, i) => (
-                  <div key={label} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg"
-                    style={{ background: i === 0 ? "#4B5FE8" : "transparent", color: i === 0 ? "white" : "rgba(31,35,40,0.5)", fontSize: 9 }}>
+                  <div key={label} className="flex items-center gap-1 px-2.5 py-1.5 rounded-full"
+                    style={{
+                      background: i === 1 ? CLASS_COLOR : "transparent",
+                      color: i === 1 ? "white" : "rgba(15,17,21,0.7)",
+                      border: i === 1 ? `1px solid ${CLASS_COLOR}` : "1px solid rgba(0,0,0,0.08)",
+                      fontSize: 9.5, fontWeight: i === 1 ? 600 : 500,
+                    }}>
                     <Icon size={9} />{label}
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Record tab content */}
-            <div className="flex-1 flex flex-col items-center justify-center px-6 py-4">
+            {/* Recorder */}
+            <div className="flex-1 px-5 py-4 overflow-hidden">
+              <div className="h-full flex flex-col rounded-2xl overflow-hidden" style={{ background: "#FFFFFF", border: "1px solid rgba(0,0,0,0.08)" }}>
 
-              {/* Name step */}
-              {(phase === "idle" || phase === "typing") && (
-                <div className="w-full max-w-xs flex flex-col items-center gap-4" style={{ animation: "rdFade 0.3s ease" }}>
-                  <div className="w-full">
-                    <div style={{ fontSize: 8, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(31,35,40,0.5)", marginBottom: 6 }}>Recording Name</div>
-                    <div className="w-full rounded-xl px-4 py-2.5 flex items-center" style={{ background: "rgba(0,0,0,0.03)", border: "1px solid rgba(0,0,0,0.06)", fontSize: 12, color: typed ? "#191918" : "rgba(31,35,40,0.38)" }}>
-                      {typed || "e.g. Lecture 3 — Cell Division"}
-                      {phase === "typing" && <span style={{ display: "inline-block", width: 1.5, height: 13, background: "#191918", marginLeft: 2, animation: "rdBlink 0.9s infinite" }} />}
-                    </div>
-                  </div>
-                  <div className="w-14 h-14 rounded-full flex items-center justify-center" style={{ background: "rgba(0,0,0,0.04)", border: "1px solid rgba(0,0,0,0.06)" }}>
-                    <Mic size={20} style={{ color: "rgba(31,35,40,0.6)" }} />
-                  </div>
-                  <div style={{ fontSize: 10, color: "rgba(31,35,40,0.42)" }}>Tap to start recording</div>
-                </div>
-              )}
-
-              {/* Recording step */}
-              {phase === "recording" && (
-                <div className="w-full max-w-xs flex flex-col items-center gap-3" style={{ animation: "rdFade 0.3s ease" }}>
-                  <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 52, fontWeight: 300, color: "#191918", letterSpacing: -2, fontVariantNumeric: "tabular-nums", lineHeight: 1 }}>
+                {/* Header: red dot + state + elapsed */}
+                <div className="flex items-center gap-2.5 px-4 py-3" style={{ borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
+                  <span className="w-2.5 h-2.5 rounded-full shrink-0"
+                    style={{ background: live ? "#DC2626" : CLASS_COLOR, animation: live ? "rdPulse 1.4s ease-in-out infinite" : "none" }} />
+                  <span style={{ fontSize: 12, fontWeight: 600, color: "#0f1115" }}>
+                    {live ? "Live transcript" : TITLE}
+                  </span>
+                  {live && (
+                    <span className="hidden sm:block truncate" style={{ fontSize: 10.5, color: "rgba(15,17,21,0.55)" }}>· {TITLE}</span>
+                  )}
+                  <span className="ml-auto tabular-nums shrink-0"
+                    style={{ fontSize: 15, fontWeight: 500, color: "#0f1115", letterSpacing: -0.4 }}>
                     {fmt(seconds)}
-                  </div>
-                  {/* Waveform */}
-                  <div className="flex items-end gap-0.5 h-10">
-                    {WAVE_HEIGHTS.map((h, i) => (
-                      <div key={i} style={{
-                        width: 3, height: 40, borderRadius: 2,
-                        background: "rgba(31,35,40,0.75)",
-                        transformOrigin: "center",
-                        animation: `rdWave ${WAVE_DURATIONS[i]}s ease-in-out infinite`,
-                        animationDelay: `${i * 0.04}s`,
-                      }} />
-                    ))}
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-2 h-2 rounded-full" style={{ background: "#ef4444", animation: "rdPulse 1s infinite" }} />
-                    <span style={{ fontSize: 10, color: "rgba(31,35,40,0.6)" }}>Recording — {TITLE}</span>
-                  </div>
-                  <div className="flex gap-2 w-full mt-1">
-                    <div className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl" style={{ background: "rgba(0,0,0,0.04)", border: "1px solid rgba(0,0,0,0.05)", fontSize: 10, color: "rgba(31,35,40,0.68)" }}>
-                      <Pause size={12} /> Pause
-                    </div>
-                    <div className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl" style={{ background: "#4B5FE8", fontSize: 10, color: "white" }}>
-                      <Square size={12} /> Stop
-                    </div>
-                  </div>
+                  </span>
                 </div>
-              )}
 
-              {/* Processing step */}
-              {phase === "processing" && (
-                <div className="flex flex-col items-center gap-4" style={{ animation: "rdFade 0.3s ease" }}>
-                  <div className="relative flex items-center justify-center w-20 h-20">
-                    {[0, 1, 2].map(i => (
-                      <div key={i} className="absolute rounded-full border" style={{
-                        width: 30 + i * 18, height: 30 + i * 18,
-                        borderColor: "rgba(0,0,0,0.06)",
-                        animation: `rdRing 2s ease-out ${i * 0.45}s infinite`,
-                      }} />
-                    ))}
-                    <div className="relative z-10 w-5 h-5 rounded-full border-2" style={{ borderColor: "rgba(0,0,0,0.15)", borderTopColor: "#4B5FE8", animation: "rdSpin 0.8s linear infinite" }} />
-                  </div>
-                  <div className="text-center">
-                    <div style={{ fontSize: 14, fontWeight: 500, color: "#191918", marginBottom: 4 }}>Processing your audio…</div>
-                    <div style={{ fontSize: 11, color: "rgba(31,35,40,0.5)" }}>Transcribing · Summarising · Generating</div>
-                  </div>
+                {/* Live transcript — the words fill the screen, no waveform */}
+                <div className="flex-1 px-5 py-4 overflow-hidden">
+                  <p style={{ fontSize: 14.5, lineHeight: 1.85, color: "#0f1115" }}>
+                    {settled}
+                    {pending && (
+                      <span style={{ color: "rgba(15,17,21,0.4)" }}>{settled ? " " : ""}{pending}</span>
+                    )}
+                    {!settled && !pending && (
+                      <span style={{ color: "rgba(15,17,21,0.4)" }}>Start speaking — words appear here as you go.</span>
+                    )}
+                  </p>
                 </div>
-              )}
 
-              {/* Done step */}
-              {(phase === "done" || phase === "hold") && (
-                <div className="w-full" style={{ animation: "rdFade 0.4s ease" }}>
-                  <div className="flex items-center gap-2 mb-4">
-                    <CheckCircle size={14} style={{ color: "#22c55e" }} />
-                    <span style={{ fontSize: 12, color: "rgba(31,35,40,0.68)" }}>Processing complete! Your recording is ready.</span>
-                  </div>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                    {RESULT_CARDS.map((card, i) => (
-                      <div key={card.label} className="rounded-xl p-3 flex flex-col gap-2"
+                {/* Board photos folded into the same lecture */}
+                {photos.length > 0 && (
+                  <div className="flex items-center gap-2 px-5 py-3" style={{ borderTop: "1px solid rgba(0,0,0,0.06)" }}>
+                    {photos.map(p => (
+                      <div key={p.at} className="w-16 h-16 rounded-xl flex flex-col items-center justify-center shrink-0"
                         style={{
-                          background: "rgba(0,0,0,0.03)",
-                          border: "1px solid rgba(0,0,0,0.04)",
-                          opacity: visibleCards > i ? 1 : 0,
-                          transform: visibleCards > i ? "translateY(0)" : "translateY(10px)",
-                          transition: "opacity 0.35s ease, transform 0.35s ease",
+                          background: "linear-gradient(160deg, #F6F7FB, #ECEEF6)",
+                          border: "1px solid rgba(0,0,0,0.08)",
+                          animation: "rdPop 0.35s ease both",
                         }}>
-                        <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: `${card.color}20` }}>
-                          <Sparkles size={12} style={{ color: card.color }} />
-                        </div>
-                        <div>
-                          <div style={{ fontSize: 11, fontWeight: 600, color: "#191918", marginBottom: 2 }}>{card.label}</div>
-                          <div style={{ fontSize: 9, color: "rgba(31,35,40,0.45)" }}>{card.desc}</div>
-                        </div>
+                        <span style={{ fontSize: 11, color: "#0f1115", fontWeight: 600 }}>{p.line1}</span>
+                        <span style={{ fontSize: 10, color: "rgba(15,17,21,0.6)" }}>{p.line2}</span>
                       </div>
                     ))}
+                    <span style={{ fontSize: 10.5, color: "rgba(15,17,21,0.55)", lineHeight: 1.5 }}>
+                      Board photos — read into this lecture,<br />formulas and all.
+                    </span>
                   </div>
-                </div>
-              )}
+                )}
 
+                {/* Controls */}
+                <div className="px-5 py-3" style={{ borderTop: "1px solid rgba(0,0,0,0.06)" }}>
+                  {live ? (
+                    <div className="flex gap-2.5">
+                      <div className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl"
+                        style={{ border: "1px solid rgba(0,0,0,0.12)", fontSize: 11, fontWeight: 500, color: "#0f1115" }}>
+                        <Pause size={13} /> Pause
+                      </div>
+                      <div className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl"
+                        style={{ border: "1px solid rgba(0,0,0,0.12)", fontSize: 11, fontWeight: 500, color: "#0f1115" }}>
+                        <Camera size={13} /> Photo{photos.length ? ` (${photos.length})` : ""}
+                      </div>
+                      <div className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl"
+                        style={{ background: "#DC2626", fontSize: 11, fontWeight: 500, color: "white" }}>
+                        <StopCircle size={13} /> Stop
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center gap-2 py-3 rounded-xl"
+                      style={{
+                        background: CLASS_COLOR, color: "white", fontSize: 13, fontWeight: 600,
+                        boxShadow: phase === "press" ? `0 0 0 6px rgba(75,95,232,0.22)` : `0 6px 20px rgba(75,95,232,0.28)`,
+                        transform: phase === "press" ? "scale(0.975)" : "scale(1)",
+                        transition: "all 0.2s ease",
+                        animation: "rdFade 0.35s ease both",
+                      }}>
+                      <Sparkles size={15} /> Process Lecture
+                    </div>
+                  )}
+                </div>
+
+              </div>
             </div>
           </div>
         </div>
       </div>
 
+      {/* Caption */}
+      <p className="text-center mt-4" style={{ fontSize: 13.5, color: "rgba(15,17,21,0.55)" }}>
+        {live
+          ? "The words appear as they're said — grey while they settle, then final."
+          : "One button turns the lecture and its board photos into your study material."}
+      </p>
+
       {/* Dots */}
-      <div className="flex items-center justify-center gap-2 mt-4">
-        {(["typing", "recording", "processing", "done"] as Phase[]).map(p => (
-          <div key={p} className="rounded-full transition-all duration-500"
-            style={{
-              width: (phase === p || (phase === "hold" && p === "done")) ? 20 : 6,
-              height: 6,
-              background: (phase === p || (phase === "hold" && p === "done")) ? "#4B5FE8" : "rgba(0,0,0,0.12)",
-            }} />
-        ))}
+      <div className="flex items-center justify-center gap-2 mt-3">
+        {(["live", "saved"] as Phase[]).map(p => {
+          const on = p === "live" ? live : !live;
+          return (
+            <div key={p} className="rounded-full transition-all duration-500"
+              style={{ width: on ? 20 : 6, height: 6, background: on ? CLASS_COLOR : "rgba(0,0,0,0.14)" }} />
+          );
+        })}
       </div>
     </div>
   );

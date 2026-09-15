@@ -2,7 +2,8 @@ import { ScrollView, View, Text, StyleSheet, TouchableOpacity, StatusBar } from 
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { useMemo } from "react";
+import { syncEventReminders } from "../../lib/eventReminders";
+import { useMemo, useEffect } from "react";
 import useSWR from "swr";
 import { makeApiFetcher } from "../../lib/api";
 import { useAuth, useUser } from "@clerk/clerk-expo";
@@ -38,6 +39,13 @@ export default function HomeScreen() {
   }), []);
 
   const { data: eventsData } = useSWR(`/api/events?from=${range.from}&to=${range.to}`, fetcher);
+  // Home already loads the next 30 days, so this keeps reminders correct for
+  // everything upcoming even if the student never opens the calendar.
+  useEffect(() => {
+    if (!eventsData?.data) return;
+    syncEventReminders(eventsData.data, { from: range.from, to: range.to }).catch(() => {});
+  }, [eventsData, range]);
+
   const { data: coursesData } = useSWR("/api/courses", fetcher);
   const { data: sheetsData } = useSWR("/api/cheatsheets", fetcher);
 

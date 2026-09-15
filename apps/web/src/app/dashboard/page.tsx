@@ -1,11 +1,11 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { useUser, useAuth } from "@clerk/nextjs";
 import { useT } from "@/lib/useT";
 import Link from "next/link";
-import useSWR, { useSWRConfig } from "swr";
-import { useApiSWRFetcher, useApiFetch } from "@/lib/apiFetch";
-import { FileText, Calendar, ChevronRight, Plus, Clock, Layers, Link2, RefreshCw, Loader2, CheckCircle } from "lucide-react";
+import useSWR from "swr";
+import { useApiSWRFetcher } from "@/lib/apiFetch";
+import { FileText, Calendar, ChevronRight, Plus, Clock, Layers } from "lucide-react";
 import { startOfDay, format, differenceInCalendarDays } from "date-fns";
 
 const BRAND = "#4B5FE8";
@@ -44,147 +44,6 @@ function ClassBadge({ name, color, size = 40 }: { name?: string; color?: string 
         {classInitial(name)}
       </span>
     </span>
-  );
-}
-
-// ── Canvas LMS ───────────────────────────────────────────────────────────────
-// Students self-serve an access token from Canvas (no university approval
-// needed) and Flux imports classes, syllabi, PDFs and deadlines automatically.
-function CanvasCard() {
-  const t = useT();
-  const fetcher = useApiSWRFetcher();
-  const apiFetch = useApiFetch();
-  const { mutate: globalMutate } = useSWRConfig();
-  const { userId, isLoaded } = useAuth();
-  const ready = isLoaded && !!userId;
-
-  const { data, mutate } = useSWR(ready ? `${BASE}/api/canvas/status` : null, fetcher, {
-    revalidateOnFocus: false,
-    refreshInterval: (latest: any) => (latest?.data?.syncing ? 4000 : 0),
-  });
-  const status = data?.data ?? null;
-
-  const [open, setOpen] = useState(false);
-  const [url, setUrl] = useState("");
-  const [token, setToken] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState("");
-
-  // When a sync finishes, refresh classes + events so imports appear instantly
-  const syncingNow = !!status?.syncing;
-  const prevSyncing = useRef(false);
-  useEffect(() => {
-    if (prevSyncing.current && !syncingNow) {
-      globalMutate(`${BASE}/api/courses`);
-      globalMutate((key: any) => typeof key === "string" && key.startsWith(`${BASE}/api/events`), undefined, { revalidate: true });
-    }
-    prevSyncing.current = syncingNow;
-  }, [syncingNow, globalMutate]);
-
-  async function connect() {
-    setBusy(true);
-    setErr("");
-    try {
-      await apiFetch(`/api/canvas/connect`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ baseUrl: url, token }),
-      });
-      setOpen(false);
-      setToken("");
-      mutate();
-    } catch {
-      setErr(t.home.canvas.invalid);
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function syncNow() {
-    try { await apiFetch(`/api/canvas/sync`, { method: "POST" }); mutate(); } catch {}
-  }
-
-  async function disconnect() {
-    try { await apiFetch(`/api/canvas`, { method: "DELETE" }); mutate(); } catch {}
-  }
-
-  const r = status?.lastResult as any;
-
-  return (
-    <div className="mb-9">
-      <p style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", color: BRAND, marginBottom: 12 }}>{t.home.canvas.eyebrow}</p>
-      <div className="rounded-[20px] border px-5 py-4" style={{ background: "#FFFFFF", borderColor: HAIRLINE }}>
-        {!status?.connected ? (
-          <>
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style={{ background: BRAND }}>
-                <Link2 size={17} style={{ color: "#fff" }} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div style={{ fontSize: 15.5, fontWeight: 600, color: INK }}>{t.home.canvas.connect}</div>
-                <div style={{ fontSize: 13.5, color: "rgba(15,17,21,0.6)", marginTop: 2 }}>{t.home.canvas.desc}</div>
-              </div>
-              <button onClick={() => setOpen(o => !o)}
-                className="font-semibold px-4 py-2 rounded-full text-white hover:opacity-90 transition-opacity shrink-0"
-                style={{ background: BRAND, fontSize: 13.5 }}>
-                {open ? t.home.canvas.close : t.home.canvas.connectCta}
-              </button>
-            </div>
-            {open && (
-              <div className="mt-4 pt-4 space-y-3" style={{ borderTop: `1px solid ${HAIRLINE}` }}>
-                <div>
-                  <label className="block mb-1.5" style={{ fontSize: 12.5, fontWeight: 600, color: "rgba(15,17,21,0.65)" }}>{t.home.canvas.urlLabel}</label>
-                  <input value={url} onChange={e => setUrl(e.target.value)} placeholder="yourschool.instructure.com"
-                    className="w-full rounded-xl border px-3.5 py-2.5 outline-none placeholder-gray-400"
-                    style={{ borderColor: HAIRLINE, background: "#FFFFFF", color: INK, fontSize: 14.5 }} />
-                </div>
-                <div>
-                  <label className="block mb-1.5" style={{ fontSize: 12.5, fontWeight: 600, color: "rgba(15,17,21,0.65)" }}>{t.home.canvas.tokenLabel}</label>
-                  <input value={token} onChange={e => setToken(e.target.value)} type="password" placeholder="1030~…"
-                    className="w-full rounded-xl border px-3.5 py-2.5 outline-none placeholder-gray-400"
-                    style={{ borderColor: HAIRLINE, background: "#FFFFFF", color: INK, fontSize: 14.5 }} />
-                  <p style={{ fontSize: 12.5, color: "rgba(15,17,21,0.55)", marginTop: 6 }}>{t.home.canvas.tokenHelp}</p>
-                </div>
-                {err && <p style={{ fontSize: 13.5, color: "#DC2626" }}>{err}</p>}
-                <button onClick={connect} disabled={busy || !url.trim() || !token.trim()}
-                  className="flex items-center gap-2 font-semibold px-5 py-2.5 rounded-full text-white disabled:opacity-40 hover:opacity-90 transition-opacity"
-                  style={{ background: BRAND, fontSize: 13.5 }}>
-                  {busy ? <Loader2 size={13} className="animate-spin" /> : <Link2 size={13} />}
-                  {busy ? t.home.canvas.connecting : t.home.canvas.submit}
-                </button>
-              </div>
-            )}
-          </>
-        ) : (
-          <div className="flex flex-wrap items-center gap-4">
-            <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style={{ background: status.syncing ? "rgba(75,95,232,0.12)" : "rgba(22,163,74,0.12)" }}>
-              {status.syncing ? <Loader2 size={17} className="animate-spin" style={{ color: BRAND }} /> : <CheckCircle size={17} style={{ color: "#16A34A" }} />}
-            </div>
-            <div className="flex-1 min-w-0">
-              <div style={{ fontSize: 15.5, fontWeight: 600, color: INK }}>
-                {status.syncing ? t.home.canvas.syncing : t.home.canvas.connected}
-              </div>
-              <div className="truncate" style={{ fontSize: 13.5, color: "rgba(15,17,21,0.6)", marginTop: 2 }}>
-                {status.baseUrl?.replace("https://", "")}
-                {!status.syncing && r ? ` · ${t.home.canvas.summary.replace("{a}", String((r.coursesCreated ?? 0) + (r.coursesMatched ?? 0))).replace("{b}", String((r.filesIndexed ?? 0) + (r.syllabiIndexed ?? 0))).replace("{c}", String(r.eventsCreated ?? 0))}` : ""}
-              </div>
-            </div>
-            {!status.syncing && (
-              <div className="flex items-center gap-2 shrink-0">
-                <button onClick={syncNow}
-                  className="flex items-center gap-1.5 font-semibold px-4 py-2 rounded-full border transition-colors hover:bg-[rgba(0,0,0,0.03)]"
-                  style={{ borderColor: HAIRLINE, color: INK, fontSize: 13.5 }}>
-                  <RefreshCw size={12} /> {t.home.canvas.syncNow}
-                </button>
-                <button onClick={disconnect} className="px-2 py-2 transition-colors hover:text-red-600" style={{ color: "rgba(15,17,21,0.55)", fontSize: 13 }}>
-                  {t.home.canvas.disconnect}
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-    </div>
   );
 }
 
@@ -260,7 +119,7 @@ export default function DashboardHome() {
     return { glow: "transparent", pulse: false };
   }
 
-  const sectionLabel = { fontSize: 11.5, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase" as const, color: BRAND, marginBottom: 12 };
+  const sectionLabel = { fontSize: 13.5, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase" as const, color: BRAND, marginBottom: 12 };
 
   return (
     <div className="flex flex-col lg:flex-row gap-8 h-full">
@@ -269,7 +128,7 @@ export default function DashboardHome() {
       <div className="flex-1 min-w-0 py-6 px-0 md:py-9 md:pl-10 md:pr-0">
 
         {/* Header */}
-        <div style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", color: BRAND, marginBottom: 8 }}>{t.home.overview}</div>
+        <div style={{ fontSize: 13.5, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", color: BRAND, marginBottom: 8 }}>{t.home.overview}</div>
         <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 34, letterSpacing: "-0.5px", color: INK, marginBottom: 30 }}>
           {t.home[greetingKey()]}{firstName ? `, ${firstName}` : ""}.
         </h1>
@@ -285,8 +144,8 @@ export default function DashboardHome() {
             <Link href="/dashboard/calendar"
               className="flex items-center gap-3 rounded-[18px] px-5 py-4 border transition-colors hover:bg-[rgba(75,95,232,0.04)]"
               style={{ background: "#FFFFFF", borderColor: HAIRLINE, borderStyle: "dashed" }}>
-              <Plus size={16} style={{ color: "rgba(15,17,21,0.55)" }} />
-              <span style={{ fontSize: 14.5, color: "rgba(15,17,21,0.65)" }}>No upcoming events — add one in Calendar</span>
+              <Plus size={16} style={{ color: "rgba(15,17,21, 0.73)" }} />
+              <span style={{ fontSize: 16, color: "rgba(15,17,21, 0.78)" }}>No upcoming events — add one in Calendar</span>
             </Link>
           ) : (
             <>
@@ -302,24 +161,24 @@ export default function DashboardHome() {
                   >
                     <div style={{ minWidth: 42, textAlign: "center" }}>
                       <div style={{ fontSize: 22, fontWeight: 800, lineHeight: 1, color: INK }}>{format(new Date(e.date), "d")}</div>
-                      <div style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", color: "rgba(15,17,21,0.6)", marginTop: 2 }}>{format(new Date(e.date), "MMM")}</div>
+                      <div style={{ fontSize: 13, fontWeight: 600, textTransform: "uppercase", color: "rgba(15,17,21, 0.75)", marginTop: 2 }}>{format(new Date(e.date), "MMM")}</div>
                     </div>
                     {e.course && <ClassBadge name={e.course.name} color={colorByCourseId[e.course.id]} size={30} />}
                     <div className="flex-1 min-w-0">
-                      <div className="truncate" style={{ fontSize: 15.5, fontWeight: 600, color: INK }}>{e.title}</div>
-                      <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "rgba(15,17,21,0.6)", marginTop: 3 }}>
+                      <div className="truncate" style={{ fontSize: 16.5, fontWeight: 600, color: INK }}>{e.title}</div>
+                      <div style={{ fontSize: 13.5, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "rgba(15,17,21, 0.75)", marginTop: 3 }}>
                         {TYPE_LABEL[e.type]}{e.course?.code ? ` · ${e.course.code}` : ""}
                       </div>
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0 px-3 py-1.5 rounded-full" style={{ background: `${cdColor}14` }}>
                       <Clock size={11} style={{ color: cdColor }} />
-                      <span style={{ fontSize: 12.5, fontWeight: 700, color: cdColor }}>{cdLabel}</span>
+                      <span style={{ fontSize: 14, fontWeight: 700, color: cdColor }}>{cdLabel}</span>
                     </div>
                   </Link>
                 );
               })}
               {allUpcoming.length > 3 && (
-                <Link href="/dashboard/calendar" className="text-center py-1.5 transition-colors hover:text-[#0f1115]" style={{ fontSize: 14, color: "rgba(15,17,21,0.6)" }}>
+                <Link href="/dashboard/calendar" className="text-center py-1.5 transition-colors hover:text-[#0f1115]" style={{ fontSize: 15.5, color: "rgba(15,17,21, 0.75)" }}>
                   +{allUpcoming.length - 3} more events →
                 </Link>
               )}
@@ -338,8 +197,8 @@ export default function DashboardHome() {
             <Link href="/dashboard/record"
               className="flex items-center gap-3 rounded-[18px] px-5 py-4 border transition-colors hover:bg-[rgba(75,95,232,0.04)]"
               style={{ background: "#FFFFFF", borderColor: HAIRLINE, borderStyle: "dashed" }}>
-              <Plus size={16} style={{ color: "rgba(15,17,21,0.55)" }} />
-              <span style={{ fontSize: 14.5, color: "rgba(15,17,21,0.65)" }}>Add your first class</span>
+              <Plus size={16} style={{ color: "rgba(15,17,21, 0.73)" }} />
+              <span style={{ fontSize: 16, color: "rgba(15,17,21, 0.78)" }}>Add your first class</span>
             </Link>
           ) : (
             courses.map((cls: any) => {
@@ -350,17 +209,15 @@ export default function DashboardHome() {
                   style={{ background: "#FFFFFF", borderColor: HAIRLINE, borderLeft: `5px solid ${tint}` }}>
                   <ClassBadge name={cls.name} color={tint} size={40} />
                   <div className="flex-1 min-w-0">
-                    <div className="truncate" style={{ fontSize: 16, fontWeight: 600, color: INK }}>{cls.name}</div>
-                    <div style={{ fontSize: 13.5, color: "rgba(15,17,21,0.6)", marginTop: 2 }}>{cls.code}</div>
+                    <div className="truncate" style={{ fontSize: 17, fontWeight: 600, color: INK }}>{cls.name}</div>
+                    <div style={{ fontSize: 15, color: "rgba(15,17,21, 0.75)", marginTop: 2 }}>{cls.code}</div>
                   </div>
-                  <ChevronRight size={16} style={{ color: "rgba(15,17,21,0.4)" }} />
+                  <ChevronRight size={16} style={{ color: "rgba(15,17,21, 0.65)" }} />
                 </Link>
               );
             })
           )}
         </div>
-
-        <CanvasCard />
 
         {/* Saved notes */}
         {notes.length > 0 && (
@@ -378,14 +235,14 @@ export default function DashboardHome() {
                   >
                     {course
                       ? <ClassBadge name={course.name} color={classColor(course)} size={32} />
-                      : <FileText size={16} style={{ color: "rgba(15,17,21,0.6)" }} className="shrink-0" />}
+                      : <FileText size={16} style={{ color: "rgba(15,17,21, 0.75)" }} className="shrink-0" />}
                     <div className="flex-1 min-w-0">
-                      <div className="truncate" style={{ fontSize: 15, fontWeight: 600, color: INK }}>{cs.title}</div>
-                      <div style={{ fontSize: 13.5, color: "rgba(15,17,21,0.6)", marginTop: 2 }}>
+                      <div className="truncate" style={{ fontSize: 16, fontWeight: 600, color: INK }}>{cs.title}</div>
+                      <div style={{ fontSize: 15, color: "rgba(15,17,21, 0.75)", marginTop: 2 }}>
                         {course?.code ? `${course.code} · ` : ""}{cs.driveUrl ? "Drive synced" : "Local"}
                       </div>
                     </div>
-                    <ChevronRight size={15} style={{ color: "rgba(15,17,21,0.4)" }} />
+                    <ChevronRight size={15} style={{ color: "rgba(15,17,21, 0.65)" }} />
                   </Link>
                 );
               })}
@@ -402,8 +259,8 @@ export default function DashboardHome() {
         {/* Panel header */}
         <div className="flex items-center justify-between mb-5 pl-6">
           <div>
-            <div style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", color: "rgba(15,17,21,0.6)", marginBottom: 5 }}>Upcoming</div>
-            <div style={{ fontSize: 17, fontWeight: 600, color: INK }}>
+            <div style={{ fontSize: 13.5, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", color: "rgba(15,17,21, 0.75)", marginBottom: 5 }}>Upcoming</div>
+            <div style={{ fontSize: 18, fontWeight: 600, color: INK }}>
               {allUpcoming.length === 0 ? "No events" : `${allUpcoming.length} event${allUpcoming.length !== 1 ? "s" : ""}`}
             </div>
           </div>
@@ -429,7 +286,7 @@ export default function DashboardHome() {
                   onClick={() => setActiveFilter(type)}
                   className="font-semibold uppercase tracking-wider px-3 py-1.5 rounded-full transition-colors"
                   style={{
-                    fontSize: 11.5,
+                    fontSize: 13.5,
                     background: on ? tint : "rgba(0,0,0,0.04)",
                     color: on ? "#FFFFFF" : "rgba(15,17,21,0.65)",
                   }}
@@ -445,14 +302,14 @@ export default function DashboardHome() {
         <div className="flex-1 overflow-y-auto pl-6 flex flex-col gap-2.5" style={{ scrollbarWidth: "none" }}>
           {displayedEvents.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
-              <Calendar size={30} style={{ color: "rgba(15,17,21,0.18)", marginBottom: 12 }} />
-              <div style={{ fontSize: 14.5, color: "rgba(15,17,21,0.6)", marginBottom: 6 }}>
+              <Calendar size={30} style={{ color: "rgba(15,17,21, 0.54)", marginBottom: 12 }} />
+              <div style={{ fontSize: 16, color: "rgba(15,17,21, 0.75)", marginBottom: 6 }}>
                 {activeFilter === "all" ? "No upcoming events" : `No ${TYPE_LABEL[activeFilter]?.toLowerCase()} events`}
               </div>
               <Link
                 href="/dashboard/calendar"
                 className="transition-colors hover:opacity-80"
-                style={{ fontSize: 13.5, color: BRAND, fontWeight: 600 }}
+                style={{ fontSize: 15, color: BRAND, fontWeight: 600 }}
               >
                 Add one
               </Link>
@@ -482,16 +339,16 @@ export default function DashboardHome() {
                         {pulse && (
                           <span className="w-2 h-2 rounded-full shrink-0" style={{ background: color, animation: "pulse 1.5s infinite" }} />
                         )}
-                        <div className="truncate" style={{ fontSize: 14.5, fontWeight: 600, color: INK }}>{e.title}</div>
+                        <div className="truncate" style={{ fontSize: 16, fontWeight: 600, color: INK }}>{e.title}</div>
                       </div>
-                      <div style={{ fontSize: 11.5, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "rgba(15,17,21,0.6)" }}>
+                      <div style={{ fontSize: 13.5, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "rgba(15,17,21, 0.75)" }}>
                         {e.course?.code ? `${e.course.code} · ` : ""}{TYPE_LABEL[e.type] ?? e.type}
                       </div>
                     </div>
                     <div className="shrink-0 text-right">
-                      <div style={{ fontSize: 13, fontWeight: 700, color }}>{dayLabel(e.date)}</div>
+                      <div style={{ fontSize: 14.5, fontWeight: 700, color }}>{dayLabel(e.date)}</div>
                       {diff > 1 && (
-                        <div style={{ fontSize: 12, color: "rgba(15,17,21,0.55)" }}>{format(new Date(e.date), "EEE")}</div>
+                        <div style={{ fontSize: 13.5, color: "rgba(15,17,21, 0.73)" }}>{format(new Date(e.date), "EEE")}</div>
                       )}
                     </div>
                   </div>
@@ -499,17 +356,17 @@ export default function DashboardHome() {
                   {/* Expanded detail */}
                   {isExpanded && (
                     <div className="mt-3 pt-3" style={{ borderTop: `1px solid ${HAIRLINE}` }}>
-                      <div className="flex items-center gap-1.5 mb-1.5" style={{ fontSize: 13.5, color: "rgba(15,17,21,0.72)" }}>
+                      <div className="flex items-center gap-1.5 mb-1.5" style={{ fontSize: 15, color: "rgba(15,17,21, 0.81)" }}>
                         <Clock size={12} />
                         {format(new Date(e.date), "EEEE, MMMM d, yyyy")}
                       </div>
                       {e.description && (
-                        <div className="leading-relaxed" style={{ fontSize: 13.5, color: "rgba(15,17,21,0.65)" }}>{e.description}</div>
+                        <div className="leading-relaxed" style={{ fontSize: 15, color: "rgba(15,17,21, 0.78)" }}>{e.description}</div>
                       )}
                       <Link
                         href="/dashboard/calendar"
                         className="inline-flex items-center gap-1 font-bold uppercase tracking-wider mt-2.5 transition-opacity hover:opacity-80"
-                        style={{ fontSize: 11.5, color }}
+                        style={{ fontSize: 13.5, color }}
                         onClick={(ev: React.MouseEvent) => ev.stopPropagation()}
                       >
                         Open in calendar <ChevronRight size={11} />
@@ -525,7 +382,7 @@ export default function DashboardHome() {
             <Link
               href="/dashboard/calendar"
               className="flex items-center justify-center gap-1 rounded-[18px] py-3 transition-colors hover:bg-[rgba(0,0,0,0.02)]"
-              style={{ fontSize: 13.5, color: "rgba(15,17,21,0.65)", border: `1px dashed ${HAIRLINE}` }}
+              style={{ fontSize: 15, color: "rgba(15,17,21, 0.78)", border: `1px dashed ${HAIRLINE}` }}
             >
               +{filtered.length - 8} more <ChevronRight size={13} />
             </Link>
@@ -534,7 +391,7 @@ export default function DashboardHome() {
 
         {/* Today's date footer */}
         <div className="pl-6 pt-5 mt-2" style={{ borderTop: `1px solid ${HAIRLINE}` }}>
-          <div style={{ fontSize: 13, color: "rgba(15,17,21,0.6)" }}>
+          <div style={{ fontSize: 14.5, color: "rgba(15,17,21, 0.75)" }}>
             {format(new Date(), "EEEE, MMMM d")}
           </div>
         </div>

@@ -2,6 +2,7 @@
 import { ClerkProvider } from "@clerk/nextjs";
 import { I18nProvider } from "@/components/I18nProvider";
 import { FeedbackProvider } from "@/components/Feedback";
+import "katex/dist/katex.min.css";
 import "./globals.css";
 
 export const metadata: Metadata = {

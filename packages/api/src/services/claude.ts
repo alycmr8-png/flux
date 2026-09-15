@@ -1,5 +1,4 @@
 import OpenAI from "openai";
-import { toMathNotation } from "@sano/shared";
 
 let _openai: OpenAI | null = null;
 function getClient() {
@@ -36,21 +35,51 @@ async function createWithRetry(params: any, retries = 3): Promise<any> {
   }
 }
 
-// The model follows MATH_STYLE most of the time but not always, so every string
-// it produces also goes through the deterministic converter.
-function mathify<T>(value: T): T {
-  if (typeof value === "string") return toMathNotation(value) as unknown as T;
-  if (Array.isArray(value)) return value.map(mathify) as unknown as T;
-  if (value && typeof value === "object") {
-    const out: any = {};
-    for (const [k, v] of Object.entries(value as any)) out[k] = mathify(v);
-    return out;
-  }
-  return value;
-}
-
 function extractText(msg: any): string {
   return msg?.choices?.[0]?.message?.content ?? "";
+}
+
+// LaTeX commands that begin with a letter JSON treats as an escape. A model that
+// writes "\frac" instead of "\\frac" produces valid JSON that silently decodes to
+// a form-feed followed by "rac", so these are recognised and re-escaped.
+const LATEX_ON_JSON_ESCAPE = new Set([
+  "bar", "backslash", "because", "begin", "beta", "big", "bigcap", "bigcup", "bigg", "biggl", "biggr", "bigl", "bigr",
+  "binom", "bm", "bmod", "boldsymbol", "bot", "box", "breve", "bullet",
+  "flat", "forall", "frac", "frown",
+  "nabla", "ne", "nearrow", "neg", "neq", "newline", "nexists", "ngeq", "ni", "nleq", "nmid", "not", "notin", "nparallel", "nu", "nwarrow",
+  "rangle", "rbrace", "rceil", "rfloor", "rho", "right", "rightarrow", "rightharpoonup", "rightleftharpoons", "rm", "rvert", "rVert",
+  "tan", "tanh", "tau", "text", "textbf", "textit", "textrm", "textstyle", "tfrac", "therefore", "theta", "tilde", "times", "to", "top",
+  "triangle", "triangleq",
+]);
+
+/** Doubles every backslash that JSON would misread, so LaTeX survives JSON.parse. */
+function escapeLatexInJson(raw: string): string {
+  return raw.replace(/\\(u[0-9a-fA-F]{4}|[a-zA-Z]+|[\s\S])/g, (match, tail: string) => {
+    if (/^u[0-9a-fA-F]{4}$/.test(tail)) return match;
+    if (tail.length === 1 && `"\\/`.includes(tail)) return match;
+    if (/^[a-zA-Z]+$/.test(tail)) {
+      if ("bfnrt".includes(tail[0]) && !LATEX_ON_JSON_ESCAPE.has(tail)) return match; // a real \n, \t, ... escape
+    }
+    return "\\\\" + tail;
+  });
+}
+
+function parseJsonObject(text: string): any {
+  const raw = text.match(/\{[\s\S]*\}/)?.[0] ?? "{}";
+  try {
+    return normalizeMath(JSON.parse(escapeLatexInJson(raw)));
+  } catch (err) {
+    console.error(`[claude] unparseable JSON (${text.length} chars), ends: ${JSON.stringify(text.slice(-300))}`);
+    throw err;
+  }
+}
+
+/** JSON mode only returns objects, so list generators ask for {"items": [...]}. */
+function parseJsonItems(text: string): any[] {
+  const parsed = parseJsonObject(text);
+  if (Array.isArray(parsed)) return parsed;
+  if (Array.isArray(parsed?.items)) return parsed.items;
+  return (Object.values(parsed ?? {}).find(Array.isArray) as any[]) ?? [];
 }
 
 async function batchPromises<T>(tasks: (() => Promise<T>)[], limit: number): Promise<T[]> {
@@ -67,21 +96,219 @@ const LANG_NAMES: Record<string, string> = {
 };
 
 // Transcripts come from speech recognition, so formulas arrive as words
-// ("the integral of x squared"). Rendering targets are plain <Text> in the mobile
-// app, so notation must be real Unicode characters — never LaTeX markup.
-const MATH_STYLE = `SCIENTIFIC NOTATION — MANDATORY:
-The transcript comes from speech recognition, so every formula arrives spelled out in words. You MUST rewrite each one in real symbols. Leaving maths in words is an error.
-Convert exactly like these:
-- "the integral from zero to one of x squared d x" → ∫₀¹ x² dx
-- "the sum from i equals one to n of i equals n times n plus one over two" → ∑ᵢ₌₁ⁿ i = n(n+1)/2
-- "f prime of g of x times g prime of x" → f′(g(x)) · g′(x)
-- "delta E equals m c squared" → ΔE = mc²
-- "water is H two O, sulfuric acid is H two S O four" → H₂O, H₂SO₄
-- "theta between zero and pi" → θ ∈ [0, π]
-- "x squared plus y squared equals r squared" → x² + y² = r²
-Use these characters: superscripts ⁰¹²³⁴⁵⁶⁷⁸⁹ⁿ⁻, subscripts ₀₁₂₃₄₅₆₇₈₉ᵢₙ, Greek α β γ δ ε θ λ μ π ρ σ τ φ ω Δ Σ Ω Π, operators × ÷ · ± ≤ ≥ ≠ ≈ ∝ → ⇒ ∞, calculus ∫ ∑ ∏ ∂ ∇ √, sets ∈ ∉ ⊂ ∪ ∩ ∀ ∃.
-Never output LaTeX or markdown maths (no \\frac, no \\int, no $...$). Write fractions as a/b or ½.
-Keep ordinary prose in words — only the maths becomes symbols.`;
+// ("the integral of x squared"). Generated study material is typeset with KaTeX
+// on web and mobile, and should read like a good tutor's handout — prose carries
+// the reasoning, maths supports it.
+const MATH_STYLE = `MATHEMATICS — WRITE IT LIKE A CLEAN TEXTBOOK:
+Speech recognition spells maths out in words. Turn the maths into LaTeX and keep the explanation in ordinary sentences, the way a careful professor writes a handout.
+Examples:
+- "the integral of two x cosine of x squared d x" → the integral $\\int 2x\\cos(x^2)\\,dx$
+- "let u equal x squared, so d u equals two x d x" → let $u = x^2$, so $du = 2x\\,dx$
+- "the limit as x approaches zero of sine x over x equals one" → $\\lim_{x \\to 0} \\frac{\\sin x}{x} = 1$
+- "F equals m a, where m is mass and a is acceleration" → $F = ma$, where $m$ is the mass and $a$ the acceleration
+- "sulfuric acid, H two S O four" → sulfuric acid ($\\mathrm{H_2SO_4}$)
+Rules:
+1. Only symbols go inside dollar signs; the words of the sentence stay outside them: the limit of $\\frac{\\sin x}{x}$ as $x \\to 0$ is $1$. Functions are commands (\\sin, \\cos, \\ln), never spelled out.
+2. $...$ for maths inside a sentence. $$...$$ on its own line only for a key result or worked steps. Never \\( \\) or \\[ \\].
+3. Worked steps are one block with the equals signs aligned:
+   $$\\begin{aligned} \\int 2x\\cos(x^2)\\,dx &= \\int \\cos u\\,du \\\\ &= \\sin(x^2) + C \\end{aligned}$$
+4. Write it as it is printed: \\sin x, \\ln x, \\frac{a}{b}, x^2, a_n, \\sqrt{x}, \\vec{v}, \\Delta E, \\leq, \\approx; a thin space before differentials (\\,dx); upright units ($9.8\\,\\mathrm{m/s^2}$); implied multiplication ($2x$, $mc^2$), with \\times only for dimensions ($3 \\times 3$) or powers of ten.
+5. No Unicode look-alikes (x², ∫, ½) and no dollar signs for money — write USD.`;
+
+// A recording and the photos attached to it are one lecture. The photos' text
+// arrives under "[WRITTEN ON THE BOARD IN THIS LECTURE]" at the end of the transcript.
+const ONE_LECTURE = `The material is ONE lecture: what the lecturer said, plus anything written on the board or slides (the section headed "[WRITTEN ON THE BOARD IN THIS LECTURE]", read from photos). Treat it as a single source — put what was written into the topics it belongs to, alongside what was said about it. Never create a separate section, point, card or question about the photos or the board.`;
+
+// Lower than the default for steadier notation, but not too low: at 0.3 the
+// models fell into repetition loops ("\\textstyle \\textstyle …") until the reply
+// was cut off.
+const STUDY_TEMPERATURE = 0.7;
+
+// Short fields (options, card fronts) must stay one line, and JSON needs every
+// backslash escaped.
+const JSON_MATH_STYLE = `${MATH_STYLE}
+In short fields (questions, quiz options, flashcard fronts, key points, terms) use inline $...$ only.
+The output is JSON, so every LaTeX backslash is written twice inside strings ("$\\\\frac{a}{b}$", "$\\\\sin x$"), exactly as in the example.
+Before returning, re-read every string: any formula still written in words must be rewritten in LaTeX.`;
+
+// Models drift to \( \) and \[ \] even when told otherwise; the renderers accept
+// both, but one convention keeps stored notes consistent.
+function normalizeMathDelimiters(s: string): string {
+  return s
+    // Over-escaped JSON leaves a doubled backslash before a command, which KaTeX reads as a line break.
+    .replace(/\\\\(?=[a-zA-Z])/g, "\\")
+    // Keep notation uniform across notes and quizzes: \text{cos} → \cos, \text{d}x → dx.
+    .replace(/\\(?:text|mathrm)\{\s*(sin|cos|tan|cot|sec|csc|ln|log|exp|lim|max|min|det|gcd|arcsin|arccos|arctan|sinh|cosh|tanh)\s*\}/g, "\\$1 ")
+    .replace(/\\(?:text|mathrm)\{d\}(?=[a-zA-Z])/g, "d")
+    // "\text{ }" used as a spacer (e.g. before dx) → a thin space.
+    .replace(/\\text\{\s+\}/g, "\\,")
+    // Double-escaped line breaks arrive as a literal "\n"; LaTeX commands starting with n are left alone.
+    .replace(/\\n/g, (m, offset: number, str: string) => {
+      const word = /^n[a-zA-Z]*/.exec(str.slice(offset + 1))?.[0] ?? "n";
+      return word !== "n" && LATEX_ON_JSON_ESCAPE.has(word) ? m : "\n";
+    })
+    .replace(/\\\[([\s\S]+?)\\\]/g, (_, m) => `$$${m.trim()}$$`)
+    .replace(/\\\(([\s\S]+?)\\\)/g, (_, m) => `$${m.trim()}$`)
+    .replace(/\$\$((?:(?!\$\$)[\s\S])+)\$\$|\$((?:[^$\\\n]|\\.)+)\$/g, (m, display?: string, inline?: string) =>
+      display !== undefined ? `$$${tidyTex(display)}$$` : liftProseOutOfMath(inline ?? "") ?? inlineMath(tidyTex(inline ?? "")))
+    .replace(/ ?\{\{EMPTY_MATH\}\} ?/g, " ")
+    .replace(/\\begin\{(aligned|align\*?|gathered|cases|array|[pbvV]?matrix)\}[\s\S]*?\\end\{\1\}/g, repairRowBreaks)
+    .replace(/(?:\$\$(?:(?!\$\$)[\s\S])+\$\$\s*){2,}/g, mergeDerivation)
+    .replace(/\$\$((?:(?!\$\$)[\s\S])+)\$\$([.,;:])(?=\s|$)/g, (_, tex: string, punct: string) => {
+      const body = tex.trimEnd();
+      return /\\end\{aligned\}$/.test(body)
+        ? `$$${body.replace(/\s*\\end\{aligned\}$/, `${punct} \\end{aligned}`)}$$`
+        : `$$${body}${punct}$$`;
+    });
+}
+
+const FN = "sin|cos|tan|cot|sec|csc|sinh|cosh|tanh|ln|log|exp";
+
+/**
+ * Small fixes a person typesetting by hand would make: \sin(u) → \sin u,
+ * 2x \times \cos x → 2x \cos x, a thin space before differentials, and no
+ * stray spacing commands after function names.
+ */
+// Marks where an inline fragment tidied down to nothing; collapsed with its
+// neighbouring spaces afterwards so no "$$" or double space is left behind.
+const EMPTY_MATH = "{{EMPTY_MATH}}";
+
+function inlineMath(tex: string): string {
+  return tex.trim() ? `$${tex}$` : EMPTY_MATH;
+}
+
+function tidyTex(tex: string): string {
+  let t = tex
+    .replace(/\\(?:textstyle|displaystyle|scriptstyle)\s*/g, "")
+    .replace(/\\(?:text|mathrm)\{\s*d\s*\}\s*([a-zA-Z])(?![a-zA-Z])/g, "\\,d$1")
+    .replace(/\\(?:text|mathrm|operatorname)\{\s*(sine|cosine|tangent|log|ln|exp|natural log)\s*\}\s*/g, (_m, name: string) =>
+      `\\${({ sine: "sin", cosine: "cos", tangent: "tan", "natural log": "ln" } as Record<string, string>)[name] ?? name} `)
+    .replace(new RegExp(`\\\\(${FN})\\s*(?:\\\\,\\s*)+`, "g"), "\\$1 ")
+    .replace(new RegExp(`\\\\(${FN})\\s*\\(\\s*([a-zA-Z]|\\\\[a-zA-Z]+)\\s*\\)(?!\\s*\\^)`, "g"), "\\$1 $2")
+    .replace(new RegExp(`(?<=[a-zA-Z0-9)}])\\s*\\\\times\\s*(?=\\\\(?:${FN})(?![a-zA-Z]))`, "g"), " ")
+    .replace(/\\(lim|sum|int|prod)\s+(?=[_^])/g, "\\$1");
+  // Only where a differential is plausible: an integral, "du = …", or an integrand ending in ")dx".
+  if (/\\int|(?:^|[^a-zA-Z\\])d[a-z]\s*=|[)}]\s*d[a-z]\s*$/.test(t)) {
+    t = t.replace(/(?<=[a-zA-Z0-9)}])(\s*)d([a-zA-Z]|\\theta|\\phi|\\rho|\\tau)(?![a-zA-Z])/g, (m, space: string, v: string, offset: number, str: string) =>
+      // A "d" glued to a letter is part of a word or product (\text{odd}, ad − bc).
+      !space && /[a-zA-Z]/.test(str[offset - 1]) ? m : `\\,d${v}`);
+  }
+  return t.replace(/[ \t]+(?=\\,)/g, "").replace(/[ \t]{2,}/g, " ");
+}
+
+/**
+ * Models sometimes wrap a whole sentence in maths: $\text{the limit as } x \text{ approaches } 0$.
+ * Words inside top-level \text{…} that contain a space are prose, so the fragment
+ * is split back into sentence text with only the symbols typeset:
+ * "the limit as $x$ approaches $0$". Returns null when there is nothing to lift.
+ */
+function liftProseOutOfMath(tex: string): string | null {
+  const pieces: { math: boolean; value: string }[] = [];
+  let depth = 0;
+  let buf = "";
+  let lifted = false;
+  for (let i = 0; i < tex.length; i++) {
+    if (depth === 0 && tex.startsWith("\\text{", i)) {
+      let j = i + 6;
+      let d = 1;
+      for (; j < tex.length && d > 0; j++) {
+        if (tex[j] === "\\") { j++; continue; }
+        if (tex[j] === "{") d++;
+        else if (tex[j] === "}") d--;
+      }
+      const words = tex.slice(i + 6, j - 1);
+      if (/\s/.test(words.trim()) || (/^\s|\s$/.test(words) && /[a-zA-Z]{2,}/.test(words))) {
+        pieces.push({ math: true, value: buf }, { math: false, value: words });
+        buf = "";
+        lifted = true;
+        i = j - 1;
+        continue;
+      }
+    }
+    const c = tex[i];
+    if (c === "\\") { buf += tex.slice(i, i + 2); i++; continue; }
+    if (c === "{") depth++;
+    else if (c === "}") depth--;
+    buf += c;
+  }
+  if (!lifted) return null;
+  pieces.push({ math: true, value: buf });
+  return pieces
+    .map(p => {
+      if (!p.math) return p.value;
+      // Leftover spacing commands between two words are not maths.
+      const body = p.value.replace(/\\[,;:! ]|\\q?quad/g, " ").trim();
+      if (!body) return p.value.length ? " " : "";
+      const lead = /^\s/.test(p.value) ? " " : "";
+      const trail = /\s$/.test(p.value) ? " " : "";
+      const tidied = tidyTex(body);
+      return tidied.trim() ? `${lead}$${tidied}$${trail}` : EMPTY_MATH;
+    })
+    .join("")
+    .replace(/ {2,}/g, " ")
+    .trim();
+}
+
+// A row break "\\" that lost one backslash in JSON decodes to "\ " and silently
+// collapses a matrix or derivation onto one line.
+function repairRowBreaks(env: string): string {
+  return env.replace(/(?<!\\)\\(?=\s)/g, "\\\\");
+}
+
+const RELATION_START = /^\s*(?:=|<|>|\\approx|\\leq?|\\geq?|\\equiv|\\Rightarrow|\\implies)(?![a-zA-Z])/;
+
+/** Index of the first "=" outside braces and brackets, or -1. */
+function topLevelEquals(tex: string): number {
+  let depth = 0;
+  for (let i = 0; i < tex.length; i++) {
+    const c = tex[i];
+    if (c === "\\") { i++; continue; }
+    if (c === "{" || c === "(" || c === "[") depth++;
+    else if (c === "}" || c === ")" || c === "]") depth--;
+    else if (c === "=" && depth === 0) return i;
+  }
+  return -1;
+}
+
+/**
+ * Consecutive display lines where each continuation starts with "=" (or another
+ * relation) are one derivation written line by line — set them as a single
+ * block aligned on the relation, the way it would be written by hand.
+ */
+function mergeDerivation(run: string): string {
+  const trailing = /\s*$/.exec(run)?.[0] ?? "";
+  const blocks = [...run.matchAll(/\$\$((?:(?!\$\$)[\s\S])+)\$\$/g)].map(m => m[1].trim());
+  const out: string[] = [];
+  let k = 0;
+  while (k < blocks.length) {
+    let n = 1;
+    while (k + n < blocks.length && RELATION_START.test(blocks[k + n])) n++;
+    const group = blocks.slice(k, k + n);
+    if (n >= 2 && group.every(b => !/\\begin|&/.test(b))) {
+      const [first, ...rest] = group;
+      const eq = topLevelEquals(first);
+      const lines = eq === -1
+        ? [`${first} &${rest[0]}`, ...rest.slice(1).map(t => `&${t}`)]
+        : [`${first.slice(0, eq).trimEnd()} &${first.slice(eq)}`, ...rest.map(t => `&${t}`)];
+      out.push(`$$\\begin{aligned} ${lines.join(" \\\\ ")} \\end{aligned}$$`);
+    } else {
+      out.push(...group.map(b => `$$${b}$$`));
+    }
+    k += n;
+  }
+  return out.join("\n") + trailing;
+}
+
+function normalizeMath<T>(value: T): T {
+  if (typeof value === "string") return normalizeMathDelimiters(value) as unknown as T;
+  if (Array.isArray(value)) return value.map(normalizeMath) as unknown as T;
+  if (value && typeof value === "object") {
+    const out: any = {};
+    for (const [k, v] of Object.entries(value as any)) out[k] = normalizeMath(v);
+    return out;
+  }
+  return value;
+}
 
 // ─── Map-Reduce pipeline for long transcripts ────────────────────────────────
 
@@ -120,7 +347,7 @@ ${MATH_STYLE}`,
       content: `"${title}" — Part ${part}/${total} (${timeRange})\n\n${text.slice(0, 8000)}`,
     }],
   });
-  return `[Part ${part}/${total} · ${timeRange}]\n${extractText(msg)}`;
+  return `[Part ${part}/${total} · ${timeRange}]\n${normalizeMathDelimiters(extractText(msg))}`;
 }
 
 /**
@@ -219,14 +446,14 @@ ${MATH_STYLE}`,
     }],
   });
   const text = extractText(msg).trim();
-  return text === "NO_CONTENT" ? "" : toMathNotation(text);
+  return text === "NO_CONTENT" ? "" : normalizeMathDelimiters(text);
 }
 
-export async function generateCheatSheet(transcript: string, lectureTitle: string, language = "en") {
+async function generateCheatSheetOnce(transcript: string, lectureTitle: string, language = "en") {
   const langName = LANG_NAMES[language] ?? "English";
   const message = await createWithRetry({
     model: "gpt-4o",
-    max_tokens: 6000,
+    max_tokens: 9000,
     system: `You are an expert study assistant. Generate a comprehensive, detailed cheat sheet from a lecture transcript.
 Write ALL text (headings, bullets, tips) in ${langName}.
 Return ONLY valid JSON — no markdown, no code blocks, no commentary.
@@ -243,10 +470,15 @@ Match the depth the lecturer used — if they elaborated on something, you elabo
 - Each section: 5-8 bullets as FULL SENTENCES explaining the concept. Capture examples and elaborations the lecturer gave.
 - keyTerms: 10-15 terms with thorough definitions (2-3 sentences each)
 - examTips: 5-8 specific, actionable tips based on what was emphasized
-- formulas: every equation or formula mentioned
+- formulas: every equation or formula mentioned. Each entry is "Name: $$formula$$" — a short plain-words name, a colon, then one equation in $$...$$ with no words inside it
 - actionItems: ONLY explicit deadlines/assignments mentioned; empty array if none
+${ONE_LECTURE}
+Example bullet: "Substituting $u = x^2$ gives $du = 2x\\\\,dx$, so $\\\\int 2x\\\\cos(x^2)\\\\,dx = \\\\int \\\\cos u\\\\,du = \\\\sin(x^2) + C$."
+Example formula: "Newton's second law: $$F = ma$$"
 
-${MATH_STYLE}`,
+${JSON_MATH_STYLE}`,
+    response_format: { type: "json_object" },
+    temperature: STUDY_TEMPERATURE,
     messages: [
       {
         role: "user",
@@ -255,8 +487,7 @@ ${MATH_STYLE}`,
     ],
   });
 
-  const json = extractText(message).match(/\{[\s\S]*\}/)?.[0] ?? "{}";
-  return mathify(JSON.parse(json));
+  return parseJsonObject(extractText(message));
 }
 
 export async function streamSocraticResponse(
@@ -357,7 +588,7 @@ Rules:
   return JSON.parse(json);
 }
 
-export async function generateQuiz(
+async function generateQuizOnce(
   transcript: string,
   lectureTitle: string,
   language = "en"
@@ -372,20 +603,29 @@ export async function generateQuiz(
 > {
   const message = await createWithRetry({
     model: "gpt-4o",
-    max_tokens: 4096,
-    system: `You are an expert study assistant. Generate 5-10 multiple choice questions from a lecture transcript.
+    max_tokens: 6000,
+    system: `You are an expert study assistant. Generate EXACTLY 8 multiple choice questions from a lecture transcript. Always return 8 — if the transcript is short, cover it in finer detail rather than returning fewer.
 Write ALL text (questions, options, explanations) in ${LANG_NAMES[language] ?? "English"}.
-Return ONLY valid JSON array — no markdown, no code blocks, no commentary. Schema:
-[{
+Return ONLY a valid JSON object — no markdown, no code blocks, no commentary. Schema:
+{"items": [{
   "question": string,
   "options": string[4],
   "correctIndex": number,
   "explanation": string,
   "timestampSeconds": number | null
-}]
+}]}
 Questions should test deep understanding, not just memorization.
+${ONE_LECTURE}
+Style — the quiz must look like the rest of the typeset notes:
+- The question is a normal English sentence; only its maths goes in inline $...$.
+- When an option is a formula or a value, the whole option is one $...$ expression, and all four options use the same form.
+- The explanation reads like a tutor talking: one or two sentences giving the idea, then — only if there is working — a single aligned derivation.
+Example item:
+{"question": "What is $\\\\int 2x\\\\cos(x^2)\\\\,dx$?", "options": ["$\\\\sin(x^2) + C$", "$2\\\\sin(x^2) + C$", "$-\\\\sin(x^2) + C$", "$x^2\\\\sin(x^2) + C$"], "correctIndex": 0, "explanation": "Let $u = x^2$, so $du = 2x\\\\,dx$ and the integral becomes a standard one.\\n$$\\\\begin{aligned} \\\\int 2x\\\\cos(x^2)\\\\,dx &= \\\\int \\\\cos u\\\\,du \\\\\\\\ &= \\\\sin(x^2) + C. \\\\end{aligned}$$", "timestampSeconds": null}
 
-${MATH_STYLE}`,
+${JSON_MATH_STYLE}`,
+    response_format: { type: "json_object" },
+    temperature: STUDY_TEMPERATURE,
     messages: [
       {
         role: "user",
@@ -394,42 +634,54 @@ ${MATH_STYLE}`,
     ],
   });
 
-  const json = extractText(message).match(/\[[\s\S]*\]/)?.[0] ?? "[]";
-  return mathify(JSON.parse(json));
+  return parseJsonItems(extractText(message)).map((q: any) => ({ ...q, options: uniformOptions(q.options ?? []) }));
 }
 
-export async function generateFlashcardsFromTranscript(
+/** When some options are typeset, bare values like "0" or "x^2" are typeset too, so the four match. */
+function uniformOptions(options: string[]): string[] {
+  const typeset = options.some(o => /\$[^$]+\$/.test(String(o)));
+  if (!typeset) return options;
+  return options.map(o => {
+    const str = String(o).trim();
+    const bareValue = !str.includes("$") && /^[-+−]?[\w.^(){}\/+\-=\\ ]{1,20}$/.test(str) && !/[a-zA-Z]{3,}/.test(str.replace(/\\[a-zA-Z]+/g, ""));
+    return bareValue ? `$${str}$` : o;
+  });
+}
+
+async function generateFlashcardsFromTranscriptOnce(
   transcript: string,
   language = "en"
 ): Promise<{ front: string; back: string }[]> {
   const langName = LANG_NAMES[language] ?? "English";
   const msg = await createWithRetry({
-    model: "gpt-4o-mini",
-    max_tokens: 2000,
-    system: `Generate 10-14 flashcards from this lecture in ${langName}. Each card tests one idea: a definition, a formula, a mechanism or a worked relationship. Keep the front short and answerable; keep the back precise.
-Return ONLY valid JSON array — no markdown, no code blocks.
-[{"front": string, "back": string}]
+    model: "gpt-4o",
+    max_tokens: 3500,
+    system: `Generate 10-14 flashcards from this lecture in ${langName}. ${ONE_LECTURE} Each card tests one idea: a definition, a formula, a mechanism or a worked relationship. Keep the front short and answerable; keep the back precise.
+Return ONLY a valid JSON object — no markdown, no code blocks.
+{"items": [{"front": string, "back": string}]}
 
-${MATH_STYLE}`,
+${JSON_MATH_STYLE}`,
+    response_format: { type: "json_object" },
+    temperature: STUDY_TEMPERATURE,
     messages: [{ role: "user", content: `Transcript:\n${transcript.slice(0, 12000)}` }],
   });
-  const json = extractText(msg).match(/\[[\s\S]*\]/)?.[0] ?? "[]";
-  return mathify(JSON.parse(json));
+  return parseJsonItems(extractText(msg));
 }
 
-export async function generateKeyPoints(
+async function generateKeyPointsOnce(
   transcript: string,
   language = "en"
 ): Promise<{ point: string; category: string }[]> {
   const langName = LANG_NAMES[language] ?? "English";
   const msg = await createWithRetry({
-    model: "gpt-4o-mini",
-    max_tokens: 1500,
-    system: `Extract 10-15 key points from this lecture in ${langName}. Categorize each as one of: "Definition", "Important", "Formula", "Example", "Warning". Return ONLY valid JSON array — no markdown, no code blocks.\n[{"point": string, "category": "Definition"|"Important"|"Formula"|"Example"|"Warning"}]\n\n${MATH_STYLE}`,
+    model: "gpt-4o",
+    max_tokens: 3000,
+    system: `Extract 10-15 key points from this lecture in ${langName}. ${ONE_LECTURE} Categorize each as one of: "Definition", "Important", "Formula", "Example", "Warning". Return ONLY a valid JSON object — no markdown, no code blocks.\n{"items": [{"point": string, "category": "Definition"|"Important"|"Formula"|"Example"|"Warning"}]}\nExample item: {"point": "Substituting $u = x^{2}$ turns $\\\\int 2x\\\\cos(x^{2})\\\\,dx$ into $\\\\int \\\\cos u\\\\,du = \\\\sin(x^{2}) + C$", "category": "Formula"}\n\n${JSON_MATH_STYLE}`,
+    response_format: { type: "json_object" },
+    temperature: STUDY_TEMPERATURE,
     messages: [{ role: "user", content: `Transcript:\n${transcript.slice(0, 12000)}` }],
   });
-  const json = extractText(msg).match(/\[[\s\S]*\]/)?.[0] ?? "[]";
-  return mathify(JSON.parse(json));
+  return parseJsonItems(extractText(msg));
 }
 
 export async function answerVideoQuestion(
@@ -442,10 +694,10 @@ export async function answerVideoQuestion(
   const msg = await createWithRetry({
     model: "gpt-4o-mini",
     max_tokens: 512,
-    system: `You are a helpful tutor for the lecture "${title}". Answer questions about it clearly and concisely in ${langName}. Only use information from the transcript.\n\nTranscript:\n${transcript.slice(0, 8000)}`,
+    system: `You are a helpful tutor for the lecture "${title}". Answer questions about it clearly and concisely in ${langName}. Only use information from the transcript. Write short paragraphs; use a simple list or **bold** only when it genuinely helps. No # headings or tables.\n\n${MATH_STYLE}\n\nTranscript:\n${transcript.slice(0, 8000)}`,
     messages,
   });
-  return toMathNotation(extractText(msg));
+  return normalizeMathDelimiters(extractText(msg));
 }
 
 // ─── Course memory Q&A ("Ask your course") ──────────────────────────────────
@@ -477,12 +729,15 @@ Rules:
 - When asked to "test me" or "quiz me": write 4–6 questions drawn from the material (mix of recall and understanding). Ask them first; offer to reveal answers, or include an "Answer key" section after. Number the questions.
 - Only say you don't have enough material yet if the sources are genuinely empty or unrelated to the request.
 - Be clear and direct, like a sharp study partner. No filler.
+- Formatting: short paragraphs, simple numbered or "-" lists, and **bold** only for the few terms that matter. No # headings, tables or horizontal rules.
+
+${MATH_STYLE}
 
 SOURCES:
 ${sourceBlock}`,
     messages,
   });
-  return toMathNotation(extractText(msg));
+  return normalizeMathDelimiters(extractText(msg));
 }
 
 // ─── Exam Mode ────────────────────────────────────────────────────────────────
@@ -520,15 +775,18 @@ Rules:
 - plan: exactly ${planDays} entries. ${daysUntilExam != null ? `The exam is in ${daysUntilExam} day(s) — label entries "Day 1".."Day ${planDays}" ending at the exam.` : `No exam date given — label entries "Session 1".."Session ${planDays}".`} Order weak/heavy topics earlier, review + self-testing last. "items" = 2-4 concrete tasks referencing actual course material.
 - Ground EVERYTHING in the numbered sources. Never invent facts, topics, or citations.
 
+${JSON_MATH_STYLE}
+
 STUDENT'S OWN NOTES (titles): ${noteTitles.length ? noteTitles.join(" · ") : "(none)"}
 
 SOURCES:
 ${sourceBlock}`,
     messages: [{ role: "user", content: `Build my exam pack for "${courseName}".` }],
+    response_format: { type: "json_object" },
+    temperature: STUDY_TEMPERATURE,
   });
 
-  const json = extractText(message).match(/\{[\s\S]*\}/)?.[0] ?? "{}";
-  return mathify(JSON.parse(json));
+  return parseJsonObject(extractText(message));
 }
 
 // ─── Transcript corrector ─────────────────────────────────────────────────────
@@ -547,11 +805,66 @@ Rules:
 - Preserve all technical, scientific, and academic vocabulary.
 - Do NOT add, remove, or change the meaning of any content.
 - Return ONLY the corrected transcript — no explanations, no preamble.
+- Write the maths in inline $...$ only; no $$ display blocks in a transcript.
 
 ${MATH_STYLE}`,
     messages: [{ role: "user", content: text }],
   });
-  return toMathNotation(extractText(msg).trim() || text);
+  return normalizeMathDelimiters(extractText(msg).trim() || text);
+}
+
+// ─── Live transcript typesetting ──────────────────────────────────────────────
+// During a recording, each finished sentence that sounds like maths is rewritten
+// so the live view uses the same LaTeX style as the notes. Sentences with no sign
+// of maths never reach the model, which keeps an hour-long lecture to cents.
+
+const SPOKEN_MATH = new RegExp(
+  [
+    "\\b(?:squared|cubed|integral|integrate|derivative|differentiate|equals|plus|minus|divided by|over [a-z0-9]\\b",
+    "square root|root of|sine|cosine|tangent|log(?:arithm)?|ln|limit|approaches|summation|sum of|factorial|exponent|power of|to the power",
+    "delta|alpha|beta|gamma|theta|lambda|sigma|omega|epsilon|phi|rho|mu|pi|infinity|matrix|determinant|vector|gradient|partial",
+    "prime|fraction|numerator|denominator|d [a-z]\\b|[a-z] of [a-z]\\b|[a-z] sub [a-z0-9]\\b|[a-z] (?:squared|cubed|over|times|plus|minus|equals)\\b)",
+    "[=+^√∫∑×÷≤≥≈]",
+    "\\d\\s*[a-z]\\b",
+  ].join("|"),
+  "i",
+);
+
+export function looksLikeSpokenMath(sentence: string): boolean {
+  return SPOKEN_MATH.test(sentence);
+}
+
+/**
+ * One fragment of live speech-to-text with its maths typeset in LaTeX, or null
+ * when there's nothing to change (or the model's reply doesn't look like the same
+ * fragment, in which case the words as heard are kept).
+ */
+export async function typesetSpokenMath(fragment: string, previous = ""): Promise<string | null> {
+  const msg = await createWithRetry({
+    model: "gpt-4o-mini",
+    max_tokens: Math.min(400, Math.ceil(fragment.length / 2) + 80),
+    temperature: 0.2,
+    system: `You typeset a live lecture transcript. You receive one fragment of speech-to-text.
+Return the same fragment with its mathematics written in LaTeX. Every other word stays exactly as spoken, in the same order.
+Do not add, remove, summarise, correct or explain anything, and do not complete a formula that carries on in the next fragment.
+Use inline $...$ only — no $$ display blocks.
+If the fragment contains no mathematics, return it unchanged. Return only the fragment.
+
+${MATH_STYLE}`,
+    messages: [{
+      role: "user",
+      content: `${previous ? `Previous fragment, for context only — do not return it: ${previous}
+
+` : ""}Fragment: ${fragment}`,
+    }],
+  }, 1);
+  const out = normalizeMathDelimiters(extractText(msg).trim().replace(/^Fragment:\s*/i, ""));
+  if (!out.includes("$") || out === fragment) return null;
+  // A reply much longer or shorter than the fragment has added or dropped content.
+  const letters = (t: string) => t.replace(/\[a-zA-Z]+|[^a-zA-Z]/g, "").length;
+  const ratio = letters(out) / Math.max(1, letters(fragment));
+  if (ratio < 0.3 || ratio > 1.6 || out.includes("$$")) return null;
+  return out;
 }
 
 export async function correctTranscript(transcript: string): Promise<string> {
@@ -586,3 +899,25 @@ export async function correctTranscript(transcript: string): Promise<string> {
     return transcript;
   }
 }
+
+// ─── JSON generations: one retry when the reply comes back cut off ─────────────
+// A truncated or malformed reply would otherwise leave a lecture with an empty
+// tab; a second attempt is far cheaper than asking the student to reprocess.
+
+async function retryOnBadJson<T>(run: () => Promise<T>): Promise<T> {
+  try {
+    return await run();
+  } catch (err) {
+    if (!(err instanceof SyntaxError)) throw err;
+    return run();
+  }
+}
+
+export const generateCheatSheet = (...args: Parameters<typeof generateCheatSheetOnce>) =>
+  retryOnBadJson(() => generateCheatSheetOnce(...args));
+export const generateQuiz = (...args: Parameters<typeof generateQuizOnce>) =>
+  retryOnBadJson(() => generateQuizOnce(...args));
+export const generateFlashcardsFromTranscript = (...args: Parameters<typeof generateFlashcardsFromTranscriptOnce>) =>
+  retryOnBadJson(() => generateFlashcardsFromTranscriptOnce(...args));
+export const generateKeyPoints = (...args: Parameters<typeof generateKeyPointsOnce>) =>
+  retryOnBadJson(() => generateKeyPointsOnce(...args));

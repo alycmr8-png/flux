@@ -2,30 +2,56 @@
 import { useState, useEffect, useRef } from "react";
 import {
   Home, Layers, Calendar, CreditCard, Archive, HelpCircle,
-  Mic, Mic2, PenLine,
-  Square, Plus, Sparkles, CheckCircle2,
+  FileText, BookOpen, ListChecks, Sparkles, Plus, Mic2,
 } from "lucide-react";
 
-// ── Steps: what the demo cycles through ────────────────────────────────────
-// Durations are deliberately slow so the captions can actually be read.
-const STEPS = [
-  { view: "classes", tab: "record",    phase: "idle",      dur: 2000 },
-  { view: "class",   tab: "record",    phase: "recording", dur: 2600 },
-  { view: "class",   tab: "record",    phase: "done",      dur: 1800 },
-  { view: "class",   tab: "ask",       phase: "question",  dur: 2200 },
-  { view: "class",   tab: "ask",       phase: "answer",    dur: 4800 }, // the hero — longest dwell
-] as const;
-
-// Big, readable captions for each step (what was previously tiny & missable).
-const CAPTIONS: Record<string, { icon: any; title: string; desc: string; flagship?: boolean }> = {
-  "classes-record-idle":    { icon: Layers,       title: "Your classes, organized for you", desc: "Every course in one place — Flux files everything automatically. No folders to manage." },
-  "class-record-recording": { icon: Mic,          title: "Record lectures live",            desc: "Hit record in class. Flux transcribes every word as your professor speaks." },
-  "class-record-done":      { icon: CheckCircle2, title: "Transcribed & remembered",        desc: "Seconds later it's a clean transcript, summary, and key points — saved to the course." },
-  "class-ask-question":     { icon: Sparkles,     title: "Ask your course anything",         desc: "One chat box per class, on top of everything you've captured all semester.", flagship: true },
-  "class-ask-answer":       { icon: Sparkles,     title: "Answers — with real sources",      desc: "Every answer cites the exact lecture minute or file it came from. No guessing.", flagship: true },
-};
+// Hero demo: one processed lecture, seen through the six tabs the app really
+// produces — Summary · Transcript · Key Points · Quizzes · Flashcards · Ask.
 
 const ACCENT = "#6E7FF3";
+// Each class has a colour the student picks; this one's is the brand blue.
+const CLASS_COLOR = "#4B5FE8";
+
+const STEPS = [
+  { view: "classes", tab: "summary",    phase: "idle",     dur: 2200 },
+  { view: "lecture", tab: "summary",    phase: "idle",     dur: 4400 },
+  { view: "lecture", tab: "points",     phase: "idle",     dur: 3800 },
+  { view: "lecture", tab: "quiz",       phase: "idle",     dur: 3800 },
+  { view: "lecture", tab: "cards",      phase: "idle",     dur: 3200 },
+  { view: "lecture", tab: "ask",        phase: "thinking", dur: 1400 },
+  { view: "lecture", tab: "ask",        phase: "answer",   dur: 4400 },
+] as const;
+
+const CAPTIONS: Record<string, { icon: any; title: string; desc: string; flagship?: boolean }> = {
+  "classes-summary-idle": {
+    icon: Layers, title: "Every class, in its own colour",
+    desc: "You pick a colour per class and Flux uses it everywhere — tabs, formulas, quiz answers.",
+  },
+  "lecture-summary-idle": {
+    icon: Sparkles, title: "One tap. Six ways to study it.", flagship: true,
+    desc: "Process Lecture turns the recording into a summary, transcript, key points, quizzes, flashcards and a chat — formulas written properly.",
+  },
+  "lecture-points-idle": {
+    icon: ListChecks, title: "Key points, colour-coded",
+    desc: "Definitions, formulas, examples and the things your professor flagged, separated at a glance.",
+  },
+  "lecture-quiz-idle": {
+    icon: BookOpen, title: "Eight questions from your lecture",
+    desc: "Multiple choice drawn from what was actually said. The right answer lights up in your class colour.",
+  },
+  "lecture-cards-idle": {
+    icon: Layers, title: "Flashcards you didn't have to make",
+    desc: "Click to flip. Pulled from the lecture itself, so they test what was taught.",
+  },
+  "lecture-ask-thinking": {
+    icon: Sparkles, title: "Ask this lecture anything", flagship: true,
+    desc: "A chat scoped to this one recording — the transcript and every board photo you took.",
+  },
+  "lecture-ask-answer": {
+    icon: Sparkles, title: "Ask this lecture anything", flagship: true,
+    desc: "A chat scoped to this one recording — the transcript and every board photo you took.",
+  },
+};
 
 const NAV = [
   { key: "home",   icon: Home,       label: "Home"      },
@@ -36,47 +62,73 @@ const NAV = [
   { key: "help",   icon: HelpCircle, label: "Help"      },
 ];
 
-const CLASS_TABS = [
-  { key: "ask",       label: "Ask",          icon: Sparkles  },
-  { key: "record",    label: "Record",       icon: Mic2      },
-  { key: "note",      label: "Take Note",    icon: PenLine   },
+const RESULT_TABS = [
+  { key: "summary",    label: "Summary",    icon: FileText   },
+  { key: "transcript", label: "Transcript", icon: BookOpen   },
+  { key: "points",     label: "Key Points", icon: ListChecks },
+  { key: "quiz",       label: "Quizzes",    icon: HelpCircle },
+  { key: "cards",      label: "Flashcards", icon: Layers     },
+  { key: "ask",        label: "Ask",        icon: Sparkles   },
 ] as const;
 
 const COURSES = [
-  { name: "Psychology 301", code: "PSY301" },
-  { name: "Biology 101",    code: "BIO101" },
-  { name: "Econ 202",       code: "ECO202" },
-  { name: "History 201",    code: "HIS201" },
+  { name: "Calculus II",  tint: CLASS_COLOR, meta: "12 lectures" },
+  { name: "Biology 101",  tint: "#16A34A",   meta: "9 lectures"  },
+  { name: "Econ 202",     tint: "#9333EA",   meta: "7 lectures"  },
+  { name: "History 201",  tint: "#EA580C",   meta: "5 lectures"  },
 ];
 
-const RECORDINGS = [
-  "Week 4 — Social Psychology",
-  "Week 3 — Memory & Cognition",
-  "Week 2 — Behavioral Theory",
+const LECTURE_TITLE = "Lecture 7 — Definite Integrals";
+
+const SUMMARY_BULLETS = [
+  "A definite integral is the signed area under f(x) between two bounds.",
+  "The Fundamental Theorem turns that area into an antiderivative evaluated at the bounds.",
+];
+const SUMMARY_FORMULAS = ["∫₀¹ x² dx = 1/3", "∑ᵢ₌₁ⁿ i = n(n+1)/2"];
+const KEY_TERM = { term: "Antiderivative", def: "a function whose derivative is the integrand" };
+const EXAM_TIP = "He said twice that the bounds matter more than the algebra.";
+
+// Category colours, exactly as the app marks them.
+const POINTS = [
+  { cat: "Definition", color: "#4B5FE8", text: "The definite integral measures signed area, so area below the axis counts as negative." },
+  { cat: "Formula",    color: "#9333EA", text: "∫₀¹ x² dx = 1/3" },
+  { cat: "Important",  color: "#DC2626", text: "The Fundamental Theorem is the point of the whole chapter." },
+  { cat: "Example",    color: "#16A34A", text: "Area under x² from 0 to 1, worked line by line on the board." },
+  { cat: "Warning",    color: "#EA580C", text: "Swapping the bounds flips the sign of the integral." },
 ];
 
-const ASK_QUESTION = "What did the professor say about cognitive dissonance?";
-const ASK_ANSWER = "She defined it as the mental discomfort from holding contradictory beliefs [1], and stressed it will be on the midterm — people resolve it by changing one belief or adding new ones [1][2].";
-const ASK_CITATIONS = [
-  { n: 1, label: "Lecture: Week 4 · 32:10" },
-  { n: 2, label: "File: Week 4 slides" },
+const QUIZ_Q = "What does the Fundamental Theorem of Calculus let you do?";
+const QUIZ_OPTIONS = [
+  "Differentiate the product of two functions",
+  "Evaluate a definite integral from an antiderivative at the bounds",
+  "Find the limit of an infinite sequence",
+  "Convert any sum into a derivative",
 ];
+const QUIZ_CORRECT = 1;
+
+const CARDS = [
+  { front: "What does ∫₀¹ x² dx evaluate to?", back: "1/3", flipped: false },
+  { front: "Define a definite integral.", back: "The signed area under f(x) between a and b.", flipped: true },
+];
+
+const ASK_Q = "What formulas were covered?";
+const ASK_A = "Two. The worked example gave ∫₀¹ x² dx = 1/3, and the sum you photographed off the board was ∑ᵢ₌₁ⁿ i = n(n+1)/2. He also set up θ ∈ [0, π] for Thursday.";
 
 // ── Sidebar ─────────────────────────────────────────────────────────────────
 function Sidebar() {
   return (
-    <div className="w-36 shrink-0 hidden sm:flex flex-col py-5" style={{ background: "rgba(0,0,0,0.025)", borderRight: "1px solid rgba(0,0,0,0.04)" }}>
-      <div className="px-4 pb-4 mb-2" style={{ borderBottom: "1px solid rgba(0,0,0,0.04)" }}>
-        <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 17, fontWeight: 800, color: "#191918" }}>Flux</div>
-        <div style={{ fontSize: 7.5, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(31,35,40,0.5)", marginTop: 1 }}>Study Assistant</div>
+    <div className="w-36 shrink-0 hidden sm:flex flex-col py-5" style={{ background: "rgba(0,0,0,0.02)", borderRight: "1px solid rgba(0,0,0,0.06)" }}>
+      <div className="px-4 pb-4 mb-2" style={{ borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
+        <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 17, fontWeight: 800, color: "#0f1115" }}>Flux</div>
+        <div style={{ fontSize: 7.5, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(15,17,21,0.45)", marginTop: 1 }}>Study Assistant</div>
       </div>
       <div className="flex-1 px-2 pt-1 flex flex-col gap-0.5">
-        <div style={{ fontSize: 7.5, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(31,35,40,0.42)", padding: "6px 8px 4px" }}>Menu</div>
+        <div style={{ fontSize: 7.5, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(15,17,21,0.4)", padding: "6px 8px 4px" }}>Menu</div>
         {NAV.map(({ key, icon: Icon, label }) => {
           const active = key === "record";
           return (
             <div key={key} className="flex items-center gap-2 px-2.5 py-2 rounded-lg"
-              style={{ background: active ? "rgba(75,95,232,0.18)" : "transparent", color: active ? "#4B5FE8" : "rgba(31,35,40,0.6)" }}>
+              style={{ background: active ? "rgba(75,95,232,0.12)" : "transparent", color: active ? CLASS_COLOR : "rgba(15,17,21,0.55)" }}>
               <Icon size={11} />
               <span style={{ fontSize: 10, fontWeight: active ? 600 : 400 }}>{label}</span>
             </div>
@@ -92,20 +144,23 @@ function ClassesView({ cardRef }: { cardRef: React.RefObject<HTMLDivElement | nu
   return (
     <div className="flex-1 p-6">
       <div className="flex items-center justify-between mb-5">
-        <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 20, color: "#191918", fontWeight: 700 }}>Workspace</div>
-        <div className="flex items-center gap-1 px-3 py-1.5 rounded-full" style={{ background: "#4B5FE8", color: "white", fontSize: 11 }}>
+        <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 20, color: "#0f1115", fontWeight: 700 }}>Workspace</div>
+        <div className="flex items-center gap-1 px-3 py-1.5 rounded-full" style={{ background: CLASS_COLOR, color: "white", fontSize: 11 }}>
           <Plus size={11} /> New Class
         </div>
       </div>
       <div className="grid grid-cols-2 gap-3">
         {COURSES.map((c, i) => (
-          <div key={i} ref={i === 0 ? cardRef : undefined} className="rounded-xl p-4"
-            style={{ background: i === 0 ? "rgba(75,95,232,0.18)" : "rgba(0,0,0,0.03)", border: `1px solid ${i === 0 ? "#4B5FE8" : "rgba(0,0,0,0.05)"}` }}>
-            <div className="w-7 h-7 rounded-lg flex items-center justify-center mb-2.5" style={{ background: "rgba(0,0,0,0.06)" }}>
-              <Layers size={12} style={{ color: "rgba(31,35,40,0.7)" }} />
+          <div key={c.name} ref={i === 0 ? cardRef : undefined} className="rounded-xl p-4"
+            style={{ background: i === 0 ? `${c.tint}14` : "#FFFFFF", border: `1px solid ${i === 0 ? c.tint : "rgba(0,0,0,0.08)"}` }}>
+            <div className="w-7 h-7 rounded-lg flex items-center justify-center mb-2.5" style={{ background: `${c.tint}1F` }}>
+              <Layers size={12} style={{ color: c.tint }} />
             </div>
-            <div style={{ fontSize: 12, fontWeight: 600, color: "white", marginBottom: 2 }}>{c.name}</div>
-            <div style={{ fontSize: 10, color: "rgba(31,35,40,0.6)" }}>{c.code}</div>
+            <div className="flex items-center gap-1.5" style={{ marginBottom: 2 }}>
+              <span className="w-2 h-2 rounded-full" style={{ background: c.tint }} />
+              <span style={{ fontSize: 12, fontWeight: 600, color: "#0f1115" }}>{c.name}</span>
+            </div>
+            <div style={{ fontSize: 10, color: "rgba(15,17,21,0.55)" }}>{c.meta}</div>
           </div>
         ))}
       </div>
@@ -113,119 +168,177 @@ function ClassesView({ cardRef }: { cardRef: React.RefObject<HTMLDivElement | nu
   );
 }
 
-// ── Class workspace ──────────────────────────────────────────────────────────
-function ClassView({ tab, phase, refs }: {
+// ── Processed lecture, seen through its six tabs ──────────────────────────────
+function LectureView({ tab, phase, refs }: {
   tab: string; phase: string;
   refs: Record<string, React.RefObject<HTMLDivElement | null>>;
 }) {
-  const isRecording = phase === "recording";
+  const label = { fontSize: 8.5, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase" as const, color: "rgba(15,17,21,0.55)", marginBottom: 5 };
+  const body = { fontSize: 11.5, lineHeight: 1.6, color: "rgba(15,17,21,0.75)" };
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
-      {/* Feature tabs */}
-      <div className="px-5 pt-4">
-        <div className="flex gap-0.5 p-1 rounded-xl w-fit max-w-full overflow-hidden" style={{ background: "rgba(75,95,232,0.12)", border: "1px solid rgba(75,95,232,0.2)" }}>
-          {CLASS_TABS.map(({ key, label, icon: Icon }) => {
-            const activeTab = tab === key;
+      {/* Lecture title */}
+      <div className="flex items-center gap-2 px-5 pt-4">
+        <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: CLASS_COLOR }} />
+        <span style={{ fontSize: 13, fontWeight: 600, color: "#0f1115" }}>{LECTURE_TITLE}</span>
+        <span className="flex items-center gap-1 ml-auto" style={{ fontSize: 9.5, color: "rgba(15,17,21,0.55)" }}>
+          <Mic2 size={10} /> 48 min · 2 board photos
+        </span>
+      </div>
+
+      {/* The six result tabs */}
+      <div className="px-5 pt-3">
+        <div className="flex gap-1 p-1 rounded-2xl" style={{ border: "1px solid rgba(0,0,0,0.08)" }}>
+          {RESULT_TABS.map(({ key, label: tabLabel, icon: Icon }) => {
+            const active = tab === key;
             return (
-              <div key={key} ref={refs[key]} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg transition-all"
+              <div key={key} ref={refs[key]} className="flex items-center gap-1 px-2.5 py-1.5 rounded-full transition-all"
                 style={{
-                  background: activeTab ? "#4B5FE8" : "transparent",
-                  color: activeTab ? "white" : "rgba(31,35,40,0.62)",
-                  fontSize: 10,
-                  fontWeight: activeTab ? 600 : 500,
-                  boxShadow: activeTab ? "0 2px 10px rgba(75,95,232,0.5)" : "none",
+                  background: active ? CLASS_COLOR : "transparent",
+                  color: active ? "white" : "rgba(15,17,21,0.55)",
+                  fontSize: 9.5,
+                  fontWeight: active ? 600 : 500,
+                  whiteSpace: "nowrap",
                 }}>
-                <Icon size={11} />{label}
+                <Icon size={10} />{tabLabel}
               </div>
             );
           })}
         </div>
       </div>
 
-      {/* Content */}
-      <div className="flex-1 px-5 py-4 overflow-hidden">
+      <div className="flex-1 px-5 py-3 overflow-hidden">
 
-        {/* RECORD TAB */}
-        {tab === "record" && (
-          <div className="flex gap-5">
-            <div className="rounded-xl p-5 text-center flex flex-col items-center shrink-0" style={{ background: "rgba(0,0,0,0.04)", border: "1px solid rgba(0,0,0,0.06)", width: 160 }}>
-              <div className="text-2xl mb-3 tabular-nums" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: "white" }}>{isRecording ? "00:42" : "00:00"}</div>
-              <div ref={refs.mic} className="w-12 h-12 rounded-full flex items-center justify-center mb-2"
-                style={{ background: isRecording ? "#ef4444" : "rgba(0,0,0,0.06)", boxShadow: isRecording ? "0 0 0 6px rgba(239,68,68,0.18)" : "none" }}>
-                {isRecording ? <Square size={14} color="white" /> : <Mic size={15} color="white" />}
-              </div>
-              {isRecording
-                ? <div className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" /><span style={{ fontSize: 10, color: "rgba(31,35,40,0.75)" }}>Recording…</span></div>
-                : <div style={{ fontSize: 10, color: "rgba(31,35,40,0.62)" }}>Tap to record</div>}
-            </div>
-            <div className="flex-1">
-              <div style={{ fontSize: 9, textTransform: "uppercase", letterSpacing: "0.12em", color: "rgba(31,35,40,0.55)", marginBottom: 10 }}>Recordings</div>
-              {RECORDINGS.map((title, i) => (
-                <div key={i} className="flex items-center gap-2.5 py-2.5" style={{ borderBottom: "1px solid rgba(0,0,0,0.04)" }}>
-                  <div className="w-6 h-6 rounded-md flex items-center justify-center shrink-0" style={{ background: "rgba(0,0,0,0.05)" }}><Mic2 size={11} style={{ color: "rgba(31,35,40,0.7)" }} /></div>
-                  <div className="flex-1 min-w-0">
-                    <div style={{ fontSize: 11, color: "white", fontWeight: 500 }}>{title}</div>
-                    <div style={{ fontSize: 9, color: "#4B5FE8" }}>Transcript · Summary · Key Points · Ask AI</div>
-                  </div>
-                  <div className="px-2 py-0.5 rounded-full" style={{ background: "rgba(75,95,232,0.2)", color: "#4B5FE8", fontSize: 9 }}>Open</div>
-                </div>
+        {/* SUMMARY */}
+        {tab === "summary" && (
+          <div className="rounded-2xl p-4" style={{ background: "#FFFFFF", border: "1px solid rgba(0,0,0,0.08)", animation: "pdIn 0.35s ease both" }}>
+            <div style={label}>What we covered</div>
+            <ul className="space-y-1 mb-3">
+              {SUMMARY_BULLETS.map(b => (
+                <li key={b} className="flex gap-2" style={body}>
+                  <span style={{ color: "rgba(15,17,21,0.35)" }}>•</span><span>{b}</span>
+                </li>
               ))}
+            </ul>
+
+            <div className="rounded-xl p-3 mb-3" style={{ background: `${CLASS_COLOR}0F`, border: `1px solid ${CLASS_COLOR}26` }}>
+              <div style={label}>Formulas</div>
+              {SUMMARY_FORMULAS.map(f => (
+                <div key={f} style={{ fontSize: 14, lineHeight: 1.7, color: "#0f1115" }}>{f}</div>
+              ))}
+            </div>
+
+            <div className="mb-3">
+              <div style={label}>Key Terms</div>
+              <div style={body}>
+                <span style={{ fontWeight: 600, color: "#0f1115" }}>{KEY_TERM.term}</span> — {KEY_TERM.def}
+              </div>
+            </div>
+
+            <div className="rounded-xl p-3" style={{ background: `${CLASS_COLOR}0F`, border: `1px solid ${CLASS_COLOR}26` }}>
+              <div style={label}>Exam Tips</div>
+              <div className="flex gap-2" style={body}>
+                <span style={{ color: "rgba(15,17,21,0.35)" }}>•</span><span>{EXAM_TIP}</span>
+              </div>
             </div>
           </div>
         )}
 
-        {/* ASK TAB — the hero feature */}
+        {/* KEY POINTS */}
+        {tab === "points" && (
+          <div className="rounded-2xl p-4" style={{ background: "#FFFFFF", border: "1px solid rgba(0,0,0,0.08)", animation: "pdIn 0.35s ease both" }}>
+            {POINTS.map((p, i) => (
+              <div key={p.cat} className="flex gap-3 items-start mb-2.5 last:mb-0" style={{ animation: `pdIn 0.35s ease ${i * 0.06}s both` }}>
+                <span className="shrink-0 text-center px-2 py-1 rounded-full"
+                  style={{ fontSize: 9, fontWeight: 700, color: p.color, background: `${p.color}1A`, minWidth: 64 }}>
+                  {p.cat}
+                </span>
+                <span style={body}>{p.text}</span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* QUIZZES */}
+        {tab === "quiz" && (
+          <div className="rounded-2xl p-4" style={{ background: "#FFFFFF", border: "1px solid rgba(0,0,0,0.08)", animation: "pdIn 0.35s ease both" }}>
+            <div className="flex items-center justify-between mb-2.5">
+              <span style={{ fontSize: 12, fontWeight: 600, color: "#0f1115" }}>1. {QUIZ_Q}</span>
+              <span className="shrink-0 ml-3" style={{ fontSize: 9.5, color: "rgba(15,17,21,0.55)" }}>1 of 8</span>
+            </div>
+            <div className="space-y-1.5">
+              {QUIZ_OPTIONS.map((opt, i) => {
+                const right = i === QUIZ_CORRECT;
+                return (
+                  <div key={opt} className="rounded-xl px-3 py-2"
+                    style={{
+                      fontSize: 11,
+                      border: `${right ? 2 : 1}px solid ${right ? CLASS_COLOR : "rgba(0,0,0,0.1)"}`,
+                      background: right ? `${CLASS_COLOR}1A` : "transparent",
+                      color: right ? CLASS_COLOR : "rgba(15,17,21,0.85)",
+                      fontWeight: right ? 600 : 400,
+                    }}>
+                    {opt}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* FLASHCARDS */}
+        {tab === "cards" && (
+          <div className="grid grid-cols-2 gap-3" style={{ animation: "pdIn 0.35s ease both" }}>
+            {CARDS.map((c, i) => (
+              <div key={c.front} className="rounded-2xl p-4 flex flex-col"
+                style={{ background: "#FFFFFF", border: "1px solid rgba(0,0,0,0.08)", minHeight: 132 }}>
+                <div style={{ fontSize: 10, fontWeight: 600, color: "rgba(15,17,21,0.35)", marginBottom: 6 }}>{i + 1} / 14</div>
+                <div style={c.flipped ? body : { fontSize: 13, fontWeight: 600, lineHeight: 1.5, color: "#0f1115" }}>
+                  {c.flipped ? c.back : c.front}
+                </div>
+                <div className="mt-auto pt-3" style={{ fontSize: 10, color: "rgba(15,17,21,0.35)" }}>
+                  {c.flipped ? "Click to hide" : "Click to reveal"}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* ASK THIS LECTURE */}
         {tab === "ask" && (
-          <div className="flex flex-col gap-3 mx-auto" style={{ maxWidth: 480 }}>
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full" style={{ background: "rgba(75,95,232,0.2)", border: "1px solid rgba(75,95,232,0.4)" }}>
-                <Sparkles size={12} style={{ color: "#4B5FE8" }} />
-                <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.04em", color: "#C7CEFB" }}>Ask your course</span>
-              </div>
-              <span style={{ fontSize: 10, color: "rgba(31,35,40,0.6)", marginLeft: "auto" }}>In memory: 12 lectures · 5 notes</span>
-            </div>
-
-            {/* User question */}
+          <div className="flex flex-col gap-2.5" style={{ animation: "pdIn 0.35s ease both" }}>
             <div className="flex justify-end">
-              <div className="px-3.5 py-2.5 max-w-[88%]" style={{ background: "#4B5FE8", color: "white", borderRadius: "16px 16px 4px 16px", fontSize: 12.5, lineHeight: 1.5, fontWeight: 500 }}>
-                {ASK_QUESTION}
+              <div className="px-3.5 py-2.5 max-w-[85%]"
+                style={{ background: CLASS_COLOR, color: "white", borderRadius: "18px 18px 4px 18px", fontSize: 12, lineHeight: 1.5, fontWeight: 500 }}>
+                {ASK_Q}
               </div>
             </div>
 
-            {phase === "question" ? (
-              /* Thinking dots */
+            {phase === "thinking" ? (
               <div className="flex justify-start">
-                <div className="px-4 py-3 flex items-center gap-1.5" style={{ background: "rgba(0,0,0,0.05)", borderRadius: "16px 16px 16px 4px" }}>
+                <div className="px-4 py-3 flex items-center gap-1.5" style={{ background: "#FFFFFF", border: "1px solid rgba(0,0,0,0.08)", borderRadius: "18px 18px 18px 4px" }}>
                   {[0, 1, 2].map(i => (
-                    <div key={i} className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: "rgba(31,35,40,0.68)", animationDelay: `${i * 0.2}s` }} />
+                    <div key={i} className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: "rgba(15,17,21,0.4)", animationDelay: `${i * 0.2}s` }} />
                   ))}
                 </div>
               </div>
             ) : (
-              <>
-                {/* AI answer */}
-                <div className="flex justify-start">
-                  <div className="px-3.5 py-3 max-w-[92%]" style={{ background: "rgba(0,0,0,0.05)", color: "rgba(31,35,40,0.9)", borderRadius: "16px 16px 16px 4px", fontSize: 12.5, lineHeight: 1.65, border: "1px solid rgba(0,0,0,0.05)" }}>
-                    {ASK_ANSWER}
-                  </div>
+              <div className="flex justify-start">
+                <div className="px-3.5 py-3 max-w-[92%]"
+                  style={{ background: "#FFFFFF", border: "1px solid rgba(0,0,0,0.08)", color: "rgba(15,17,21,0.85)", borderRadius: "18px 18px 18px 4px", fontSize: 12, lineHeight: 1.7 }}>
+                  {ASK_A}
                 </div>
-                {/* Citation chips */}
-                <div className="flex flex-wrap items-center gap-2">
-                  <span style={{ fontSize: 9, textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(31,35,40,0.55)", fontWeight: 600 }}>Sources</span>
-                  {ASK_CITATIONS.map(c => (
-                    <span key={c.n} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full"
-                      style={{ background: "rgba(75,95,232,0.2)", color: "#C7CEFB", border: "1px solid rgba(75,95,232,0.4)", fontSize: 10, fontWeight: 500 }}>
-                      <span style={{ fontWeight: 800 }}>[{c.n}]</span> {c.label}
-                    </span>
-                  ))}
-                </div>
-              </>
+              </div>
             )}
 
-            <div className="flex gap-2 mt-1">
-              <div className="flex-1 px-3.5 py-2.5 rounded-xl" style={{ background: "rgba(0,0,0,0.04)", border: "1px solid rgba(0,0,0,0.06)", fontSize: 11, color: "rgba(31,35,40,0.5)" }}>Ask anything about this course…</div>
-              <div className="px-4 py-2.5 rounded-xl font-semibold" style={{ background: "#4B5FE8", color: "white", fontSize: 11 }}>Send</div>
+            <div style={{ fontSize: 10, color: "rgba(15,17,21,0.55)" }}>
+              Answers come from this recording — its transcript and its board photos.
+            </div>
+
+            <div className="flex gap-2 mt-auto">
+              <div className="flex-1 px-3.5 py-2.5 rounded-xl" style={{ border: "1px solid rgba(0,0,0,0.08)", fontSize: 11, color: "rgba(15,17,21,0.4)" }}>Ask about this lecture…</div>
+              <div className="px-4 py-2.5 rounded-xl font-semibold" style={{ background: CLASS_COLOR, color: "white", fontSize: 11 }}>Send</div>
             </div>
           </div>
         )}
@@ -236,12 +349,12 @@ function ClassView({ tab, phase, refs }: {
 }
 
 // ── Cursor ───────────────────────────────────────────────────────────────────
-function Cursor({ x, y, clicking }: { x: number; y: number; clicking: boolean }) {
+function Cursor({ x, y }: { x: number; y: number }) {
   return (
     <div className="pointer-events-none absolute z-50"
-      style={{ left: x, top: y, transition: "left 0.5s cubic-bezier(0.4,0,0.2,1), top 0.5s cubic-bezier(0.4,0,0.2,1)", transform: `scale(${clicking ? 0.82 : 1})` }}>
+      style={{ left: x, top: y, transition: "left 0.5s cubic-bezier(0.4,0,0.2,1), top 0.5s cubic-bezier(0.4,0,0.2,1)" }}>
       <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-        <path d="M4 2L16 10.5L10.5 11.5L8 17L4 2Z" fill="white" stroke="#FFFFFF" strokeWidth="1.2" strokeLinejoin="round" />
+        <path d="M4 2L16 10.5L10.5 11.5L8 17L4 2Z" fill="#0f1115" stroke="#FFFFFF" strokeWidth="1.2" strokeLinejoin="round" />
       </svg>
     </div>
   );
@@ -254,11 +367,13 @@ export function ProductDemo() {
 
   const bodyRef      = useRef<HTMLDivElement>(null);
   const classCardRef = useRef<HTMLDivElement>(null);
-  const refs = {
-    ask:       useRef<HTMLDivElement>(null),
-    record:    useRef<HTMLDivElement>(null),
-    note:      useRef<HTMLDivElement>(null),
-    mic:       useRef<HTMLDivElement>(null),
+  const refs: Record<string, React.RefObject<HTMLDivElement | null>> = {
+    summary:    useRef<HTMLDivElement>(null),
+    transcript: useRef<HTMLDivElement>(null),
+    points:     useRef<HTMLDivElement>(null),
+    quiz:       useRef<HTMLDivElement>(null),
+    cards:      useRef<HTMLDivElement>(null),
+    ask:        useRef<HTMLDivElement>(null),
   };
 
   const [cursorPos, setCursorPos] = useState({ x: 0, y: 0 });
@@ -270,18 +385,11 @@ export function ProductDemo() {
     return { x: rect.left - body.left + rect.width / 2 - 10, y: rect.top - body.top + rect.height / 2 - 4 };
   }
 
-  const CURSOR_REFS: Record<string, React.RefObject<HTMLDivElement | null>> = {
-    "classes-record-idle":      classCardRef,
-    "class-record-recording":   refs.mic,
-    "class-record-done":        refs.record,
-    "class-ask-question":       refs.ask,
-    "class-ask-answer":         refs.ask,
-  };
-
   const stepKey = `${step.view}-${step.tab}-${step.phase}`;
 
   useEffect(() => {
-    setCursorPos(getPos(CURSOR_REFS[stepKey]?.current ?? null));
+    const target = step.view === "classes" ? classCardRef : refs[step.tab];
+    setCursorPos(getPos(target?.current ?? null));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stepIdx]);
 
@@ -295,37 +403,39 @@ export function ProductDemo() {
 
   return (
     <div className="select-none w-full" style={{ maxWidth: 900 }}>
-      <style>{`@keyframes demoProgress { from { width: 0% } to { width: 100% } }`}</style>
+      <style>{`
+        @keyframes demoProgress { from { width: 0% } to { width: 100% } }
+        @keyframes pdIn { from { opacity: 0; transform: translateY(6px) } to { opacity: 1; transform: none } }
+      `}</style>
 
-      <div className="rounded-2xl overflow-hidden shadow-2xl" style={{ background: "#FFFFFF", border: "1px solid rgba(0,0,0,0.06)" }}>
+      <div className="rounded-2xl overflow-hidden shadow-2xl" style={{ background: "#FFFFFF", border: "1px solid rgba(0,0,0,0.08)" }}>
         {/* Title bar */}
-        <div className="flex items-center gap-2 px-5 py-3" style={{ borderBottom: "1px solid rgba(0,0,0,0.05)", background: "rgba(0,0,0,0.025)" }}>
+        <div className="flex items-center gap-2 px-5 py-3" style={{ borderBottom: "1px solid rgba(0,0,0,0.06)", background: "rgba(0,0,0,0.025)" }}>
           <div className="w-2.5 h-2.5 rounded-full" style={{ background: "rgba(0,0,0,0.12)" }} />
           <div className="w-2.5 h-2.5 rounded-full" style={{ background: "rgba(0,0,0,0.12)" }} />
           <div className="w-2.5 h-2.5 rounded-full" style={{ background: "rgba(0,0,0,0.12)" }} />
-          <div className="mx-auto text-sm" style={{ color: "rgba(31,35,40,0.55)", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Flux — Study Assistant</div>
+          <div className="mx-auto text-sm" style={{ color: "rgba(15,17,21,0.45)", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Flux — Study Assistant</div>
         </div>
 
-        <div ref={bodyRef} className="flex relative" style={{ height: 420 }}>
+        <div ref={bodyRef} className="flex relative" style={{ height: 440 }}>
           <Sidebar />
           {step.view === "classes"
             ? <ClassesView cardRef={classCardRef} />
-            : <ClassView tab={step.tab} phase={step.phase} refs={refs} />
+            : <LectureView tab={step.tab} phase={step.phase} refs={refs} />
           }
-          <Cursor x={cursorPos.x} y={cursorPos.y} clicking={step.phase === "recording"} />
+          <Cursor x={cursorPos.x} y={cursorPos.y} />
         </div>
       </div>
 
-      {/* ── Prominent caption — big, high-contrast, can't be missed ── */}
+      {/* Caption */}
       <div className="mt-5">
-        {/* progress bar — fills over the step's duration so the pace is felt */}
         <div className="rounded-full overflow-hidden" style={{ height: 3, background: "rgba(0,0,0,0.1)" }}>
           <div key={stepIdx} style={{ height: "100%", background: ACCENT, borderRadius: 999, animation: `demoProgress ${step.dur}ms linear forwards` }} />
         </div>
 
         <div className="flex items-start gap-3.5 mt-4 px-1 max-w-xl mx-auto" style={{ minHeight: 70 }}>
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: cap?.flagship ? "rgba(75,95,232,0.12)" : "rgba(0,0,0,0.05)", border: cap?.flagship ? "1px solid rgba(75,95,232,0.35)" : "1px solid rgba(0,0,0,0.1)" }}>
-            <CapIcon size={18} style={{ color: cap?.flagship ? "#4B5FE8" : "rgba(0,0,0,0.7)" }} />
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: cap?.flagship ? "rgba(75,95,232,0.12)" : "rgba(0,0,0,0.04)", border: cap?.flagship ? "1px solid rgba(75,95,232,0.35)" : "1px solid rgba(0,0,0,0.08)" }}>
+            <CapIcon size={18} style={{ color: cap?.flagship ? CLASS_COLOR : "rgba(15,17,21,0.7)" }} />
           </div>
           <div className="flex-1 min-w-0 text-left">
             <div className="flex items-center gap-2 flex-wrap">
@@ -333,12 +443,12 @@ export function ProductDemo() {
                 {cap?.title}
               </span>
               {cap?.flagship && (
-                <span className="px-2 py-0.5 rounded-full" style={{ fontSize: 9, fontWeight: 800, letterSpacing: "0.08em", textTransform: "uppercase", color: "#4B5FE8", background: "rgba(75,95,232,0.12)", border: "1px solid rgba(75,95,232,0.3)" }}>
+                <span className="px-2 py-0.5 rounded-full" style={{ fontSize: 9, fontWeight: 800, letterSpacing: "0.08em", textTransform: "uppercase", color: CLASS_COLOR, background: "rgba(75,95,232,0.12)", border: "1px solid rgba(75,95,232,0.3)" }}>
                   ★ Core feature
                 </span>
               )}
             </div>
-            <p style={{ fontSize: 14, lineHeight: 1.55, color: "rgba(0,0,0,0.6)", marginTop: 4 }}>
+            <p style={{ fontSize: 14, lineHeight: 1.55, color: "rgba(15,17,21,0.6)", marginTop: 4 }}>
               {cap?.desc}
             </p>
           </div>
@@ -350,7 +460,7 @@ export function ProductDemo() {
         {STEPS.map((_, i) => (
           <button key={i} onClick={() => setStepIdx(i)} aria-label={`Step ${i + 1}`}
             className="rounded-full transition-all duration-300"
-            style={{ width: stepIdx === i ? 22 : 7, height: 7, background: stepIdx === i ? ACCENT : "rgba(0,0,0,0.2)" }} />
+            style={{ width: stepIdx === i ? 22 : 7, height: 7, background: stepIdx === i ? ACCENT : "rgba(0,0,0,0.18)" }} />
         ))}
       </div>
     </div>

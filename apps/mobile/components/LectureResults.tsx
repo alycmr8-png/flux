@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, ActivityIndicator, Alert, ScrollView } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { TypingDots } from "./TypingDots";
+import { MathText, hasMathDelimiters } from "./MathText";
 
 type View5 = "summary" | "transcript" | "points" | "cards" | "quiz" | "ask";
 
@@ -81,6 +82,8 @@ export function LectureResults({
     }
   }
 
+  const chatAbortRef = useRef<AbortController | null>(null);
+
   async function send() {
     const q = input.trim();
     if (!q || loading === "ask") return;
@@ -88,12 +91,17 @@ export function LectureResults({
     setMessages(next);
     setInput("");
     setLoading("ask");
+    const controller = new AbortController();
+    chatAbortRef.current = controller;
     try {
-      const r = await api.post("/api/studybook/chat", { lectureId, messages: next });
+      const r = await api.post("/api/studybook/chat", { lectureId, messages: next }, { signal: controller.signal });
       setMessages([...next, { role: "assistant", content: r.data?.data?.reply ?? "" }]);
     } catch (e: any) {
-      setMessages([...next, { role: "assistant", content: e?.response?.data?.error ?? "Something went wrong — try again." }]);
+      if (e?.code !== "ERR_CANCELED") {
+        setMessages([...next, { role: "assistant", content: e?.response?.data?.error ?? "Something went wrong — try again." }]);
+      }
     } finally {
+      chatAbortRef.current = null;
       setLoading(null);
     }
   }
@@ -140,16 +148,22 @@ export function LectureResults({
         </View>
       )}
 
-      {/* ── Summary ── */}
-      {view === "summary" && (
+      {/* ── Summary ── (the screen opens straight away; the summary fills in when it arrives) */}
+      {view === "summary" && !sheet && (
+        <View style={s.loadingBox}>
+          <ActivityIndicator size="small" color={color} />
+          <Text style={s.loadingTxt}>Loading summary…</Text>
+        </View>
+      )}
+      {view === "summary" && sheet && (
         <View style={s.card}>
           {(content.sections ?? []).map((sec: any, i: number) => (
             <View key={i} style={{ marginBottom: 14 }}>
-              <Text style={s.sectionLbl}>{sec.heading}</Text>
+              <MathText text={sec.heading} style={s.sectionLbl} interactive />
               {(sec.bullets ?? []).map((b: string, j: number) => (
                 <View key={j} style={s.bulletRow}>
                   <Text style={s.bullet}>•</Text>
-                  <Text style={s.body}>{b}</Text>
+                  <MathText text={b} style={s.body} interactive />
                 </View>
               ))}
             </View>
@@ -159,7 +173,7 @@ export function LectureResults({
             <View style={s.tintBox}>
               <Text style={s.sectionLbl}>Formulas</Text>
               {content.formulas.map((f: string, i: number) => (
-                <Text key={i} style={s.formula}>{f}</Text>
+                <MathText key={i} text={f} style={s.formula} formula interactive />
               ))}
             </View>
           )}
@@ -168,9 +182,13 @@ export function LectureResults({
             <View style={{ marginTop: 12 }}>
               <Text style={s.sectionLbl}>Key Terms</Text>
               {content.keyTerms.map((kt: any, i: number) => (
-                <Text key={i} style={[s.body, { marginBottom: 6 }]}>
-                  <Text style={s.bodyStrong}>{kt.term}</Text>{" — "}{kt.definition}
-                </Text>
+                <MathText
+                  key={i}
+                  lead={{ text: kt.term, style: s.bodyStrong }}
+                  text={` — ${kt.definition}`}
+                  style={[s.body, { marginBottom: 6 }]}
+                  interactive
+                />
               ))}
             </View>
           )}
@@ -181,7 +199,7 @@ export function LectureResults({
               {content.examTips.map((t: string, i: number) => (
                 <View key={i} style={s.bulletRow}>
                   <Text style={s.bullet}>•</Text>
-                  <Text style={s.body}>{t}</Text>
+                  <MathText text={t} style={s.body} interactive />
                 </View>
               ))}
             </View>
@@ -195,7 +213,7 @@ export function LectureResults({
       {view === "transcript" && transcript !== null && (
         <View style={s.card}>
           {transcript.trim()
-            ? <Text style={s.transcript}>{transcript}</Text>
+            ? <MathText text={transcript} style={s.transcript} interactive />
             : <Text style={s.body}>No transcript available for this lecture.</Text>}
         </View>
       )}
@@ -208,7 +226,7 @@ export function LectureResults({
               <View style={[s.catChip, { backgroundColor: (CATEGORY_COLOR[p.category] ?? "#4B5FE8") + "1A" }]}>
                 <Text style={[s.catTxt, { color: CATEGORY_COLOR[p.category] ?? "#4B5FE8" }]}>{p.category}</Text>
               </View>
-              <Text style={[s.body, { flex: 1 }]}>{p.point}</Text>
+              <MathText text={p.point} style={[s.body, { flex: 1 }]} interactive />
             </View>
           ))}
           {!points.length && <Text style={s.body}>No key points found.</Text>}
@@ -234,8 +252,9 @@ export function LectureResults({
 
           {messages.map((m, i) => (
             <View key={i} style={[s.msgRow, m.role === "user" ? s.msgRight : s.msgLeft]}>
-              <View style={[s.bubble, m.role === "user" ? s.bubbleUser : s.bubbleAi]}>
-                <Text style={[s.body, m.role === "user" && { color: "#fff" }]}>{m.content}</Text>
+              {/* A WebView has no intrinsic width, so a bubble holding math takes its max width. */}
+              <View style={[s.bubble, m.role === "user" ? s.bubbleUser : s.bubbleAi, hasMathDelimiters(m.content) && s.bubbleWide]}>
+                <MathText text={m.content} style={[s.body, m.role === "user" && { color: "#fff" }]} interactive />
               </View>
             </View>
           ))}
@@ -257,9 +276,26 @@ export function LectureResults({
               onSubmitEditing={send}
               returnKeyType="send"
             />
-            <TouchableOpacity style={s.sendBtn} onPress={send} activeOpacity={0.8}>
-              <Ionicons name="arrow-up" size={20} color="#fff" />
-            </TouchableOpacity>
+            {loading === "ask" ? (
+              <TouchableOpacity
+                style={[s.sendBtn, { backgroundColor: "#0f1115" }]}
+                onPress={() => chatAbortRef.current?.abort()}
+                activeOpacity={0.8}
+                accessibilityLabel="Stop"
+              >
+                <Ionicons name="stop" size={17} color="#fff" />
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                style={[s.sendBtn, { backgroundColor: color }, !input.trim() && { opacity: 0.4 }]}
+                onPress={send}
+                disabled={!input.trim()}
+                activeOpacity={0.8}
+                accessibilityLabel="Send"
+              >
+                <Ionicons name="send" size={18} color="#fff" />
+              </TouchableOpacity>
+            )}
           </View>
         </View>
       )}
@@ -270,12 +306,12 @@ export function LectureResults({
           {cards.map((c: any, i: number) => (
             <TouchableOpacity
               key={i}
-              style={s.card}
+              style={[s.card, flipped[i] && { borderColor: color, backgroundColor: color + "12" }]}
               onPress={() => setFlipped(f => ({ ...f, [i]: !f[i] }))}
               activeOpacity={0.8}
             >
               <Text style={s.cardIdx}>{i + 1} / {cards.length}</Text>
-              <Text style={flipped[i] ? s.body : s.bodyStrong}>{flipped[i] ? c.back : c.front}</Text>
+              <MathText text={flipped[i] ? c.back : c.front} style={flipped[i] ? [s.bodyStrong, { color }] : s.bodyStrong} />
               <Text style={s.flipHint}>{flipped[i] ? "Tap to hide" : "Tap to reveal"}</Text>
             </TouchableOpacity>
           ))}
@@ -288,7 +324,7 @@ export function LectureResults({
         <View>
           {quiz.questions.map((q: any, i: number) => (
             <View key={q.id ?? i} style={s.card}>
-              <Text style={[s.bodyStrong, { marginBottom: 10 }]}>{i + 1}. {q.question}</Text>
+              <MathText text={`${i + 1}. ${q.question}`} style={[s.bodyStrong, { marginBottom: 10 }]} interactive />
               {(q.options ?? []).map((opt: string, oi: number) => {
                 const picked = answers[i] === oi;
                 const revealed = !!score;
@@ -299,25 +335,25 @@ export function LectureResults({
                     onPress={() => !score && setAnswers(a => ({ ...a, [i]: oi }))}
                     style={[
                       s.option,
-                      picked && !revealed && s.optionPicked,
-                      revealed && isRight && s.optionRight,
+                      picked && !revealed && { borderColor: color, backgroundColor: color + "10" },
+                      revealed && isRight && { borderColor: color, backgroundColor: color + "1A", borderWidth: 2 },
                       revealed && picked && !isRight && s.optionWrong,
                     ]}
                     activeOpacity={0.7}
                   >
-                    <Text style={[s.body, picked && !revealed && { color: "#4B5FE8" }]}>{opt}</Text>
+                    <MathText text={opt} style={[s.body, picked && !revealed && { color }, revealed && isRight && { color, fontWeight: "700" }]} />
                   </TouchableOpacity>
                 );
               })}
               {score && q.explanation && (
-                <Text style={[s.body, { marginTop: 8, color: "rgba(15,17,21,0.6)" }]}>{q.explanation}</Text>
+                <MathText text={q.explanation} style={[s.body, { marginTop: 8, color: "rgba(15,17,21,0.6)" }]} interactive />
               )}
             </View>
           ))}
 
           {score ? (
             <View style={[s.card, { alignItems: "center" }]}>
-              <Text style={s.scoreTxt}>{score.correct} / {score.total}</Text>
+              <Text style={[s.scoreTxt, { color }]}>{score.correct} / {score.total}</Text>
               <Text style={s.body}>{Math.round((score.correct / Math.max(score.total, 1)) * 100)}% correct</Text>
             </View>
           ) : (
@@ -371,6 +407,7 @@ const s = StyleSheet.create({
   bubble: { maxWidth: "88%", borderRadius: 16, paddingHorizontal: 14, paddingVertical: 11 },
   bubbleUser: { backgroundColor: "#4B5FE8", borderBottomRightRadius: 5 },
   bubbleAi: { backgroundColor: "#FFFFFF", borderWidth: 1, borderColor: "rgba(0,0,0,0.08)", borderBottomLeftRadius: 5 },
+  bubbleWide: { width: "88%" },
   inputRow: { flexDirection: "row", gap: 10, marginTop: 6 },
   input: { flex: 1, backgroundColor: "#FFFFFF", borderRadius: 14, paddingHorizontal: 14, paddingVertical: 13, fontSize: 15, color: "#0f1115", borderWidth: 1, borderColor: "rgba(0,0,0,0.08)" },
   sendBtn: { width: 48, height: 48, borderRadius: 14, backgroundColor: "#4B5FE8", alignItems: "center", justifyContent: "center" },
@@ -379,10 +416,8 @@ const s = StyleSheet.create({
   flipHint: { fontSize: 11.5, color: "rgba(15,17,21,0.35)", marginTop: 10 },
 
   option: { borderWidth: 1, borderColor: "rgba(0,0,0,0.1)", borderRadius: 12, paddingHorizontal: 13, paddingVertical: 11, marginBottom: 7 },
-  optionPicked: { borderColor: "#4B5FE8", backgroundColor: "rgba(75,95,232,0.06)" },
-  optionRight: { borderColor: "#16A34A", backgroundColor: "rgba(22,163,74,0.08)" },
   optionWrong: { borderColor: "#DC2626", backgroundColor: "rgba(220,38,38,0.06)" },
-  scoreTxt: { fontSize: 32, fontWeight: "800", color: "#4B5FE8", marginBottom: 4 },
+  scoreTxt: { fontSize: 32, fontWeight: "800", marginBottom: 4 },
 
   primaryBtn: { backgroundColor: "#4B5FE8", borderRadius: 16, paddingVertical: 15, alignItems: "center", marginBottom: 10 },
   primaryBtnTxt: { fontSize: 15, color: "#fff", fontWeight: "600" },

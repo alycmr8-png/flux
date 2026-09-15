@@ -4,46 +4,12 @@ import { useSearchParams, useRouter } from "next/navigation";
 import useSWR from "swr";
 import { Check, Zap, ArrowRight } from "lucide-react";
 import { useApiFetch, useApiSWRFetcher } from "@/lib/apiFetch";
+import { PLANS, PLAN_FEATURES, PLAN_LABEL, type PaidPlanId } from "@/lib/plans";
 
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
-const SHARED_FEATURES = [
-  "Ask your course — answers with sources",
-  "Unlimited recordings & uploads",
-  "AI summaries & key points",
-  "Exam Mode — likely topics & predicted questions",
-  "Calendar, notes & YouTube import",
-];
-
-const PLANS = [
-  {
-    id: "monthly",
-    name: "Monthly",
-    price: "$9.99",
-    period: "/mo",
-    annual: "billed monthly",
-    highlight: false,
-    features: SHARED_FEATURES,
-  },
-  {
-    id: "6month",
-    name: "6-Month",
-    price: "$6.99",
-    period: "/mo",
-    annual: "$41.94 every 6 months · Save 30%",
-    highlight: true,
-    features: SHARED_FEATURES,
-  },
-  {
-    id: "yearly",
-    name: "Yearly",
-    price: "$5.99",
-    period: "/mo",
-    annual: "$71.88 per year · Save 40%",
-    highlight: false,
-    features: SHARED_FEATURES,
-  },
-];
+// Plans live in one shared file so this page can't drift from the landing page.
+const PAID_PLANS = PLANS.filter((p) => p.id !== "free");
 
 export default function BillingPage() {
   const router = useRouter();
@@ -57,7 +23,7 @@ export default function BillingPage() {
 
   const isNew = currentPlan === "free" && !success;
 
-  async function upgrade(plan: "monthly" | "6month" | "yearly") {
+  async function upgrade(plan: PaidPlanId) {
     setLoading(plan);
     try {
       const res = await apiFetch(`/api/billing/checkout`, {
@@ -81,19 +47,19 @@ export default function BillingPage() {
     }
   }
 
-  const planLabel: Record<string, string> = { free: "Free", monthly: "Monthly", "6month": "6-Month", yearly: "Yearly", student: "Student", pro: "Pro" };
+  const planLabel = PLAN_LABEL;
 
   return (
     <div className="p-8 max-w-2xl">
       {/* Header */}
       {isNew ? (
         <>
-          <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(0,0,0,0.38)", marginBottom: 6 }}>Billing</div>
+          <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(0,0,0, 0.64)", marginBottom: 6 }}>Billing</div>
           <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 30, color: "#1F2328", marginBottom: 28 }}>Choose your plan</h1>
         </>
       ) : (
         <>
-          <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(0,0,0,0.38)", marginBottom: 6 }}>Account</div>
+          <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(0,0,0, 0.64)", marginBottom: 6 }}>Account</div>
           <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 30, color: "#1F2328", marginBottom: 28 }}>Billing</h1>
         </>
       )}
@@ -103,13 +69,13 @@ export default function BillingPage() {
         <div className="bg-[rgba(16,185,129,0.10)] border border-[rgba(16,185,129,0.3)] rounded-2xl p-5 mb-6">
           <div className="flex items-center gap-2 text-[#4caf50] mb-3">
             <Check size={16} />
-            <span className="text-sm font-medium">
+            <span className="text-[15.5px] font-medium">
               You&apos;re on {planLabel[currentPlan]} — welcome to Flux!
             </span>
           </div>
           <button
             onClick={() => router.push("/dashboard")}
-            className="flex items-center gap-2 bg-indigo-600 text-white text-sm font-medium px-5 py-2.5 rounded-full hover:bg-indigo-500 transition-colors"
+            className="flex items-center gap-2 bg-indigo-600 text-white text-[15.5px] font-medium px-5 py-2.5 rounded-full hover:bg-indigo-500 transition-colors"
           >
             Start using Flux <ArrowRight size={14} />
           </button>
@@ -119,16 +85,16 @@ export default function BillingPage() {
       {/* Current plan — only shown to paying users */}
       {!isLoading && currentPlan !== "free" && !success && (
         <div className="bg-[#FFFFFF] border border-[rgba(0,0,0,0.09)] rounded-2xl p-5 mb-6">
-          <div className="text-[10px] text-gray-600 uppercase tracking-widest mb-3">Current plan</div>
+          <div className="text-[10px] text-gray-800 uppercase tracking-widest mb-3">Current plan</div>
           <div className="flex items-center justify-between">
             <div>
               <div className="text-gray-900 font-medium text-lg">{planLabel[currentPlan]}</div>
-              <div className="text-xs text-gray-600 mt-0.5">Unlimited recordings</div>
+              <div className="text-[13.5px] text-gray-800 mt-0.5">Up to 30 lectures a month · recordings up to 3 hours</div>
             </div>
             <button
               onClick={openPortal}
               disabled={loading === "portal"}
-              className="text-xs border border-[rgba(0,0,0,0.08)] text-gray-600 hover:text-gray-900 hover:border-[rgba(148,163,184,0.4)] rounded-full px-4 py-2 transition-colors disabled:opacity-50"
+              className="text-[13.5px] border border-[rgba(0,0,0,0.08)] text-gray-800 hover:text-gray-900 hover:border-[rgba(148,163,184,0.4)] rounded-full px-4 py-2 transition-colors disabled:opacity-50"
             >
               {loading === "portal" ? "Loading…" : "Manage subscription"}
             </button>
@@ -138,47 +104,47 @@ export default function BillingPage() {
 
       {/* Plan cards */}
       <div className="space-y-3">
-        {PLANS.map((plan) => {
+        {PAID_PLANS.map((plan) => {
           const isCurrent = currentPlan === plan.id;
           const canUpgrade = currentPlan === "free";
+          const featured = plan.recommended && !isCurrent;
 
           return (
             <div
               key={plan.id}
-              className={`border rounded-2xl p-5 flex items-start justify-between gap-4 ${
-                plan.highlight && !isCurrent
-                  ? "border-black bg-[#FFFFFF]"
-                  : isCurrent
-                  ? "border-[rgba(0,0,0,0.10)] bg-[#FFFFFF]"
-                  : "border-[rgba(0,0,0,0.09)] bg-[#F7F6F4]"
-              }`}
+              className="rounded-2xl p-5 flex items-start justify-between gap-4"
+              style={{
+                background: "#FFFFFF",
+                border: featured ? "2px solid #4B5FE8" : "1px solid rgba(0,0,0,0.1)",
+                boxShadow: featured ? "0 10px 30px rgba(75,95,232,0.14)" : "none",
+              }}
             >
               <div className="flex-1">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-sm font-medium text-gray-900">{plan.name}</span>
-                  {plan.highlight && !isCurrent && (
-                    <span className="text-[9px] font-bold uppercase tracking-widest bg-indigo-600 text-white rounded-full px-2 py-0.5">
-                      Popular
+                <div className="flex items-center gap-2 mb-1.5">
+                  <span className="text-[17px] font-bold text-gray-900">{plan.name}</span>
+                  {plan.badge && !isCurrent && (
+                    <span className="text-[12px] font-bold uppercase tracking-wider rounded-full px-2.5 py-0.5 text-white"
+                      style={{ background: featured ? "#4B5FE8" : "#0f1115" }}>
+                      {featured ? `Best value · ${plan.badge}` : plan.badge}
                     </span>
                   )}
                   {isCurrent && (
-                    <span className="text-[9px] font-bold uppercase tracking-widest border border-[rgba(0,0,0,0.08)] text-gray-600 rounded-full px-2 py-0.5">
+                    <span className="text-[12px] font-bold uppercase tracking-wider border border-[rgba(0,0,0,0.12)] text-gray-800 rounded-full px-2.5 py-0.5">
                       Current
                     </span>
                   )}
                 </div>
-                <div className="flex items-baseline gap-1 mb-1">
-                  <span className="text-2xl text-gray-900 font-light">{plan.price}</span>
-                  <span className="text-gray-600 text-xs">{plan.period}</span>
-                  {plan.annual && (
-                    <span className="text-gray-500 text-xs ml-1">{plan.annual}</span>
-                  )}
+                <div className="flex items-baseline gap-1.5 flex-wrap">
+                  <span className="text-[28px] text-gray-900 font-bold">{plan.price}</span>
+                  <span className="text-gray-700 text-[15px]">{plan.period}</span>
+                  {plan.perMonth && <span className="text-[15px] font-semibold ml-1" style={{ color: "#4B5FE8" }}>{plan.perMonth}</span>}
                 </div>
-                <div className="space-y-1.5 mt-3">
-                  {plan.features.map((f) => (
-                    <div key={f} className="flex items-center gap-2 text-xs text-gray-600">
-                      <Check size={10} className="text-gray-600 shrink-0" />
-                      {f}
+                <div className="text-[15px] text-gray-800 mt-1">{plan.tagline}</div>
+                <div className="flex flex-wrap gap-x-4 gap-y-1 mt-3">
+                  {plan.limits.map((l) => (
+                    <div key={l} className="flex items-center gap-1.5 text-[14.5px] text-gray-800">
+                      <Check size={13} className="shrink-0" style={{ color: "#4B5FE8" }} />
+                      {l}
                     </div>
                   ))}
                 </div>
@@ -186,16 +152,13 @@ export default function BillingPage() {
 
               {!isCurrent && canUpgrade && (
                 <button
-                  onClick={() => upgrade(plan.id as "monthly" | "6month" | "yearly")}
+                  onClick={() => upgrade(plan.id as PaidPlanId)}
                   disabled={!!loading}
-                  className={`flex items-center gap-1.5 text-xs font-medium px-4 py-2.5 rounded-full transition-colors disabled:opacity-50 shrink-0 mt-1 ${
-                    plan.highlight
-                      ? "bg-indigo-600 text-white hover:bg-indigo-500"
-                      : "border border-[rgba(0,0,0,0.08)] text-gray-900 hover:border-[rgba(148,163,184,0.4)]"
-                  }`}
+                  className="flex items-center gap-1.5 text-[15px] font-semibold px-5 py-2.5 rounded-full transition-opacity disabled:opacity-50 shrink-0 mt-1 hover:opacity-90"
+                  style={featured ? { background: "#4B5FE8", color: "#FFFFFF" } : { border: "1px solid rgba(0,0,0,0.15)", color: "#0f1115" }}
                 >
-                  <Zap size={11} />
-                  {loading === plan.id ? "Loading…" : "Upgrade"}
+                  <Zap size={13} />
+                  {loading === plan.id ? "Loading…" : "Start free trial"}
                 </button>
               )}
             </div>
@@ -203,8 +166,20 @@ export default function BillingPage() {
         })}
       </div>
 
-      <p className="text-xs text-gray-500 mt-6 text-center">
-        7-day free trial on all plans. Cancel anytime.
+      <div className="mt-8 rounded-2xl p-6" style={{ background: "rgba(0,0,0,0.025)", border: "1px solid rgba(0,0,0,0.07)" }}>
+        <div className="text-[16px] font-bold text-gray-900 mb-4">Every plan includes</div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2.5">
+          {PLAN_FEATURES.map((f) => (
+            <div key={f} className="flex items-center gap-2 text-[15px] text-gray-800">
+              <Check size={14} className="shrink-0" style={{ color: "#4B5FE8" }} />
+              {f}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <p className="text-[13.5px] text-gray-700 mt-6 text-center">
+        Paid plans start with a 7-day free trial. Cancel anytime.
       </p>
     </div>
   );

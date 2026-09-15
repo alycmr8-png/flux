@@ -1,3 +1,4 @@
+import { isBareLatex, latexToReadable, mathToPlainText } from "@sano/shared";
 import { google } from "googleapis";
 import { prisma } from "../lib/prisma";
 
@@ -64,21 +65,25 @@ export async function createCalendarEvent(
   return event.data.id ?? null;
 }
 
+// Google Docs can't typeset LaTeX, so maths is written out in readable symbols
+// (∫₀¹ x² dx) rather than exported as raw source.
 function formatCheatSheetText(content: any, title: string): string {
+  const plain = (s: unknown) => mathToPlainText(String(s ?? "")).replace(/\n+/g, " ").trim();
   let text = `${title} — Cheat Sheet\n${"=".repeat(40)}\n\n`;
   for (const section of content.sections ?? []) {
-    text += `${section.heading}\n${"-".repeat(section.heading.length)}\n`;
-    for (const bullet of section.bullets) text += `• ${bullet}\n`;
+    const heading = plain(section.heading);
+    text += `${heading}\n${"-".repeat(heading.length)}\n`;
+    for (const bullet of section.bullets ?? []) text += `• ${plain(bullet)}\n`;
     text += "\n";
   }
   if (content.formulas?.length) {
     text += `Formulas\n--------\n`;
-    for (const f of content.formulas) text += `• ${f}\n`;
+    for (const f of content.formulas) text += `• ${isBareLatex(f) ? latexToReadable(f) : plain(f)}\n`;
     text += "\n";
   }
   if (content.examTips?.length) {
     text += `Exam Tips\n---------\n`;
-    for (const tip of content.examTips) text += `• ${tip}\n`;
+    for (const tip of content.examTips) text += `• ${plain(tip)}\n`;
   }
   return text;
 }

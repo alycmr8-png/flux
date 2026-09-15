@@ -2,8 +2,8 @@
 import { useEffect, useRef, useState } from "react";
 
 // The landing page's recurring character: a student with an afro who reacts
-// to each section in Gen-Z. HeroQuote cycles panic quotes in the hero;
-// DemoQuote pins one reaction beside a demo and pops in on scroll.
+// to a demo in Gen-Z. DemoQuote pins one reaction beside a demo and pops in
+// on scroll.
 
 export function AfroFace({ size = 24 }: { size?: number; style?: React.CSSProperties }) {
   return (
@@ -86,69 +86,3 @@ export function DemoQuote({ quote, side = "right", top = 18 }: { quote: string; 
   );
 }
 
-const QUOTES = [
-  "I'm cooked 😭 my notes are everywhere",
-  "week 9 and I know NOTHING",
-  "the final is in 3 days… it's giving panic",
-  "what did the prof even say in lecture 4 💀",
-];
-
-export function HeroQuote() {
-  const [i, setI] = useState(0);
-  const [show, setShow] = useState(false);
-
-  useEffect(() => {
-    // pop in shortly after load, then rotate quotes
-    const first = setTimeout(() => setShow(true), 700);
-    const cycle = setInterval(() => {
-      setShow(false);
-      setTimeout(() => {
-        setI(x => (x + 1) % QUOTES.length);
-        setShow(true);
-      }, 350);
-    }, 4600);
-    return () => { clearTimeout(first); clearInterval(cycle); };
-  }, []);
-
-  return (
-    <div className="hidden lg:block absolute pointer-events-none" style={{ top: 70, left: -72, zIndex: 5 }}>
-      <div
-        style={{
-          position: "relative",
-          background: "#FFFFFF",
-          border: "1px solid rgba(0,0,0,0.08)",
-          boxShadow: "0 10px 28px rgba(0,0,0,0.1)",
-          borderRadius: 16,
-          borderBottomLeftRadius: 4,
-          padding: "9px 13px",
-          maxWidth: 200,
-          fontSize: 12.5,
-          fontWeight: 600,
-          lineHeight: 1.4,
-          color: "#191918",
-          textAlign: "left",
-          transformOrigin: "bottom left",
-          transform: show ? "scale(1) translateY(0)" : "scale(0.8) translateY(6px)",
-          opacity: show ? 1 : 0,
-          transition: "all 0.34s cubic-bezier(0.34, 1.56, 0.64, 1)",
-        }}
-      >
-        {QUOTES[i]}
-        {/* tail pointing down at the avatar */}
-        <span
-          style={{
-            position: "absolute",
-            left: 12,
-            bottom: -5,
-            width: 10,
-            height: 10,
-            background: "#FFFFFF",
-            borderLeft: "1px solid rgba(0,0,0,0.08)",
-            borderBottom: "1px solid rgba(0,0,0,0.08)",
-            transform: "rotate(-45deg)",
-          }}
-        />
-      </div>
-    </div>
-  );
-}

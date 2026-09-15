@@ -14,7 +14,7 @@ function fmtTime(seconds: number): string {
     : `${m}:${String(s).padStart(2, "0")}`;
 }
 
-const TYPE_LABELS: Record<string, string> = { lecture: "Lecture", video: "Video", file: "File", note: "Your note" };
+const TYPE_LABELS: Record<string, string> = { lecture: "Lecture", video: "Video", file: "File", note: "Your note", photo: "Photo" };
 
 // GET /api/examprep?courseId= — the latest pack for a course
 examPrepRouter.get("/", async (req, res) => {

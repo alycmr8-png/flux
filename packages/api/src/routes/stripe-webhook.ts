@@ -10,10 +10,10 @@ function stripe() {
 }
 
 function planFromPriceId(priceId: string): string {
-  if (priceId === process.env.STRIPE_MONTHLY_PRICE_ID) return "monthly";
-  if (priceId === process.env.STRIPE_6MONTH_PRICE_ID) return "6month";
-  if (priceId === process.env.STRIPE_YEARLY_PRICE_ID) return "yearly";
-  return "monthly";
+  if (priceId === process.env.STRIPE_STUDENT_PRICE_ID) return "student";
+  if (priceId === process.env.STRIPE_SEMESTER_PRICE_ID) return "semester";
+  if (priceId === process.env.STRIPE_ANNUAL_PRICE_ID) return "annual";
+  return "student";
 }
 
 router.post("/", async (req, res) => {
@@ -45,7 +45,7 @@ router.post("/", async (req, res) => {
         if (session.mode !== "subscription") break;
 
         const userId = session.metadata?.userId;
-        const plan = session.metadata?.plan ?? "monthly";
+        const plan = session.metadata?.plan ?? "student";
         if (!userId) break;
 
         const s = stripe();

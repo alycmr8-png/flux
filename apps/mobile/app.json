@@ -41,7 +41,13 @@
       "expo-secure-store",
       "expo-web-browser",
       "expo-status-bar",
-      "expo-audio",
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "Flux records your lectures to generate cheat sheets.",
+          "enableBackgroundRecording": true
+        }
+      ],
       [
         "expo-image-picker",
         {

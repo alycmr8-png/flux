@@ -3,16 +3,14 @@
 import Link from "next/link";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import { Layers, Mic, GraduationCap, PenLine, Calendar } from "lucide-react";
+import { Layers } from "lucide-react";
 
 import { GoogleBanner } from "@/components/GoogleBanner";
 import { CapabilityTicker } from "@/components/CapabilityTicker";
-import { HeroQuote, DemoQuote, AfroFace } from "@/components/HeroQuote";
-import { WaitlistForm } from "@/components/WaitlistForm";
+import { DemoQuote } from "@/components/HeroQuote";
 import { ProductDemo } from "@/components/ProductDemo";
 import { RecordingDemo } from "@/components/RecordingDemo";
 import { CourseMemoryDemo } from "@/components/CourseMemoryDemo";
-import { ExamModeDemo } from "@/components/ExamModeDemo";
 import { Navbar } from "@/components/Navbar";
 import { RotatingPrompts } from "@/components/RotatingPrompts";
 import { Hero3DLogo } from "@/components/Hero3DLogo";
@@ -63,41 +61,15 @@ export default async function LandingPage() {
 
         {/* hero content — open, no box */}
         <div className="flex flex-col items-center text-center w-full" style={{ position: "relative", maxWidth: 900 }}>
-          {/* Notion-style floating icon tiles (desktop only) */}
-          {[
-            { Icon: Mic,           color: "#4B5FE8", tint: "rgba(75,95,232,0.1)",  style: { top: -30,  left: -60,  rotate: "-8deg" } },
-            { Icon: GraduationCap, color: "#DC2626", tint: "rgba(220,38,38,0.08)", style: { top: -45,  right: -55, rotate: "7deg" } },
-            { Icon: AfroFace,      color: "#D97706", tint: "rgba(217,119,6,0.12)", style: { top: 145,  left: -75, rotate: "-5deg" } },
-            { Icon: Layers,        color: "#4B5FE8", tint: "rgba(75,95,232,0.1)",  style: { top: 345,  right: -50, rotate: "-6deg" } },
-            { Icon: PenLine,       color: "#9333EA", tint: "rgba(147,51,234,0.09)",style: { bottom: 15, left: -80, rotate: "9deg" } },
-            { Icon: Calendar,      color: "#0891B2", tint: "rgba(8,145,178,0.09)", style: { bottom: 30, right: -75, rotate: "-9deg" } },
-          ].map(({ Icon, color, tint, style }, i) => (
-            <div
-              key={i}
-              aria-hidden
-              className="hidden lg:flex absolute items-center justify-center w-20 h-20 rounded-3xl pointer-events-none"
-              style={{
-                background: "#FFFFFF",
-                border: "1px solid rgba(0,0,0,0.08)",
-                boxShadow: "0 10px 28px rgba(0,0,0,0.08)",
-                transform: `rotate(${(style as any).rotate})`,
-                ...style,
-              } as React.CSSProperties}
-            >
-              <span className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ background: tint }}>
-                <Icon size={28} style={{ color }} />
-              </span>
-            </div>
-          ))}
-          <HeroQuote />
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-9" style={{ background: "rgba(75,95,232,0.08)", border: "1px solid rgba(75,95,232,0.25)" }}>
             <Layers size={12} style={{ color: "#4B5FE8" }} />
-            <span className="text-xs uppercase tracking-[0.2em] font-semibold" style={{ color: "#4B5FE8" }}>
-              Flux — Built for university students
+            <span className="text-[10px] md:text-xs uppercase tracking-[0.12em] md:tracking-[0.2em] font-semibold" style={{ color: "#4B5FE8" }}>
+              Built for university students
             </span>
           </div>
-          <h1 className="text-5xl md:text-7xl mb-6 leading-[1.05]" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, color: "#0f1115", letterSpacing: "-0.03em" }}>
-            Notes that write<br />
+          <h1 className="mb-6 leading-[1.05]" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: "clamp(30px, 6.4vw, 64px)", fontWeight: 800, color: "#0f1115", letterSpacing: "-0.03em" }}>
+            Record the lecture.{" "}
+            <br />
             <span
               style={{
                 backgroundImage: "linear-gradient(110deg, #4B5FE8 0%, #6E7FF3 55%, #9F7BFA 100%)",
@@ -106,11 +78,13 @@ export default async function LandingPage() {
                 color: "transparent",
               }}
             >
-              themselves.
+              Get the flashcards, quiz{" "}
+              <br className="hidden md:inline" />
+              and summary.
             </span>
           </h1>
           <p className="text-base md:text-lg mb-7 leading-relaxed max-w-xl" style={{ color: "rgba(15,17,21,0.6)" }}>
-            Record your lecture — Flux transcribes it and turns it into clean, organized notes in minutes. No more scrambling to write everything down.
+            Flux turns your recordings, PDFs, slides and YouTube links into study material — then answers anything about your course, cited to the lecture and the minute.
           </p>
           <div className="mb-9 px-2 w-full flex justify-center">
             <RotatingPrompts />
@@ -143,7 +117,6 @@ export default async function LandingPage() {
       <div className="relative py-14 md:py-20">
         <ScrollReveal className="relative z-10 flex justify-center px-4 md:px-12 pb-12" delay={100}>
           <div className="relative">
-            <DemoQuote quote="wait… it wrote all my notes for me?? 😭" side="right" top={30} />
             <ProductDemo />
           </div>
         </ScrollReveal>
@@ -155,19 +128,19 @@ export default async function LandingPage() {
           <div className="text-center mb-12">
             <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: "#6E7FF3", marginBottom: 14 }}>How it works</div>
             <h2 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: "clamp(28px, 4.5vw, 44px)", color: "#0f1115", letterSpacing: "-0.03em", lineHeight: 1.1 }}>
-              Stop typing.<br />Start listening.
+              One recording.<br />Everything you need.
             </h2>
             <p className="text-base md:text-lg mt-5 max-w-2xl mx-auto leading-relaxed" style={{ color: "rgba(0,0,0,0.55)" }}>
-              Imagine you&apos;re taking Calculus. Instead of racing to write everything down, you just
-              hit record. Flux transcribes the lecture, pulls out the key points, and turns it into
-              clean, organized notes — automatically, while you actually pay attention to class.
+              Imagine you&apos;re taking Calculus. You hit record and the words appear on screen as they&apos;re
+              said. The professor fills the board, so you photograph it — Flux reads the formulas straight
+              off the photo. When the lecture ends, one tap turns all of it into study material.
             </p>
           </div>
           <div className="grid md:grid-cols-3 gap-5">
             {[
-              { n: "01", title: "Record the lecture", text: "Just hit record at the start of class. Flux listens and transcribes every word, live — no typing required." },
-              { n: "02", title: "Notes done in minutes", text: "Flux turns the transcript into organized, ready-to-study notes — key points, structure, and vocabulary already sorted for you." },
-              { n: "03", title: "Ask anything", text: "Forgot to write something down? Ask your course and get the answer straight from the lecture — cited to the exact moment." },
+              { n: "01", title: "Record, and read along", text: "Words appear on screen as they're spoken. Photograph the whiteboard and Flux reads it into the same transcript — including the formulas." },
+              { n: "02", title: "Six things from one tap", text: "Summary, full transcript, key points, flashcards, a practice quiz, and a chat that knows this lecture. Generated once, yours forever." },
+              { n: "03", title: "Ask your whole course", text: "Every lecture and note becomes one memory per class. Ask anything and the answer cites the lecture and the minute it was said." },
             ].map(step => (
               <div key={step.n} className="rounded-2xl p-7" style={{ background: "rgba(0,0,0,0.03)", border: "1px solid rgba(0,0,0,0.08)" }}>
                 <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 13, color: "#6E7FF3", letterSpacing: "0.1em", marginBottom: 14 }}>{step.n}</div>
@@ -184,15 +157,15 @@ export default async function LandingPage() {
         <div className="text-center max-w-2xl">
           <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: "#6E7FF3", marginBottom: 14 }}>Step 1 — Capture</div>
           <h2 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: "clamp(30px, 5vw, 52px)", color: "#0f1115", letterSpacing: "-0.03em", lineHeight: 1.1, marginBottom: 16 }}>
-            One tap in class.<br />Notes appear in minutes.
+            Watch it write itself.<br />While the lecture happens.
           </h2>
           <p style={{ fontSize: 18, color: "rgba(0,0,0,0.5)", lineHeight: 1.65 }}>
-            Record the lecture — Flux transcribes every word and turns it into clean, organized notes
-            automatically. No typing, no missed details, no falling behind.
+            The transcript builds live as your professor talks, so you can follow along instead of
+            scribbling. Photograph the board and those formulas join the same notes — written properly
+            as ∫₀¹ x² dx, not &ldquo;the integral from zero to one of x squared&rdquo;.
           </p>
         </div>
         <div className="relative">
-          <DemoQuote quote="one tap and my notes are already done?? bet 🙏" side="left" top={24} />
           <RecordingDemo />
         </div>
       </ScrollReveal>
@@ -203,14 +176,15 @@ export default async function LandingPage() {
         <div className="text-center max-w-2xl">
           <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: "#6E7FF3", marginBottom: 14 }}>Step 2 — Ask</div>
           <h2 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: "clamp(30px, 5vw, 52px)", color: "#0f1115", letterSpacing: "-0.03em", lineHeight: 1.1, marginBottom: 16 }}>
-            Ask your notes.<br />
+            Six ways to study it.<br />
             <span style={{ backgroundImage: "linear-gradient(110deg, #4B5FE8 0%, #6E7FF3 55%, #9F7BFA 100%)", WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent" }}>
-              Get receipts.
+              From one recording.
             </span>
           </h2>
           <p style={{ fontSize: 18, color: "rgba(0,0,0,0.5)", lineHeight: 1.65 }}>
-            Every answer comes from your own lecture notes — cited to the exact moment,
-            one click from replaying what your professor actually said.
+            Summary, transcript, key points, flashcards, a practice quiz, and a chat that answers from
+            this lecture alone. Ask across the whole class and every answer is cited to the lecture and
+            the minute — one click from replaying what was actually said.
           </p>
         </div>
         <div className="relative">
@@ -220,47 +194,13 @@ export default async function LandingPage() {
       </ScrollReveal>
       </div>
 
-      {/* Exam Mode — the payoff before the exam */}
-      <ScrollReveal className="flex flex-col items-center px-4 md:px-12 py-16 md:py-24 gap-10">
-        <div className="text-center max-w-2xl">
-          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: "#6E7FF3", marginBottom: 14 }}>Step 3 — Exam time</div>
-          <h2 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: "clamp(30px, 5vw, 52px)", color: "#0f1115", letterSpacing: "-0.03em", lineHeight: 1.1, marginBottom: 16 }}>
-            One button before the exam.<br />
-            <span style={{ backgroundImage: "linear-gradient(110deg, #4B5FE8 0%, #6E7FF3 55%, #9F7BFA 100%)", WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent" }}>
-              Flux predicts it.
-            </span>
-          </h2>
-          <p style={{ fontSize: 18, color: "rgba(0,0,0,0.5)", lineHeight: 1.65 }}>
-            Exam Mode reads every note Flux has taken for you and builds your prep: the topics your
-            professor leaned on, practice questions with receipts, and a day-by-day plan to exam day.
-          </p>
-        </div>
-        <div className="relative">
-          <DemoQuote quote="not the AI predicting my final 💀🙏" side="left" top={20} />
-          <ExamModeDemo />
-        </div>
-      </ScrollReveal>
-
-      {/* Waitlist — catch interest right after the strongest demo */}
-      <ScrollReveal className="flex flex-col items-center px-4 md:px-12 py-14 md:py-20 gap-6">
-        <div className="text-center max-w-xl">
-          <h2 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: "clamp(26px, 4vw, 40px)", color: "#0f1115", letterSpacing: "-0.03em", lineHeight: 1.15, marginBottom: 12 }}>
-            Want faster notes for your classes?
-          </h2>
-          <p style={{ fontSize: 16, color: "rgba(0,0,0,0.5)", lineHeight: 1.6 }}>
-            We're inviting students in small waves. Leave your email and you'll be in the next one.
-          </p>
-        </div>
-        <WaitlistForm source="landing-exammode" />
-      </ScrollReveal>
-
       {/* Tagline */}
       <ScrollReveal className="text-center py-10 px-6">
         <p className="text-sm uppercase tracking-[0.22em] font-semibold mb-3" style={{ color: "rgba(0,0,0,0.8)" }}>
           Built for how you actually take notes
         </p>
         <p className="text-2xl md:text-3xl" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, color: "#0f1115", letterSpacing: "-0.02em" }}>
-          Every lecture. Every class. Notes done for you.
+          Every lecture. Every formula. Every class.
         </p>
       </ScrollReveal>
 
@@ -284,10 +224,10 @@ export default async function LandingPage() {
       {/* CTA footer */}
       <ScrollReveal className="py-24 text-center px-6">
         <h2 className="text-4xl md:text-5xl mb-4" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, color: "#0f1115", letterSpacing: "-0.03em" }}>
-          Every lecture. <span style={{ color: "#6E7FF3" }}>Turned into notes.</span>
+          Walk out of class <span style={{ color: "#6E7FF3" }}>already revised.</span>
         </h2>
         <p className="text-sm mb-8 max-w-sm mx-auto" style={{ color: "rgba(0,0,0,0.55)", lineHeight: 1.7 }}>
-          Stop scribbling and start listening — Flux turns every lecture into clean notes automatically, all semester long.
+          Record it once. Keep the transcript, the summary, the flashcards and the quiz — and ask your course anything, all semester long.
         </p>
         <Link href="/sign-up" className="font-semibold px-10 py-3.5 rounded-full text-sm transition-all hover:opacity-90" style={{ background: "#4B5FE8", color: "white" }}>
           Get started free
@@ -298,34 +238,34 @@ export default async function LandingPage() {
       <footer style={{ borderTop: "1px solid rgba(0,0,0,0.08)", position: "relative", zIndex: 1 }}>
         <div className="max-w-6xl mx-auto px-6 md:px-16 py-12 flex flex-col md:flex-row items-center md:items-start justify-between gap-8">
           <div className="flex flex-col items-center md:items-start gap-3">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ background: "#4B5FE8" }}>
-                <Layers size={13} style={{ color: "#0f1115" }} />
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0" style={{ background: "#4B5FE8" }}>
+                <Layers size={21} style={{ color: "#FFFFFF" }} />
               </div>
-              <span style={{ fontSize: 17, fontWeight: 800, color: "#0f1115", letterSpacing: "-0.4px" }}>
+              <span style={{ fontSize: 30, fontWeight: 800, color: "#0f1115", letterSpacing: "-0.6px" }}>
                 Fl<span style={{ color: "#6E7FF3" }}>u</span>x
               </span>
             </div>
-            <p className="text-xs max-w-[240px] text-center md:text-left" style={{ color: "rgba(0,0,0,0.35)", lineHeight: 1.6 }}>
-              Notes that write themselves, from every lecture.
+            <p className="text-[19px] max-w-[360px] text-center md:text-left" style={{ color: "rgba(0,0,0,0.65)", lineHeight: 1.5, fontWeight: 500 }}>
+              Your lecture, already written down.
             </p>
           </div>
           <div className="flex gap-12">
-            <div className="flex flex-col gap-2.5">
-              <span className="text-[10px] font-bold uppercase tracking-[0.15em]" style={{ color: "rgba(0,0,0,0.3)" }}>Product</span>
-              <Link href="#how-it-works" className="text-xs hover:text-[#0f1115] transition-colors" style={{ color: "rgba(0,0,0,0.5)" }}>How it works</Link>
-              <Link href="#pricing" className="text-xs hover:text-[#0f1115] transition-colors" style={{ color: "rgba(0,0,0,0.5)" }}>Pricing</Link>
-              <Link href="#faq" className="text-xs hover:text-[#0f1115] transition-colors" style={{ color: "rgba(0,0,0,0.5)" }}>FAQ</Link>
+            <div className="flex flex-col gap-3.5">
+              <span className="text-[13px] font-bold uppercase tracking-[0.15em]" style={{ color: "rgba(0,0,0,0.5)" }}>Product</span>
+              <Link href="#how-it-works" className="text-[17px] hover:text-[#0f1115] transition-colors" style={{ color: "rgba(0,0,0,0.7)" }}>How it works</Link>
+              <Link href="#pricing" className="text-[17px] hover:text-[#0f1115] transition-colors" style={{ color: "rgba(0,0,0,0.7)" }}>Pricing</Link>
+              <Link href="#faq" className="text-[17px] hover:text-[#0f1115] transition-colors" style={{ color: "rgba(0,0,0,0.7)" }}>FAQ</Link>
             </div>
-            <div className="flex flex-col gap-2.5">
-              <span className="text-[10px] font-bold uppercase tracking-[0.15em]" style={{ color: "rgba(0,0,0,0.3)" }}>Account</span>
-              <Link href="/sign-up" className="text-xs hover:text-[#0f1115] transition-colors" style={{ color: "rgba(0,0,0,0.5)" }}>Get started</Link>
-              <Link href="/sign-in" className="text-xs hover:text-[#0f1115] transition-colors" style={{ color: "rgba(0,0,0,0.5)" }}>Sign in</Link>
+            <div className="flex flex-col gap-3.5">
+              <span className="text-[13px] font-bold uppercase tracking-[0.15em]" style={{ color: "rgba(0,0,0,0.5)" }}>Account</span>
+              <Link href="/sign-up" className="text-[17px] hover:text-[#0f1115] transition-colors" style={{ color: "rgba(0,0,0,0.7)" }}>Get started</Link>
+              <Link href="/sign-in" className="text-[17px] hover:text-[#0f1115] transition-colors" style={{ color: "rgba(0,0,0,0.7)" }}>Sign in</Link>
             </div>
           </div>
         </div>
         <div className="text-center pb-8">
-          <span className="text-[11px]" style={{ color: "rgba(0,0,0,0.25)" }}>© {new Date().getFullYear()} Flux. All rights reserved.</span>
+          <span className="text-[14px]" style={{ color: "rgba(0,0,0,0.45)" }}>© {new Date().getFullYear()} Flux. All rights reserved.</span>
         </div>
       </footer>
 

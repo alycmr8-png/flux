@@ -58,10 +58,10 @@ function RetentionBar({ name, code, avg, tint }: { name: string; code: string; a
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2.5 min-w-0">
           <ClassBadge name={name} color={tint} size={28} />
-          <span className="truncate" style={{ fontSize: 15, fontWeight: 600, color: INK }}>{name}</span>
-          <span className="shrink-0" style={{ fontSize: 12.5, fontWeight: 600, color: "rgba(15,17,21,0.6)" }}>{code}</span>
+          <span className="truncate" style={{ fontSize: 16, fontWeight: 600, color: INK }}>{name}</span>
+          <span className="shrink-0" style={{ fontSize: 14, fontWeight: 600, color: "rgba(15,17,21, 0.75)" }}>{code}</span>
         </div>
-        <span className="tabular-nums shrink-0" style={{ fontSize: 15, fontWeight: 800, color }}>{avg}%</span>
+        <span className="tabular-nums shrink-0" style={{ fontSize: 16, fontWeight: 800, color }}>{avg}%</span>
       </div>
       <div className="h-2.5 rounded-full overflow-hidden" style={{ background: "rgba(0,0,0,0.06)" }}>
         <div className="h-2.5 rounded-full transition-all duration-1000 ease-out" style={{ width: `${avg}%`, background: color }} />
@@ -88,18 +88,18 @@ function LectureRow({ lecture, onRename }: { lecture: any; onRename: (id: string
     <div className="flex items-center justify-between py-3 border-b last:border-0 group" style={{ borderColor: "rgba(0,0,0,0.05)" }}>
       <div className="flex items-center gap-3 flex-1 min-w-0 mr-3">
         <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{ background: "rgba(0,0,0,0.04)" }}>
-          <Mic2 size={13} style={{ color: "rgba(15,17,21,0.6)" }} />
+          <Mic2 size={13} style={{ color: "rgba(15,17,21, 0.75)" }} />
         </div>
         <div className="flex-1 min-w-0">
           {editing ? (
             <input autoFocus value={val} onChange={e => setVal(e.target.value)}
               onKeyDown={e => { if (e.key === "Enter") save(); if (e.key === "Escape") setEditing(false); }}
               className="w-full rounded-xl px-3 py-1.5 outline-none border"
-              style={{ background: "#FFFFFF", borderColor: HAIRLINE, color: INK, fontSize: 14.5 }} />
+              style={{ background: "#FFFFFF", borderColor: HAIRLINE, color: INK, fontSize: 16 }} />
           ) : (
-            <div className="truncate" style={{ fontSize: 14.5, fontWeight: 600, color: INK }}>{lecture.title}</div>
+            <div className="truncate" style={{ fontSize: 16, fontWeight: 600, color: INK }}>{lecture.title}</div>
           )}
-          <div style={{ fontSize: 13, color: "rgba(15,17,21,0.6)", marginTop: 2 }}>
+          <div style={{ fontSize: 14.5, color: "rgba(15,17,21, 0.75)", marginTop: 2 }}>
             {format(new Date(lecture.recordedAt), "MMM d, yyyy")}
           </div>
         </div>
@@ -108,10 +108,10 @@ function LectureRow({ lecture, onRename }: { lecture: any; onRename: (id: string
         {editing ? (
           <>
             <button onClick={save} disabled={saving} className="p-1.5" style={{ color: "#16A34A" }}><Check size={15} /></button>
-            <button onClick={() => { setEditing(false); setVal(lecture.title); }} className="p-1.5" style={{ color: "rgba(15,17,21,0.6)" }}><X size={15} /></button>
+            <button onClick={() => { setEditing(false); setVal(lecture.title); }} className="p-1.5" style={{ color: "rgba(15,17,21, 0.75)" }}><X size={15} /></button>
           </>
         ) : (
-          <button onClick={() => setEditing(true)} className="p-1.5 opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: "rgba(15,17,21,0.6)" }}>
+          <button onClick={() => setEditing(true)} className="p-1.5 opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: "rgba(15,17,21, 0.75)" }}>
             <Pencil size={14} />
           </button>
         )}
@@ -132,22 +132,22 @@ function ClassSection({ cls, tint, onRename }: { cls: any; tint: string; onRenam
     >
       <button onClick={() => setOpen(!open)} className="w-full flex items-center justify-between gap-3 px-5 py-4 transition-colors hover:bg-[rgba(0,0,0,0.02)]">
         <div className="flex items-center gap-3 min-w-0">
-          {open ? <ChevronDown size={16} style={{ color: "rgba(15,17,21,0.6)" }} /> : <ChevronRight size={16} style={{ color: "rgba(15,17,21,0.6)" }} />}
+          {open ? <ChevronDown size={16} style={{ color: "rgba(15,17,21, 0.75)" }} /> : <ChevronRight size={16} style={{ color: "rgba(15,17,21, 0.75)" }} />}
           <ClassBadge name={cls.name} color={tint} size={32} />
-          <span className="truncate" style={{ fontSize: 15.5, fontWeight: 600, color: INK }}>{cls.name}</span>
+          <span className="truncate" style={{ fontSize: 16.5, fontWeight: 600, color: INK }}>{cls.name}</span>
           <span
             className="shrink-0 rounded-full px-2.5 py-1"
-            style={{ fontSize: 11.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", background: "rgba(0,0,0,0.04)", color: "rgba(15,17,21,0.7)" }}
+            style={{ fontSize: 13.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", background: "rgba(0,0,0,0.04)", color: "rgba(15,17,21, 0.8)" }}
           >
             {count} {count === 1 ? "lecture" : "lectures"}
           </span>
         </div>
-        <span className="shrink-0 font-mono" style={{ fontSize: 13, color: "rgba(15,17,21,0.6)" }}>{cls.code}</span>
+        <span className="shrink-0 font-mono" style={{ fontSize: 14.5, color: "rgba(15,17,21, 0.75)" }}>{cls.code}</span>
       </button>
       {open && (
         <div className="px-5 pb-3 border-t" style={{ borderColor: HAIRLINE }}>
           {count === 0
-            ? <p className="py-4" style={{ fontSize: 14, color: "rgba(15,17,21,0.6)" }}>No recordings yet.</p>
+            ? <p className="py-4" style={{ fontSize: 15.5, color: "rgba(15,17,21, 0.75)" }}>No recordings yet.</p>
             : cls.lectures.map((l: any) => <LectureRow key={l.id} lecture={l} onRename={onRename} />)
           }
         </div>
@@ -189,7 +189,7 @@ export default function ProgressPage() {
     <div style={{ color: INK, maxWidth: 860 }}>
       {/* Header */}
       <div className="mb-8">
-        <div style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", color: BRAND, marginBottom: 8 }}>Analytics</div>
+        <div style={{ fontSize: 13.5, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", color: BRAND, marginBottom: 8 }}>Analytics</div>
         <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 34, letterSpacing: "-0.5px", color: INK }}>Progress</h1>
       </div>
 
@@ -203,7 +203,7 @@ export default function ProgressPage() {
           </div>
           <div>
             <div style={{ fontSize: 36, fontWeight: 800, color: INK, lineHeight: 1 }}>{isLoading ? "—" : lectures}</div>
-            <div style={{ fontSize: 13.5, color: "rgba(15,17,21,0.65)", marginTop: 5 }}>Lectures recorded</div>
+            <div style={{ fontSize: 15, color: "rgba(15,17,21, 0.78)", marginTop: 5 }}>Lectures recorded</div>
           </div>
         </div>
 
@@ -215,13 +215,13 @@ export default function ProgressPage() {
             <RingChart value={avgScore} />
           )}
           <div>
-            <div style={{ fontSize: 15, fontWeight: 700, color: INK }}>Avg Quiz Score</div>
-            <div style={{ fontSize: 13.5, color: "rgba(15,17,21,0.65)", marginTop: 4 }}>
+            <div style={{ fontSize: 16, fontWeight: 700, color: INK }}>Avg Quiz Score</div>
+            <div style={{ fontSize: 15, color: "rgba(15,17,21, 0.78)", marginTop: 4 }}>
               {avgScore >= 70 ? "Great work!" : avgScore >= 50 ? "Keep studying" : "Needs attention"}
             </div>
             <div className="flex items-center gap-1.5 mt-2">
               <TrendingUp size={13} style={{ color: avgScore >= 70 ? "#16A34A" : "#EA580C" }} />
-              <span style={{ fontSize: 12.5, fontWeight: 600, color: avgScore >= 70 ? "#16A34A" : "#EA580C" }}>
+              <span style={{ fontSize: 14, fontWeight: 600, color: avgScore >= 70 ? "#16A34A" : "#EA580C" }}>
                 {avgScore >= 70 ? "Above average" : "Below average"}
               </span>
             </div>
@@ -235,8 +235,8 @@ export default function ProgressPage() {
           </div>
           <div>
             <div style={{ fontSize: 36, fontWeight: 800, color: INK, lineHeight: 1 }}>{isLoading ? "—" : streak}</div>
-            <div style={{ fontSize: 13.5, color: "rgba(15,17,21,0.65)", marginTop: 5 }}>Day streak</div>
-            {streak >= 3 && <div style={{ fontSize: 12.5, fontWeight: 600, color: "#EA580C", marginTop: 5 }}>🔥 On fire!</div>}
+            <div style={{ fontSize: 15, color: "rgba(15,17,21, 0.78)", marginTop: 5 }}>Day streak</div>
+            {streak >= 3 && <div style={{ fontSize: 14, fontWeight: 600, color: "#EA580C", marginTop: 5 }}>🔥 On fire!</div>}
           </div>
         </div>
       </div>
@@ -246,7 +246,7 @@ export default function ProgressPage() {
         <div className="rounded-[20px] p-6 mb-6" style={{ background: "#FFFFFF", border: `1px solid ${HAIRLINE}` }}>
           <div className="flex items-center gap-2 mb-6">
             <BookOpen size={15} style={{ color: BRAND }} />
-            <p style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(15,17,21,0.65)" }}>
+            <p style={{ fontSize: 13.5, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(15,17,21, 0.78)" }}>
               Quiz retention by course
             </p>
           </div>
@@ -260,7 +260,7 @@ export default function ProgressPage() {
             {[{ label: "Strong (≥70%)", color: "#16A34A" }, { label: "Average (50–70%)", color: "#EA580C" }, { label: "Needs work (<50%)", color: "#DC2626" }].map(l => (
               <div key={l.label} className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full" style={{ background: l.color }} />
-                <span style={{ fontSize: 12.5, color: "rgba(15,17,21,0.65)" }}>{l.label}</span>
+                <span style={{ fontSize: 14, color: "rgba(15,17,21, 0.78)" }}>{l.label}</span>
               </div>
             ))}
           </div>
@@ -270,7 +270,7 @@ export default function ProgressPage() {
       {/* ── Recordings by class ── */}
       <div className="mb-3 flex items-center gap-2">
         <Mic2 size={15} style={{ color: BRAND }} />
-        <p style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(15,17,21,0.65)" }}>
+        <p style={{ fontSize: 13.5, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(15,17,21, 0.78)" }}>
           Recordings by class
         </p>
       </div>
@@ -285,8 +285,8 @@ export default function ProgressPage() {
 
       {!isLoading && !p?.lecturesByClass?.length && (
         <div className="rounded-[20px] p-10 text-center" style={{ background: "#FFFFFF", border: `1px dashed ${HAIRLINE}` }}>
-          <Mic2 size={30} className="mx-auto mb-3" style={{ color: "rgba(15,17,21,0.2)" }} />
-          <p style={{ fontSize: 15, color: "rgba(15,17,21,0.65)" }}>No classes yet. Create one in the Workspace.</p>
+          <Mic2 size={30} className="mx-auto mb-3" style={{ color: "rgba(15,17,21, 0.55)" }} />
+          <p style={{ fontSize: 16, color: "rgba(15,17,21, 0.78)" }}>No classes yet. Create one in the Workspace.</p>
         </div>
       )}
 

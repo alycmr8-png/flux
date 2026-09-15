@@ -8,6 +8,21 @@ export function audioSig(lectureId: string, userId: string, exp: number): string
   return crypto.createHmac("sha256", SECRET).update(`${lectureId}|${userId}|${exp}`).digest("hex");
 }
 
+// Class photos (<img src>) use the same scheme, under their own prefix so a
+// signature for one kind of media can never unlock the other.
+export function photoSig(photoId: string, userId: string, exp: number): string {
+  return crypto.createHmac("sha256", SECRET).update(`photo|${photoId}|${userId}|${exp}`).digest("hex");
+}
+
+export function verifyPhotoSig(photoId: string, userId: string, exp: number, sig: string): boolean {
+  if (!Number.isFinite(exp) || exp < Date.now()) return false;
+  const expected = photoSig(photoId, userId, exp);
+  return (
+    sig.length === expected.length &&
+    crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected))
+  );
+}
+
 export function verifyAudioSig(lectureId: string, userId: string, exp: number, sig: string): boolean {
   if (!Number.isFinite(exp) || exp < Date.now()) return false;
   const expected = audioSig(lectureId, userId, exp);

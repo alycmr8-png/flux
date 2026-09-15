@@ -22,12 +22,13 @@ async function getOrCreateCustomer(s: any, user: any): Promise<string> {
 
 router.post("/checkout", async (req, res) => {
   const user = (req as any).user;
-  const { plan } = req.body as { plan: "monthly" | "6month" | "yearly" };
+  const { plan } = req.body as { plan: "student" | "semester" | "annual" };
 
+  // $9.99 / month · $34.99 every 4 months · $69.99 / year — created in Stripe.
   const priceIds: Record<string, string> = {
-    monthly: process.env.STRIPE_MONTHLY_PRICE_ID ?? "",
-    "6month": process.env.STRIPE_6MONTH_PRICE_ID ?? "",
-    yearly: process.env.STRIPE_YEARLY_PRICE_ID ?? "",
+    student: process.env.STRIPE_STUDENT_PRICE_ID ?? "",
+    semester: process.env.STRIPE_SEMESTER_PRICE_ID ?? "",
+    annual: process.env.STRIPE_ANNUAL_PRICE_ID ?? "",
   };
 
   const priceId = priceIds[plan];

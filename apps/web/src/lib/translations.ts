@@ -60,6 +60,7 @@ const translations = {
         quizzes: "Quizzes",
         note: "Take Note",
         ask: "Ask",
+        photo: "Add Photo",
       },
       exam: {
         tab: "Exam Mode",
@@ -223,6 +224,7 @@ const translations = {
         quizzes: "Quiz",
         note: "Prendre des notes",
         ask: "Demander",
+        photo: "Ajouter une photo",
       },
       exam: {
         tab: "Mode Examen",

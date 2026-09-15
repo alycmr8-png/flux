@@ -1,12 +1,12 @@
 import { Router } from "express";
-import { quotaMiddleware } from "../services/usage";
+import { quotaMiddleware, planFor, MAX_RECORDING_MINUTES } from "../services/usage";
 import multer from "multer";
 import { z } from "zod";
 import path from "path";
 import os from "os";
 import fs from "fs";
 import { prisma } from "../lib/prisma";
-import { processLecture } from "../services/lectureProcessor";
+import { processLecture, MAX_LECTURE_PHOTOS } from "../services/lectureProcessor";
 import { audioSig } from "../lib/audioSign";
 
 export const lectureRouter = Router();
@@ -30,7 +30,8 @@ const storage = multer.diskStorage({
     cb(null, `${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`);
   },
 });
-const upload = multer({ storage });
+// A 3-hour live transcript plus its timestamps can approach multer's 1 MB field default.
+const upload = multer({ storage, limits: { fieldSize: 8 * 1024 * 1024 } });
 
 lectureRouter.get("/", async (req, res) => {
   const user = (req as any).user;
@@ -48,6 +49,51 @@ lectureRouter.get("/", async (req, res) => {
   res.json({ data: lectures });
 });
 
+// POST /api/lectures/:id/photos — attach photos to a finished recording and reprocess it
+// More files than the cap makes multer throw; answer with the limit instead of a 500.
+const acceptLecturePhotos = (req: any, res: any, next: any) =>
+  upload.array("images", MAX_LECTURE_PHOTOS)(req, res, (err: unknown) => {
+    if (err instanceof multer.MulterError) return res.status(400).json({ error: `A recording can have up to ${MAX_LECTURE_PHOTOS} photos.` });
+    next(err);
+  });
+
+lectureRouter.post("/:id/photos", acceptLecturePhotos, async (req, res) => {
+  const user = (req as any).user;
+  const files = (req.files as Express.Multer.File[] | undefined) ?? [];
+  const discard = () => files.forEach(f => fs.promises.unlink(f.path).catch(() => {}));
+
+  const lecture = await prisma.lecture.findFirst({ where: { id: String(req.params.id), userId: user.id } });
+  if (!lecture) { discard(); return res.status(404).json({ error: "Recording not found" }); }
+  if (!files.length) return res.status(400).json({ error: "Add at least one photo." });
+  if (!["ready", "error"].includes(lecture.status)) {
+    discard();
+    return res.status(409).json({ error: "This recording is still being processed — try again when it's ready." });
+  }
+  if (files.some(f => !["image/jpeg", "image/png", "image/webp", "image/gif"].includes(f.mimetype))) {
+    discard();
+    return res.status(415).json({ error: "Photos must be JPEG, PNG, WebP or GIF." });
+  }
+  const existing = (lecture.imageUrls ?? []).filter(p => fs.existsSync(p));
+  if (existing.length + files.length > MAX_LECTURE_PHOTOS) {
+    discard();
+    const left = Math.max(0, MAX_LECTURE_PHOTOS - existing.length);
+    return res.status(400).json({
+      error: left ? `This recording can take ${left} more photo${left === 1 ? "" : "s"}.` : `This recording already has ${MAX_LECTURE_PHOTOS} photos.`,
+      remaining: left,
+    });
+  }
+
+  // Photos attached to a recording are part of that lecture — the recording was
+  // already counted when it was uploaded, so this is not charged again. The
+  // five-photo cap bounds how many times one recording can be rebuilt.
+  const updated = await prisma.lecture.update({
+    where: { id: lecture.id },
+    data: { imageUrls: [...existing, ...files.map(f => f.path)], status: "processing" },
+  });
+  processLecture(lecture.id, user.id, { reprocess: true }).catch(console.error);
+  res.status(202).json({ data: { id: updated.id, status: updated.status, photoCount: updated.imageUrls.length } });
+});
+
 lectureRouter.get("/:id", async (req, res) => {
   const user = (req as any).user;
   const lecture = await prisma.lecture.findFirst({
@@ -61,17 +107,39 @@ lectureRouter.get("/:id", async (req, res) => {
 lectureRouter.post(
   "/",
   quotaMiddleware("lecture"),
-  upload.fields([{ name: "audio", maxCount: 1 }, { name: "slides", maxCount: 1 }, { name: "images", maxCount: 12 }]),
+  upload.fields([{ name: "audio", maxCount: 1 }, { name: "slides", maxCount: 1 }, { name: "images", maxCount: MAX_LECTURE_PHOTOS }]),
   async (req, res) => {
     const user = (req as any).user;
-    const { courseId, title } = z
-      .object({ courseId: z.string(), title: z.string().optional() })
+    const { courseId, title, durationSeconds, liveTranscript, liveSegments } = z
+      .object({
+        courseId: z.string(),
+        title: z.string().optional(),
+        durationSeconds: z.coerce.number().nonnegative().optional(),
+        liveTranscript: z.string().optional(),
+        liveSegments: z.string().optional(),
+      })
       .parse(req.body);
 
     const files = req.files as Record<string, Express.Multer.File[]>;
     const audioFile = files?.audio?.[0];
     const slidesFile = files?.slides?.[0];
     const imageFiles = files?.images ?? [];
+
+    // The app stops recording at the plan's limit; this backs that up for
+    // anything that gets past it. Size is checked too, since duration is
+    // client-reported — 12 kB/s leaves plenty of room above the 32 kbps we record at.
+    const capMinutes = MAX_RECORDING_MINUTES[await planFor(user.id)];
+    const capSeconds = capMinutes * 60;
+    const tooLong = (durationSeconds ?? 0) > capSeconds + 120;
+    const tooBig = (audioFile?.size ?? 0) > capSeconds * 12_000;
+    if (tooLong || tooBig) {
+      for (const f of [audioFile, slidesFile, ...imageFiles]) if (f?.path) fs.promises.unlink(f.path).catch(() => {});
+      const hours = capMinutes >= 60 ? `${capMinutes / 60} hour${capMinutes === 60 ? "" : "s"}` : `${capMinutes} minutes`;
+      return res.status(413).json({ error: `Recordings on your plan can be up to ${hours} long.` });
+    }
+
+    let segments: any = undefined;
+    try { segments = liveSegments ? JSON.parse(liveSegments) : undefined; } catch { segments = undefined; }
 
     const lecture = await prisma.lecture.create({
       data: {
@@ -82,6 +150,10 @@ lectureRouter.post(
         audioUrl: audioFile?.path,
         slidesUrl: slidesFile?.path,
         imageUrls: imageFiles.map(f => f.path),
+        durationSeconds: Math.round(durationSeconds ?? 0),
+        // Kept so processing can reuse it instead of transcribing the audio a second time.
+        transcript: liveTranscript?.trim() || null,
+        segments: Array.isArray(segments) ? segments : undefined,
       },
     });
 

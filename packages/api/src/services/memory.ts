@@ -15,11 +15,17 @@ export interface ChunkMeta {
 export interface SourceInput {
   userId: string;
   courseId: string;
-  sourceType: "lecture" | "video" | "file" | "note";
+  sourceType: "lecture" | "video" | "file" | "note" | "photo";
   sourceId: string;
   sourceTitle: string;
   text?: string;
   segments?: { start: number; end: number; text: string }[];
+  /**
+   * Content that belongs to the same source but has no timestamps — e.g. photos of
+   * the board attached to a recording. Only needed alongside `segments`; without
+   * segments, `text` already carries everything.
+   */
+  extraText?: string;
 }
 
 export interface RetrievedChunk {
@@ -134,7 +140,10 @@ function cosineSim(a: number[], b: number[]): number {
 export async function indexSource(input: SourceInput): Promise<number> {
   const pieces: { content: string; meta: ChunkMeta | null }[] =
     input.segments?.length
-      ? chunkSegments(input.segments)
+      ? [
+          ...chunkSegments(input.segments),
+          ...chunkText(input.extraText ?? "").map(c => ({ content: c, meta: null })),
+        ]
       : chunkText(input.text ?? "").map(c => ({ content: c, meta: null }));
 
   await prisma.memoryChunk.deleteMany({ where: { sourceId: input.sourceId, userId: input.userId } });

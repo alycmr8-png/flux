@@ -57,7 +57,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 22, color: INK, letterSpacing: "-0.5px", lineHeight: 1.1 }}>
                 Flux
               </div>
-              <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(15,17,21,0.55)" }}>
+              <div style={{ fontSize: 12.5, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(15,17,21, 0.73)" }}>
                 Study Assistant
               </div>
             </div>
@@ -66,7 +66,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
         {/* Nav */}
         <nav className="flex-1 px-3 pt-2 flex flex-col gap-1 overflow-y-auto">
-          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(15,17,21,0.55)", padding: "8px 10px 8px" }}>
+          <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(15,17,21, 0.73)", padding: "8px 10px 8px" }}>
             {t.nav.menu}
           </div>
           {nav.map(({ href, icon: Icon, label }) => {
@@ -77,7 +77,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 href={href}
                 className="flex items-center gap-3 px-3.5 py-3 rounded-2xl transition-colors"
                 style={{
-                  fontSize: 15,
+                  fontSize: 16,
                   background: active ? "rgba(75,95,232,0.10)" : "transparent",
                   border: active ? "1px solid rgba(75,95,232,0.22)" : "1px solid transparent",
                   color: active ? BRAND : "rgba(15,17,21,0.68)",
@@ -120,7 +120,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               style={{ color: active ? BRAND : "rgba(15,17,21,0.55)" }}
             >
               <Icon size={21} />
-              <span style={{ fontSize: 10.5, fontWeight: active ? 700 : 500 }}>{label}</span>
+              <span style={{ fontSize: 12.5, fontWeight: active ? 700 : 500 }}>{label}</span>
             </Link>
           );
         })}

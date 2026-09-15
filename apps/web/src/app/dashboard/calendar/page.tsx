@@ -217,21 +217,21 @@ export default function CalendarPage() {
       <div className="flex items-start justify-between mb-6">
         <div>
           <h1 className="font-serif italic" style={{ fontSize: 32, fontWeight: 300 }}>Schedule</h1>
-          <p style={{ fontSize: 13, color: "rgba(15,17,21,0.6)", marginTop: 2 }}>
+          <p style={{ fontSize: 14.5, color: "rgba(15,17,21, 0.75)", marginTop: 2 }}>
             Reviews Flux plans for you, plus everything you add yourself.
           </p>
         </div>
         <button
           onClick={connectGoogle}
           className="flex items-center gap-2 rounded-full"
-          style={{ border: "1px solid rgba(0,0,0,0.12)", padding: "8px 16px", fontSize: 13, fontWeight: 500, background: "#FFFFFF" }}
+          style={{ border: "1px solid rgba(0,0,0,0.12)", padding: "8px 16px", fontSize: 14.5, fontWeight: 500, background: "#FFFFFF" }}
         >
           Google
         </button>
       </div>
 
       {notice && (
-        <div className="rounded-xl mb-4" style={{ fontSize: 12.5, color: "#B91C1C", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", padding: "9px 14px" }}>
+        <div className="rounded-xl mb-4" style={{ fontSize: 14, color: "#B91C1C", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", padding: "9px 14px" }}>
           {notice}
         </div>
       )}
@@ -247,7 +247,7 @@ export default function CalendarPage() {
             onClick={() => { setView(v); if (v !== "month") setSelected(anchor); }}
             className="flex-1 transition-colors"
             style={{
-              padding: "10px 0", borderRadius: 19, fontSize: 14.5, fontWeight: 600,
+              padding: "10px 0", borderRadius: 19, fontSize: 16, fontWeight: 600,
               background: view === v ? "#4B5FE8" : "transparent",
               color: view === v ? "#fff" : "rgba(15,17,21,0.55)",
             }}
@@ -265,18 +265,18 @@ export default function CalendarPage() {
         }}
       >
         <div className="flex items-center justify-between mb-4">
-          <button onClick={() => step(-1)} className="cal-nav rounded-lg" style={{ padding: 7, color: "rgba(15,17,21,0.55)" }} aria-label="Previous">
+          <button onClick={() => step(-1)} className="cal-nav rounded-lg" style={{ padding: 7, color: "rgba(15,17,21, 0.73)" }} aria-label="Previous">
             <ChevronLeft size={20} />
           </button>
           <div className="flex items-center gap-3">
-            <span style={{ fontSize: 16, fontWeight: 700 }}>{headerLabel}</span>
+            <span style={{ fontSize: 17, fontWeight: 700 }}>{headerLabel}</span>
             {view !== "day" && !isSameDay(anchor, new Date()) && (
-              <button onClick={goToday} className="rounded-full" style={{ border: "1px solid rgba(0,0,0,0.12)", padding: "5px 12px", fontSize: 12.5, fontWeight: 600 }}>
+              <button onClick={goToday} className="rounded-full" style={{ border: "1px solid rgba(0,0,0,0.12)", padding: "5px 12px", fontSize: 14, fontWeight: 600 }}>
                 Today
               </button>
             )}
           </div>
-          <button onClick={() => step(1)} className="cal-nav rounded-lg" style={{ padding: 7, color: "rgba(15,17,21,0.55)" }} aria-label="Next">
+          <button onClick={() => step(1)} className="cal-nav rounded-lg" style={{ padding: 7, color: "rgba(15,17,21, 0.73)" }} aria-label="Next">
             <ChevronRight size={20} />
           </button>
         </div>
@@ -286,7 +286,7 @@ export default function CalendarPage() {
           <div>
             <div className="grid grid-cols-7">
               {["S", "M", "T", "W", "T", "F", "S"].map((d, i) => (
-                <div key={i} style={{ textAlign: "center", fontSize: 12, fontWeight: 700, color: "rgba(15,17,21,0.4)", padding: "6px 0" }}>{d}</div>
+                <div key={i} style={{ textAlign: "center", fontSize: 13.5, fontWeight: 700, color: "rgba(15,17,21, 0.65)", padding: "6px 0" }}>{d}</div>
               ))}
             </div>
             <div className="grid grid-cols-7">
@@ -313,7 +313,7 @@ export default function CalendarPage() {
                       }}
                     >
                       <span style={{
-                        fontSize: 16,
+                        fontSize: 17,
                         fontWeight: today || isSel ? 700 : 400,
                         color: today ? "#fff" : isSel ? "#4B5FE8" : "rgba(15,17,21,0.75)",
                       }}>
@@ -350,7 +350,7 @@ export default function CalendarPage() {
                     onClick={() => setSelected(day)}
                     className="flex flex-col items-center gap-1"
                   >
-                    <span style={{ fontSize: 11.5, fontWeight: 700, color: "rgba(15,17,21,0.4)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                    <span style={{ fontSize: 13.5, fontWeight: 700, color: "rgba(15,17,21, 0.65)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
                       {format(day, "EEE")}
                     </span>
                     <span
@@ -359,7 +359,7 @@ export default function CalendarPage() {
                         display: "flex", alignItems: "center", justifyContent: "center",
                         background: today ? "#4B5FE8" : "transparent",
                         border: isSel && !today ? "2px solid #4B5FE8" : "2px solid transparent",
-                        fontSize: 16, fontWeight: 700,
+                        fontSize: 17, fontWeight: 700,
                         color: today ? "#fff" : isSel ? "#4B5FE8" : "#0f1115",
                       }}
                     >
@@ -378,7 +378,7 @@ export default function CalendarPage() {
                   className="grid"
                   style={{ gridTemplateColumns: `${GUTTER}px repeat(7, minmax(0, 1fr))`, height: HOUR_H, borderBottom: "1px solid rgba(0,0,0,0.05)" }}
                 >
-                  <div style={{ textAlign: "right", paddingRight: 10, fontSize: 11, fontWeight: 600, color: "rgba(15,17,21,0.4)", marginTop: -7 }}>
+                  <div style={{ textAlign: "right", paddingRight: 10, fontSize: 13, fontWeight: 600, color: "rgba(15,17,21, 0.65)", marginTop: -7 }}>
                     {gutterHour(h)}
                   </div>
                   {weekDays.map((day, di) => {
@@ -404,7 +404,7 @@ export default function CalendarPage() {
                             style={{
                               background: itemColor(it), color: "#fff",
                               borderRadius: 6, padding: "3px 7px",
-                              fontSize: 11.5, fontWeight: 600, lineHeight: "15px",
+                              fontSize: 13.5, fontWeight: 600, lineHeight: "15px",
                             }}
                           >
                             {it.title}
@@ -416,7 +416,7 @@ export default function CalendarPage() {
                 </div>
               ))}
             </div>
-            <p style={{ fontSize: 12, color: "rgba(15,17,21,0.4)", textAlign: "center", marginTop: 12 }}>
+            <p style={{ fontSize: 13.5, color: "rgba(15,17,21, 0.65)", textAlign: "center", marginTop: 12 }}>
               Click any slot to schedule something
             </p>
           </div>
@@ -428,7 +428,7 @@ export default function CalendarPage() {
             <span style={{ fontSize: 76, fontWeight: 200, letterSpacing: -3, lineHeight: 1 }}>{format(anchor, "d")}</span>
             <div>
               <div style={{ fontSize: 22, fontWeight: 700 }}>{format(anchor, "EEEE")}</div>
-              <div style={{ fontSize: 14.5, color: "rgba(15,17,21,0.55)", marginTop: 3 }}>
+              <div style={{ fontSize: 16, color: "rgba(15,17,21, 0.73)", marginTop: 3 }}>
                 {listItems.length
                   ? `${listItems.length} session${listItems.length === 1 ? "" : "s"}`
                   : "Nothing scheduled"}
@@ -438,7 +438,7 @@ export default function CalendarPage() {
               <button
                 onClick={goToday}
                 className="rounded-full"
-                style={{ marginLeft: "auto", border: "1px solid rgba(0,0,0,0.12)", padding: "8px 16px", fontSize: 13, fontWeight: 600 }}
+                style={{ marginLeft: "auto", border: "1px solid rgba(0,0,0,0.12)", padding: "8px 16px", fontSize: 14.5, fontWeight: 600 }}
               >
                 Today
               </button>
@@ -449,7 +449,7 @@ export default function CalendarPage() {
 
       {/* Day list */}
       <div className="flex items-center justify-between mb-4">
-        <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(15,17,21,0.5)" }}>
+        <span style={{ fontSize: 13.5, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(15,17,21, 0.7)" }}>
           {isToday(listDate) ? "Today" : format(listDate, "EEEE")} · {format(listDate, "d MMM")}
         </span>
         <button
@@ -458,7 +458,7 @@ export default function CalendarPage() {
           style={{
             background: adding ? "rgba(15,17,21,0.08)" : "#4B5FE8",
             color: adding ? "#0f1115" : "#fff",
-            padding: "9px 16px", fontSize: 13.5, fontWeight: 600,
+            padding: "9px 16px", fontSize: 15, fontWeight: 600,
           }}
         >
           {adding ? <X size={16} /> : <Plus size={16} />}
@@ -472,7 +472,7 @@ export default function CalendarPage() {
           className="mb-5"
           style={{ background: "#FFFFFF", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 20, padding: 20, boxShadow: "0 4px 12px rgba(0,0,0,0.05)" }}
         >
-          <div style={{ fontSize: 17, fontWeight: 700, marginBottom: 16 }}>{format(listDate, "EEEE d MMM")}</div>
+          <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 16 }}>{format(listDate, "EEEE d MMM")}</div>
 
           <input
             autoFocus
@@ -481,7 +481,7 @@ export default function CalendarPage() {
             onKeyDown={(e) => { if (e.key === "Enter") addEvent(); }}
             placeholder="Exam, assignment, reading…"
             className="w-full outline-none"
-            style={{ border: "1px solid rgba(0,0,0,0.1)", borderRadius: 12, padding: "12px 14px", fontSize: 15, color: "#0f1115", maxWidth: 520 }}
+            style={{ border: "1px solid rgba(0,0,0,0.1)", borderRadius: 12, padding: "12px 14px", fontSize: 16, color: "#0f1115", maxWidth: 520 }}
           />
 
           <div className="flex flex-wrap gap-2" style={{ marginTop: 14 }}>
@@ -494,7 +494,7 @@ export default function CalendarPage() {
                   border: `1px solid ${newType === t ? TYPE_COLOR[t] : "rgba(0,0,0,0.12)"}`,
                   background: newType === t ? TYPE_COLOR[t] : "transparent",
                   color: newType === t ? "#fff" : "rgba(15,17,21,0.65)",
-                  padding: "7px 14px", fontSize: 12.5, fontWeight: 600,
+                  padding: "7px 14px", fontSize: 14, fontWeight: 600,
                 }}
               >
                 {t}
@@ -502,7 +502,7 @@ export default function CalendarPage() {
             ))}
           </div>
 
-          <div style={{ fontSize: 11, fontWeight: 700, color: "rgba(15,17,21,0.45)", textTransform: "uppercase", letterSpacing: "0.1em", margin: "18px 0 9px" }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: "rgba(15,17,21, 0.68)", textTransform: "uppercase", letterSpacing: "0.1em", margin: "18px 0 9px" }}>
             Time
           </div>
           <div className="flex flex-wrap gap-2">
@@ -515,7 +515,7 @@ export default function CalendarPage() {
                   border: `1px solid ${newHour === h ? "#4B5FE8" : "rgba(0,0,0,0.12)"}`,
                   background: newHour === h ? "#4B5FE8" : "transparent",
                   color: newHour === h ? "#fff" : "rgba(15,17,21,0.65)",
-                  padding: "7px 13px", fontSize: 12.5, fontWeight: 600, minWidth: 62,
+                  padding: "7px 13px", fontSize: 14, fontWeight: 600, minWidth: 62,
                 }}
               >
                 {shortHour(h)}
@@ -524,7 +524,7 @@ export default function CalendarPage() {
           </div>
 
           {formError && (
-            <div className="rounded-xl" style={{ marginTop: 14, fontSize: 12.5, color: "#B91C1C", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", padding: "9px 14px", maxWidth: 520 }}>
+            <div className="rounded-xl" style={{ marginTop: 14, fontSize: 14, color: "#B91C1C", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", padding: "9px 14px", maxWidth: 520 }}>
               {formError}
             </div>
           )}
@@ -535,7 +535,7 @@ export default function CalendarPage() {
             className="rounded-xl"
             style={{
               marginTop: 18, background: "#4B5FE8", color: "#fff",
-              padding: "13px 28px", fontSize: 14.5, fontWeight: 600,
+              padding: "13px 28px", fontSize: 16, fontWeight: 600,
               opacity: !newTitle.trim() || saving ? 0.4 : 1,
               cursor: !newTitle.trim() || saving ? "not-allowed" : "pointer",
             }}
@@ -550,14 +550,14 @@ export default function CalendarPage() {
       )}
 
       {listItems.length === 0 ? (
-        <p style={{ fontSize: 14, color: "rgba(15,17,21,0.5)", lineHeight: 1.5 }}>
+        <p style={{ fontSize: 15.5, color: "rgba(15,17,21, 0.7)", lineHeight: 1.5 }}>
           Nothing on this day — click Schedule to add an exam, assignment or deadline.
         </p>
       ) : (
         <div className="flex flex-col gap-2.5" style={{ maxWidth: 760 }}>
           {listItems.map((it) => (
             <div key={`${it.kind}-${it.id}`} className="cal-row flex items-stretch gap-3">
-              <span style={{ width: 66, textAlign: "right", paddingTop: 15, fontSize: 12.5, fontWeight: 600, color: "rgba(15,17,21,0.5)", flexShrink: 0 }}>
+              <span style={{ width: 66, textAlign: "right", paddingTop: 15, fontSize: 14, fontWeight: 600, color: "rgba(15,17,21, 0.7)", flexShrink: 0 }}>
                 {format(it.at, "h:mma").toLowerCase()}
               </span>
               <span style={{ width: 3, borderRadius: 2, background: itemColor(it), flexShrink: 0 }} />
@@ -566,8 +566,8 @@ export default function CalendarPage() {
                 style={{ background: "#FFFFFF", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 14, padding: 14 }}
               >
                 <div className="min-w-0">
-                  <div style={{ fontSize: 14.5, fontWeight: 600, lineHeight: "20px" }}>{it.title}</div>
-                  <div className="capitalize" style={{ fontSize: 12.5, color: "rgba(15,17,21,0.55)", marginTop: 3 }}>
+                  <div style={{ fontSize: 16, fontWeight: 600, lineHeight: "20px" }}>{it.title}</div>
+                  <div className="capitalize" style={{ fontSize: 14, color: "rgba(15,17,21, 0.73)", marginTop: 3 }}>
                     {it.kind === "session" ? "review" : it.sub}{it.course ? ` · ${it.course}` : ""}
                   </div>
                 </div>
@@ -575,7 +575,7 @@ export default function CalendarPage() {
                   <button
                     onClick={() => removeEvent(it.id, it.title)}
                     className="cal-del"
-                    style={{ color: "rgba(15,17,21,0.45)", padding: 2, marginLeft: 12, flexShrink: 0 }}
+                    style={{ color: "rgba(15,17,21, 0.68)", padding: 2, marginLeft: 12, flexShrink: 0 }}
                     aria-label={`Delete ${it.title}`}
                     title="Delete"
                   >

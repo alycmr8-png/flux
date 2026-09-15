@@ -1,20 +1,19 @@
 "use client";
-import { Mic, Link2, Play, GraduationCap, FileEdit, Zap, PenLine, Calendar, Globe, Sparkles } from "lucide-react";
+import { Mic, Play, Camera, FileEdit, Zap, PenLine, Calendar, Globe, Sparkles } from "lucide-react";
 
 // Notion-style capability strip: playful icon tiles in a slow marquee.
 // Every chip is a true statement about the product — no borrowed logos.
 
 const CAPS = [
   { icon: Mic,           label: "Record any lecture",   color: "#4B5FE8", tint: "rgba(75,95,232,0.1)" },
-  { icon: Link2,         label: "Works with Canvas",    color: "#16A34A", tint: "rgba(22,163,74,0.1)" },
   { icon: Play,          label: "Answers with receipts", color: "#6E7FF3", tint: "rgba(110,127,243,0.1)" },
-  { icon: GraduationCap, label: "Exam Mode",            color: "#DC2626", tint: "rgba(220,38,38,0.08)" },
-  { icon: Zap,           label: "Instant lecture notes", color: "#EF4444", tint: "rgba(239,68,68,0.08)" },
-  { icon: FileEdit,      label: "Auto transcripts",      color: "#EA580C", tint: "rgba(234,88,12,0.09)" },
-  { icon: PenLine,       label: "Notes that count",     color: "#9333EA", tint: "rgba(147,51,234,0.09)" },
+  { icon: Camera,        label: "Photos of your notes",  color: "#DC2626", tint: "rgba(220,38,38,0.08)" },
+  { icon: Zap,           label: "Live transcript", color: "#EF4444", tint: "rgba(239,68,68,0.08)" },
+  { icon: FileEdit,      label: "Reads the whiteboard",      color: "#EA580C", tint: "rgba(234,88,12,0.09)" },
+  { icon: PenLine,       label: "Flashcards & quizzes",     color: "#9333EA", tint: "rgba(147,51,234,0.09)" },
   { icon: Calendar,      label: "Deadlines synced",     color: "#0891B2", tint: "rgba(8,145,178,0.09)" },
-  { icon: Globe,         label: "English & Français",   color: "#4B5FE8", tint: "rgba(75,95,232,0.1)" },
-  { icon: Sparkles,      label: "Built from your classes", color: "#6E7FF3", tint: "rgba(110,127,243,0.1)" },
+  { icon: Globe,         label: "5 languages",   color: "#4B5FE8", tint: "rgba(75,95,232,0.1)" },
+  { icon: Sparkles,      label: "Maths written properly", color: "#6E7FF3", tint: "rgba(110,127,243,0.1)" },
 ];
 
 function Chip({ icon: Icon, label, color, tint }: (typeof CAPS)[number]) {

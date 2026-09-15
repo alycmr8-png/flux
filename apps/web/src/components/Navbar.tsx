@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { Layers } from "lucide-react";
+import { DownloadQR } from "./DownloadQR";
 
 export function Navbar() {
   return (
@@ -43,10 +44,12 @@ export function Navbar() {
               {label}
             </Link>
           ))}
+          <DownloadQR />
         </nav>
 
         {/* Auth buttons */}
         <div className="flex items-center gap-2">
+          <DownloadQR variant="compact" />
           <Link
             href="/sign-in"
             className="navbar-link hidden md:block"

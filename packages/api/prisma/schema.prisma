@@ -30,6 +30,7 @@ model User {
   notes           Note[]
   calendarEvents  CalendarEvent[]
   examPacks       ExamPack[]
+  photos          ClassPhoto[]
 
   sentConnections     Connection[]  @relation("ConnectionFrom")
   receivedConnections Connection[]  @relation("ConnectionTo")
@@ -117,6 +118,7 @@ model Course {
   notes          Note[]
   calendarEvents CalendarEvent[]
   examPacks      ExamPack[]
+  photos         ClassPhoto[]
 }
 
 model CalendarEvent {
@@ -145,6 +147,24 @@ model Note {
 
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+}
+
+// A photo the student adds to a class — whiteboard, slide, handwritten page.
+// Flux reads it once (maths typeset in LaTeX) and files the text into course memory.
+model ClassPhoto {
+  id        String   @id @default(cuid())
+  userId    String
+  courseId  String
+  filePath  String
+  mimeType  String
+  text      String   @default("") @db.Text
+  status    String   @default("reading") // reading | ready | error
+  createdAt DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@index([courseId, userId])
 }
 
 model Lecture {
@@ -185,7 +205,7 @@ model MemoryChunk {
   id          String   @id @default(cuid())
   userId      String
   courseId    String
-  sourceType  String   // lecture | video | file | note
+  sourceType  String   // lecture | video | file | note | photo
   sourceId    String
   sourceTitle String
   content     String   @db.Text

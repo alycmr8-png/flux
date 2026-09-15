@@ -1,5 +1,5 @@
 "use client";
-import { Mail, MessageCircle, GraduationCap, Mic, Calendar } from "lucide-react";
+import { Mail, MessageCircle, Camera, Mic, Calendar } from "lucide-react";
 
 const FAQS = [
   {
@@ -11,8 +11,8 @@ const FAQS = [
     a: "Go to Calendar, click any future day, then press Add. Fill in the title, type (Exam, Assignment, etc.), and date. Flux will remind you as the date approaches.",
   },
   {
-    q: "What is Exam Mode?",
-    a: "Exam Mode reads everything you've saved for a class — recordings, notes and files — and builds likely topics, predicted questions, gaps in your notes, and a study plan. Find it in Workspace → Exam Mode.",
+    q: "How do I add photos to a class?",
+    a: "Open a class and go to Add Photo. Take or pick photos of the whiteboard, slides or your handwritten notes — Flux reads each one, formulas included, and Ask can answer from what's in them.",
   },
   {
     q: "How do I change the language?",
@@ -22,7 +22,7 @@ const FAQS = [
 
 const FEATURES = [
   { icon: Mic,        label: "Record",       desc: "Record lectures and get instant cheat sheets" },
-  { icon: GraduationCap, label: "Exam Mode", desc: "Likely topics, predicted questions and a study plan" },
+  { icon: Camera,     label: "Add Photo",    desc: "Photos of the board and your notes, read by Flux" },
   { icon: Calendar,   label: "Calendar",     desc: "Track exams, assignments, and deadlines" },
 ];
 
@@ -33,48 +33,48 @@ export default function HelpPage() {
         <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 28 }}>
           Help
         </h1>
-        <p style={{ color: "rgba(31,35,40,0.6)", fontSize: 13, marginTop: 2 }}>
+        <p style={{ color: "rgba(31,35,40, 0.75)", fontSize: 14.5, marginTop: 2 }}>
           Everything you need to get the most out of Flux
         </p>
       </div>
 
       {/* Quick feature overview */}
-      <p className="text-xs uppercase tracking-widest mb-3" style={{ color: "rgba(31,35,40,0.5)" }}>What Flux can do</p>
+      <p className="text-[13.5px] uppercase tracking-widest mb-3" style={{ color: "rgba(31,35,40, 0.7)" }}>What Flux can do</p>
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-10">
         {FEATURES.map(({ icon: Icon, label, desc }) => (
           <div key={label} className="rounded-2xl p-4 border" style={{ background: "rgba(0,0,0,0.04)", borderColor: "rgba(0,0,0,0.06)" }}>
             <div className="w-8 h-8 rounded-xl flex items-center justify-center mb-3" style={{ background: "rgba(0,0,0,0.06)" }}>
-              <Icon size={15} style={{ color: "rgba(31,35,40,0.8)" }} />
+              <Icon size={15} style={{ color: "rgba(31,35,40, 0.85)" }} />
             </div>
-            <div className="text-sm font-medium mb-1">{label}</div>
-            <div style={{ fontSize: 11, color: "rgba(31,35,40,0.6)", lineHeight: 1.5 }}>{desc}</div>
+            <div className="text-[15.5px] font-medium mb-1">{label}</div>
+            <div style={{ fontSize: 13, color: "rgba(31,35,40, 0.75)", lineHeight: 1.5 }}>{desc}</div>
           </div>
         ))}
       </div>
 
       {/* FAQs */}
-      <p className="text-xs uppercase tracking-widest mb-3" style={{ color: "rgba(31,35,40,0.5)" }}>Frequently asked questions</p>
+      <p className="text-[13.5px] uppercase tracking-widest mb-3" style={{ color: "rgba(31,35,40, 0.7)" }}>Frequently asked questions</p>
       <div className="flex flex-col gap-3 mb-10">
         {FAQS.map(({ q, a }) => (
           <div key={q} className="rounded-2xl p-5 border" style={{ background: "rgba(0,0,0,0.04)", borderColor: "rgba(0,0,0,0.06)" }}>
-            <div className="text-sm font-medium mb-2">{q}</div>
-            <div style={{ fontSize: 13, color: "rgba(31,35,40,0.7)", lineHeight: 1.65 }}>{a}</div>
+            <div className="text-[15.5px] font-medium mb-2">{q}</div>
+            <div style={{ fontSize: 14.5, color: "rgba(31,35,40, 0.8)", lineHeight: 1.65 }}>{a}</div>
           </div>
         ))}
       </div>
 
       {/* Contact */}
-      <p className="text-xs uppercase tracking-widest mb-3" style={{ color: "rgba(31,35,40,0.5)" }}>Still need help?</p>
+      <p className="text-[13.5px] uppercase tracking-widest mb-3" style={{ color: "rgba(31,35,40, 0.7)" }}>Still need help?</p>
       <div className="flex flex-col sm:flex-row gap-3">
         <a
           href="mailto:support@fluxstudy.ai"
           className="flex-1 flex items-center gap-3 rounded-2xl px-5 py-4 border transition-all hover:border-white/20"
           style={{ background: "rgba(0,0,0,0.04)", borderColor: "rgba(0,0,0,0.06)" }}
         >
-          <Mail size={16} style={{ color: "rgba(31,35,40,0.7)" }} />
+          <Mail size={16} style={{ color: "rgba(31,35,40, 0.8)" }} />
           <div>
-            <div className="text-sm font-medium">Email support</div>
-            <div style={{ fontSize: 11, color: "rgba(31,35,40,0.55)" }}>support@fluxstudy.ai</div>
+            <div className="text-[15.5px] font-medium">Email support</div>
+            <div style={{ fontSize: 13, color: "rgba(31,35,40, 0.73)" }}>support@fluxstudy.ai</div>
           </div>
         </a>
         <a
@@ -84,10 +84,10 @@ export default function HelpPage() {
           className="flex-1 flex items-center gap-3 rounded-2xl px-5 py-4 border transition-all hover:border-white/20"
           style={{ background: "rgba(0,0,0,0.04)", borderColor: "rgba(0,0,0,0.06)" }}
         >
-          <MessageCircle size={16} style={{ color: "rgba(31,35,40,0.7)" }} />
+          <MessageCircle size={16} style={{ color: "rgba(31,35,40, 0.8)" }} />
           <div>
-            <div className="text-sm font-medium">Join our Discord</div>
-            <div style={{ fontSize: 11, color: "rgba(31,35,40,0.55)" }}>Chat with the community</div>
+            <div className="text-[15.5px] font-medium">Join our Discord</div>
+            <div style={{ fontSize: 13, color: "rgba(31,35,40, 0.73)" }}>Chat with the community</div>
           </div>
         </a>
       </div>

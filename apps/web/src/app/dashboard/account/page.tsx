@@ -70,7 +70,7 @@ export default function AccountPage() {
 
   return (
     <div style={{ maxWidth: 720 }}>
-      <div style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", color: BRAND, marginBottom: 8 }}>
+      <div style={{ fontSize: 13.5, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", color: BRAND, marginBottom: 8 }}>
         Account
       </div>
       <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 34, letterSpacing: "-0.5px", color: INK, marginBottom: 26 }}>
@@ -103,11 +103,11 @@ export default function AccountPage() {
         </button>
         <div className="min-w-0">
           <div style={{ fontSize: 19, fontWeight: 700, color: INK }}>{user?.fullName ?? "Student"}</div>
-          <div className="truncate" style={{ fontSize: 14.5, color: "rgba(15,17,21,0.65)", marginTop: 3 }}>{email}</div>
+          <div className="truncate" style={{ fontSize: 16, color: "rgba(15,17,21, 0.78)", marginTop: 3 }}>{email}</div>
         </div>
       </div>
 
-      {err && <p className="text-sm mb-3" style={{ color: "#DC2626" }}>{err}</p>}
+      {err && <p className="text-[15.5px] mb-3" style={{ color: "#DC2626" }}>{err}</p>}
 
       {/* Rows */}
       <Link
@@ -115,9 +115,9 @@ export default function AccountPage() {
         className="flex items-center gap-3 rounded-2xl px-5 py-4 mb-2.5 transition-colors hover:bg-[rgba(75,95,232,0.05)]"
         style={{ background: "#FFFFFF", border: `1px solid ${HAIRLINE}` }}
       >
-        <CreditCard size={20} style={{ color: "rgba(15,17,21,0.55)" }} />
-        <span className="flex-1" style={{ fontSize: 15.5, fontWeight: 600, color: INK }}>Billing &amp; plan</span>
-        <ExternalLink size={17} style={{ color: "rgba(15,17,21,0.55)" }} />
+        <CreditCard size={20} style={{ color: "rgba(15,17,21, 0.73)" }} />
+        <span className="flex-1" style={{ fontSize: 16.5, fontWeight: 600, color: INK }}>Billing &amp; plan</span>
+        <ExternalLink size={17} style={{ color: "rgba(15,17,21, 0.73)" }} />
       </Link>
 
       <Link
@@ -125,9 +125,9 @@ export default function AccountPage() {
         className="flex items-center gap-3 rounded-2xl px-5 py-4 mb-2.5 transition-colors hover:bg-[rgba(75,95,232,0.05)]"
         style={{ background: "#FFFFFF", border: `1px solid ${HAIRLINE}` }}
       >
-        <HelpCircle size={20} style={{ color: "rgba(15,17,21,0.55)" }} />
-        <span className="flex-1" style={{ fontSize: 15.5, fontWeight: 600, color: INK }}>Help &amp; support</span>
-        <ChevronRight size={17} style={{ color: "rgba(15,17,21,0.55)" }} />
+        <HelpCircle size={20} style={{ color: "rgba(15,17,21, 0.73)" }} />
+        <span className="flex-1" style={{ fontSize: 16.5, fontWeight: 600, color: INK }}>Help &amp; support</span>
+        <ChevronRight size={17} style={{ color: "rgba(15,17,21, 0.73)" }} />
       </Link>
 
       {/* Sign out */}
@@ -137,20 +137,20 @@ export default function AccountPage() {
             className="flex flex-wrap items-center gap-3 rounded-2xl px-5 py-4"
             style={{ background: "#FFFFFF", border: "1px solid rgba(239,68,68,0.3)" }}
           >
-            <span className="flex-1" style={{ fontSize: 15, color: "rgba(15,17,21,0.75)" }}>
+            <span className="flex-1" style={{ fontSize: 16, color: "rgba(15,17,21, 0.82)" }}>
               Sign out? You can sign back in anytime.
             </span>
             <button
               onClick={() => setConfirmSignOut(false)}
               className="rounded-xl px-4 py-2"
-              style={{ fontSize: 14, fontWeight: 600, background: "rgba(0,0,0,0.05)", color: "rgba(15,17,21,0.75)" }}
+              style={{ fontSize: 15.5, fontWeight: 600, background: "rgba(0,0,0,0.05)", color: "rgba(15,17,21, 0.82)" }}
             >
               Cancel
             </button>
             <button
               onClick={() => signOut()}
               className="rounded-xl px-4 py-2"
-              style={{ fontSize: 14, fontWeight: 700, background: "#DC2626", color: "#fff" }}
+              style={{ fontSize: 15.5, fontWeight: 700, background: "#DC2626", color: "#fff" }}
             >
               Sign out
             </button>
@@ -162,7 +162,7 @@ export default function AccountPage() {
             style={{ background: "#FFFFFF", border: `1px solid ${HAIRLINE}` }}
           >
             <LogOut size={20} style={{ color: "#EF4444" }} />
-            <span className="flex-1 text-left" style={{ fontSize: 15.5, fontWeight: 600, color: "#DC2626" }}>Sign out</span>
+            <span className="flex-1 text-left" style={{ fontSize: 16.5, fontWeight: 600, color: "#DC2626" }}>Sign out</span>
           </button>
         )}
       </div>
@@ -183,7 +183,7 @@ export default function AccountPage() {
           >
             <div className="flex items-center justify-between mb-5">
               <h2 style={{ fontSize: 21, fontWeight: 700, color: INK }}>Pick your avatar</h2>
-              <button onClick={() => setPicking(false)} className="p-1.5 rounded-full" style={{ color: "rgba(15,17,21,0.55)" }}>
+              <button onClick={() => setPicking(false)} className="p-1.5 rounded-full" style={{ color: "rgba(15,17,21, 0.73)" }}>
                 <X size={19} />
               </button>
             </div>
@@ -201,7 +201,7 @@ export default function AccountPage() {
               )}
             </div>
 
-            <div style={{ fontSize: 12.5, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(15,17,21,0.6)", marginBottom: 10 }}>
+            <div style={{ fontSize: 14, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(15,17,21, 0.75)", marginBottom: 10 }}>
               Avatar
             </div>
             <div className="flex flex-wrap gap-2.5 mb-6">
@@ -224,7 +224,7 @@ export default function AccountPage() {
               ))}
             </div>
 
-            <div style={{ fontSize: 12.5, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(15,17,21,0.6)", marginBottom: 10 }}>
+            <div style={{ fontSize: 14, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(15,17,21, 0.75)", marginBottom: 10 }}>
               Background
             </div>
             <div className="flex flex-wrap gap-2.5 mb-6">
@@ -249,7 +249,7 @@ export default function AccountPage() {
             <button
               onClick={() => setPicking(false)}
               className="w-full rounded-2xl py-3.5"
-              style={{ background: avatarColor, color: "#fff", fontSize: 16, fontWeight: 700 }}
+              style={{ background: avatarColor, color: "#fff", fontSize: 17, fontWeight: 700 }}
             >
               Done
             </button>

@@ -158,7 +158,7 @@ router.post("/", quotaMiddleware("ask"), async (req, res) => {
 
   // Consolidate retrieved chunks that point to the same source (and timestamp)
   // so the same lecture/video/file isn't shown as many identical references.
-  const typeLabels: Record<string, string> = { lecture: "Lecture", video: "Video", file: "File", note: "Your note" };
+  const typeLabels: Record<string, string> = { lecture: "Lecture", video: "Video", file: "File", note: "Your note", photo: "Photo" };
   const groups = new Map<string, {
     sourceType: string; sourceId: string; sourceTitle: string; startSec: number | null; contents: string[];
   }>();

@@ -5,11 +5,12 @@ import {
   eachDayOfInterval, isSameDay, isToday,
   addMonths, subMonths, addWeeks, subWeeks, addDays, subDays,
 } from "date-fns";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import useSWR from "swr";
 import { useApi, makeApiFetcher } from "../../lib/api";
 import { useAuth } from "@clerk/clerk-expo";
 import { Ionicons } from "@expo/vector-icons";
+import { syncEventReminders } from "../../lib/eventReminders";
 
 type CalView = "day" | "week" | "month";
 const VIEWS: CalView[] = ["day", "week", "month"];
@@ -55,6 +56,13 @@ export default function CalendarScreen() {
     fetcher
   );
   const events: any[] = eventsData?.data ?? [];
+
+  // Events come back per visible range, so reminders are reconciled whenever
+  // that set changes — creating, deleting or browsing all keep them accurate.
+  useEffect(() => {
+    if (!eventsData?.data) return;
+    syncEventReminders(eventsData.data, { from: range.from, to: range.to }).catch(() => {});
+  }, [eventsData]);
 
   // Reviews Flux schedules and events the student adds share the day list.
   const itemsOn = (d: Date) => [

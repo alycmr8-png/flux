@@ -4,7 +4,7 @@ import {
   Mic, Loader2, Plus, Pause, Play, StopCircle,
   Calendar, X, Mic2, FileText, ArrowLeft, Layers, Check,
   PenLine, Trash2, RotateCcw, Sparkles, ImagePlus, ChevronRight,
-  GraduationCap, Target, AlertTriangle, ListChecks, HelpCircle, BookOpen, Camera,
+  AlertTriangle, ListChecks, HelpCircle, BookOpen, Camera, Send, Square,
 } from "lucide-react";
 import { useApiFetch, useApiSWRFetcher } from "@/lib/apiFetch";
 import { useToast, useConfirm } from "@/components/Feedback";
@@ -13,9 +13,18 @@ import { useT } from "@/lib/useT";
 import useSWR from "swr";
 import { format } from "date-fns";
 import { TiptapNoteEditor } from "@/components/TiptapNoteEditor";
+import { MathText, FormulaText } from "@/components/MathText";
 import { recSafeStart, recSafeAppend, recSafeClear, recSafeLoad, type RecMeta } from "@/lib/recSafe";
 import { useLiveTranscription } from "@/lib/useLiveTranscription";
-import { toMathNotation } from "@sano/shared";
+import { ensureFiniteDuration } from "@/lib/audioDuration";
+import fixWebmDuration from "fix-webm-duration";
+import { toMathNotation, mathToPlainText } from "@sano/shared";
+
+// Grid previews are clamped to two lines, so maths is shown as readable symbols there.
+const latexToReadablePreview = (text: string) => mathToPlainText(text).replace(/\s+/g, " ").trim();
+
+// Photos per recording — taken while recording or attached afterwards (the API enforces the same).
+const MAX_LECTURE_PHOTOS = 5;
 
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
@@ -160,6 +169,8 @@ function LectureResults({
     }
   }
 
+  const chatAbortRef = useRef<AbortController | null>(null);
+
   async function send(text?: string) {
     const q = (text ?? input).trim();
     if (!q || loading === "ask") return;
@@ -167,16 +178,23 @@ function LectureResults({
     setMessages(next);
     setInput("");
     setLoading("ask");
+    const controller = new AbortController();
+    chatAbortRef.current = controller;
     try {
       const r = await apiFetch("/api/studybook/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ lectureId, messages: next }),
+        signal: controller.signal,
       });
       setMessages([...next, { role: "assistant", content: r.data?.reply ?? "" }]);
     } catch (e: any) {
-      setMessages([...next, { role: "assistant", content: e?.message ?? "Something went wrong — try again." }]);
+      // A stop is the student's choice, not a failure — leave the question and move on.
+      if (e?.name !== "AbortError") {
+        setMessages([...next, { role: "assistant", content: e?.message ?? "Something went wrong — try again." }]);
+      }
     } finally {
+      chatAbortRef.current = null;
       setLoading(null);
     }
   }
@@ -200,9 +218,9 @@ function LectureResults({
   const content = sheet?.content ?? {};
   const card = "rounded-2xl border p-6";
   const cardStyle = { background: "#FFFFFF", borderColor: "rgba(0,0,0,0.08)" };
-  const label = "text-[10px] font-bold uppercase tracking-widest mb-2";
-  const body = "text-sm leading-[1.75]";
-  const bodyStyle = { color: "rgba(15,17,21,0.75)" };
+  const label = "text-[13.5px] font-bold uppercase tracking-widest mb-2";
+  const body = "text-[16px] leading-[1.75]";
+  const bodyStyle = { color: "rgba(15,17,21, 0.82)" };
 
   return (
     <div>
@@ -224,7 +242,7 @@ function LectureResults({
             style={{
               padding: "9px 16px",
               borderRadius: 999,
-              fontSize: 13.5,
+              fontSize: 16,
               fontWeight: view === key ? 600 : 500,
               background: view === key ? color : "transparent",
               color: view === key ? "#fff" : "rgba(15,17,21,0.55)",
@@ -239,7 +257,7 @@ function LectureResults({
       {loading === view && (
         <div className="flex items-center justify-center gap-2.5 py-12">
           <Loader2 size={16} className="animate-spin" style={{ color }} />
-          <span className="text-sm" style={{ color: "rgba(15,17,21,0.55)" }}>Generating…</span>
+          <span className="text-[16px]" style={{ color: "rgba(15,17,21, 0.73)" }}>Generating…</span>
         </div>
       )}
 
@@ -248,12 +266,12 @@ function LectureResults({
         <div className={card} style={cardStyle}>
           {(content.sections ?? []).map((sec: any, i: number) => (
             <div key={i} className="mb-6 last:mb-0">
-              <div className={label} style={{ color: "rgba(15,17,21,0.55)" }}>{sec.heading}</div>
+              <MathText as="div" className={label} style={{ color: "rgba(15,17,21, 0.73)" }} text={sec.heading} />
               <ul className="space-y-1.5">
                 {(sec.bullets ?? []).map((b: string, j: number) => (
                   <li key={j} className={`flex gap-2.5 ${body}`} style={bodyStyle}>
-                    <span style={{ color: "rgba(15,17,21,0.35)" }}>•</span>
-                    <span>{b}</span>
+                    <span style={{ color: "rgba(15,17,21, 0.62)" }}>•</span>
+                    <MathText className="min-w-0" text={b} />
                   </li>
                 ))}
               </ul>
@@ -262,21 +280,21 @@ function LectureResults({
 
           {(content.formulas ?? []).length > 0 && (
             <div className="rounded-xl p-4 mt-5" style={{ background: `${color}0F`, border: `1px solid ${color}26` }}>
-              <div className={label} style={{ color: "rgba(15,17,21,0.55)" }}>Formulas</div>
+              <div className={label} style={{ color: "rgba(15,17,21, 0.73)" }}>Formulas</div>
               {content.formulas.map((f: string, i: number) => (
-                <div key={i} className="text-[15px] leading-7" style={{ color: "#0f1115" }}>{f}</div>
+                <FormulaText key={i} as="div" className="text-[17.5px] leading-7" style={{ color: "#0f1115" }} text={f} />
               ))}
             </div>
           )}
 
           {(content.keyTerms ?? []).length > 0 && (
             <div className="mt-5">
-              <div className={label} style={{ color: "rgba(15,17,21,0.55)" }}>Key Terms</div>
+              <div className={label} style={{ color: "rgba(15,17,21, 0.73)" }}>Key Terms</div>
               <div className="space-y-1.5">
                 {content.keyTerms.map((kt: any, i: number) => (
                   <div key={i} className={body} style={bodyStyle}>
-                    <span className="font-semibold" style={{ color: "#0f1115" }}>{kt.term}</span>
-                    {kt.definition ? ` — ${kt.definition}` : ""}
+                    <MathText className="font-semibold" style={{ color: "#0f1115" }} text={kt.term} />
+                    {kt.definition ? <>{" — "}<MathText text={kt.definition} /></> : ""}
                   </div>
                 ))}
               </div>
@@ -285,12 +303,12 @@ function LectureResults({
 
           {(content.examTips ?? []).length > 0 && (
             <div className="rounded-xl p-4 mt-5" style={{ background: `${color}0F`, border: `1px solid ${color}26` }}>
-              <div className={label} style={{ color: "rgba(15,17,21,0.55)" }}>Exam Tips</div>
+              <div className={label} style={{ color: "rgba(15,17,21, 0.73)" }}>Exam Tips</div>
               <ul className="space-y-1.5">
                 {content.examTips.map((tp: string, i: number) => (
                   <li key={i} className={`flex gap-2.5 ${body}`} style={bodyStyle}>
-                    <span style={{ color: "rgba(15,17,21,0.35)" }}>•</span>
-                    <span>{tp}</span>
+                    <span style={{ color: "rgba(15,17,21, 0.62)" }}>•</span>
+                    <MathText className="min-w-0" text={tp} />
                   </li>
                 ))}
               </ul>
@@ -307,7 +325,7 @@ function LectureResults({
       {view === "transcript" && transcript !== null && (
         <div className={card} style={cardStyle}>
           {transcript.trim()
-            ? <p className="text-[15px] leading-[1.85] whitespace-pre-wrap" style={{ color: "rgba(15,17,21,0.85)" }}>{transcript}</p>
+            ? <MathText as="p" className="text-[17.5px] leading-[1.85] whitespace-pre-wrap" style={{ color: "rgba(15,17,21, 0.88)" }} text={transcript} />
             : <p className={body} style={bodyStyle}>No transcript available for this lecture.</p>}
         </div>
       )}
@@ -319,11 +337,11 @@ function LectureResults({
             const c = CATEGORY_COLOR[p.category] ?? BRAND;
             return (
               <div key={i} className="flex gap-3 items-start mb-3 last:mb-0">
-                <span className="text-[10px] font-bold shrink-0 px-2.5 py-1 rounded-full text-center"
+                <span className="text-[13.5px] font-bold shrink-0 px-2.5 py-1 rounded-full text-center"
                   style={{ color: c, background: `${c}1A`, minWidth: 84 }}>
                   {p.category}
                 </span>
-                <span className={body} style={bodyStyle}>{p.point}</span>
+                <MathText className={`${body} min-w-0`} style={bodyStyle} text={p.point} />
               </div>
             );
           })}
@@ -336,16 +354,18 @@ function LectureResults({
         <div className="space-y-3">
           {(quiz.questions ?? []).map((q: any, i: number) => (
             <div key={q.id ?? i} className={card} style={cardStyle}>
-              <div className="text-[15px] font-semibold mb-3" style={{ color: "#0f1115" }}>{i + 1}. {q.question}</div>
+              <div className="text-[17.5px] font-semibold mb-3" style={{ color: "#0f1115" }}>{i + 1}. <MathText text={q.question} /></div>
               <div className="space-y-2">
                 {(q.options ?? []).map((opt: string, oi: number) => {
                   const picked = answers[i] === oi;
                   const revealed = !!score;
                   const isRight = q.correctIndex === oi;
-                  const borderColor = revealed && isRight ? "#16A34A"
+                  // A correct answer is marked in the class colour; a wrong pick
+                  // stays red so the two never read the same.
+                  const borderColor = revealed && isRight ? color
                     : revealed && picked && !isRight ? "#DC2626"
                     : picked ? color : "rgba(0,0,0,0.1)";
-                  const background = revealed && isRight ? "rgba(22,163,74,0.08)"
+                  const background = revealed && isRight ? `${color}1A`
                     : revealed && picked && !isRight ? "rgba(220,38,38,0.06)"
                     : picked ? `${color}0F` : "transparent";
                   return (
@@ -353,16 +373,16 @@ function LectureResults({
                       key={oi}
                       disabled={!!score}
                       onClick={() => setAnswers(a => ({ ...a, [i]: oi }))}
-                      className="w-full text-left rounded-xl px-4 py-3 text-sm transition-colors disabled:cursor-default"
-                      style={{ border: `1px solid ${borderColor}`, background, color: "rgba(15,17,21,0.85)" }}
+                      className="w-full text-left rounded-xl px-4 py-3 text-[16px] transition-colors disabled:cursor-default"
+                      style={{ border: `${revealed && isRight ? 2 : 1}px solid ${borderColor}`, background, color: revealed && isRight ? color : "rgba(15,17,21,0.85)", fontWeight: revealed && isRight ? 600 : 400 }}
                     >
-                      {opt}
+                      <MathText text={opt} />
                     </button>
                   );
                 })}
               </div>
               {score && q.explanation && (
-                <p className="text-sm mt-3 leading-relaxed" style={{ color: "rgba(15,17,21,0.6)" }}>{q.explanation}</p>
+                <MathText as="p" className="text-[16px] mt-3 leading-relaxed" style={{ color: "rgba(15,17,21, 0.75)" }} text={q.explanation} />
               )}
             </div>
           ))}
@@ -376,7 +396,7 @@ function LectureResults({
             </div>
           ) : (
             <button onClick={submitQuiz}
-              className="w-full rounded-2xl py-4 text-[15px] font-semibold text-white transition-opacity hover:opacity-90"
+              className="w-full rounded-2xl py-4 text-[17.5px] font-semibold text-white transition-opacity hover:opacity-90"
               style={{ background: color }}>
               Check answers
             </button>
@@ -391,15 +411,14 @@ function LectureResults({
             <button
               key={i}
               onClick={() => setFlipped(f => ({ ...f, [i]: !f[i] }))}
-              className={`${card} text-left transition-colors hover:border-[rgba(0,0,0,0.18)]`}
-              style={{ ...cardStyle, minHeight: 150 }}
+              className={`${card} text-left min-w-0 transition-colors hover:border-[rgba(0,0,0,0.18)]`}
+              style={{ ...cardStyle, minHeight: 150, ...(flipped[i] ? { borderColor: color, background: `${color}12` } : {}) }}
             >
-              <div className="text-[11px] font-semibold mb-2" style={{ color: "rgba(15,17,21,0.35)" }}>{i + 1} / {cards.length}</div>
-              <div className={flipped[i] ? body : "text-[15px] font-semibold leading-relaxed"}
-                style={flipped[i] ? bodyStyle : { color: "#0f1115" }}>
-                {flipped[i] ? c.back : c.front}
-              </div>
-              <div className="text-[11px] mt-3" style={{ color: "rgba(15,17,21,0.35)" }}>
+              <div className="text-[14.5px] font-semibold mb-2" style={{ color: "rgba(15,17,21, 0.62)" }}>{i + 1} / {cards.length}</div>
+              <MathText as="div" className="text-[17.5px] font-semibold leading-relaxed"
+                style={{ color: flipped[i] ? color : "#0f1115" }}
+                text={flipped[i] ? c.back : c.front} />
+              <div className="text-[14.5px] mt-3" style={{ color: "rgba(15,17,21, 0.62)" }}>
                 {flipped[i] ? "Click to hide" : "Click to reveal"}
               </div>
             </button>
@@ -415,12 +434,12 @@ function LectureResults({
         <div>
           {messages.length === 0 && (
             <div className={`${card} mb-3`} style={cardStyle}>
-              <div className="text-[15px] font-semibold" style={{ color: "#0f1115" }}>Ask anything about this lecture</div>
+              <div className="text-[17.5px] font-semibold" style={{ color: "#0f1115" }}>Ask anything about this lecture</div>
               <p className={`${body} mt-1`} style={bodyStyle}>Answers come from this recording&rsquo;s transcript.</p>
               <div className="flex flex-wrap gap-2 mt-4">
                 {["Explain the main idea simply", "What formulas were covered?", "What might be on the exam?"].map(p => (
                   <button key={p} onClick={() => send(p)}
-                    className="text-xs px-3.5 py-2 rounded-full transition-colors"
+                    className="text-[15px] px-3.5 py-2 rounded-full transition-colors"
                     style={{ color, background: `${color}0F`, border: `1px solid ${color}26` }}>
                     {p}
                   </button>
@@ -432,13 +451,14 @@ function LectureResults({
           <div className="space-y-3 mb-3">
             {messages.map((m, i) => (
               <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
-                <span className="text-sm max-w-[85%] leading-relaxed px-4 py-2.5 whitespace-pre-wrap"
+                <MathText className="text-[16px] max-w-[85%] leading-relaxed px-4 py-2.5 whitespace-pre-wrap"
                   style={{
                     background: m.role === "user" ? color : "#FFFFFF",
                     border: m.role === "user" ? "none" : "1px solid rgba(0,0,0,0.08)",
                     color: m.role === "user" ? "#fff" : "rgba(15,17,21,0.85)",
                     borderRadius: m.role === "user" ? "18px 18px 4px 18px" : "18px 18px 18px 4px",
-                  }}>{m.content}</span>
+                  }}
+                  text={m.content} />
               </div>
             ))}
             {loading === "ask" && (
@@ -454,21 +474,29 @@ function LectureResults({
             <input value={input} onChange={e => setInput(e.target.value)}
               onKeyDown={e => e.key === "Enter" && !e.shiftKey && send()}
               placeholder="Ask about this lecture…"
-              className="flex-1 rounded-xl px-4 py-3 text-sm outline-none"
+              className="flex-1 rounded-xl px-4 py-3 text-[16px] outline-none"
               style={{ background: "#FFFFFF", border: "1px solid rgba(0,0,0,0.08)", color: "#0f1115" }} />
-            <button onClick={() => send()} disabled={!input.trim() || loading === "ask"}
-              className="text-sm font-semibold px-5 rounded-xl text-white disabled:opacity-40"
-              style={{ background: color }}>
-              Send
-            </button>
+            {loading === "ask" ? (
+              <button onClick={() => chatAbortRef.current?.abort()} aria-label="Stop"
+                className="w-12 h-12 rounded-full flex items-center justify-center text-white shrink-0"
+                style={{ background: "#0f1115" }}>
+                <Square size={15} fill="currentColor" />
+              </button>
+            ) : (
+              <button onClick={() => send()} disabled={!input.trim()} aria-label="Send"
+                className="w-12 h-12 rounded-full flex items-center justify-center text-white shrink-0 disabled:opacity-40"
+                style={{ background: color }}>
+                <Send size={18} />
+              </button>
+            )}
           </div>
         </div>
       )}
 
       <div className="flex justify-center mt-6">
         <button onClick={onRecordAnother}
-          className="text-sm px-5 py-2.5 rounded-full transition-colors hover:bg-black/[0.03]"
-          style={{ color: "rgba(15,17,21,0.55)", border: "1px solid rgba(0,0,0,0.12)" }}>
+          className="text-[16px] px-5 py-2.5 rounded-full transition-colors hover:bg-black/[0.03]"
+          style={{ color: "rgba(15,17,21, 0.73)", border: "1px solid rgba(0,0,0,0.12)" }}>
           Back to recordings
         </button>
       </div>
@@ -509,29 +537,29 @@ function CreateClassPage({ onBack, onCreate }: { onBack: () => void; onCreate: (
 
   return (
     <div className="max-w-lg">
-      <button onClick={onBack} className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors text-sm mb-8">
+      <button onClick={onBack} className="flex items-center gap-2 text-gray-800 hover:text-gray-900 transition-colors text-[16px] mb-8">
         <ArrowLeft size={14} /> {t.common.back}
       </button>
 
       <h1 className="font-serif italic text-5xl mb-1">{t.newClass.title}</h1>
-      <p className="text-gray-600 text-sm mb-8">{t.newClass.subtitle}</p>
+      <p className="text-gray-800 text-[16px] mb-8">{t.newClass.subtitle}</p>
 
       <div className="space-y-4">
         {/* Class name */}
         <div>
-          <label className="text-[10px] text-gray-600 uppercase tracking-widest block mb-1.5">{t.newClass.classNameLabel}</label>
+          <label className="text-[13.5px] text-gray-800 uppercase tracking-widest block mb-1.5">{t.newClass.classNameLabel}</label>
           <input
             value={name}
             onChange={e => setName(e.target.value)}
             onKeyDown={e => e.key === "Enter" && create()}
             placeholder={t.newClass.classNamePlaceholder}
-            className="w-full bg-[#FFFFFF] border border-[rgba(0,0,0,0.08)] focus:border-indigo-500/50 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder-gray-400 outline-none"
+            className="w-full bg-[#FFFFFF] border border-[rgba(0,0,0,0.08)] focus:border-indigo-500/50 rounded-xl px-4 py-3 text-[16px] text-gray-900 placeholder-gray-400 outline-none"
           />
         </div>
 
         {/* Colour — every pill, card and results screen for this class picks it up */}
         <div>
-          <label className="text-[10px] text-gray-600 uppercase tracking-widest block mb-2">Colour</label>
+          <label className="text-[13.5px] text-gray-800 uppercase tracking-widest block mb-2">Colour</label>
           <div className="flex flex-wrap gap-2">
             {CLASS_COLORS.map(c => (
               <button
@@ -550,7 +578,7 @@ function CreateClassPage({ onBack, onCreate }: { onBack: () => void; onCreate: (
         <button
           onClick={create}
           disabled={loading || !name.trim()}
-          className="w-full rounded-xl py-3 text-sm font-semibold text-white disabled:opacity-40 flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
+          className="w-full rounded-xl py-3 text-[16px] font-semibold text-white disabled:opacity-40 flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
           style={{ background: color }}
         >
           {loading ? <><Loader2 size={14} className="animate-spin" /> {t.common.creating}</> : t.newClass.create}
@@ -587,11 +615,11 @@ function ClassList({ onSelect, onCreate }: { onSelect: (c: any) => void; onCreat
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="font-serif italic text-3xl mb-1">{t.workspace.title}</h1>
-          <p className="text-gray-600 text-sm">{t.workspace.subtitle}</p>
+          <p className="text-gray-800 text-[16px]">{t.workspace.subtitle}</p>
         </div>
         <button
           onClick={onCreate}
-          className="flex items-center gap-2 bg-[#FFFFFF] text-gray-900 text-sm font-medium px-4 py-2 rounded-full hover:bg-[#F1F0EE] transition-colors"
+          className="flex items-center gap-2 bg-[#FFFFFF] text-gray-900 text-[16px] font-medium px-4 py-2 rounded-full hover:bg-[#F1F0EE] transition-colors"
         >
           <Plus size={14} /> {t.workspace.newClass}
         </button>
@@ -609,9 +637,9 @@ function ClassList({ onSelect, onCreate }: { onSelect: (c: any) => void; onCreat
       ) : courses.length === 0 ? (
         <div className="border border-dashed border-[rgba(0,0,0,0.08)] rounded-2xl p-16 text-center">
           <Layers size={36} className="mx-auto mb-4 text-[#222]" />
-          <p className="text-gray-600 text-sm font-medium mb-1">No classes yet</p>
-          <p className="text-gray-600 text-xs mb-4">Create your first class to start recording lectures</p>
-          <button onClick={onCreate} className="text-xs text-[#6b6b69] border border-[rgba(0,0,0,0.1)] px-4 py-2 rounded-full hover:border-[#ddd] transition-colors">
+          <p className="text-gray-800 text-[16px] font-medium mb-1">No classes yet</p>
+          <p className="text-gray-800 text-[15px] mb-4">Create your first class to start recording lectures</p>
+          <button onClick={onCreate} className="text-[15px] text-[#6b6b69] border border-[rgba(0,0,0,0.1)] px-4 py-2 rounded-full hover:border-[#ddd] transition-colors">
             Create a class
           </button>
         </div>
@@ -621,17 +649,17 @@ function ClassList({ onSelect, onCreate }: { onSelect: (c: any) => void; onCreat
             <div key={c.id} className="relative group/card">
               {confirmDeleteId === c.id ? (
                 <div className="bg-[#FFFFFF] border border-red-200 rounded-2xl p-7 flex flex-col gap-3">
-                  <p className="text-sm font-medium text-gray-900">Delete &ldquo;{c.name}&rdquo;?</p>
-                  <p className="text-xs text-gray-600 leading-relaxed">
+                  <p className="text-[16px] font-medium text-gray-900">Delete &ldquo;{c.name}&rdquo;?</p>
+                  <p className="text-[15px] text-gray-800 leading-relaxed">
                     This permanently deletes the class and everything in it — recordings, transcripts, summaries and notes. This cannot be undone.
                   </p>
                   <div className="flex gap-2 mt-1">
                     <button onClick={() => setConfirmDeleteId(null)} disabled={deleting}
-                      className="flex-1 text-xs py-2 rounded-lg border border-[rgba(0,0,0,0.12)] text-gray-600 hover:text-gray-900 transition-colors">
+                      className="flex-1 text-[15px] py-2 rounded-lg border border-[rgba(0,0,0,0.12)] text-gray-800 hover:text-gray-900 transition-colors">
                       Cancel
                     </button>
                     <button onClick={() => deleteCourse(c.id)} disabled={deleting}
-                      className="flex-1 text-xs py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors flex items-center justify-center gap-1.5">
+                      className="flex-1 text-[15px] py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors flex items-center justify-center gap-1.5">
                       {deleting ? <Loader2 size={11} className="animate-spin" /> : <Trash2 size={11} />}
                       Delete
                     </button>
@@ -648,7 +676,7 @@ function ClassList({ onSelect, onCreate }: { onSelect: (c: any) => void; onCreat
                       style={{ background: tint(c) }}>
                       {(c.name ?? "?").trim().charAt(0).toUpperCase()}
                     </div>
-                    <div className="text-gray-900 font-medium text-base">{c.name}</div>
+                    <div className="text-gray-900 font-medium text-[17px]">{c.name}</div>
                   </button>
                   <button
                     onClick={e => { e.stopPropagation(); setConfirmDeleteId(c.id); }}
@@ -677,7 +705,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: {
   const toast = useToast();
   const confirm = useConfirm();
   const { userId } = useAuth();
-  const [tab, setTab] = useState<"record" | "exam" | "note" | "ask">("record");
+  const [tab, setTab] = useState<"record" | "photo" | "note" | "ask">("record");
   // Every accent in this workspace comes from the class's own colour.
   const color = tint(course);
 
@@ -702,69 +730,83 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: {
     u?.match(/(?:youtube\.com\/(?:watch\?v=|shorts\/)|youtu\.be\/)([^&?\s/]+)/)?.[1] ?? null;
   const audioLectures: any[] = lectures.filter((l: any) => l.audioUrl && !isYoutubeUrl(l.audioUrl));
 
-  // ── Exam Mode ──────────────────────────────────────────────────────────────
-  const { data: examPackData, mutate: mutateExamPack } = useSWR(
-    visitedTabs.has("exam") ? `${BASE}/api/examprep?courseId=${course.id}` : null,
+  // ── Photos ─────────────────────────────────────────────────────────────────
+  // Whiteboards, slides, handwritten pages. Flux reads each one (maths typeset)
+  // and files it into this class's memory, so Ask can answer from it.
+  const { data: photosData, mutate: mutatePhotos } = useSWR(
+    visitedTabs.has("photo") ? `${BASE}/api/photos?courseId=${course.id}` : null,
     fetcher,
-    { revalidateOnFocus: false }
+    {
+      revalidateOnFocus: false,
+      // Poll only while a photo is still being read.
+      refreshInterval: (latest: any) => ((latest?.data ?? []).some((p: any) => p.status === "reading") ? 2500 : 0),
+    }
   );
-  const examContent: any = examPackData?.data?.content ?? null;
-  const [examLoading, setExamLoading] = useState(false);
-  const [examDateInput, setExamDateInput] = useState("");
-  const [examChosen, setExamChosen] = useState<Record<number, string>>({});
-  const [examRevealed, setExamRevealed] = useState<Set<number>>(new Set());
-  const examDaysLeft = examContent?.examDate
-    ? Math.max(0, Math.ceil((new Date(examContent.examDate).getTime() - Date.now()) / 86400000))
-    : null;
+  const photos: any[] = photosData?.data ?? [];
+  const [photoUploading, setPhotoUploading] = useState(false);
+  const [openPhotoId, setOpenPhotoId] = useState<string | null>(null);
+  const photoInputRef = useRef<HTMLInputElement | null>(null);
+  const openPhoto = photos.find((p: any) => p.id === openPhotoId) ?? null;
+  const MAX_PHOTOS_PER_UPLOAD = 10;
 
-  async function generateExam() {
-    setExamLoading(true);
-    setExamChosen({});
-    setExamRevealed(new Set());
+  async function uploadPhotos(files: FileList | null) {
+    if (!files?.length) return;
+    const list = Array.from(files).slice(0, MAX_PHOTOS_PER_UPLOAD);
+    setPhotoUploading(true);
     try {
-      const res = await apiFetch(`/api/examprep/generate`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ courseId: course.id, examDate: examDateInput || undefined }),
-      });
-      mutateExamPack({ data: res.data }, false);
+      const fd = new FormData();
+      fd.append("courseId", course.id);
+      list.forEach(f => fd.append("photos", f));
+      const res = await apiFetch("/api/photos", { method: "POST", body: fd });
+      await mutatePhotos({ data: [...(res.data ?? []), ...photos] }, { revalidate: false });
+      if (files.length > MAX_PHOTOS_PER_UPLOAD) toast(`Added the first ${MAX_PHOTOS_PER_UPLOAD} photos — add the rest in another batch.`, "error");
     } catch (e: any) {
       const msg = String(e?.message ?? "");
       toast(
-        e?.name === "QuotaError" ? msg : msg.includes("empty_memory") ? t.workspace.exam.emptyMemory : t.workspace.exam.failed,
+        e?.name === "QuotaError" ? msg
+          : msg.includes("API 415") ? "Photos must be JPEG, PNG, WebP or GIF."
+          : "Couldn't add those photos — try again.",
         "error"
       );
     } finally {
-      setExamLoading(false);
+      setPhotoUploading(false);
+      if (photoInputRef.current) photoInputRef.current.value = "";
     }
   }
 
-  function renderExamCites(citations: any[]) {
-    if (!citations?.length) return null;
-    return (
-      <div className="flex flex-wrap gap-1.5 mt-1.5">
-        {citations.map((c: any, i: number) => {
-          const clickable = citationClickable(c);
-          const Icon = c.sourceType === "note" ? PenLine : c.sourceType === "file" ? FileText : Play;
-          return (
-            <button
-              key={i}
-              disabled={!clickable}
-              onClick={() => clickable && openCitation(c)}
-              className="flex items-center gap-1 text-[10px] rounded-full border px-2 py-0.5 transition-colors disabled:opacity-60 hover:bg-[rgba(75,95,232,0.1)]"
-              style={{ borderColor: "rgba(75,95,232,0.3)", color: "#4B5FE8", background: "rgba(75,95,232,0.05)" }}
-            >
-              {askCiteLoading === c.n ? <Loader2 size={9} className="animate-spin" /> : <Icon size={9} />}
-              <span className="truncate max-w-[220px]">{c.label}</span>
-            </button>
-          );
-        })}
-      </div>
-    );
+  async function deletePhoto(id: string) {
+    const ok = await confirm({
+      title: "Delete this photo?",
+      message: "The photo and what Flux read from it are removed, and Ask will stop using it.",
+      confirmLabel: "Delete",
+      danger: true,
+    });
+    if (!ok) return;
+    setOpenPhotoId(null);
+    await mutatePhotos({ data: photos.filter((p: any) => p.id !== id) }, { revalidate: false });
+    try {
+      await apiFetch(`/api/photos/${id}`, { method: "DELETE" });
+    } catch {
+      toast("Couldn't delete that photo — try again.", "error");
+      mutatePhotos();
+    }
+  }
+
+  async function retryPhoto(id: string) {
+    await mutatePhotos({ data: photos.map((p: any) => (p.id === id ? { ...p, status: "reading" } : p)) }, { revalidate: false });
+    try {
+      await apiFetch(`/api/photos/${id}/retry`, { method: "POST" });
+    } finally {
+      mutatePhotos();
+    }
   }
 
   // ── record ──
   const live = useLiveTranscription();
+  const { data: usageData } = useSWR(`${BASE}/api/usage`, fetcher);
+  const maxRecSeconds = (usageData?.data?.maxRecordingMinutes ?? 180) * 60;
+  const limitHitRef = useRef(false);
+  const [micError, setMicError] = useState<string | null>(null);
   const [recording, setRecording] = useState(false);
   const [paused, setPaused] = useState(false);
   const [seconds, setSeconds] = useState(0);
@@ -790,6 +832,10 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: {
   const mediaRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Recording time comes from the wall clock, not from counting timer ticks:
+  // browsers throttle timers in background tabs, so a tick counter falls behind
+  // the real recording the moment the student switches tab or window.
+  const clockRef = useRef<{ accumulatedMs: number; runningSince: number | null }>({ accumulatedMs: 0, runningSince: null });
   const audioElemRef = useRef<HTMLAudioElement | null>(null);
   const openAudioRef = useRef<HTMLAudioElement | null>(null);
   const wakeLockRef = useRef<any>(null);
@@ -816,8 +862,14 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: {
     pollRef.current = setInterval(async () => {
       if (Date.now() - pollStartRef.current > 6 * 60 * 1000) {
         if (pollRef.current) clearInterval(pollRef.current);
-        setProcessingError("Processing timed out. Please try again.");
         setProcessingId(null);
+        if (reprocessingRef.current) {
+          reprocessingRef.current = false;
+          toast("Still working on the new photos — check back in a few minutes.", "error");
+          setRecStep("name");
+          return;
+        }
+        setProcessingError("Processing timed out. Please try again.");
         setRecStep("saved");
         return;
       }
@@ -829,15 +881,24 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: {
           if (pollRef.current) clearInterval(pollRef.current);
           if (status === "error") {
             const errorMessage = res.data?.errorMessage;
-            setProcessingError(errorMessage || "Processing failed. Check your internet connection and try again.");
             setProcessingId(null);
+            if (reprocessingRef.current) {
+              reprocessingRef.current = false;
+              toast(errorMessage || "Couldn't reprocess with those photos — try again.", "error");
+              mutateLectures();
+              setRecStep("name");
+              return;
+            }
+            setProcessingError(errorMessage || "Processing failed. Check your internet connection and try again.");
             setRecStep("saved");
             return;
           }
+          reprocessingRef.current = false;
           const finishedId = processingId;
           await mutateLectures();
           setProcessingId(null);
           setRecStep("name");
+          clockRef.current = { accumulatedMs: 0, runningSince: null };
           setSeconds(0);
           setRecTitle("");
           autoTitleRef.current = "";
@@ -850,6 +911,52 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: {
     return () => { if (pollRef.current) clearInterval(pollRef.current); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [processingId]);
+
+  function elapsedSeconds() {
+    const { accumulatedMs, runningSince } = clockRef.current;
+    return Math.floor((accumulatedMs + (runningSince ? Date.now() - runningSince : 0)) / 1000);
+  }
+
+  function startClock(fromZero: boolean) {
+    if (fromZero) clockRef.current.accumulatedMs = 0;
+    clockRef.current.runningSince = Date.now();
+    if (timerRef.current) clearInterval(timerRef.current);
+    timerRef.current = setInterval(() => setSeconds(elapsedSeconds()), 500);
+    setSeconds(elapsedSeconds());
+  }
+
+  function stopClock() {
+    const { runningSince } = clockRef.current;
+    if (runningSince) clockRef.current.accumulatedMs += Date.now() - runningSince;
+    clockRef.current.runningSince = null;
+    if (timerRef.current) clearInterval(timerRef.current);
+    timerRef.current = null;
+    setSeconds(elapsedSeconds());
+  }
+
+  // While recording: catch the clock up the moment the tab is visible again,
+  // show the recording in the tab title so it can be found from other tabs,
+  // and warn before the tab is closed mid-lecture.
+  useEffect(() => {
+    if (!recording) return;
+    const baseTitle = document.title;
+    const syncTitle = () => {
+      document.title = `${paused ? "❚❚ Paused" : "● Recording"} ${fmt(elapsedSeconds())} — ${baseTitle}`;
+    };
+    const onVisible = () => { setSeconds(elapsedSeconds()); syncTitle(); };
+    const onBeforeUnload = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = ""; };
+    const titleTimer = setInterval(syncTitle, 1000);
+    syncTitle();
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => {
+      clearInterval(titleTimer);
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("beforeunload", onBeforeUnload);
+      document.title = baseTitle;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [recording, paused]);
 
   async function acquireWakeLock() {
     // Keep the screen awake during long recordings — a locked/sleeping screen
@@ -889,11 +996,26 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: {
 
   async function startRecording() {
     autoTitleRef.current = autoTitle();
-    const stream = await navigator.mediaDevices.getUserMedia({
-      // lecture halls: suppress room noise, level out a far-away professor
-      audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
-    });
-    const recorder = new MediaRecorder(stream);
+
+    // Browsers only expose the microphone over https or on localhost, so this
+    // is undefined when the app is opened on a plain-http LAN address.
+    if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) {
+      setMicError("Recording needs a secure connection. Open this page at http://localhost:3000 (or over https) to use the microphone.");
+      return;
+    }
+
+    let stream: MediaStream;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({
+        // lecture halls: suppress room noise, level out a far-away professor
+        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+      });
+    } catch {
+      setMicError("Microphone access was blocked. Allow it in your browser's site settings, then try again.");
+      return;
+    }
+    setMicError(null);
+    const recorder = new MediaRecorder(stream, { audioBitsPerSecond: 32000 });
     mediaRef.current = recorder;
     chunksRef.current = [];
     setRecovered(null);
@@ -907,11 +1029,11 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: {
     recorder.ondataavailable = e => { chunksRef.current.push(e.data); recSafeAppend(e.data); };
     recorder.start(250);
     // The file upload is still the source of truth; this is the words on screen.
-    live.start().catch(() => { /* recording still works without live text */ });
+    limitHitRef.current = false;
+    live.start(0).catch(() => { /* recording still works without live text */ });
     setRecording(true);
     setRecStep("recording");
-    setSeconds(0);
-    timerRef.current = setInterval(() => setSeconds(s => s + 1), 1000);
+    startClock(true);
     acquireWakeLock();
   }
 
@@ -920,32 +1042,90 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: {
     mediaRef.current.pause();
     live.stop();
     setPaused(true);
-    if (timerRef.current) clearInterval(timerRef.current);
+    stopClock();
   }
 
   function resumeRecording() {
-    if (!mediaRef.current || !paused) return;
+    if (!mediaRef.current || !paused || elapsedSeconds() >= maxRecSeconds) return;
     mediaRef.current.resume();
-    live.start().catch(() => {});
+    live.start(elapsedSeconds()).catch(() => {});
     setPaused(false);
-    timerRef.current = setInterval(() => setSeconds(s => s + 1), 1000);
+    startClock(false);
   }
 
-  async function stopRecording() {
-    if (!mediaRef.current) return;
+  async function stopRecording(showSaved = true): Promise<{ blob: Blob; url: string } | null> {
+    if (!mediaRef.current) return null;
     releaseWakeLock();
     live.stop();
     mediaRef.current.stop();
     mediaRef.current.stream.getTracks().forEach(t => t.stop());
-    if (timerRef.current) clearInterval(timerRef.current);
+    stopClock();
     setPaused(false);
     setRecording(false);
     await new Promise<void>(res => { mediaRef.current!.onstop = () => res(); });
-    const blob = new Blob(chunksRef.current, { type: "audio/webm" });
+    const raw = new Blob(chunksRef.current, { type: "audio/webm" });
+    // Stamp the real length into the file so players can show progress and seek.
+    const durationMs = Math.max(clockRef.current.accumulatedMs, 1000);
+    const blob = await fixWebmDuration(raw, durationMs, { logger: false }).catch(() => raw);
     const url = URL.createObjectURL(blob);
     setSavedBlob(blob);
     setSavedAudioUrl(url);
-    setRecStep("saved");
+    if (showSaved) setRecStep("saved");
+    return { blob, url };
+  }
+
+  // Stop no longer ends the lecture outright — it pauses and asks what to do,
+  // so a mis-tap can't cut a lecture short.
+  const [stopPrompt, setStopPrompt] = useState(false);
+  const [stopAtLimit, setStopAtLimit] = useState(false);
+
+  function requestStop(atLimit = false) {
+    if (!paused) pauseRecording();
+    setStopAtLimit(atLimit);
+    setStopPrompt(true);
+  }
+
+  function chooseResume() {
+    if (stopAtLimit) return; // nothing to resume past the plan's length limit
+    setStopPrompt(false);
+    resumeRecording();
+  }
+
+  async function chooseProcess() {
+    setStopPrompt(false);
+    const take = await stopRecording(false);
+    // Give the live stream a moment to deliver its last words, then wait for any
+    // sentence still being typeset so the saved transcript matches what was shown.
+    await new Promise(r => setTimeout(r, 1200));
+    await live.flush();
+    if (take) await processAudio(take.blob, take.url);
+  }
+
+  // Stop on its own when a recording reaches the plan's length limit.
+  useEffect(() => {
+    if (recStep !== "recording" || paused || limitHitRef.current) return;
+    if (seconds >= maxRecSeconds) {
+      limitHitRef.current = true;
+      requestStop(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [seconds, recStep, paused, maxRecSeconds]);
+
+  function chooseDelete() {
+    if (!window.confirm("Delete this recording? It can't be recovered.")) return;
+    setStopPrompt(false);
+    releaseWakeLock();
+    live.stop();
+    if (mediaRef.current) {
+      mediaRef.current.onstop = null;
+      if (mediaRef.current.state !== "inactive") mediaRef.current.stop();
+      mediaRef.current.stream.getTracks().forEach(t => t.stop());
+    }
+    stopClock();
+    chunksRef.current = [];
+    setRecording(false);
+    recSafeClear();
+    resetRecorder();
   }
 
   function addImages(files: FileList | null) {
@@ -953,7 +1133,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: {
     const picked = Array.from(files)
       .filter(f => f.type.startsWith("image/"))
       .map(f => ({ file: f, url: URL.createObjectURL(f) }));
-    setImages(prev => [...prev, ...picked].slice(0, 12));
+    setImages(prev => [...prev, ...picked].slice(0, MAX_LECTURE_PHOTOS));
   }
 
   function removeImage(i: number) {
@@ -979,24 +1159,33 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: {
     }
   }
 
-  async function processAudio() {
-    if (!savedBlob) return;
+  async function processAudio(blobArg?: Blob, urlArg?: string) {
+    const blob = blobArg ?? savedBlob;
+    const audioUrl = urlArg ?? savedAudioUrl;
+    if (!blob) return;
     if (audioElemRef.current) { audioElemRef.current.pause(); setPlaying(false); }
     setUploading(true);
     setRecStep("processing");
     try {
       const fd = new FormData();
-      fd.append("audio", savedBlob, "lecture.webm");
+      fd.append("audio", blob, "lecture.webm");
       fd.append("courseId", course.id);
       fd.append("title", lectureTitle());
-      // Board photos ride along on the same upload — the API takes up to 12.
+      fd.append("durationSeconds", String(Math.round(clockRef.current.accumulatedMs / 1000) || seconds));
+      // The live transcript lets the server skip transcribing the same audio again.
+      const liveText = live.getTranscript();
+      if (liveText) {
+        fd.append("liveTranscript", liveText);
+        fd.append("liveSegments", JSON.stringify(live.getSegments()));
+      }
+      // Board photos ride along on the same upload — up to MAX_LECTURE_PHOTOS.
       images.forEach(({ file }) => fd.append("images", file));
       const res = await apiFetch("/api/lectures", { method: "POST", body: fd });
       const lectureId = res.data?.id ?? null;
-      if (lectureId && savedAudioUrl) {
-        localAudioUrlsRef.current.set(lectureId, savedAudioUrl);
-      } else if (savedAudioUrl) {
-        URL.revokeObjectURL(savedAudioUrl);
+      if (lectureId && audioUrl) {
+        localAudioUrlsRef.current.set(lectureId, audioUrl);
+      } else if (audioUrl) {
+        URL.revokeObjectURL(audioUrl);
       }
       setProcessingId(lectureId);
       setProcessingStatus("processing");
@@ -1014,6 +1203,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: {
   function resetRecorder() {
     setProcessingId(null);
     setProcessingStatus("processing");
+    clockRef.current = { accumulatedMs: 0, runningSince: null };
     setSeconds(0);
     setRecTitle("");
     autoTitleRef.current = "";
@@ -1074,6 +1264,56 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: {
   function closeOpenLecture() {
     setOpenLectureId(null);
     setOpenLectureData(null);
+  }
+
+  // ── Attach photos to a finished recording → reprocess it ──
+  const attachInputRef = useRef<HTMLInputElement | null>(null);
+  const attachTargetRef = useRef<any>(null);
+  const reprocessingRef = useRef(false);
+  const [attachingId, setAttachingId] = useState<string | null>(null);
+  const photoCount = (l: any) => (Array.isArray(l?.imageUrls) ? l.imageUrls.length : 0);
+
+  function startAttach(l: any) {
+    if (recStep === "saved" || recStep === "processing") {
+      toast("Finish or discard the current recording first.", "error");
+      return;
+    }
+    if (photoCount(l) >= MAX_LECTURE_PHOTOS) {
+      toast(`This recording already has ${MAX_LECTURE_PHOTOS} photos.`, "error");
+      return;
+    }
+    attachTargetRef.current = l;
+    attachInputRef.current?.click();
+  }
+
+  async function attachPhotos(files: FileList | null) {
+    const l = attachTargetRef.current;
+    if (!files?.length || !l) return;
+    const room = MAX_LECTURE_PHOTOS - photoCount(l);
+    const list = Array.from(files).filter(f => f.type.startsWith("image/")).slice(0, room);
+    if (!list.length) return;
+    setAttachingId(l.id);
+    try {
+      const fd = new FormData();
+      list.forEach(f => fd.append("images", f));
+      await apiFetch(`/api/lectures/${l.id}/photos`, { method: "POST", body: fd });
+      if (files.length > room) toast(`Only ${room} more photo${room === 1 ? "" : "s"} fit on this recording — attached the first ${room}.`, "error");
+      // Watch it rebuild on the processing screen, then land on the refreshed material.
+      reprocessingRef.current = true;
+      closeOpenLecture();
+      setProcessingError("");
+      setProcessingStatus("processing");
+      setRecStep("processing");
+      setProcessingId(l.id);
+      mutateLectures();
+    } catch (e: any) {
+      const msg = String(e?.message ?? "");
+      const serverError = /"error":"([^"]+)"/.exec(msg)?.[1];
+      toast(e?.name === "QuotaError" ? msg : serverError ?? "Couldn't attach those photos — try again.", "error");
+    } finally {
+      setAttachingId(null);
+      if (attachInputRef.current) attachInputRef.current.value = "";
+    }
   }
 
   const fmt = (s: number) =>
@@ -1209,6 +1449,8 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: {
     rebuildAskMemory();
   }, [askStatusData]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const askAbortRef = useRef<AbortController | null>(null);
+
   async function sendAsk(text?: string) {
     const q = (text ?? askInput).trim();
     if (!q || askLoading) return;
@@ -1216,16 +1458,22 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: {
     setAskMessages(prev => [...prev, { role: "user", content: q }]);
     setAskInput("");
     setAskLoading(true);
+    const controller = new AbortController();
+    askAbortRef.current = controller;
     try {
       const res = await apiFetch("/api/ask", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ courseId: course.id, messages: history }),
+        signal: controller.signal,
       });
       setAskMessages(prev => [...prev, { role: "assistant", content: res.data.reply, citations: res.data.citations ?? [] }]);
     } catch (e: any) {
-      setAskMessages(prev => [...prev, { role: "assistant", content: e?.message ?? "Something went wrong — try again." }]);
+      if (e?.name !== "AbortError") {
+        setAskMessages(prev => [...prev, { role: "assistant", content: e?.message ?? "Something went wrong — try again." }]);
+      }
     } finally {
+      askAbortRef.current = null;
       setAskLoading(false);
     }
   }
@@ -1236,7 +1484,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: {
   const askAudioRef = useRef<HTMLAudioElement | null>(null);
 
   function citationClickable(c: any) {
-    return ["lecture", "video", "file", "note"].includes(c.sourceType);
+    return ["lecture", "video", "file", "note", "photo"].includes(c.sourceType);
   }
 
   async function openCitation(c: any) {
@@ -1268,6 +1516,13 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: {
       return;
     }
 
+    // Photo → open it large, beside what Flux read from it
+    if (c.sourceType === "photo") {
+      switchTab("photo");
+      setOpenPhotoId(c.sourceId);
+      return;
+    }
+
     // Note → open it in the note editor
     if (c.sourceType === "note") {
       setAskCiteLoading(c.n);
@@ -1293,7 +1548,8 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: {
       try {
         // Signed URL lets the browser stream + seek (range requests) instead
         // of downloading the whole lecture before playback starts.
-        const r = await apiFetch(`/api/lectures/${c.sourceId}/audio-url`);
+        // Recordings processed before photos were folded in cite them as "<id>_photos".
+        const r = await apiFetch(`/api/lectures/${String(c.sourceId).replace(/_photos$/, "")}/audio-url`);
         if (!r?.data?.url) throw new Error();
         setAskPlayer({ title: c.sourceTitle ?? c.label, url: `${BASE}${r.data.url}`, startSec });
       } catch {
@@ -1309,7 +1565,8 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: {
     if (!askPlayer) return;
     const el = askAudioRef.current;
     if (!el) return;
-    const seekAndPlay = () => {
+    const seekAndPlay = async () => {
+      await ensureFiniteDuration(el);
       el.currentTime = askPlayer.startSec;
       el.play().catch(() => { /* autoplay blocked — user presses play, position is set */ });
     };
@@ -1321,7 +1578,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: {
   const TABS = [
     { key: "ask",       label: t.workspace.tabs.ask,       icon: Sparkles },
     { key: "record",    label: t.workspace.tabs.record,    icon: Mic2     },
-    { key: "exam",      label: t.workspace.exam.tab,       icon: GraduationCap },
+    { key: "photo",     label: t.workspace.tabs.photo,     icon: Camera   },
     { key: "note",      label: t.workspace.tabs.note,      icon: PenLine  },
   ] as const;
 
@@ -1331,7 +1588,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: {
       <style>{WORKSPACE_KEYFRAMES}</style>
       {/* Header */}
       <div className="mb-8">
-        <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "#6E7FF3", marginBottom: 14 }}>
+        <div style={{ fontSize: 13.5, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "#6E7FF3", marginBottom: 14 }}>
           Workspace
         </div>
         {/* Class pills */}
@@ -1342,8 +1599,8 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: {
               onClick={() => onSelect(c)}
               className="whitespace-nowrap transition-all flex items-center gap-2"
               style={c.id === course.id
-                ? { padding: "8px 16px", borderRadius: 999, fontSize: 13.5, fontWeight: 600, background: tint(c), color: "white", border: `1px solid ${tint(c)}`, boxShadow: `0 4px 16px ${tint(c)}59` }
-                : { padding: "8px 16px", borderRadius: 999, fontSize: 13.5, fontWeight: 500, background: "transparent", color: "rgba(15,17,21,0.75)", border: "1px solid rgba(0,0,0,0.08)" }
+                ? { padding: "8px 16px", borderRadius: 999, fontSize: 16, fontWeight: 600, background: tint(c), color: "white", border: `1px solid ${tint(c)}`, boxShadow: `0 4px 16px ${tint(c)}59` }
+                : { padding: "8px 16px", borderRadius: 999, fontSize: 16, fontWeight: 500, background: "transparent", color: "rgba(15,17,21, 0.82)", border: "1px solid rgba(0,0,0,0.08)" }
               }
             >
               {c.id !== course.id && <span className="w-2 h-2 rounded-full" style={{ background: tint(c) }} />}
@@ -1353,7 +1610,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: {
           <button
             onClick={onBack}
             className="whitespace-nowrap transition-all"
-            style={{ padding: "8px 15px", borderRadius: 999, fontSize: 13.5, fontWeight: 500, background: "transparent", color: "rgba(31,35,40,0.66)", border: "1px solid rgba(0,0,0,0.07)" }}
+            style={{ padding: "8px 15px", borderRadius: 999, fontSize: 16, fontWeight: 500, background: "transparent", color: "rgba(31,35,40, 0.78)", border: "1px solid rgba(0,0,0,0.07)" }}
           >
             ← All classes
           </button>
@@ -1370,7 +1627,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: {
             style={{
               padding: "8px 15px",
               borderRadius: 999,
-              fontSize: 13.5,
+              fontSize: 16,
               fontWeight: tab === key ? 600 : 500,
               background: tab === key ? color : "transparent",
               color: tab === key ? "white" : "rgba(15,17,21,0.75)",
@@ -1395,8 +1652,8 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: {
               <Sparkles size={16} style={{ color: "#4B5FE8" }} />
             </div>
             <div className="flex-1 min-w-0">
-              <div className="text-sm font-semibold text-gray-900">{t.workspace.ask.title}</div>
-              <div className="text-[11px]" style={{ color: "rgba(31,35,40,0.6)" }}>
+              <div className="text-[16px] font-semibold text-gray-900">{t.workspace.ask.title}</div>
+              <div className="text-[14.5px]" style={{ color: "rgba(31,35,40, 0.75)" }}>
                 {askIndexing
                   ? t.workspace.ask.building
                   : askStatus
@@ -1405,8 +1662,8 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: {
               </div>
             </div>
             <button onClick={rebuildAskMemory} disabled={askIndexing}
-              className="flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-full transition-colors disabled:opacity-40"
-              style={{ color: "rgba(31,35,40,0.7)", border: "1px solid rgba(0,0,0,0.08)" }}>
+              className="flex items-center gap-1.5 text-[14.5px] px-3 py-1.5 rounded-full transition-colors disabled:opacity-40"
+              style={{ color: "rgba(31,35,40, 0.8)", border: "1px solid rgba(0,0,0,0.08)" }}>
               {askIndexing ? <Loader2 size={11} className="animate-spin" /> : <RotateCcw size={11} />}
               {t.workspace.ask.refresh}
             </button>
@@ -1417,22 +1674,22 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: {
             {askIndexing && askMessages.length === 0 && (
               <div className="flex flex-col items-center justify-center h-full gap-3 text-center px-6">
                 <Loader2 size={22} className="animate-spin" style={{ color: "#4B5FE8" }} />
-                <div className="text-sm" style={{ color: "rgba(31,35,40,0.8)" }}>{t.workspace.ask.building}</div>
-                <div className="text-xs" style={{ color: "rgba(31,35,40,0.55)" }}>{t.workspace.ask.buildingHint}</div>
+                <div className="text-[16px]" style={{ color: "rgba(31,35,40, 0.85)" }}>{t.workspace.ask.building}</div>
+                <div className="text-[15px]" style={{ color: "rgba(31,35,40, 0.73)" }}>{t.workspace.ask.buildingHint}</div>
               </div>
             )}
             {!askIndexing && askMessages.length === 0 && (
               <div className="flex flex-col items-center justify-center h-full gap-4 text-center px-6">
                 {(askStatus?.chunkCount ?? 0) === 0 ? (
-                  <div className="text-sm max-w-sm" style={{ color: "rgba(31,35,40,0.66)" }}>{t.workspace.ask.empty}</div>
+                  <div className="text-[16px] max-w-sm" style={{ color: "rgba(31,35,40, 0.78)" }}>{t.workspace.ask.empty}</div>
                 ) : (
                   <>
-                    <div className="text-sm" style={{ color: "rgba(31,35,40,0.66)" }}>{t.workspace.ask.subtitle}</div>
+                    <div className="text-[16px]" style={{ color: "rgba(31,35,40, 0.78)" }}>{t.workspace.ask.subtitle}</div>
                     <div className="flex flex-wrap justify-center gap-2">
                       {t.workspace.ask.quickPrompts.map(p => (
                         <button key={p} onClick={() => sendAsk(p)}
-                          className="text-xs px-3.5 py-2 rounded-full transition-colors hover:bg-black/[0.04]"
-                          style={{ color: "rgba(31,35,40,0.8)", border: "1px solid rgba(0,0,0,0.08)" }}>
+                          className="text-[15px] px-3.5 py-2 rounded-full transition-colors hover:bg-black/[0.04]"
+                          style={{ color: "rgba(31,35,40, 0.85)", border: "1px solid rgba(0,0,0,0.08)" }}>
                           {p}
                         </button>
                       ))}
@@ -1443,12 +1700,13 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: {
             )}
             {askMessages.map((m, i) => (
               <div key={i} className={`flex flex-col ${m.role === "user" ? "items-end" : "items-start"}`}>
-                <span className="text-sm max-w-[85%] leading-relaxed px-4 py-2.5 whitespace-pre-wrap"
+                <MathText className="text-[16px] max-w-[85%] leading-relaxed px-4 py-2.5 whitespace-pre-wrap"
                   style={{
                     background: m.role === "user" ? "#4B5FE8" : "rgba(0,0,0,0.05)",
                     color: m.role === "user" ? "white" : "rgba(31,35,40,0.85)",
                     borderRadius: m.role === "user" ? "18px 18px 4px 18px" : "18px 18px 18px 4px",
-                  }}>{m.content}</span>
+                  }}
+                  text={m.content} />
                 {m.role === "assistant" && (m.citations?.length ?? 0) > 0 && (
                   <div className="flex flex-wrap gap-1.5 mt-2 max-w-[85%]">
                     {m.citations!.map((c: any) => {
@@ -1462,7 +1720,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: {
                           }
                           onClick={() => playable && openCitation(c)}
                           disabled={!playable}
-                          className="inline-flex items-center gap-1 text-[10px] px-2.5 py-1 rounded-full transition-all"
+                          className="inline-flex items-center gap-1 text-[13.5px] px-2.5 py-1 rounded-full transition-all"
                           style={{
                             background: "rgba(75,95,232,0.12)",
                             color: "#4B5FE8",
@@ -1476,6 +1734,8 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: {
                             ? <Loader2 size={9} className="animate-spin" />
                             : c.sourceType === "file"
                             ? <FileText size={9} />
+                            : c.sourceType === "photo"
+                            ? <Camera size={9} />
                             : c.sourceType === "note"
                             ? <PenLine size={9} />
                             : <Play size={9} fill="currentColor" />}
@@ -1502,14 +1762,14 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: {
               style={{ background: "rgba(75,95,232,0.14)", border: "1px solid rgba(75,95,232,0.35)" }}>
               <Play size={13} style={{ color: "#4B5FE8", flexShrink: 0 }} fill="currentColor" />
               <div className="min-w-0" style={{ maxWidth: 180 }}>
-                <div className="text-[11px] font-semibold truncate" style={{ color: "#1F2328" }}>{askPlayer.title}</div>
-                <div className="text-[9px]" style={{ color: "#4B5FE8" }}>
+                <div className="text-[14.5px] font-semibold truncate" style={{ color: "#1F2328" }}>{askPlayer.title}</div>
+                <div className="text-[13px]" style={{ color: "#4B5FE8" }}>
                   from {Math.floor(askPlayer.startSec / 60)}:{String(askPlayer.startSec % 60).padStart(2, "0")}
                 </div>
               </div>
               <audio ref={askAudioRef} src={askPlayer.url} controls className="flex-1 h-8" style={{ minWidth: 0 }} />
               <button onClick={() => setAskPlayer(null)} aria-label="Close player"
-                className="p-1 rounded-lg transition-colors hover:bg-black/[0.05]" style={{ color: "rgba(31,35,40,0.6)" }}>
+                className="p-1 rounded-lg transition-colors hover:bg-black/[0.05]" style={{ color: "rgba(31,35,40, 0.75)" }}>
                 <X size={14} />
               </button>
             </div>
@@ -1520,13 +1780,21 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: {
             <input value={askInput} onChange={e => setAskInput(e.target.value)}
               onKeyDown={e => e.key === "Enter" && !e.shiftKey && sendAsk()}
               placeholder={t.workspace.ask.placeholder}
-              className="flex-1 rounded-xl px-4 py-2.5 text-sm outline-none"
+              className="flex-1 rounded-xl px-4 py-2.5 text-[16px] outline-none"
               style={{ background: "rgba(0,0,0,0.04)", border: "1px solid rgba(0,0,0,0.07)", color: "#1F2328" }} />
-            <button onClick={() => sendAsk()} disabled={!askInput.trim() || askLoading}
-              className="text-sm font-semibold px-4 py-2.5 rounded-xl disabled:opacity-40"
-              style={{ background: "#4B5FE8", color: "white" }}>
-              {t.workspace.ask.send}
-            </button>
+            {askLoading ? (
+              <button onClick={() => askAbortRef.current?.abort()} aria-label="Stop"
+                className="w-11 h-11 rounded-full flex items-center justify-center text-white shrink-0"
+                style={{ background: "#0f1115" }}>
+                <Square size={14} fill="currentColor" />
+              </button>
+            ) : (
+              <button onClick={() => sendAsk()} disabled={!askInput.trim()} aria-label="Send"
+                className="w-11 h-11 rounded-full flex items-center justify-center text-white shrink-0 disabled:opacity-40"
+                style={{ background: color }}>
+                <Send size={17} />
+              </button>
+            )}
           </div>
         </div>
       )}
@@ -1543,16 +1811,43 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: {
             className="hidden"
             onChange={e => { addImages(e.target.files); e.target.value = ""; }}
           />
+          <input
+            ref={attachInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif"
+            multiple
+            className="hidden"
+            onChange={e => attachPhotos(e.target.files)}
+          />
 
           {/* ── Open recording → everything generated for it ── */}
           {openLectureId ? (
             <div>
-              <button onClick={closeOpenLecture} className="flex items-center gap-2 text-sm transition-colors mb-6"
-                style={{ color: "rgba(15,17,21,0.55)" }}>
-                <ArrowLeft size={14} /> Back to recordings
-              </button>
+              <div className="flex items-center justify-between gap-3 mb-6">
+                <button onClick={closeOpenLecture} className="flex items-center gap-2 text-[16px] transition-colors"
+                  style={{ color: "rgba(15,17,21, 0.73)" }}>
+                  <ArrowLeft size={14} /> Back to recordings
+                </button>
+                {(() => {
+                  const l = lectures.find((x: any) => x.id === openLectureId);
+                  if (!l) return null;
+                  const count = photoCount(l);
+                  return (
+                    <button
+                      onClick={() => startAttach(l)}
+                      disabled={attachingId === l.id || count >= MAX_LECTURE_PHOTOS}
+                      className="flex items-center gap-2 text-[15.5px] font-semibold px-4 py-2 rounded-full transition-colors hover:bg-black/[0.03] disabled:opacity-50"
+                      style={{ color: "#0f1115", border: `1px solid ${color}55` }}
+                      title="Attach photos — processed with the audio as one lecture"
+                    >
+                      {attachingId === l.id ? <Loader2 size={15} className="animate-spin" /> : <ImagePlus size={15} style={{ color }} />}
+                      Attach photos · {count}/{MAX_LECTURE_PHOTOS}
+                    </button>
+                  );
+                })()}
+              </div>
               {openLectureData === null ? (
-                <div className="flex items-center gap-3 text-sm py-8" style={{ color: "rgba(15,17,21,0.55)" }}>
+                <div className="flex items-center gap-3 text-[16px] py-8" style={{ color: "rgba(15,17,21, 0.73)" }}>
                   <Loader2 size={16} className="animate-spin" /> Loading…
                 </div>
               ) : (
@@ -1566,6 +1861,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: {
                         src={openLectureData.audioUrl}
                         controls
                         className="w-full"
+                        onLoadedMetadata={(e) => { ensureFiniteDuration(e.currentTarget); }}
                         onPlay={async () => {
                           try {
                             if ("wakeLock" in navigator && !wakeLockRef.current) {
@@ -1577,7 +1873,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: {
                         onEnded={() => { wakeLockRef.current?.release?.().catch?.(() => {}); wakeLockRef.current = null; }}
                       />
                       {openLectureData.recordedAt && (
-                        <div className="text-[11px] mt-1" style={{ color: "rgba(15,17,21,0.45)" }}>
+                        <div className="text-[14.5px] mt-1" style={{ color: "rgba(15,17,21, 0.68)" }}>
                           Recorded {format(new Date(openLectureData.recordedAt), "MMMM d, yyyy")}
                         </div>
                       )}
@@ -1602,8 +1898,8 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: {
               {recovered && recStep === "name" && (
                 <div className="rounded-2xl p-4 mb-4 border flex flex-wrap items-center gap-3" style={{ background: "rgba(217,119,6,0.07)", borderColor: "rgba(217,119,6,0.3)" }}>
                   <div className="flex-1 min-w-[200px]">
-                    <div className="text-sm font-semibold" style={{ color: "#92400E" }}>Recording recovered</div>
-                    <div className="text-xs mt-0.5" style={{ color: "rgba(15,17,21,0.6)" }}>
+                    <div className="text-[16px] font-semibold" style={{ color: "#92400E" }}>Recording recovered</div>
+                    <div className="text-[15px] mt-0.5" style={{ color: "rgba(15,17,21, 0.75)" }}>
                       &ldquo;{recovered.meta.title}&rdquo; · {recovered.meta.courseName} · {(recovered.blob.size / 1048576).toFixed(1)} MB — interrupted before it was saved.
                     </div>
                   </div>
@@ -1616,14 +1912,14 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: {
                         setRecStep("saved");
                         setRecovered(null);
                       }}
-                      className="text-xs font-semibold px-4 py-2 rounded-full text-white"
+                      className="text-[15px] font-semibold px-4 py-2 rounded-full text-white"
                       style={{ background: "#D97706" }}>
                       Restore
                     </button>
                     <button
                       onClick={() => { recSafeClear(); setRecovered(null); }}
-                      className="text-xs px-3 py-2 transition-colors hover:text-red-600"
-                      style={{ color: "rgba(15,17,21,0.5)" }}>
+                      className="text-[15px] px-3 py-2 transition-colors hover:text-red-600"
+                      style={{ color: "rgba(15,17,21, 0.7)" }}>
                       Discard
                     </button>
                   </div>
@@ -1634,17 +1930,17 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: {
               {recStep === "name" && (
                 <div className="rounded-2xl p-8 flex flex-col items-center gap-5" style={{ background: "#FFFFFF", border: "1px solid rgba(0,0,0,0.08)" }}>
                   <div className="w-full max-w-xl space-y-2">
-                    <label className="text-[10px] uppercase tracking-widest block" style={{ color: "rgba(15,17,21,0.55)" }}>Lecture title (optional)</label>
+                    <label className="text-[13.5px] uppercase tracking-widest block" style={{ color: "rgba(15,17,21, 0.73)" }}>Lecture title (optional)</label>
                     <input
                       autoFocus
                       value={recTitle}
                       onChange={e => setRecTitle(e.target.value)}
                       onKeyDown={e => e.key === "Enter" && startRecording()}
                       placeholder={lectureTitle()}
-                      className="w-full rounded-xl px-4 py-3 text-sm outline-none"
+                      className="w-full rounded-xl px-4 py-3 text-[16px] outline-none"
                       style={{ background: "rgba(0,0,0,0.03)", border: "1px solid rgba(0,0,0,0.08)", color: "#0f1115" }}
                     />
-                    <p className="text-xs" style={{ color: "rgba(15,17,21,0.45)" }}>
+                    <p className="text-[15px]" style={{ color: "rgba(15,17,21, 0.68)" }}>
                       Leave it blank and we&rsquo;ll name it &ldquo;{lectureTitle()}&rdquo;.
                     </p>
                   </div>
@@ -1655,7 +1951,15 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: {
                   >
                     <Mic size={24} />
                   </button>
-                  <p className="text-xs" style={{ color: "rgba(15,17,21,0.55)" }}>Click to start recording</p>
+                  <p className="text-[15px]" style={{ color: "rgba(15,17,21, 0.73)" }}>Click to start recording</p>
+                  {micError && (
+                    <p
+                      className="text-[15px] text-center max-w-md rounded-xl px-4 py-3"
+                      style={{ color: "#B91C1C", background: "rgba(220,38,38,0.06)", border: "1px solid rgba(220,38,38,0.2)" }}
+                    >
+                      {micError}
+                    </p>
+                  )}
                 </div>
               )}
 
@@ -1672,10 +1976,10 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: {
                         animation: live.connected && !paused ? "livePulse 1.4s ease-in-out infinite" : "none",
                       }}
                     />
-                    <span className="text-sm font-semibold" style={{ color: "#0f1115" }}>
+                    <span className="text-[16px] font-semibold" style={{ color: "#0f1115" }}>
                       {paused ? "Paused" : live.connected ? "Live transcript" : "Connecting…"}
                     </span>
-                    <span className="text-xs truncate hidden sm:block" style={{ color: "rgba(15,17,21,0.45)" }}>
+                    <span className="text-[15px] truncate hidden sm:block" style={{ color: "rgba(15,17,21, 0.68)" }}>
                       · {lectureTitle()}
                     </span>
                     <span className="ml-auto text-xl font-medium shrink-0"
@@ -1686,16 +1990,17 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: {
 
                   <div ref={liveScrollRef} className="overflow-y-auto px-8 py-6" style={{ height: "min(52vh, 520px)" }}>
                     {live.fullText ? (
-                      <p className="text-[17px] leading-[1.9] whitespace-pre-wrap" style={{ color: "#0f1115" }}>
-                        {toMathNotation(live.text)}
+                      <p className="text-[19px] leading-[1.9] whitespace-pre-wrap" style={{ color: "#0f1115" }}>
+                        {/* Settled sentences arrive typeset, in the same style as the notes. */}
+                        <MathText text={live.text} />
                         {live.partial && (
-                          <span style={{ color: "rgba(15,17,21,0.4)" }}>
+                          <span style={{ color: "rgba(15,17,21, 0.65)" }}>
                             {live.text ? " " : ""}{toMathNotation(live.partial)}
                           </span>
                         )}
                       </p>
                     ) : (
-                      <p className="text-[15px]" style={{ color: "rgba(15,17,21,0.4)" }}>
+                      <p className="text-[17.5px]" style={{ color: "rgba(15,17,21, 0.65)" }}>
                         Start speaking — words appear here as you go.
                       </p>
                     )}
@@ -1726,28 +2031,79 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: {
                       style={{ border: "1px solid rgba(0,0,0,0.12)" }}
                     >
                       {paused ? <Play size={16} style={{ color: "#0f1115" }} /> : <Pause size={16} style={{ color: "#0f1115" }} />}
-                      <span className="text-sm font-medium" style={{ color: "#0f1115" }}>{paused ? "Resume" : "Pause"}</span>
+                      <span className="text-[16px] font-medium" style={{ color: "#0f1115" }}>{paused ? "Resume" : "Pause"}</span>
                     </button>
                     <button
                       onClick={() => imageInputRef.current?.click()}
-                      disabled={images.length >= 12}
-                      title={images.length >= 12 ? "Up to 12 photos per lecture" : "Add a photo of the board or slides"}
+                      disabled={images.length >= MAX_LECTURE_PHOTOS}
+                      title={images.length >= MAX_LECTURE_PHOTOS ? `Up to ${MAX_LECTURE_PHOTOS} photos per lecture` : "Add a photo of the board or slides"}
                       className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl transition-colors hover:bg-black/[0.03] disabled:opacity-40"
                       style={{ border: "1px solid rgba(0,0,0,0.12)" }}
                     >
                       <Camera size={16} style={{ color: "#0f1115" }} />
-                      <span className="text-sm font-medium" style={{ color: "#0f1115" }}>
+                      <span className="text-[16px] font-medium" style={{ color: "#0f1115" }}>
                         Photo{images.length ? ` (${images.length})` : ""}
                       </span>
                     </button>
                     <button
-                      onClick={stopRecording}
+                      onClick={() => requestStop()}
                       className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-white transition-opacity hover:opacity-90"
                       style={{ background: "#DC2626" }}
                     >
                       <StopCircle size={16} />
-                      <span className="text-sm font-medium">Stop</span>
+                      <span className="text-[16px] font-medium">Stop</span>
                     </button>
+                  </div>
+                </div>
+              )}
+
+              {stopPrompt && recStep === "recording" && (
+                <div
+                  className="fixed inset-0 z-50 flex items-center justify-center px-4"
+                  style={{ background: "rgba(15,17,21,0.45)" }}
+                  onClick={chooseResume}
+                  onKeyDown={e => e.key === "Escape" && chooseResume()}
+                >
+                  <div
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="stop-title"
+                    className="w-full max-w-md rounded-2xl p-6"
+                    style={{ background: "#FFFFFF", boxShadow: "0 24px 60px rgba(0,0,0,0.25)" }}
+                    onClick={e => e.stopPropagation()}
+                  >
+                    <div id="stop-title" className="text-[20px] font-bold" style={{ color: "#0f1115" }}>
+                      {stopAtLimit ? "Recording limit reached" : "Recording paused"}
+                    </div>
+                    <p className="text-[16px] mt-1.5 mb-5" style={{ color: "rgba(15,17,21, 0.75)" }}>
+                      {stopAtLimit
+                        ? `This recording hit the ${maxRecSeconds >= 3600 ? `${maxRecSeconds / 3600}-hour` : `${Math.round(maxRecSeconds / 60)}-minute`} limit on your plan. Process it now, or delete it.`
+                        : `${fmt(seconds)} recorded${images.length ? ` · ${images.length} photo${images.length === 1 ? "" : "s"}` : ""}. What would you like to do?`}
+                    </p>
+                    <div className="flex flex-col gap-2.5">
+                      <button
+                        onClick={chooseProcess}
+                        autoFocus
+                        className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl text-white text-[17px] font-semibold transition-opacity hover:opacity-90"
+                        style={{ background: color }}
+                      >
+                        <Sparkles size={17} /> Process lecture
+                      </button>
+                      {!stopAtLimit && <button
+                        onClick={chooseResume}
+                        className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl text-[17px] font-semibold transition-colors hover:bg-black/[0.03]"
+                        style={{ border: "1px solid rgba(0,0,0,0.12)", color: "#0f1115" }}
+                      >
+                        <Mic2 size={17} /> Resume recording
+                      </button>}
+                      <button
+                        onClick={chooseDelete}
+                        className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl text-[17px] font-semibold transition-colors hover:bg-red-50"
+                        style={{ color: "#DC2626" }}
+                      >
+                        <Trash2 size={17} /> Delete recording
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
@@ -1757,15 +2113,15 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: {
                 <div className="rounded-2xl p-6 space-y-4" style={{ background: "#FFFFFF", border: "1px solid rgba(0,0,0,0.08)" }}>
                   <div className="flex items-center gap-2.5">
                     <span className="w-3 h-3 rounded-full shrink-0" style={{ background: color }} />
-                    <span className="text-[15px] font-semibold" style={{ color: "#0f1115" }}>{lectureTitle()}</span>
-                    <span className="ml-auto text-xs" style={{ color: "rgba(15,17,21,0.55)" }}>{fmt(seconds)}</span>
+                    <span className="text-[17.5px] font-semibold" style={{ color: "#0f1115" }}>{lectureTitle()}</span>
+                    <span className="ml-auto text-[15px]" style={{ color: "rgba(15,17,21, 0.73)" }}>{fmt(seconds)}</span>
                   </div>
 
                   <input
                     value={recTitle}
                     onChange={e => setRecTitle(e.target.value)}
                     placeholder="Rename this lecture (optional)"
-                    className="w-full rounded-xl px-4 py-3 text-sm outline-none"
+                    className="w-full rounded-xl px-4 py-3 text-[16px] outline-none"
                     style={{ background: "rgba(0,0,0,0.03)", border: "1px solid rgba(0,0,0,0.08)", color: "#0f1115" }}
                   />
 
@@ -1775,20 +2131,20 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: {
                     style={{ border: "1px solid rgba(0,0,0,0.08)" }}
                   >
                     {playing ? <Pause size={15} style={{ color }} /> : <Play size={15} style={{ color }} />}
-                    <span className="text-sm" style={{ color: "#0f1115" }}>{playing ? "Pause" : "Listen to recording"}</span>
+                    <span className="text-[16px]" style={{ color: "#0f1115" }}>{playing ? "Pause" : "Listen to recording"}</span>
                   </button>
 
                   {/* Board photos */}
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-[10px] uppercase tracking-widest" style={{ color: "rgba(15,17,21,0.55)" }}>
-                        Board photos {images.length ? `(${images.length}/12)` : ""}
+                      <span className="text-[13.5px] uppercase tracking-widest" style={{ color: "rgba(15,17,21, 0.73)" }}>
+                        Board photos {images.length ? `(${images.length}/${MAX_LECTURE_PHOTOS})` : ""}
                       </span>
                       <button
                         onClick={() => imageInputRef.current?.click()}
-                        disabled={images.length >= 12}
-                        className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full transition-colors hover:bg-black/[0.03] disabled:opacity-40"
-                        style={{ color: "rgba(15,17,21,0.75)", border: "1px solid rgba(0,0,0,0.1)" }}>
+                        disabled={images.length >= MAX_LECTURE_PHOTOS}
+                        className="flex items-center gap-1.5 text-[15px] px-3 py-1.5 rounded-full transition-colors hover:bg-black/[0.03] disabled:opacity-40"
+                        style={{ color: "rgba(15,17,21, 0.82)", border: "1px solid rgba(0,0,0,0.1)" }}>
                         <ImagePlus size={12} /> Add photos
                       </button>
                     </div>
@@ -1809,29 +2165,29 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: {
                         ))}
                       </div>
                     ) : (
-                      <p className="text-xs" style={{ color: "rgba(15,17,21,0.45)" }}>
+                      <p className="text-[15px]" style={{ color: "rgba(15,17,21, 0.68)" }}>
                         Photos of the whiteboard or slides are read alongside the audio.
                       </p>
                     )}
                   </div>
 
                   {processingError && (
-                    <div className="rounded-xl px-4 py-3 text-sm" style={{ background: "rgba(220,38,38,0.06)", border: "1px solid rgba(220,38,38,0.2)", color: "#DC2626" }}>
+                    <div className="rounded-xl px-4 py-3 text-[16px]" style={{ background: "rgba(220,38,38,0.06)", border: "1px solid rgba(220,38,38,0.2)", color: "#DC2626" }}>
                       {processingError}
                     </div>
                   )}
 
                   <button
-                    onClick={processAudio}
+                    onClick={() => processAudio()}
                     disabled={uploading}
                     className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl text-white transition-opacity hover:opacity-90 disabled:opacity-40"
                     style={{ background: color, boxShadow: `0 6px 20px ${color}40` }}
                   >
                     {uploading ? <Loader2 size={17} className="animate-spin" /> : <Sparkles size={17} />}
-                    <span className="text-base font-semibold">{uploading ? "Processing…" : "Process Lecture"}</span>
+                    <span className="text-[17px] font-semibold">{uploading ? "Sending it over…" : "Make my study material"}</span>
                   </button>
 
-                  <button onClick={resetRecorder} className="w-full text-xs transition-colors hover:text-red-600" style={{ color: "rgba(15,17,21,0.4)" }}>
+                  <button onClick={resetRecorder} className="w-full text-[15px] transition-colors hover:text-red-600" style={{ color: "rgba(15,17,21, 0.65)" }}>
                     Discard recording
                   </button>
                 </div>
@@ -1839,7 +2195,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: {
 
               {/* ── Step: processing ── */}
               {recStep === "processing" && (
-                <div className="rounded-2xl p-14 flex flex-col items-center gap-7" style={{ background: "#FFFFFF", border: "1px solid rgba(0,0,0,0.08)" }}>
+                <div className="rounded-2xl p-8 md:p-11 flex flex-col items-center gap-6" style={{ background: "#FFFFFF", border: "1px solid rgba(0,0,0,0.08)" }}>
                   <div className="relative flex items-center justify-center w-28 h-28">
                     {[0, 1, 2].map(i => (
                       <div key={i} className="absolute rounded-full" style={{
@@ -1851,13 +2207,51 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: {
                     ))}
                     <Loader2 size={22} className="animate-spin relative z-10" style={{ color }} />
                   </div>
-                  <div className="text-center space-y-1">
-                    <div className="text-sm font-semibold" style={{ color: "#0f1115" }}>
-                      {processingStatus === "transcribing" ? "Transcribing your lecture…"
-                        : processingStatus === "generating" ? "Generating your summary…"
-                        : "Uploading & analysing…"}
+                  <div className="text-center space-y-2.5 max-w-lg">
+                    <div className="text-[23px] font-bold" style={{ color: "#0f1115" }}>
+                      {processingStatus === "transcribing" ? "Writing down every word"
+                        : processingStatus === "generating" ? "Building your study material"
+                        : "Getting your recording ready"}
                     </div>
+                    <p className="text-[17.5px] leading-relaxed" style={{ color: "rgba(15,17,21, 0.86)" }}>
+                      {processingStatus === "transcribing"
+                        ? "Transcribing the audio, then proofreading it for misheard terms, names and formulas — and reading in your slides and any photos you took in class."
+                        : processingStatus === "generating"
+                        ? "Four things at once, from the whole lecture. It's also being filed into your course memory, so you can ask about it weeks from now."
+                        : "Compressing the audio so it moves fast."}
+                    </p>
                   </div>
+
+                  {/* What actually comes out the other end */}
+                  <div className="grid grid-cols-2 gap-3 w-full max-w-lg">
+                    {[
+                      { Icon: FileText,   label: "Cheat sheet",   note: "the whole lecture, condensed" },
+                      { Icon: ListChecks, label: "Key points",    note: "what actually mattered" },
+                      { Icon: Layers,     label: "Flashcards",    note: "ready to drill" },
+                      { Icon: HelpCircle, label: "Practice quiz", note: "every answer timestamped" },
+                    ].map(({ Icon, label, note }) => {
+                      const building = processingStatus === "generating";
+                      const done = processingStatus === "ready";
+                      const lit = building || done;
+                      return (
+                        <div key={label} className="rounded-xl p-4 flex items-start gap-3 transition-all duration-500" style={{
+                          background: lit ? `${color}0d` : "rgba(0,0,0,0.02)",
+                          border: `1px solid ${lit ? `${color}33` : "rgba(0,0,0,0.06)"}`,
+                        }}>
+                          <span className="mt-0.5 shrink-0">
+                            {done ? <Check size={18} style={{ color }} />
+                              : building ? <Loader2 size={18} className="animate-spin" style={{ color }} />
+                              : <Icon size={18} style={{ color: "rgba(15,17,21, 0.7)" }} />}
+                          </span>
+                          <div className="min-w-0 text-left">
+                            <div className="text-[17.5px] font-semibold leading-tight" style={{ color: lit ? "#0f1115" : "rgba(15,17,21,0.72)" }}>{label}</div>
+                            <div className="text-[15px] leading-snug mt-1" style={{ color: lit ? "rgba(15,17,21,0.8)" : "rgba(15,17,21,0.62)" }}>{note}</div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
                   {/* Where in the pipeline this lecture is */}
                   <div className="flex items-center gap-3 flex-wrap justify-center">
                     {(["processing", "transcribing", "generating", "ready"] as const).map((s, i) => {
@@ -1866,22 +2260,26 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: {
                       const active = i === idx;
                       return (
                         <div key={s} className="flex items-center gap-2">
-                          <span className="w-2 h-2 rounded-full" style={{ background: done || active ? color : "rgba(0,0,0,0.14)" }} />
-                          <span className="text-xs" style={{ color: i <= idx ? "rgba(15,17,21,0.75)" : "rgba(15,17,21,0.35)" }}>
-                            {s === "processing" ? "Upload" : s === "transcribing" ? "Transcribe" : s === "generating" ? "Summarise" : "Done"}
+                          <span className="w-2.5 h-2.5 rounded-full" style={{ background: done || active ? color : "rgba(0,0,0,0.22)" }} />
+                          <span className={`text-[17px] ${active ? "font-semibold" : "font-medium"}`} style={{ color: i <= idx ? "#0f1115" : "rgba(15,17,21,0.6)" }}>
+                            {s === "processing" ? "Upload" : s === "transcribing" ? "Transcribe" : s === "generating" ? "Generate" : "Ready"}
                           </span>
-                          {i < 3 && <span className="w-6 h-px" style={{ background: "rgba(0,0,0,0.1)" }} />}
+                          {i < 3 && <span className="w-6 h-px" style={{ background: "rgba(0,0,0,0.2)" }} />}
                         </div>
                       );
                     })}
                   </div>
+
+                  <p className="text-[16px] text-center" style={{ color: "rgba(15,17,21, 0.82)" }}>
+                    This runs on our servers — you can leave this page and come back.
+                  </p>
                 </div>
               )}
 
               {/* ── Recordings list ── */}
               {audioLectures.length > 0 && recStep !== "recording" && (
                 <div className="mt-2">
-                  <p className="text-xs uppercase tracking-widest mb-3" style={{ color: "rgba(15,17,21,0.55)" }}>Recordings</p>
+                  <p className="text-[15px] uppercase tracking-widest mb-3" style={{ color: "rgba(15,17,21, 0.73)" }}>Recordings</p>
                   <div className="space-y-2">
                     {audioLectures.map(l => {
                       const ready = l.status === "ready";
@@ -1893,12 +2291,12 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: {
                           }}>
                           {confirmArchiveId === l.id ? (
                             <div className="flex items-center justify-between gap-3">
-                              <p className="text-xs flex-1" style={{ color: "rgba(15,17,21,0.65)" }}>
+                              <p className="text-[15px] flex-1" style={{ color: "rgba(15,17,21, 0.78)" }}>
                                 Delete <span className="font-medium" style={{ color: "#0f1115" }}>&ldquo;{l.title}&rdquo;</span>?
                               </p>
                               <div className="flex items-center gap-2 shrink-0">
-                                <button onClick={() => setConfirmArchiveId(null)} className="text-xs px-3 py-1.5 rounded-lg" style={{ color: "rgba(15,17,21,0.6)" }}>Cancel</button>
-                                <button onClick={() => archiveLecture(l.id)} className="text-xs px-3 py-1.5 rounded-lg text-white" style={{ background: "#DC2626" }}>Delete</button>
+                                <button onClick={() => setConfirmArchiveId(null)} className="text-[15px] px-3 py-1.5 rounded-lg" style={{ color: "rgba(15,17,21, 0.75)" }}>Cancel</button>
+                                <button onClick={() => archiveLecture(l.id)} className="text-[15px] px-3 py-1.5 rounded-lg text-white" style={{ background: "#DC2626" }}>Delete</button>
                               </div>
                             </div>
                           ) : (
@@ -1913,8 +2311,8 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: {
                                   <Mic2 size={12} style={{ color }} />
                                 </span>
                                 <span className="flex-1 min-w-0">
-                                  <span className="block text-sm truncate" style={{ color: "#0f1115" }}>{l.title}</span>
-                                  <span className="block text-xs mt-0.5" style={{ color: "rgba(15,17,21,0.5)" }}>
+                                  <span className="block text-[16px] truncate" style={{ color: "#0f1115" }}>{l.title}</span>
+                                  <span className="block text-[15px] mt-0.5" style={{ color: "rgba(15,17,21, 0.7)" }}>
                                     {ready
                                       ? `${format(new Date(l.recordedAt), "MMM d, yyyy")} · Click to open`
                                       : l.status === "error" ? "Processing failed" : "Still processing…"}
@@ -1923,18 +2321,30 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: {
                               </button>
                               <div className="flex items-center gap-2 shrink-0">
                                 {ready ? (
-                                  <ChevronRight size={16} style={{ color: "rgba(15,17,21,0.35)" }} />
+                                  <ChevronRight size={16} style={{ color: "rgba(15,17,21, 0.62)" }} />
                                 ) : l.status === "error" ? (
-                                  <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full" style={{ color: "#DC2626", background: "rgba(220,38,38,0.08)" }}>Failed</span>
+                                  <span className="text-[13px] font-semibold px-2 py-0.5 rounded-full" style={{ color: "#DC2626", background: "rgba(220,38,38,0.08)" }}>Failed</span>
                                 ) : (
-                                  <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1" style={{ color: "rgba(15,17,21,0.55)", background: "rgba(0,0,0,0.06)" }}>
+                                  <span className="text-[13px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1" style={{ color: "rgba(15,17,21, 0.73)", background: "rgba(0,0,0,0.06)" }}>
                                     <Loader2 size={8} className="animate-spin" /> Processing
                                   </span>
+                                )}
+                                {ready && (
+                                  <button
+                                    onClick={() => startAttach(l)}
+                                    disabled={attachingId === l.id || photoCount(l) >= MAX_LECTURE_PHOTOS}
+                                    className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-[13.5px] font-semibold transition-colors hover:bg-black/[0.04] disabled:opacity-40"
+                                    style={{ color: "rgba(15,17,21, 0.75)" }}
+                                    title={photoCount(l) >= MAX_LECTURE_PHOTOS ? `${MAX_LECTURE_PHOTOS} photos attached` : "Attach photos — processed with the audio as one lecture"}
+                                  >
+                                    {attachingId === l.id ? <Loader2 size={14} className="animate-spin" /> : <ImagePlus size={15} />}
+                                    {photoCount(l)}/{MAX_LECTURE_PHOTOS}
+                                  </button>
                                 )}
                                 <button
                                   onClick={() => setConfirmArchiveId(l.id)}
                                   className="p-1.5 rounded-lg transition-colors hover:bg-red-50"
-                                  style={{ color: "rgba(15,17,21,0.25)" }}
+                                  style={{ color: "rgba(15,17,21, 0.57)" }}
                                   title="Delete recording"
                                 >
                                   <Trash2 size={13} />
@@ -1952,20 +2362,20 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: {
               {/* ── Archived recordings ── */}
               {archivedLectures.length > 0 && recStep !== "recording" && (
                 <div className="mt-6">
-                  <p className="text-xs uppercase tracking-widest mb-3" style={{ color: "rgba(15,17,21,0.4)" }}>Archived</p>
+                  <p className="text-[15px] uppercase tracking-widest mb-3" style={{ color: "rgba(15,17,21, 0.65)" }}>Archived</p>
                   <div className="space-y-2">
                     {archivedLectures.map(l => (
                       <div key={l.id} className="rounded-xl px-4 py-3 flex items-center gap-3"
                         style={{ background: "rgba(0,0,0,0.02)", border: "1px solid rgba(0,0,0,0.06)" }}>
                         <div className="flex-1 min-w-0">
-                          <div className="text-sm truncate" style={{ color: "rgba(15,17,21,0.6)" }}>{l.title}</div>
-                          <div className="text-xs mt-0.5" style={{ color: "rgba(15,17,21,0.4)" }}>
+                          <div className="text-[16px] truncate" style={{ color: "rgba(15,17,21, 0.75)" }}>{l.title}</div>
+                          <div className="text-[15px] mt-0.5" style={{ color: "rgba(15,17,21, 0.65)" }}>
                             {format(new Date(l.recordedAt), "MMM d, yyyy")}
                           </div>
                         </div>
                         <button onClick={() => restoreLecture(l.id)}
-                          className="text-xs px-3 py-1.5 rounded-full transition-colors hover:bg-black/[0.03]"
-                          style={{ color: "rgba(15,17,21,0.7)", border: "1px solid rgba(0,0,0,0.1)" }}>
+                          className="text-[15px] px-3 py-1.5 rounded-full transition-colors hover:bg-black/[0.03]"
+                          style={{ color: "rgba(15,17,21, 0.8)", border: "1px solid rgba(0,0,0,0.1)" }}>
                           Restore
                         </button>
                         <button
@@ -1979,7 +2389,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: {
                             if (ok) permanentlyDelete(l.id);
                           }}
                           className="p-1.5 rounded-lg transition-colors hover:bg-red-50"
-                          style={{ color: "rgba(15,17,21,0.25)" }}
+                          style={{ color: "rgba(15,17,21, 0.57)" }}
                           title="Delete permanently"
                         >
                           <Trash2 size={13} />
@@ -1994,201 +2404,130 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: {
         </div>
       )}
 
-      {/* ── EXAM MODE ── */}
-      {tab === "exam" && (
-        <div className="space-y-4">
-          {!examContent && !examLoading && (
-            <div className="rounded-3xl border p-8 md:p-12 text-center" style={{ background: "#FFFFFF", borderColor: "rgba(0,0,0,0.07)" }}>
-              <div className="w-14 h-14 rounded-2xl mx-auto mb-4 flex items-center justify-center" style={{ background: "linear-gradient(135deg,#4B5FE8,#6E7FF3)", boxShadow: "0 8px 24px rgba(75,95,232,0.35)" }}>
-                <GraduationCap size={26} className="text-white" />
-              </div>
-              <h2 className="text-xl font-bold text-gray-900 mb-2" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>{t.workspace.exam.title}</h2>
-              <p className="text-sm text-gray-600 max-w-md mx-auto mb-7 leading-relaxed">{t.workspace.exam.tagline}</p>
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-                <div className="flex items-center gap-2">
-                  <label className="text-xs text-gray-500 whitespace-nowrap">{t.workspace.exam.dateLabel}</label>
-                  <input type="date" value={examDateInput} onChange={e => setExamDateInput(e.target.value)}
-                    className="rounded-xl border px-3 py-2 text-sm text-gray-900 outline-none"
-                    style={{ borderColor: "rgba(0,0,0,0.1)", background: "#FBFBFA" }} />
-                </div>
-                <button onClick={generateExam}
-                  className="flex items-center gap-2 text-sm font-semibold px-6 py-2.5 rounded-full text-white hover:opacity-90 transition-opacity"
-                  style={{ background: "#4B5FE8", boxShadow: "0 4px 16px rgba(75,95,232,0.35)" }}>
-                  <Sparkles size={15} /> {t.workspace.exam.generate}
+      {/* ── ADD PHOTO ── */}
+      {tab === "photo" && (
+        <div className="space-y-5">
+          <input
+            ref={photoInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif"
+            multiple
+            className="hidden"
+            onChange={e => uploadPhotos(e.target.files)}
+          />
+
+          <div className="rounded-3xl border p-7 md:p-9 flex flex-col md:flex-row md:items-center gap-5" style={{ background: "#FFFFFF", borderColor: "rgba(0,0,0,0.08)" }}>
+            <div className="flex-1 min-w-0">
+              <h2 className="text-[24px] font-bold mb-1.5" style={{ color: "#0f1115", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                Add photos to {course.name}
+              </h2>
+              <p className="text-[17px] leading-relaxed" style={{ color: "rgba(15,17,21,0.82)" }}>
+                The whiteboard, a slide, your handwritten notes, a page of the textbook. Flux reads each photo — formulas included — so Ask can answer from it.
+              </p>
+            </div>
+            <button
+              onClick={() => photoInputRef.current?.click()}
+              disabled={photoUploading}
+              className="shrink-0 flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-2xl text-white text-[17px] font-semibold transition-opacity hover:opacity-90 disabled:opacity-50"
+              style={{ background: color, boxShadow: `0 6px 20px ${color}40` }}
+            >
+              {photoUploading ? <Loader2 size={19} className="animate-spin" /> : <ImagePlus size={19} />}
+              {photoUploading ? "Adding…" : "Take or add photos"}
+            </button>
+          </div>
+
+          {photos.length === 0 && !photoUploading ? (
+            <div className="rounded-3xl border border-dashed p-10 text-center" style={{ borderColor: "rgba(0,0,0,0.15)" }}>
+              <Camera size={30} className="mx-auto mb-3" style={{ color: "rgba(15,17,21,0.5)" }} />
+              <p className="text-[17px]" style={{ color: "rgba(15,17,21,0.75)" }}>No photos in this class yet.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+              {photos.map((p: any) => (
+                <button
+                  key={p.id}
+                  onClick={() => setOpenPhotoId(p.id)}
+                  className="text-left rounded-2xl border overflow-hidden transition-shadow hover:shadow-md"
+                  style={{ background: "#FFFFFF", borderColor: "rgba(0,0,0,0.08)" }}
+                >
+                  <div className="relative" style={{ aspectRatio: "4 / 3", background: "rgba(0,0,0,0.04)" }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={`${BASE}${p.imageUrl}`} alt="Class photo" className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
+                    {p.status === "reading" && (
+                      <span className="absolute left-2 top-2 flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[13px] font-semibold text-white" style={{ background: "rgba(15,17,21,0.72)" }}>
+                        <Loader2 size={12} className="animate-spin" /> Reading…
+                      </span>
+                    )}
+                    {p.status === "error" && (
+                      <span className="absolute left-2 top-2 flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[13px] font-semibold text-white" style={{ background: "#DC2626" }}>
+                        <AlertTriangle size={12} /> Couldn't read
+                      </span>
+                    )}
+                  </div>
+                  <div className="p-3">
+                    <p className="text-[15px] leading-snug line-clamp-2" style={{ color: p.text ? "rgba(15,17,21,0.85)" : "rgba(15,17,21,0.6)" }}>
+                      {p.status === "reading" ? "Flux is reading this photo…"
+                        : p.status === "error" ? "Tap to try again."
+                        : p.text ? latexToReadablePreview(p.text) : "Nothing readable in this photo."}
+                    </p>
+                    <p className="text-[13.5px] mt-1.5" style={{ color: "rgba(15,17,21,0.6)" }}>
+                      {format(new Date(p.createdAt), "d MMM, h:mm a")}
+                    </p>
+                  </div>
                 </button>
-              </div>
-              <p className="text-[11px] text-gray-400 mt-5">{t.workspace.exam.note}</p>
+              ))}
             </div>
           )}
 
-          {examLoading && (
-            <div className="rounded-3xl border p-12 text-center" style={{ background: "#FFFFFF", borderColor: "rgba(0,0,0,0.07)" }}>
-              <Loader2 size={28} className="animate-spin mx-auto mb-4" style={{ color: "#4B5FE8" }} />
-              <div className="text-sm font-medium text-gray-900 mb-1">{t.workspace.exam.generating}</div>
-              <p className="text-xs text-gray-500">{t.workspace.exam.generatingSub}</p>
-            </div>
-          )}
-
-          {examContent && !examLoading && (
-            <>
-              {/* Status / countdown bar */}
-              <div className="rounded-2xl border p-4 flex flex-wrap items-center gap-3" style={{ background: "#FFFFFF", borderColor: "rgba(0,0,0,0.07)" }}>
-                <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "linear-gradient(135deg,#4B5FE8,#6E7FF3)" }}>
-                  <GraduationCap size={17} className="text-white" />
+          {openPhoto && (
+            <div
+              className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-8"
+              style={{ background: "rgba(15,17,21,0.6)" }}
+              onClick={() => setOpenPhotoId(null)}
+            >
+              <div
+                className="w-full max-w-5xl max-h-[90vh] rounded-3xl overflow-hidden flex flex-col md:flex-row"
+                style={{ background: "#FFFFFF" }}
+                onClick={e => e.stopPropagation()}
+              >
+                <div className="md:flex-[3] min-h-0 flex items-center justify-center" style={{ background: "#0f1115" }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={`${BASE}${openPhoto.imageUrl}`} alt="Class photo" className="max-h-[45vh] md:max-h-[90vh] w-full object-contain" />
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-semibold text-gray-900">
-                    {examDaysLeft != null
-                      ? (examDaysLeft > 0 ? t.workspace.exam.daysLeft.replace("{n}", String(examDaysLeft)) : t.workspace.exam.examToday)
-                      : t.workspace.exam.title}
+                <div className="md:flex-[2] min-h-0 flex flex-col">
+                  <div className="flex items-center gap-2 px-5 py-4 border-b" style={{ borderColor: "rgba(0,0,0,0.08)" }}>
+                    <span className="text-[17px] font-semibold" style={{ color: "#0f1115" }}>What Flux read</span>
+                    <span className="text-[14px]" style={{ color: "rgba(15,17,21,0.6)" }}>· {format(new Date(openPhoto.createdAt), "d MMM, h:mm a")}</span>
+                    <button onClick={() => setOpenPhotoId(null)} className="ml-auto p-1.5 rounded-lg hover:bg-black/5" aria-label="Close">
+                      <X size={18} style={{ color: "#0f1115" }} />
+                    </button>
                   </div>
-                  <div className="text-[11px] text-gray-500">
-                    {t.workspace.exam.builtFrom.replace("{s}", String(examContent.sourceCount ?? 0)).replace("{c}", String(examContent.chunkCount ?? 0))}
+                  <div className="flex-1 min-h-0 overflow-y-auto px-5 py-4">
+                    {openPhoto.status === "reading" ? (
+                      <p className="flex items-center gap-2 text-[16px]" style={{ color: "rgba(15,17,21,0.75)" }}>
+                        <Loader2 size={16} className="animate-spin" /> Reading this photo…
+                      </p>
+                    ) : openPhoto.status === "error" ? (
+                      <div className="space-y-3">
+                        <p className="text-[16px]" style={{ color: "rgba(15,17,21,0.8)" }}>Flux couldn't read this photo.</p>
+                        <button onClick={() => retryPhoto(openPhoto.id)} className="flex items-center gap-2 rounded-xl px-4 py-2 text-[15px] font-semibold text-white" style={{ background: color }}>
+                          <RotateCcw size={15} /> Try again
+                        </button>
+                      </div>
+                    ) : openPhoto.text ? (
+                      <MathText as="div" className="text-[16.5px] leading-[1.8] whitespace-pre-wrap" style={{ color: "#0f1115" }} text={openPhoto.text} />
+                    ) : (
+                      <p className="text-[16px]" style={{ color: "rgba(15,17,21,0.75)" }}>Nothing readable in this photo.</p>
+                    )}
+                  </div>
+                  <div className="px-5 py-3 border-t flex justify-end" style={{ borderColor: "rgba(0,0,0,0.08)" }}>
+                    <button onClick={() => deletePhoto(openPhoto.id)} className="flex items-center gap-2 rounded-xl px-3.5 py-2 text-[15px] font-medium transition-colors hover:bg-red-50" style={{ color: "#DC2626" }}>
+                      <Trash2 size={15} /> Delete photo
+                    </button>
                   </div>
                 </div>
-                <input type="date" value={examDateInput} onChange={e => setExamDateInput(e.target.value)}
-                  className="rounded-xl border px-3 py-1.5 text-xs text-gray-900 outline-none" style={{ borderColor: "rgba(0,0,0,0.1)", background: "#FBFBFA" }} />
-                <button onClick={generateExam}
-                  className="flex items-center gap-1.5 text-xs font-semibold px-4 py-2 rounded-full border text-gray-700 hover:bg-[#F1F0EE] transition-colors"
-                  style={{ borderColor: "rgba(0,0,0,0.1)" }}>
-                  <RotateCcw size={12} /> {t.workspace.exam.regenerate}
-                </button>
               </div>
-
-              {/* Likely topics */}
-              {(examContent.topics ?? []).length > 0 && (
-                <div className="rounded-2xl border p-5" style={{ background: "#FFFFFF", borderColor: "rgba(0,0,0,0.07)" }}>
-                  <div className="flex items-center gap-2 mb-1">
-                    <Target size={14} style={{ color: "#4B5FE8" }} />
-                    <h3 className="text-sm font-bold text-gray-900">{t.workspace.exam.topics}</h3>
-                  </div>
-                  <p className="text-xs text-gray-500 mb-4">{t.workspace.exam.topicsSub}</p>
-                  <div className="space-y-3">
-                    {examContent.topics.map((tp: any, i: number) => (
-                      <div key={i} className="rounded-xl border p-4" style={{ borderColor: "rgba(0,0,0,0.06)", background: "#FBFBFA" }}>
-                        <div className="flex items-center justify-between gap-3 mb-1.5">
-                          <div className="text-sm font-semibold text-gray-900">{tp.name}</div>
-                          <div className="flex gap-1 shrink-0">
-                            {[1, 2, 3, 4, 5].map(n => (
-                              <span key={n} className="w-4 h-1.5 rounded-full" style={{ background: n <= tp.importance ? "#4B5FE8" : "rgba(0,0,0,0.08)" }} />
-                            ))}
-                          </div>
-                        </div>
-                        <p className="text-xs text-gray-600 leading-relaxed">{tp.why}</p>
-                        {renderExamCites(tp.citations)}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Predicted questions */}
-              {(examContent.questions ?? []).length > 0 && (
-                <div className="rounded-2xl border p-5" style={{ background: "#FFFFFF", borderColor: "rgba(0,0,0,0.07)" }}>
-                  <div className="flex items-center gap-2 mb-1">
-                    <Sparkles size={14} style={{ color: "#4B5FE8" }} />
-                    <h3 className="text-sm font-bold text-gray-900">{t.workspace.exam.questions}</h3>
-                  </div>
-                  <p className="text-xs text-gray-500 mb-4">{t.workspace.exam.questionsSub}</p>
-                  <div className="space-y-3">
-                    {examContent.questions.map((q: any, qi: number) => {
-                      const chosen = examChosen[qi];
-                      const answered = q.type === "mcq" ? chosen != null : examRevealed.has(qi);
-                      return (
-                        <div key={qi} className="rounded-xl border p-4" style={{ borderColor: "rgba(0,0,0,0.06)", background: "#FBFBFA" }}>
-                          <div className="flex items-start gap-2.5 mb-3">
-                            <span className="shrink-0 w-6 h-6 rounded-lg flex items-center justify-center text-[11px] font-bold mt-0.5" style={{ background: "rgba(75,95,232,0.1)", color: "#4B5FE8" }}>{qi + 1}</span>
-                            <p className="text-sm text-gray-900 font-medium leading-relaxed">{q.question}</p>
-                          </div>
-                          {q.type === "mcq" && q.options && (
-                            <div className="space-y-1.5 mb-2">
-                              {q.options.map((opt: string) => {
-                                const letter = opt.match(/^[A-D]/)?.[0] ?? opt[0];
-                                const isCorrect = letter === q.correctAnswer;
-                                const isChosen = chosen === letter;
-                                return (
-                                  <button key={opt} disabled={answered}
-                                    onClick={() => setExamChosen(p => ({ ...p, [qi]: letter }))}
-                                    className="w-full text-left text-xs rounded-lg border px-3 py-2 transition-colors disabled:cursor-default"
-                                    style={{
-                                      borderColor: answered && isCorrect ? "rgba(22,163,74,0.5)" : answered && isChosen ? "rgba(220,38,38,0.5)" : "rgba(0,0,0,0.08)",
-                                      background: answered && isCorrect ? "rgba(22,163,74,0.08)" : answered && isChosen ? "rgba(220,38,38,0.07)" : "#FFFFFF",
-                                      color: "#1F2328",
-                                    }}>
-                                    {opt}
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          )}
-                          {q.type === "short" && !answered && (
-                            <button onClick={() => setExamRevealed(p => new Set([...p, qi]))}
-                              className="text-xs font-semibold px-4 py-2 rounded-full border text-gray-700 hover:bg-[#F1F0EE] transition-colors mb-2"
-                              style={{ borderColor: "rgba(0,0,0,0.1)" }}>
-                              {t.workspace.exam.reveal}
-                            </button>
-                          )}
-                          {answered && (
-                            <div className="rounded-lg p-3 mb-1" style={{ background: "rgba(75,95,232,0.06)", border: "1px solid rgba(75,95,232,0.2)" }}>
-                              {q.type === "short" && <div className="text-xs text-gray-900 font-medium mb-1">{q.correctAnswer}</div>}
-                              <p className="text-xs text-gray-600 leading-relaxed">{q.explanation}</p>
-                            </div>
-                          )}
-                          {renderExamCites(q.citations)}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* Gaps in your notes */}
-              {(examContent.gaps ?? []).length > 0 && (
-                <div className="rounded-2xl border p-5" style={{ background: "#FFFFFF", borderColor: "rgba(0,0,0,0.07)" }}>
-                  <div className="flex items-center gap-2 mb-1">
-                    <AlertTriangle size={14} style={{ color: "#D97706" }} />
-                    <h3 className="text-sm font-bold text-gray-900">{t.workspace.exam.gaps}</h3>
-                  </div>
-                  <p className="text-xs text-gray-500 mb-4">{t.workspace.exam.gapsSub}</p>
-                  <div className="space-y-3">
-                    {examContent.gaps.map((g: any, i: number) => (
-                      <div key={i} className="rounded-xl p-4 border" style={{ background: "rgba(217,119,6,0.06)", borderColor: "rgba(217,119,6,0.25)" }}>
-                        <div className="text-sm font-semibold text-gray-900 mb-1">{g.topic}</div>
-                        <p className="text-xs text-gray-600 leading-relaxed mb-1.5">{g.evidence}</p>
-                        <p className="text-xs font-medium" style={{ color: "#B45309" }}>→ {g.suggestion}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Study plan */}
-              {(examContent.plan ?? []).length > 0 && (
-                <div className="rounded-2xl border p-5" style={{ background: "#FFFFFF", borderColor: "rgba(0,0,0,0.07)" }}>
-                  <div className="flex items-center gap-2 mb-1">
-                    <Calendar size={14} style={{ color: "#4B5FE8" }} />
-                    <h3 className="text-sm font-bold text-gray-900">{t.workspace.exam.plan}</h3>
-                  </div>
-                  <p className="text-xs text-gray-500 mb-4">{t.workspace.exam.planSub}</p>
-                  <div className="grid sm:grid-cols-2 gap-3">
-                    {examContent.plan.map((d: any, i: number) => (
-                      <div key={i} className="rounded-xl border p-4" style={{ background: "#FBFBFA", borderColor: "rgba(0,0,0,0.06)" }}>
-                        <div className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: "#4B5FE8" }}>{d.label}</div>
-                        <div className="text-sm font-semibold text-gray-900 mb-2">{d.focus}</div>
-                        <div className="space-y-1">
-                          {(d.items ?? []).map((it: string, j: number) => (
-                            <div key={j} className="flex gap-2 text-xs text-gray-600">
-                              <span className="mt-1.5 w-1 h-1 rounded-full shrink-0" style={{ background: "rgba(0,0,0,0.3)" }} />
-                              {it}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </>
+            </div>
           )}
         </div>
       )}
@@ -2197,10 +2536,10 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: {
       {tab === "note" && noteView === "list" && (
         <div className="space-y-3">
           <div className="flex items-center justify-between mb-1">
-            <p className="text-xs text-gray-600 uppercase tracking-widest">Your Notes</p>
+            <p className="text-[15px] text-gray-800 uppercase tracking-widest">Your Notes</p>
             <button
               onClick={() => { setNewNoteName(""); setNoteView("create"); }}
-              className="flex items-center gap-1.5 text-xs bg-[#FFFFFF] text-gray-900 px-3 py-1.5 rounded-full font-medium hover:bg-[#F1F0EE] transition-colors"
+              className="flex items-center gap-1.5 text-[15px] bg-[#FFFFFF] text-gray-900 px-3 py-1.5 rounded-full font-medium hover:bg-[#F1F0EE] transition-colors"
             >
               <Plus size={11} /> New Note
             </button>
@@ -2209,11 +2548,11 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: {
           {notes.length === 0 ? (
             <div className="bg-[#FFFFFF] border border-[rgba(0,0,0,0.08)] rounded-2xl p-10 text-center">
               <PenLine size={28} className="mx-auto mb-3 text-[#222]" />
-              <p className="text-sm text-gray-600 mb-1">No notes yet</p>
-              <p className="text-xs text-gray-600 mb-4">Create your first note for {course.name}</p>
+              <p className="text-[16px] text-gray-800 mb-1">No notes yet</p>
+              <p className="text-[15px] text-gray-800 mb-4">Create your first note for {course.name}</p>
               <button
                 onClick={() => { setNewNoteName(""); setNoteView("create"); }}
-                className="text-xs border border-[rgba(0,0,0,0.1)] px-4 py-2 rounded-full text-gray-900 hover:border-[#ddd] transition-colors"
+                className="text-[15px] border border-[rgba(0,0,0,0.1)] px-4 py-2 rounded-full text-gray-900 hover:border-[#ddd] transition-colors"
               >
                 Create a note
               </button>
@@ -2223,14 +2562,14 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: {
               {notes.map(n => (
                 <div key={n.id} className="group bg-[#FFFFFF] border border-[rgba(0,0,0,0.08)] rounded-xl px-4 py-3 flex items-center justify-between hover:border-[rgba(0,0,0,0.1)] transition-colors">
                   <button className="flex-1 text-left" onClick={() => { setActiveNote(n); setNoteSavedAt(null); setNoteView("edit"); }}>
-                    <div className="text-sm text-gray-900">{n.name}</div>
-                    <div className="text-[10px] text-gray-600 mt-0.5">
+                    <div className="text-[16px] text-gray-900">{n.name}</div>
+                    <div className="text-[13.5px] text-gray-800 mt-0.5">
                       {format(new Date(n.updatedAt), "MMM d, yyyy · h:mm a")}
                     </div>
                   </button>
                   <button
                     onClick={() => deleteNote(n.id)}
-                    className="opacity-0 group-hover:opacity-100 text-gray-600 hover:text-red-600 transition-all ml-3"
+                    className="opacity-0 group-hover:opacity-100 text-gray-800 hover:text-red-600 transition-all ml-3"
                   >
                     <Trash2 size={13} />
                   </button>
@@ -2243,27 +2582,27 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: {
 
       {tab === "note" && noteView === "create" && (
         <div className="max-w-sm">
-          <button onClick={() => setNoteView("list")} className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors text-sm mb-6">
+          <button onClick={() => setNoteView("list")} className="flex items-center gap-2 text-gray-800 hover:text-gray-900 transition-colors text-[16px] mb-6">
             <ArrowLeft size={14} /> Back
           </button>
           <h2 className="font-serif italic text-2xl mb-1">New Note</h2>
-          <p className="text-gray-600 text-sm mb-6">Give your note a name to get started.</p>
+          <p className="text-gray-800 text-[16px] mb-6">Give your note a name to get started.</p>
           <div className="space-y-4">
             <div>
-              <label className="text-[10px] text-gray-600 uppercase tracking-widest block mb-1.5">Note name</label>
+              <label className="text-[13.5px] text-gray-800 uppercase tracking-widest block mb-1.5">Note name</label>
               <input
                 autoFocus
                 value={newNoteName}
                 onChange={e => setNewNoteName(e.target.value)}
                 onKeyDown={e => e.key === "Enter" && createNote()}
                 placeholder="e.g. Chapter 3 — Derivatives, Lecture 5…"
-                className="w-full bg-[#FFFFFF] border border-[rgba(0,0,0,0.08)] focus:border-indigo-500/50 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder-gray-400 outline-none"
+                className="w-full bg-[#FFFFFF] border border-[rgba(0,0,0,0.08)] focus:border-indigo-500/50 rounded-xl px-4 py-3 text-[16px] text-gray-900 placeholder-gray-400 outline-none"
               />
             </div>
             <button
               onClick={createNote}
               disabled={!newNoteName.trim()}
-              className="w-full bg-[#FFFFFF] text-gray-900 rounded-xl py-3 text-sm font-medium disabled:opacity-40 hover:bg-[#F1F0EE] transition-colors"
+              className="w-full bg-[#FFFFFF] text-gray-900 rounded-xl py-3 text-[16px] font-medium disabled:opacity-40 hover:bg-[#F1F0EE] transition-colors"
             >
               Create Note
             </button>
@@ -2275,19 +2614,19 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: {
         <div className="space-y-3">
           {/* Header */}
           <div className="flex items-center gap-3">
-            <button onClick={() => setNoteView("list")} className="text-gray-600 hover:text-gray-900 transition-colors">
+            <button onClick={() => setNoteView("list")} className="text-gray-800 hover:text-gray-900 transition-colors">
               <ArrowLeft size={15} />
             </button>
-            <div className="text-sm font-medium text-gray-900">{activeNote.name}</div>
+            <div className="text-[16px] font-medium text-gray-900">{activeNote.name}</div>
             <div className="ml-auto flex items-center gap-3">
               {noteSavedAt && (
-                <span className="text-[10px] text-gray-600">
+                <span className="text-[13.5px] text-gray-800">
                   Saved {noteSavedAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                 </span>
               )}
               <button
                 onClick={saveNoteNow}
-                className="px-3 py-1.5 rounded-lg text-xs font-medium bg-indigo-600 text-white hover:bg-indigo-500 transition-colors"
+                className="px-3 py-1.5 rounded-lg text-[15px] font-medium bg-indigo-600 text-white hover:bg-indigo-500 transition-colors"
               >
                 Save
               </button>
@@ -2302,7 +2641,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: {
                 });
                 if (ok) deleteNote(activeNote.id);
               }}
-              className="text-gray-600 hover:text-red-600 transition-colors"
+              className="text-gray-800 hover:text-red-600 transition-colors"
               aria-label="Delete note"
             >
               <Trash2 size={13} />

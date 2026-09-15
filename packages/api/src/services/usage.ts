@@ -1,13 +1,20 @@
 import { prisma } from "../lib/prisma";
 
-// Monthly quotas per plan. Free is a real taste of the product (about two
-// recorded lectures a week); paid limits exist only to stop abuse, and are
-// high enough that an honest heavy user never sees them.
+// Monthly quotas per plan. Every paid plan (Student, Semester, Annual) gets the
+// same limits and differs only on price — usage doesn't grow because someone
+// paid upfront, and the cheapest-per-month plan must not carry the highest caps.
 export type UsageKind = "lecture" | "ask" | "gen";
 
 const LIMITS: Record<"free" | "paid", Record<UsageKind, number>> = {
-  free: { lecture: 8, ask: 30, gen: 15 },
-  paid: { lecture: 120, ask: 1000, gen: 300 },
+  free: { lecture: 5, ask: 20, gen: 15 },
+  paid: { lecture: 30, ask: 300, gen: 300 },
+};
+
+// Longest single recording per plan. Transcription is billed by the minute, so
+// an uncapped recording is the one thing that can sink a subscription's margin.
+export const MAX_RECORDING_MINUTES: Record<"free" | "paid", number> = {
+  free: 60,
+  paid: 180,
 };
 
 export class QuotaError extends Error {
@@ -27,7 +34,9 @@ function currentMonth(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 }
 
-async function planFor(userId: string): Promise<"free" | "paid"> {
+export async function planFor(userId: string): Promise<"free" | "paid"> {
+  // Local testing treats everyone as paid so limits never get in the way. Never set in production.
+  if (process.env.DISABLE_QUOTAS === "true") return "paid";
   const sub = await prisma.subscription.findUnique({ where: { userId } });
   const active = sub && ["active", "trialing"].includes(sub.status) && sub.currentPeriodEnd > new Date();
   return active ? "paid" : "free";
@@ -75,6 +84,7 @@ export async function usageSummary(userId: string) {
     lecture: { used: row?.lectureCount ?? 0, limit: LIMITS[plan].lecture },
     ask: { used: row?.askCount ?? 0, limit: LIMITS[plan].ask },
     gen: { used: row?.genCount ?? 0, limit: LIMITS[plan].gen },
+    maxRecordingMinutes: MAX_RECORDING_MINUTES[plan],
   };
 }
 

@@ -1,7 +1,28 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-@import 'katex/dist/katex.min.css';
+/* KaTeX's stylesheet is imported in app/layout.tsx (an @import here, after
+   the @tailwind rules, is invalid CSS). Maths is set to sit in the text like a
+   printed page: KaTeX's default 1.21em runs large beside body copy, and display
+   maths reads best left-aligned under the sentence that introduces it, as in
+   written notes. Wide equations scroll inside their own block. */
+.flux-math-inline,
+.flux-math-display { text-transform: none; letter-spacing: normal; }
+.flux-math-inline .katex,
+.flux-math-display .katex { font-size: 1.1em; }
+.flux-math-display {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  margin: 0.55em 0;
+  padding: 0.15em 0 0.15em 1.25em;
+  white-space: normal;
+}
+.flux-math-display > .katex-display { margin: 0; text-align: left; }
+.flux-math-display > .katex-display > .katex { text-align: left; }
+/* Readable-symbol fallback for the rare fragment KaTeX rejects. */
+.flux-math-fallback { font-family: "Cambria Math", "STIX Two Math", "Times New Roman", serif; }
 
 html {
   scroll-behavior: smooth;

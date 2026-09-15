@@ -41,16 +41,26 @@ async function safeStatusUpdate(lectureId: string, data: object) {
   }
 }
 
-export async function processLecture(lectureId: string, userId: string) {
+/** Photos (and slides) are appended to the stored transcript under these headings. */
+const APPENDED_SECTIONS = /\n\n\[(?:SLIDES|PHOTOS TAKEN IN CLASS|WRITTEN ON THE BOARD IN THIS LECTURE)\]\n[\s\S]*$/;
+
+/** The most photos a single recording can carry — during recording and attached later. */
+export const MAX_LECTURE_PHOTOS = 5;
+
+export async function processLecture(lectureId: string, userId: string, opts: { reprocess?: boolean } = {}) {
   try {
     const lecture = await prisma.lecture.findUniqueOrThrow({ where: { id: lectureId } });
+    // Reprocessing (photos attached to a finished recording) starts from the transcript
+    // already written and proofread, without the photo section added last time.
+    const storedTranscript = (lecture.transcript ?? "").startsWith("[ERROR]") ? "" : (lecture.transcript ?? "");
+    const reuse = !!opts.reprocess && storedTranscript.trim().length > 0;
 
     await safeStatusUpdate(lectureId, { status: "transcribing" });
 
     let transcript = "";
     let segments: { start: number; end: number; text: string }[] = [];
 
-    if (!lecture.audioUrl || !fs.existsSync(lecture.audioUrl)) {
+    if (!reuse && (!lecture.audioUrl || !fs.existsSync(lecture.audioUrl))) {
       throw new Error(`Audio file not found: ${lecture.audioUrl}`);
     }
 
@@ -58,9 +68,9 @@ export async function processLecture(lectureId: string, userId: string) {
     // Browser recordings arrive at ~64-128 kbps; 48 kbps mono mp3 is fully
     // clear for speech and roughly quadruples how many lectures fit on the
     // storage volume. Streaming/citations also get faster.
-    let audioPath = lecture.audioUrl;
-    try {
-      const compressed = await compressAudio(lecture.audioUrl);
+    let audioPath = lecture.audioUrl ?? "";
+    if (!reuse) try {
+      const compressed = await compressAudio(audioPath);
       if (compressed) {
         audioPath = compressed;
         await safeStatusUpdate(lectureId, { audioUrl: compressed });
@@ -69,14 +79,38 @@ export async function processLecture(lectureId: string, userId: string) {
       console.error("[processLecture] compression failed (non-fatal):", e?.message);
     }
 
-    const result = await transcribeAudio(audioPath);
-    transcript = result.text;
-    segments = result.segments;
+    // Every recording is already transcribed live by Deepgram while it happens.
+    // Paying Whisper to transcribe the same audio again doubled the per-minute
+    // cost, so the live transcript is used whenever it plausibly covers the whole
+    // lecture. If the stream dropped part-way (too few words for the length), or
+    // there was no live transcript at all, Whisper runs as before.
+    const live = (lecture.transcript ?? "").trim();
+    const liveSegs = Array.isArray(lecture.segments) ? (lecture.segments as any[]) : [];
+    const liveWords = live ? live.split(/\s+/).length : 0;
+    const coveredSeconds = Math.max(lecture.durationSeconds || 0, liveSegs.length ? Number(liveSegs[liveSegs.length - 1]?.end) || 0 : 0);
+    const minutes = Math.max(coveredSeconds / 60, 1);
+    const liveIsComplete = liveWords >= 50 && liveWords / minutes >= 30;
 
-    if (!transcript.trim()) throw new Error("Whisper returned empty transcript");
+    if (reuse) {
+      transcript = storedTranscript.replace(APPENDED_SECTIONS, "");
+      segments = liveSegs.map((x: any) => ({ start: Number(x.start) || 0, end: Number(x.end) || 0, text: String(x.text ?? "") }));
+      console.log(`[processLecture] reprocessing with the stored transcript (${transcript.length} chars)`);
+    } else if (liveIsComplete) {
+      transcript = live;
+      segments = liveSegs.map((x: any) => ({ start: Number(x.start) || 0, end: Number(x.end) || 0, text: String(x.text ?? "") }));
+      console.log(`[processLecture] using live transcript (${liveWords} words over ${minutes.toFixed(1)} min) — Whisper skipped`);
+    } else {
+      if (live) console.log(`[processLecture] live transcript looks incomplete (${liveWords} words over ${minutes.toFixed(1)} min) — falling back to Whisper`);
+      const result = await transcribeAudio(audioPath);
+      transcript = result.text;
+      segments = result.segments;
+    }
+
+    if (!transcript.trim()) throw new Error("Transcription returned an empty transcript");
 
     // ── Correct speech-to-text errors (punctuation, homophones, split words) ──
-    try {
+    // Already done for a reprocessed transcript.
+    if (!reuse) try {
       transcript = await correctTranscript(transcript);
       console.log(`[processLecture] transcript corrected (${transcript.length} chars)`);
     } catch (corrErr) {
@@ -142,7 +176,9 @@ export async function processLecture(lectureId: string, userId: string) {
       }
       if (parts.length) {
         extractedImageText = parts.join("\n\n");
-        transcript = `${transcript}\n\n[PHOTOS TAKEN IN CLASS]\n${extractedImageText}`;
+        // One lecture: what was said and what was written on the board go into the
+        // same transcript, so everything generated treats them as one source.
+        transcript = `${transcript}\n\n[WRITTEN ON THE BOARD IN THIS LECTURE]\n${extractedImageText}`;
         console.log(`[processLecture] appended ${parts.length} photo transcription(s)`);
       }
     }
@@ -159,18 +195,13 @@ export async function processLecture(lectureId: string, userId: string) {
         sourceTitle: lecture.title,
         text: transcript,
         segments,
+        // Board photos are filed under the recording itself, so Ask sees one lecture
+        // (and cites it as one), not the lecture plus a separate photos source.
+        extraText: extractedImageText,
       });
       console.log(`[processLecture] indexed ${count} memory chunks`);
-      if (extractedImageText.trim()) {
-        await indexSource({
-          userId,
-          courseId: lecture.courseId,
-          sourceType: "lecture",
-          sourceId: `${lectureId}_photos`,
-          sourceTitle: `${lecture.title} — photos`,
-          text: extractedImageText,
-        });
-      }
+      // Recordings processed before photos were folded in had them as their own source.
+      await prisma.memoryChunk.deleteMany({ where: { sourceId: `${lectureId}_photos`, userId } }).catch(() => {});
       if (extractedSlideText.trim()) {
         await indexSource({
           userId,
@@ -229,6 +260,13 @@ export async function processLecture(lectureId: string, userId: string) {
         },
       }),
     ]);
+
+    if (opts.reprocess) {
+      // The fresh material replaces the old. Quizzes the student already took are
+      // kept so their scores stay in Progress; clients always show the newest.
+      await prisma.cheatSheet.deleteMany({ where: { lectureId, id: { not: cheatSheet.id } } }).catch(() => {});
+      await prisma.quiz.deleteMany({ where: { lectureId, id: { not: quiz.id }, attempts: { none: {} } } }).catch(() => {});
+    }
 
     if (user?.googleTokens) {
       try {

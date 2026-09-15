@@ -1,25 +1,95 @@
 import { useState, useRef, useEffect } from "react";
 import {
   View, Text, StyleSheet, TouchableOpacity, Alert,
-  StatusBar, ScrollView, TextInput, ActivityIndicator, KeyboardAvoidingView, Platform, Keyboard,
+  StatusBar, ScrollView, TextInput, ActivityIndicator, KeyboardAvoidingView, Platform, Keyboard, AppState,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import {
-  useAudioRecorder, useAudioPlayer, useAudioPlayerStatus,
+  useAudioRecorder, useAudioRecorderState, useAudioPlayer, useAudioPlayerStatus,
   requestRecordingPermissionsAsync, setAudioModeAsync,
   IOSOutputFormat, AudioQuality, type RecordingOptions,
 } from "expo-audio";
+import { activateKeepAwakeAsync, deactivateKeepAwake } from "expo-keep-awake";
+import * as Notifications from "expo-notifications";
 import { useApi, makeApiFetcher } from "../../lib/api";
 import { useAuth } from "@clerk/clerk-expo";
 import { Ionicons } from "@expo/vector-icons";
 import useSWR from "swr";
 import { LectureResults } from "../../components/LectureResults";
+import { ClassPhotos } from "../../components/ClassPhotos";
+import { ProcessingCard } from "../../components/ProcessingCard";
+import { LectureAudioBar } from "../../components/LectureAudioBar";
 import { TypingDots } from "../../components/TypingDots";
+import { MathText, hasMathDelimiters } from "../../components/MathText";
 import { useLiveTranscription } from "../../lib/useLiveTranscription";
-import { toMathNotation } from "@sano/shared";
+import { toMathNotation, type LiveEntry } from "@sano/shared";
 import * as ImagePicker from "expo-image-picker";
 import { Image } from "react-native";
+
+const KEEP_AWAKE_TAG = "flux-recording";
+// Photos per recording — taken while recording or attached afterwards (the API enforces the same).
+const MAX_LECTURE_PHOTOS = 5;
+
+/**
+ * The live transcript: runs of plain sentences flow together as native text, and
+ * each sentence with typeset maths gets its own MathText block. Math blocks only
+ * render once their typeset version arrives and never change after, so the
+ * WebView behind them isn't reloaded as new words stream in.
+ */
+function LiveTranscriptView({ entries, partial }: { entries: LiveEntry[]; partial: string }) {
+  const blocks: { kind: "text" | "math"; key: string; text: string }[] = [];
+  for (const entry of entries) {
+    const last = blocks[blocks.length - 1];
+    if (entry.math) blocks.push({ kind: "math", key: entry.key, text: entry.text });
+    else if (last?.kind === "text") last.text += ` ${entry.text}`;
+    else blocks.push({ kind: "text", key: entry.key, text: entry.text });
+  }
+  const partialText = partial ? toMathNotation(partial) : "";
+  const endsInText = blocks[blocks.length - 1]?.kind === "text";
+  return (
+    <View>
+      {blocks.map((block, i) =>
+        block.kind === "math" ? (
+          <MathText key={block.key} text={block.text} style={w.liveTxt} />
+        ) : (
+          <Text key={block.key} style={w.liveTxt}>
+            {block.text}
+            {i === blocks.length - 1 && partialText ? <Text style={w.livePartial}> {partialText}</Text> : null}
+          </Text>
+        )
+      )}
+      {partialText && !endsInText ? <Text style={[w.liveTxt, w.livePartial]}>{partialText}</Text> : null}
+    </View>
+  );
+}
+
+/**
+ * Keeps the recording going when the student switches apps or locks the phone.
+ * Background recording needs the "audio" background mode on iOS and a
+ * foreground service (with its notification) on Android; builds get both from
+ * the expo-audio config plugin. Where that isn't available — Expo Go on Android,
+ * or notifications denied — expo-audio throws, so recording falls back to
+ * foreground-only instead of failing to start.
+ */
+async function startLectureRecorder(recorder: ReturnType<typeof useAudioRecorder>): Promise<boolean> {
+  try {
+    if (Platform.OS === "android") {
+      // The foreground service shows a notification, which Android 13+ must allow.
+      const { granted } = await Notifications.requestPermissionsAsync();
+      if (!granted) throw new Error("notifications denied");
+    }
+    await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true, allowsBackgroundRecording: true, shouldPlayInBackground: true });
+    await recorder.prepareToRecordAsync();
+    recorder.record();
+    return true;
+  } catch {
+    await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true, allowsBackgroundRecording: false, shouldPlayInBackground: false });
+    await recorder.prepareToRecordAsync();
+    recorder.record();
+    return false;
+  }
+}
 
 const LECTURE_RECORDING: RecordingOptions = {
   extension: ".m4a",
@@ -195,7 +265,7 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
   const api = useApi();
   const { getToken } = useAuth();
   const fetcher = makeApiFetcher(getToken);
-  const [tab, setTab] = useState<"ask" | "record" | "note">("ask");
+  const [tab, setTab] = useState<"ask" | "record" | "photo" | "note">("ask");
 
   const { data: lecturesData, mutate: mutateLectures } = useSWR(`/api/lectures?courseId=${course.id}`, fetcher);
   const lectures: any[] = lecturesData?.data ?? [];
@@ -230,6 +300,8 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [askStatusData, lectures.length]);
 
+  const askAbortRef = useRef<AbortController | null>(null);
+
   async function sendAsk(text?: string) {
     const q = (text ?? askInput).trim();
     if (!q || askLoading) return;
@@ -237,22 +309,34 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
     setAskMessages(next);
     setAskInput("");
     setAskLoading(true);
+    const controller = new AbortController();
+    askAbortRef.current = controller;
     try {
       const res = await api.post("/api/ask", {
         courseId: course.id,
         messages: next.map(m => ({ role: m.role, content: m.content })),
-      });
+      }, { signal: controller.signal });
       setAskMessages([...next, { role: "assistant", content: res.data?.data?.reply ?? "", citations: res.data?.data?.citations ?? [] }]);
     } catch (e: any) {
-      setAskMessages([...next, { role: "assistant", content: e?.response?.data?.error ?? "Something went wrong — try again." }]);
+      // Stopping is deliberate, so it shouldn't read as an error in the chat.
+      if (e?.code !== "ERR_CANCELED") {
+        setAskMessages([...next, { role: "assistant", content: e?.response?.data?.error ?? "Something went wrong — try again." }]);
+      }
     } finally {
+      askAbortRef.current = null;
       setAskLoading(false);
     }
   }
 
   // ── record ──
   const audioRecorder = useAudioRecorder(LECTURE_RECORDING);
+  // The native recorder counts recorded time itself, including while the app is
+  // in the background where JS timers stop — so the clock is read from it.
+  const recorderState = useAudioRecorderState(audioRecorder, 500);
   const live = useLiveTranscription();
+  const { data: usageData } = useSWR("/api/usage", fetcher);
+  const maxRecSeconds = (usageData?.data?.maxRecordingMinutes ?? 180) * 60;
+  const limitHitRef = useRef(false);
   const [isSessionActive, setIsSessionActive] = useState(false);
   const [paused, setPaused] = useState(false);
   const [seconds, setSeconds] = useState(0);
@@ -268,7 +352,8 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
   const [lectureSheet, setLectureSheet] = useState<any | null>(null);
   const [resultsReady, setResultsReady] = useState(false);
   const [lectureTranscript, setLectureTranscript] = useState<string | null>(null);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [processingError, setProcessingError] = useState<string | null>(null);
+  const [openRecordedAt, setOpenRecordedAt] = useState<string | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const liveScrollRef = useRef<ScrollView | null>(null);
   const [kbOpen, setKbOpen] = useState(false);
@@ -286,6 +371,7 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
         const res = await api.get(`/api/lectures/${processingLectureId}/status`);
         const status = res.data?.data?.status;
         setProcessingStatus(status);
+        if (status === "error") setProcessingError(res.data?.data?.errorMessage ?? null);
         if (status === "ready" || status === "error") {
           if (pollRef.current) clearInterval(pollRef.current);
           if (status === "ready") {
@@ -298,7 +384,10 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
             } else {
               const sheetRes = await api.get(`/api/cheatsheets?lectureId=${processingLectureId}`);
               const sheets = (sheetRes.data?.data ?? []).filter((s: any) => !s.title?.startsWith("Study Book:"));
-              if (sheets.length) setLectureSheet(sheets[0]);
+              if (sheets.length) {
+                setLectureSheet(sheets[0]);
+                sheetCacheRef.current.set(processingLectureId, sheets[0]);
+              }
               setResultsReady(true);
             }
           }
@@ -308,10 +397,31 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
     return () => { if (pollRef.current) clearInterval(pollRef.current); };
   }, [processingLectureId, recordAction]);
 
+  useEffect(() => {
+    if (isSessionActive) setSeconds(Math.floor((recorderState.durationMillis ?? 0) / 1000));
+  }, [recorderState.durationMillis, isSessionActive]);
+
+  // Back in the foreground mid-lecture: pick up anything the OS paused (a call,
+  // or foreground-only recording) and reconnect the live transcript.
+  const sessionRef = useRef({ active: false, paused: false });
+  sessionRef.current = { active: isSessionActive, paused };
+  useEffect(() => {
+    const sub = AppState.addEventListener("change", (state) => {
+      const { active, paused: isPaused } = sessionRef.current;
+      if (state !== "active" || !active || isPaused) return;
+      try {
+        if (!audioRecorder.getStatus().isRecording) audioRecorder.record();
+      } catch { /* recorder already released */ }
+      live.resume().catch(() => {});
+    });
+    return () => sub.remove();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Switch out of recording mode once there's a take to review/play back.
   useEffect(() => {
     if (savedUri) {
-      setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true }).catch(() => {});
+      setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true, allowsBackgroundRecording: false, shouldPlayInBackground: false }).catch(() => {});
     }
   }, [savedUri]);
 
@@ -319,13 +429,13 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
     try {
       const { granted } = await requestRecordingPermissionsAsync();
       if (!granted) { Alert.alert("Microphone denied", "Enable mic in Settings."); return; }
-      await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
-      await audioRecorder.prepareToRecordAsync();
-      audioRecorder.record();
-      live.start().catch(() => { /* recording still works without live text */ });
+      autoTitleRef.current = autoTitle();
+      await startLectureRecorder(audioRecorder);
+      activateKeepAwakeAsync(KEEP_AWAKE_TAG).catch(() => {});
+      limitHitRef.current = false;
+      live.start(0).catch(() => { /* recording still works without live text */ });
       setIsSessionActive(true);
       setSeconds(0);
-      timerRef.current = setInterval(() => setSeconds((s) => s + 1), 1000);
     } catch { Alert.alert("Error", "Could not start recording."); }
   }
 
@@ -334,32 +444,87 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
     audioRecorder.pause();
     live.stop();
     setPaused(true);
-    if (timerRef.current) clearInterval(timerRef.current);
   }
 
   function resumeRecording() {
-    if (!isSessionActive || !paused) return;
+    if (!isSessionActive || !paused || seconds >= maxRecSeconds) return;
     audioRecorder.record();
-    live.start().catch(() => {});
+    live.start(seconds).catch(() => {});
     setPaused(false);
-    timerRef.current = setInterval(() => setSeconds(s => s + 1), 1000);
   }
 
-  async function stopRecording() {
-    if (!isSessionActive) return;
-    if (timerRef.current) clearInterval(timerRef.current);
+  async function stopRecording(): Promise<string | null> {
+    if (!isSessionActive) return null;
+    deactivateKeepAwake(KEEP_AWAKE_TAG).catch(() => {});
     setPaused(false);
     live.stop();
     try {
       await audioRecorder.stop();
       const uri = audioRecorder.uri;
       setIsSessionActive(false);
-      if (!uri) { Alert.alert("Recording failed", "Could not read the audio file."); return; }
+      if (!uri) { Alert.alert("Recording failed", "Could not read the audio file."); return null; }
       setSavedUri(uri);
+      return uri;
     } catch {
       Alert.alert("Error", "Could not stop recording.");
       setIsSessionActive(false);
+      return null;
     }
+  }
+
+  // Stop pauses first and asks, so a mis-tap can't end a lecture early.
+  function requestStop(atLimit = false) {
+    pauseRecording();
+    const limitLabel = maxRecSeconds >= 3600 ? `${maxRecSeconds / 3600}-hour` : `${Math.round(maxRecSeconds / 60)}-minute`;
+    const process = {
+      text: "Process",
+      onPress: async () => {
+        const uri = await stopRecording();
+        // Give the live stream a moment to deliver its last words, then wait for any
+        // sentence still being typeset so the saved transcript matches what was shown.
+        await new Promise(r => setTimeout(r, 1200));
+        await live.flush();
+        if (uri) await processAudio("summarize", uri);
+      },
+    };
+    const remove = { text: "Delete", style: "destructive" as const, onPress: () => confirmDelete(atLimit) };
+    Alert.alert(
+      atLimit ? "Recording limit reached" : "Recording paused",
+      atLimit
+        ? `This recording hit the ${limitLabel} limit on your plan. Process it now, or delete it.`
+        : `${fmt(seconds)} recorded${images.length ? ` · ${images.length} photo${images.length === 1 ? "" : "s"}` : ""}. What would you like to do?`,
+      atLimit
+        ? [remove, process]
+        : [remove, { text: "Resume", style: "cancel", onPress: resumeRecording }, process],
+      atLimit ? { cancelable: false } : { cancelable: true, onDismiss: resumeRecording }
+    );
+  }
+
+  // Stop on its own when a recording reaches the plan's length limit.
+  useEffect(() => {
+    if (!isSessionActive || paused || limitHitRef.current) return;
+    if (seconds >= maxRecSeconds) {
+      limitHitRef.current = true;
+      requestStop(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [seconds, isSessionActive, paused, maxRecSeconds]);
+
+  function confirmDelete(atLimit = false) {
+    Alert.alert("Delete this recording?", "It can't be recovered.", [
+      { text: "Keep it", style: "cancel", onPress: () => requestStop(atLimit) },
+      {
+        text: "Delete",
+        style: "destructive",
+        onPress: async () => {
+          deactivateKeepAwake(KEEP_AWAKE_TAG).catch(() => {});
+          live.stop();
+          try { await audioRecorder.stop(); } catch { /* already stopped */ }
+          setIsSessionActive(false);
+          resetRecorder();
+        },
+      },
+    ]);
   }
 
   function playAudio() {
@@ -375,12 +540,16 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
   }
 
   // "Biology 101 — 13 Sep, 2:15pm" beats "Untitled Lecture" in the list later.
-  function lectureTitle() {
-    if (recTitle.trim()) return recTitle.trim();
+  const autoTitleRef = useRef("");
+  function autoTitle() {
     const now = new Date();
     const day = now.toLocaleDateString(undefined, { day: "numeric", month: "short" });
     const time = now.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
     return `${course.name} — ${day}, ${time}`;
+  }
+  // Pinned when recording starts, so the name carries the time the lecture began.
+  function lectureTitle() {
+    return recTitle.trim() || autoTitleRef.current || autoTitle();
   }
 
   async function addPhoto(fromCamera: boolean) {
@@ -393,25 +562,34 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
     }
     const res = fromCamera
       ? await ImagePicker.launchCameraAsync({ quality: 0.6 })
-      : await ImagePicker.launchImageLibraryAsync({ quality: 0.6, allowsMultipleSelection: true, selectionLimit: 6 });
+      : await ImagePicker.launchImageLibraryAsync({ quality: 0.6, allowsMultipleSelection: true, selectionLimit: MAX_LECTURE_PHOTOS });
     if (res.canceled) return;
-    setImages(prev => [...prev, ...res.assets.map(a => a.uri)].slice(0, 12));
+    setImages(prev => [...prev, ...res.assets.map(a => a.uri)].slice(0, MAX_LECTURE_PHOTOS));
   }
 
-  async function processAudio(action: "transcribe" | "summarize") {
-    if (!savedUri) return;
+  async function processAudio(action: "transcribe" | "summarize", uriArg?: string) {
+    // A freshly stopped take is passed in directly — state set a moment ago isn't readable yet.
+    const audioUri = uriArg ?? savedUri;
+    if (!audioUri) return;
     setRecordAction(action);
     if (playerStatus.playing) player.pause();
+    setProcessingError(null);
     setUploading(true);
     try {
       const fd = new FormData();
-      fd.append("audio", { uri: savedUri, name: "lecture.m4a", type: "audio/m4a" } as any);
+      fd.append("audio", { uri: audioUri, name: "lecture.m4a", type: "audio/m4a" } as any);
       fd.append("courseId", course.id);
       images.forEach((uri, i) => {
         const ext = uri.split(".").pop()?.toLowerCase() ?? "jpg";
         fd.append("images", { uri, name: `photo-${i + 1}.${ext}`, type: ext === "png" ? "image/png" : "image/jpeg" } as any);
       });
       fd.append("title", lectureTitle());
+      fd.append("durationSeconds", String(seconds));
+      const liveText = live.getTranscript();
+      if (liveText) {
+        fd.append("liveTranscript", liveText);
+        fd.append("liveSegments", JSON.stringify(live.getSegments()));
+      }
       const res = await api.post("/api/lectures", fd, { headers: { "Content-Type": "multipart/form-data" } });
       setProcessingLectureId(res.data?.data?.id ?? null);
       setProcessingStatus("processing");
@@ -426,25 +604,161 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
     }
   }
 
-  // Tapping a past recording reopens everything that was generated for it.
+  // Tapping a past recording opens its results straight away — the summary is
+  // fetched behind the screen (and remembered, so reopening is instant) instead
+  // of showing the processing card while it loads.
+  const sheetCacheRef = useRef<Map<string, any>>(new Map());
+  const [openTitle, setOpenTitle] = useState("");
+  const openLectureIdRef = useRef<string | null>(null);
+  openLectureIdRef.current = processingLectureId;
+
   async function openPastLecture(l: any) {
     setRecordAction(null);
     setLectureTranscript(null);
-    setLectureSheet(null);
+    setOpenTitle(l.title ?? "");
+    setOpenRecordedAt(l.recordedAt ?? null);
     setProcessingLectureId(l.id);
     setProcessingStatus(l.status ?? "ready");
-    if (l.status !== "ready") { setResultsReady(false); return; }
+    if (l.status !== "ready") { setLectureSheet(null); setResultsReady(false); return; }
+    setLectureSheet(sheetCacheRef.current.get(l.id) ?? null);
+    setResultsReady(true);
+    let sheet: any;
     try {
       const sheetRes = await api.get(`/api/cheatsheets?lectureId=${l.id}`);
       const sheets = (sheetRes.data?.data ?? []).filter((x: any) => !x.title?.startsWith("Study Book:"));
-      setLectureSheet(sheets[0] ?? { title: l.title, content: {} });
+      sheet = sheets[0] ?? { title: l.title, content: {} };
+      sheetCacheRef.current.set(l.id, sheet);
     } catch {
-      setLectureSheet({ title: l.title, content: {} });
+      sheet = sheetCacheRef.current.get(l.id) ?? { title: l.title, content: {} };
     }
-    setResultsReady(true);
+    // Only if the student is still looking at this lecture.
+    if (openLectureIdRef.current === l.id) setLectureSheet(sheet);
+  }
+
+  // ── Recordings: archive (the list's delete), restore, delete forever ──
+  const { data: archivedData, mutate: mutateArchived } = useSWR(`/api/lectures?courseId=${course.id}&archived=true`, fetcher);
+  const archivedLectures: any[] = archivedData?.data ?? [];
+  const isYoutubeUrl = (u?: string | null) => !!u && /youtube\.com|youtu\.be/.test(u);
+  const audioLectures = lectures.filter((l: any) => l.audioUrl && !isYoutubeUrl(l.audioUrl));
+
+  function archiveLecture(l: any) {
+    Alert.alert(`Delete "${l.title}"?`, "It moves to Archived below, where you can restore it.", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Delete",
+        style: "destructive",
+        onPress: async () => {
+          try { await api.patch(`/api/lectures/${l.id}/archive`); } catch { Alert.alert("Couldn't delete that recording", "Try again."); }
+          mutateLectures();
+          mutateArchived();
+        },
+      },
+    ]);
+  }
+
+  async function restoreLecture(id: string) {
+    try { await api.patch(`/api/lectures/${id}/restore`); } catch { Alert.alert("Couldn't restore that recording", "Try again."); }
+    mutateLectures();
+    mutateArchived();
+  }
+
+  function deleteForever(l: any) {
+    Alert.alert(`Permanently delete "${l.title}"?`, "The recording, its transcript and everything generated from it are removed for good.", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Delete forever",
+        style: "destructive",
+        onPress: async () => {
+          try { await api.delete(`/api/lectures/${l.id}`); } catch { Alert.alert("Couldn't delete that recording", "Try again."); }
+          mutateArchived();
+        },
+      },
+    ]);
+  }
+
+  // ── Attach photos to a finished recording → reprocess it ──
+  const [attachingId, setAttachingId] = useState<string | null>(null);
+  const photoCount = (l: any) => (Array.isArray(l?.imageUrls) ? l.imageUrls.length : 0);
+
+  function startAttach(l: any) {
+    if (isSessionActive || savedUri) {
+      Alert.alert("Finish the current recording first", "Process or discard it, then attach photos.");
+      return;
+    }
+    const room = MAX_LECTURE_PHOTOS - photoCount(l);
+    if (room <= 0) {
+      Alert.alert("No room for more photos", `This recording already has ${MAX_LECTURE_PHOTOS} photos.`);
+      return;
+    }
+    Alert.alert(
+      "Attach photos",
+      `Add up to ${room} more photo${room === 1 ? "" : "s"}. They're processed together with the audio as one lecture — the summary, key points, flashcards and quiz are rebuilt to include them.`,
+      [
+        { text: "Take photo", onPress: () => attachPhotos(l, true, room) },
+        { text: "Choose photos", onPress: () => attachPhotos(l, false, room) },
+        { text: "Cancel", style: "cancel" },
+      ],
+    );
+  }
+
+  async function attachPhotos(l: any, fromCamera: boolean, room: number) {
+    const perm = fromCamera
+      ? await ImagePicker.requestCameraPermissionsAsync()
+      : await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!perm.granted) {
+      Alert.alert(fromCamera ? "Camera denied" : "Photos denied", "Enable access in Settings to attach photos.");
+      return;
+    }
+    // quality < 1 has the picker re-encode as JPEG, which the reader accepts (HEIC isn't).
+    const res = fromCamera
+      ? await ImagePicker.launchCameraAsync({ quality: 0.6 })
+      : await ImagePicker.launchImageLibraryAsync({ quality: 0.6, allowsMultipleSelection: true, selectionLimit: room });
+    if (res.canceled || !res.assets.length) return;
+    const uris = res.assets.slice(0, room).map(a => a.uri);
+    setAttachingId(l.id);
+    try {
+      const fd = new FormData();
+      uris.forEach((uri, i) => {
+        const ext = uri.split(".").pop()?.toLowerCase() ?? "jpg";
+        fd.append("images", { uri, name: `photo-${i + 1}.${ext === "png" ? "png" : "jpg"}`, type: ext === "png" ? "image/png" : "image/jpeg" } as any);
+      });
+      await api.post(`/api/lectures/${l.id}/photos`, fd, { headers: { "Content-Type": "multipart/form-data" } });
+      // Watch it rebuild on the processing screen; results open when it's done.
+      sheetCacheRef.current.delete(l.id);
+      setRecordAction(null);
+      setOpenTitle(l.title ?? "");
+      setOpenRecordedAt(l.recordedAt ?? null);
+      setLectureSheet(null);
+      setResultsReady(false);
+      setProcessingError(null);
+      setProcessingStatus("processing");
+      setProcessingLectureId(l.id);
+      mutateLectures();
+    } catch (e: any) {
+      const status = e?.response?.status;
+      Alert.alert(
+        "Couldn't attach photos",
+        status === 429 ? "You've hit this month's plan limit. Upgrade in Billing to keep going."
+          : e?.response?.data?.error ?? "Try again in a moment.",
+      );
+    } finally {
+      setAttachingId(null);
+    }
+  }
+
+  /** Back from an opened (or processing) lecture to the recordings list. */
+  function closeOpenLecture() {
+    setProcessingLectureId(null);
+    setProcessingStatus("processing");
+    setProcessingError(null);
+    setLectureSheet(null);
+    setResultsReady(false);
+    setLectureTranscript(null);
+    mutateLectures();
   }
 
   function resetRecorder() {
+    setProcessingError(null);
     setProcessingLectureId(null);
     setProcessingStatus("processing");
     setLectureSheet(null);
@@ -511,6 +825,7 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
   const TABS = [
     { key: "ask",       icon: "sparkles-outline",      label: "Ask"           },
     { key: "record",    icon: "mic-outline",           label: "Record"        },
+    { key: "photo",     icon: "camera-outline",        label: "Add Photo"     },
     { key: "note",      icon: "create-outline",        label: "Take Note"     },
   ] as const;
 
@@ -596,8 +911,9 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
           {/* Messages */}
           {askMessages.map((m, i) => (
             <View key={i} style={[a.msgRow, m.role === "user" ? a.msgRight : a.msgLeft]}>
-              <View style={[a.bubble, m.role === "user" ? a.bubbleUser : a.bubbleAi]}>
-                <Text style={[a.bubbleTxt, m.role === "user" && { color: "#fff" }]}>{m.content}</Text>
+              {/* A WebView has no intrinsic width, so a bubble holding math takes its max width. */}
+              <View style={[a.bubble, m.role === "user" ? a.bubbleUser : a.bubbleAi, hasMathDelimiters(m.content) && a.bubbleWide]}>
+                <MathText text={m.content} style={[a.bubbleTxt, m.role === "user" && { color: "#fff" }]} interactive />
               </View>
               {m.role === "assistant" && (m.citations?.length ?? 0) > 0 && (
                 <View style={a.citeWrap}>
@@ -631,14 +947,26 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
               onSubmitEditing={() => sendAsk()}
               editable={!askLoading}
             />
-            <TouchableOpacity
-              style={[a.sendBtn, (!askInput.trim() || askLoading) && { opacity: 0.4 }]}
-              onPress={() => sendAsk()}
-              disabled={!askInput.trim() || askLoading}
-              activeOpacity={0.8}
-            >
-              <Ionicons name="arrow-up" size={18} color="#fff" />
-            </TouchableOpacity>
+            {askLoading ? (
+              <TouchableOpacity
+                style={[a.sendBtn, { backgroundColor: "#0f1115" }]}
+                onPress={() => askAbortRef.current?.abort()}
+                activeOpacity={0.8}
+                accessibilityLabel="Stop"
+              >
+                <Ionicons name="stop" size={16} color="#fff" />
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                style={[a.sendBtn, { backgroundColor: course.color || "#4B5FE8" }, !askInput.trim() && { opacity: 0.4 }]}
+                onPress={() => sendAsk()}
+                disabled={!askInput.trim()}
+                activeOpacity={0.8}
+                accessibilityLabel="Send"
+              >
+                <Ionicons name="send" size={17} color="#fff" />
+              </TouchableOpacity>
+            )}
           </View>
         </>
       )}
@@ -646,65 +974,55 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
       {/* ── RECORD ── */}
       {tab === "record" && (
         <>
-          {/* Processing */}
-          {processingLectureId && !resultsReady && !lectureTranscript && (
-            <View style={w.doneCard}>
-              {processingStatus === "error"
-                ? <Ionicons name="alert-circle-outline" size={28} color="rgba(15,17,21,0.55)" style={{ marginBottom: 12 }} />
-                : <ActivityIndicator size="small" color="rgba(15,17,21,0.55)" style={{ marginBottom: 14 }} />
-              }
-              <Text style={w.doneTitle}>
-                {processingStatus === "transcribing" ? "Transcribing your lecture…"
-                  : processingStatus === "generating" ? "Generating your summary…"
-                  : processingStatus === "error" ? "Processing failed"
-                  : "Uploading & analysing…"}
-              </Text>
-              {processingStatus !== "error" && (
-                <View style={w.progressSteps}>
-                  {["processing","transcribing","generating","ready"].map((s, i) => {
-                    const idx = ["processing","transcribing","generating","ready"].indexOf(processingStatus);
-                    return (
-                      <View key={s} style={w.progressStep}>
-                        <View style={[w.stepDot, i < idx && w.stepDotDone, i === idx && w.stepDotActive]} />
-                        <Text style={[w.stepTxt, i <= idx && { color: "rgba(15,17,21,0.55)" }]}>
-                          {s === "processing" ? "Upload" : s === "transcribing" ? "Transcribe" : s === "generating" ? "Summarise" : "Done"}
-                        </Text>
-                      </View>
-                    );
-                  })}
-                </View>
-              )}
-              <TouchableOpacity onPress={resetRecorder} style={w.againBtn}>
-                <Text style={w.againTxt}>Record another</Text>
-              </TouchableOpacity>
-            </View>
-          )}
-
-          {/* Transcript view */}
-          {lectureTranscript && (
-            <View style={w.card}>
-              <Text style={[w.listLbl, { marginTop: 0, marginBottom: 10 }]}>Transcript</Text>
-              <ScrollView style={{ maxHeight: 300 }} nestedScrollEnabled>
-                <Text style={[w.cardDesc, { color: "rgba(15,17,21,0.75)", lineHeight: 20 }]}>{lectureTranscript}</Text>
-              </ScrollView>
-              <View style={{ borderTopWidth: 0.5, borderTopColor: "rgba(0,0,0,0.08)", paddingTop: 12, marginTop: 12 }}>
-                <TouchableOpacity onPress={resetRecorder} style={[w.againBtn, { marginTop: 0, alignSelf: "center" }]}>
-                  <Text style={w.againTxt}>Record another</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
+          {/* Processing — the same screen as the web workspace */}
+          {processingLectureId && !resultsReady && (
+            <ProcessingCard
+              status={processingStatus}
+              color={course.color || "#4B5FE8"}
+              errorMessage={processingError}
+              onBack={closeOpenLecture}
+            />
           )}
 
           {/* Everything generated from the recording */}
-          {resultsReady && processingLectureId && lectureSheet && (
+          {resultsReady && processingLectureId && (
+            <>
+            <View style={w.openHead}>
+              <TouchableOpacity onPress={closeOpenLecture} style={w.backLink} activeOpacity={0.7}>
+                <Ionicons name="arrow-back" size={18} color="rgba(15,17,21,0.8)" />
+                <Text style={w.backLinkTxt}>Back to recordings</Text>
+              </TouchableOpacity>
+              {(() => {
+                const l = lectures.find((x: any) => x.id === processingLectureId);
+                if (!l) return null;
+                const count = photoCount(l);
+                const full = count >= MAX_LECTURE_PHOTOS;
+                return (
+                  <TouchableOpacity
+                    onPress={() => startAttach(l)}
+                    disabled={attachingId === l.id || full}
+                    style={[w.attachBtn, { borderColor: `${course.color || "#4B5FE8"}66` }, full && { opacity: 0.5 }]}
+                    activeOpacity={0.7}
+                  >
+                    {attachingId === l.id
+                      ? <ActivityIndicator size="small" color={course.color || "#4B5FE8"} />
+                      : <Ionicons name="image-outline" size={17} color={course.color || "#4B5FE8"} />}
+                    <Text style={w.attachTxt}>Photos {count}/{MAX_LECTURE_PHOTOS}</Text>
+                  </TouchableOpacity>
+                );
+              })()}
+            </View>
+            <LectureAudioBar api={api} lectureId={processingLectureId} recordedAt={openRecordedAt} color={course.color || "#4B5FE8"} />
             <LectureResults
+              key={processingLectureId}
               api={api}
               lectureId={processingLectureId}
-              title={lectureSheet.title}
+              title={lectureSheet?.title ?? openTitle}
               sheet={lectureSheet}
               color={course.color || "#4B5FE8"}
-              onRecordAnother={resetRecorder}
+              onRecordAnother={closeOpenLecture}
             />
+            </>
           )}
 
           {/* Saved audio action card */}
@@ -720,7 +1038,7 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
                 value={recTitle}
                 onChangeText={setRecTitle}
                 placeholder="Rename this lecture (optional)"
-                placeholderTextColor="rgba(15,17,21,0.35)"
+                placeholderTextColor="rgba(15,17,21,0.55)"
                 returnKeyType="done"
               />
 
@@ -728,6 +1046,42 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
                 <Ionicons name={playerStatus.playing ? "pause-circle" : "play-circle"} size={22} color="#4B5FE8" />
                 <Text style={w.listenTxt}>{playerStatus.playing ? "Pause" : "Listen to recording"}</Text>
               </TouchableOpacity>
+
+              {/* Board photos ride along with the audio */}
+              <View style={w.photoSection}>
+                <View style={w.photoHead}>
+                  <Text style={[w.listLbl, { marginTop: 0, marginBottom: 0 }]}>
+                    Board photos{images.length ? ` (${images.length}/${MAX_LECTURE_PHOTOS})` : ""}
+                  </Text>
+                  <TouchableOpacity
+                    disabled={images.length >= MAX_LECTURE_PHOTOS}
+                    style={[w.photoAddBtn, images.length >= MAX_LECTURE_PHOTOS && { opacity: 0.4 }]}
+                    activeOpacity={0.7}
+                    onPress={() => Alert.alert("Add photos", "Capture the board or pick existing photos.", [
+                      { text: "Take photo", onPress: () => addPhoto(true) },
+                      { text: "Choose photos", onPress: () => addPhoto(false) },
+                      { text: "Cancel", style: "cancel" },
+                    ])}
+                  >
+                    <Ionicons name="image-outline" size={17} color="rgba(15,17,21,0.85)" />
+                    <Text style={w.photoAddTxt}>Add photos</Text>
+                  </TouchableOpacity>
+                </View>
+                {images.length > 0 ? (
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingTop: 6 }}>
+                    {images.map((uri, i) => (
+                      <TouchableOpacity key={uri + i} onPress={() => setImages(prev => prev.filter((_, j) => j !== i))} activeOpacity={0.8}>
+                        <Image source={{ uri }} style={w.savedThumb} />
+                        <View style={w.thumbX}><Ionicons name="close" size={12} color="#fff" /></View>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                ) : (
+                  <Text style={w.photoHint}>Photos of the whiteboard or slides are read alongside the audio.</Text>
+                )}
+              </View>
+
+              {processingError ? <Text style={w.errorBox}>{processingError}</Text> : null}
 
               <TouchableOpacity
                 style={[w.processBtn, { backgroundColor: course.color || "#4B5FE8" }, uploading && { opacity: 0.5 }]}
@@ -738,11 +1092,11 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
                 {uploading
                   ? <ActivityIndicator size="small" color="#fff" />
                   : <Ionicons name="sparkles" size={18} color="#fff" />}
-                <Text style={w.processTxt}>{uploading ? "Processing…" : "Process Lecture"}</Text>
+                <Text style={w.processTxt}>{uploading ? "Sending it over…" : "Make my study material"}</Text>
               </TouchableOpacity>
 
               <TouchableOpacity onPress={resetRecorder} style={{ alignSelf: "center", marginTop: 14 }}>
-                <Text style={{ fontSize: 13.5, color: "rgba(15,17,21,0.55)" }}>Discard recording</Text>
+                <Text style={{ fontSize: 16, color: "rgba(15,17,21,0.75)" }}>Discard recording</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -750,13 +1104,6 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
           {/* Recorder */}
           {!processingLectureId && !savedUri && (
             <>
-              <TextInput
-                style={w.titleInput}
-                value={recTitle}
-                onChangeText={setRecTitle}
-                placeholder="Lecture title (optional)"
-                placeholderTextColor="rgba(15,17,21,0.35)"
-              />
               {isSessionActive ? (
                 <>
                   {/* While recording the transcript is the screen — no waveform,
@@ -769,6 +1116,7 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
                       </Text>
                       <Text style={w.liveTimer}>{fmt(seconds)}</Text>
                     </View>
+                    <Text style={w.liveTitle} numberOfLines={1}>{lectureTitle()}</Text>
 
                     <ScrollView
                       style={w.liveScroll}
@@ -778,10 +1126,7 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
                       showsVerticalScrollIndicator={false}
                     >
                       {live.fullText ? (
-                        <Text style={w.liveTxt}>
-                          {toMathNotation(live.text)}
-                          {live.partial ? <Text style={w.livePartial}>{live.text ? " " : ""}{toMathNotation(live.partial)}</Text> : null}
-                        </Text>
+                        <LiveTranscriptView entries={live.entries} partial={live.partial} />
                       ) : (
                         <Text style={w.liveHint}>Start speaking — words appear here as you go.</Text>
                       )}
@@ -804,7 +1149,7 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
 
                     <View style={w.ctrlRow}>
                       <TouchableOpacity style={w.ctrlBtn} onPress={paused ? resumeRecording : pauseRecording} activeOpacity={0.8}>
-                        <Ionicons name={paused ? "play" : "pause"} size={19} color="#0f1115" />
+                        <Ionicons name={paused ? "play" : "pause"} size={21} color="#0f1115" />
                         <Text style={w.ctrlTxt}>{paused ? "Resume" : "Pause"}</Text>
                       </TouchableOpacity>
 
@@ -817,12 +1162,12 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
                         ])}
                         activeOpacity={0.8}
                       >
-                        <Ionicons name="camera-outline" size={19} color="#0f1115" />
+                        <Ionicons name="camera-outline" size={21} color="#0f1115" />
                         <Text style={w.ctrlTxt}>Photo{images.length ? ` (${images.length})` : ""}</Text>
                       </TouchableOpacity>
 
-                      <TouchableOpacity style={w.ctrlStop} onPress={stopRecording} activeOpacity={0.8}>
-                        <Ionicons name="stop" size={19} color="#fff" />
+                      <TouchableOpacity style={w.ctrlStop} onPress={() => requestStop()} activeOpacity={0.8}>
+                        <Ionicons name="stop" size={21} color="#fff" />
                         <Text style={w.ctrlStopTxt}>Stop</Text>
                       </TouchableOpacity>
                     </View>
@@ -830,11 +1175,27 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
                 </>
               ) : (
                 <View style={w.recCard}>
-                  <Text style={w.timer}>{fmt(seconds)}</Text>
-                  <Text style={[w.hint, { marginBottom: 20 }]}>Tap to start recording</Text>
-                  <TouchableOpacity style={w.startBtn} onPress={startRecording} disabled={uploading} activeOpacity={0.8}>
-                    <Ionicons name="mic" size={28} color="#fff" />
+                  <View style={{ alignSelf: "stretch" }}>
+                    <Text style={[w.listLbl, { marginTop: 0 }]}>Lecture title (optional)</Text>
+                    <TextInput
+                      style={w.titleInput}
+                      value={recTitle}
+                      onChangeText={setRecTitle}
+                      placeholder={autoTitle()}
+                      placeholderTextColor="rgba(15,17,21,0.55)"
+                      returnKeyType="done"
+                    />
+                    <Text style={w.nameHint}>Leave it blank and we&rsquo;ll name it &ldquo;{autoTitle()}&rdquo;.</Text>
+                  </View>
+                  <TouchableOpacity
+                    style={[w.startBtn, { backgroundColor: course.color || "#4B5FE8", borderColor: course.color || "#4B5FE8" }]}
+                    onPress={startRecording}
+                    disabled={uploading}
+                    activeOpacity={0.8}
+                  >
+                    <Ionicons name="mic" size={30} color="#fff" />
                   </TouchableOpacity>
+                  <Text style={w.hint}>Tap to start recording</Text>
                 </View>
               )}
 
@@ -843,30 +1204,85 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
 
           {/* Past recordings stay out of the way while one is in progress —
               the live transcript gets the whole screen. */}
-          {lectures.length > 0 && !savedUri && !isSessionActive && (
+          {audioLectures.length > 0 && !savedUri && !isSessionActive && !resultsReady && (
             <>
               <Text style={w.listLbl}>Recordings</Text>
-              {lectures.map((l) => (
-                <TouchableOpacity
-                  key={l.id}
-                  style={w.listRow}
-                  onPress={() => openPastLecture(l)}
-                  activeOpacity={0.7}
-                >
-                  <View style={{ flex: 1 }}>
-                    <Text style={w.listTitle}>{l.title}</Text>
-                    <Text style={w.listSub}>{l.status === "ready" ? "Tap to open" : l.status}</Text>
+              {audioLectures.map((l: any) => {
+                const ready = l.status === "ready";
+                const tint = course.color || "#4B5FE8";
+                return (
+                  <View key={l.id} style={w.listRow}>
+                    <TouchableOpacity style={w.listMain} onPress={() => openPastLecture(l)} activeOpacity={0.7}>
+                      <View style={[w.listIcon, { backgroundColor: `${tint}1A` }]}>
+                        <Ionicons name="mic" size={17} color={tint} />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={w.listTitle} numberOfLines={2}>{l.title}</Text>
+                        <Text style={w.listSub}>
+                          {ready
+                            ? `${new Date(l.recordedAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })} · Tap to open`
+                            : l.status === "error" ? "Processing failed" : "Still processing…"}
+                        </Text>
+                      </View>
+                      {ready ? (
+                        <Ionicons name="chevron-forward" size={19} color="rgba(15,17,21,0.6)" />
+                      ) : l.status === "error" ? (
+                        <Text style={[w.badge, { color: "#DC2626", backgroundColor: "rgba(220,38,38,0.08)" }]}>Failed</Text>
+                      ) : (
+                        <View style={[w.badgeRow, { backgroundColor: "rgba(0,0,0,0.06)" }]}>
+                          <ActivityIndicator size="small" color="rgba(15,17,21,0.7)" style={{ transform: [{ scale: 0.6 }] }} />
+                          <Text style={[w.badge, { paddingHorizontal: 0, color: "rgba(15,17,21,0.78)" }]}>Processing</Text>
+                        </View>
+                      )}
+                    </TouchableOpacity>
+                    {ready && (
+                      <TouchableOpacity
+                        onPress={() => startAttach(l)}
+                        disabled={attachingId === l.id || photoCount(l) >= MAX_LECTURE_PHOTOS}
+                        style={[w.attachChip, photoCount(l) >= MAX_LECTURE_PHOTOS && { opacity: 0.45 }]}
+                        hitSlop={6}
+                        activeOpacity={0.6}
+                      >
+                        {attachingId === l.id
+                          ? <ActivityIndicator size="small" color="rgba(15,17,21,0.7)" />
+                          : <Ionicons name="image-outline" size={18} color="rgba(15,17,21,0.75)" />}
+                        <Text style={w.attachChipTxt}>{photoCount(l)}/{MAX_LECTURE_PHOTOS}</Text>
+                      </TouchableOpacity>
+                    )}
+                    <TouchableOpacity onPress={() => archiveLecture(l)} style={w.trashBtn} hitSlop={8} activeOpacity={0.6}>
+                      <Ionicons name="trash-outline" size={19} color="rgba(15,17,21,0.62)" />
+                    </TouchableOpacity>
                   </View>
-                  <Ionicons
-                    name={l.status === "ready" ? "chevron-forward" : "time-outline"}
-                    size={16}
-                    color="rgba(15,17,21,0.35)"
-                  />
-                </TouchableOpacity>
+                );
+              })}
+            </>
+          )}
+
+          {archivedLectures.length > 0 && !savedUri && !isSessionActive && !resultsReady && (
+            <>
+              <Text style={w.listLbl}>Archived</Text>
+              {archivedLectures.map((l: any) => (
+                <View key={l.id} style={[w.listRow, { backgroundColor: "rgba(0,0,0,0.02)" }]}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[w.listTitle, { color: "rgba(15,17,21,0.8)" }]} numberOfLines={2}>{l.title}</Text>
+                    <Text style={w.listSub}>{new Date(l.recordedAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}</Text>
+                  </View>
+                  <TouchableOpacity onPress={() => restoreLecture(l.id)} style={w.restoreBtn} activeOpacity={0.7}>
+                    <Text style={w.restoreTxt}>Restore</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => deleteForever(l)} style={w.trashBtn} hitSlop={8} activeOpacity={0.6}>
+                    <Ionicons name="trash-outline" size={19} color="rgba(15,17,21,0.62)" />
+                  </TouchableOpacity>
+                </View>
               ))}
             </>
           )}
         </>
+      )}
+
+      {/* ── ADD PHOTO ── */}
+      {tab === "photo" && (
+        <ClassPhotos api={api} fetcher={fetcher} course={course} color={course.color || "#4B5FE8"} />
       )}
 
       {/* ── TAKE NOTE — list ── */}
@@ -1068,67 +1484,90 @@ const w = StyleSheet.create({
   tabScroll: { marginBottom: 20 },
   tabRow: { flexDirection: "row", gap: 6, backgroundColor: "#FFFFFF", borderRadius: 24, padding: 5, borderWidth: 1, borderColor: "rgba(0,0,0,0.08)" },
   tab: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 18, paddingVertical: 11, borderRadius: 19 },
-  tabLabel: { fontSize: 14.5, color: "rgba(15,17,21,0.55)", fontWeight: "600" },
+  tabLabel: { fontSize: 15.5, color: "rgba(15,17,21,0.72)", fontWeight: "600" },
   tabLabelActive: { color: "#fff" },
-  titleInput: { backgroundColor: "#FFFFFF", borderRadius: 14, paddingHorizontal: 14, paddingVertical: 14, fontSize: 16, color: "#0f1115", borderWidth: 1, borderColor: "rgba(0,0,0,0.08)", marginBottom: 10 },
+  titleInput: { backgroundColor: "#FFFFFF", borderRadius: 14, paddingHorizontal: 14, paddingVertical: 15, fontSize: 18, color: "#0f1115", borderWidth: 1, borderColor: "rgba(0,0,0,0.08)", marginBottom: 10 },
   recCard: { backgroundColor: "#FFFFFF", borderRadius: 28, padding: 28, alignItems: "center", borderWidth: 1, borderColor: "rgba(0,0,0,0.08)", marginBottom: 10 },
-  timer: { fontSize: 52, color: "#0f1115", fontWeight: "200", letterSpacing: -2, marginBottom: 10 },
+  timer: { fontSize: 60, color: "#0f1115", fontWeight: "300", letterSpacing: -2, marginBottom: 10 },
   liveCard: { backgroundColor: "#FFFFFF", borderRadius: 18, padding: 15, borderWidth: 1, borderColor: "rgba(0,0,0,0.08)", marginBottom: 10 },
   liveHead: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 9 },
   liveDot: { width: 8, height: 8, borderRadius: 4 },
-  liveLbl: { fontSize: 12.5, fontWeight: "700", color: "rgba(15,17,21,0.7)", textTransform: "uppercase", letterSpacing: 1 },
-  liveTimer: { fontSize: 14.5, color: "rgba(15,17,21,0.7)", marginLeft: "auto", fontVariant: ["tabular-nums"] },
+  liveLbl: { fontSize: 15, fontWeight: "700", color: "rgba(15,17,21,0.88)", textTransform: "uppercase", letterSpacing: 1 },
+  liveTimer: { fontSize: 18, color: "#0f1115", fontWeight: "600", marginLeft: "auto", fontVariant: ["tabular-nums"] },
   liveScroll: { maxHeight: 460, minHeight: 260 },
-  liveTxt: { fontSize: 17.5, color: "#0f1115", lineHeight: 27 },
+  liveTxt: { fontSize: 19.5, color: "#0f1115", lineHeight: 30 },
   thumbRow: { marginTop: 12, maxHeight: 62 },
   thumb: { width: 54, height: 54, borderRadius: 10, backgroundColor: "rgba(0,0,0,0.05)" },
   thumbX: { position: "absolute", top: -4, right: -4, width: 18, height: 18, borderRadius: 9, backgroundColor: "rgba(15,17,21,0.75)", alignItems: "center", justifyContent: "center" },
   ctrlRow: { flexDirection: "row", gap: 8, marginTop: 14, borderTopWidth: 1, borderTopColor: "rgba(0,0,0,0.06)", paddingTop: 14 },
   ctrlBtn: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 7, backgroundColor: "#FFFFFF", borderRadius: 16, paddingVertical: 13, borderWidth: 1, borderColor: "rgba(0,0,0,0.12)" },
-  ctrlTxt: { fontSize: 15.5, color: "#0f1115", fontWeight: "600" },
+  ctrlTxt: { fontSize: 17, color: "#0f1115", fontWeight: "600" },
   ctrlStop: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 7, backgroundColor: "#4B5FE8", borderRadius: 16, paddingVertical: 13 },
-  ctrlStopTxt: { fontSize: 15.5, color: "#fff", fontWeight: "600" },
-  livePartial: { color: "rgba(15,17,21,0.55)" },
-  liveHint: { fontSize: 15.5, color: "rgba(15,17,21,0.55)", lineHeight: 23 },
+  ctrlStopTxt: { fontSize: 17, color: "#fff", fontWeight: "700" },
+  livePartial: { color: "rgba(15,17,21,0.66)" },
+  liveHint: { fontSize: 18, color: "rgba(15,17,21,0.75)", lineHeight: 26 },
   recBtnRow: { flexDirection: "row", gap: 10, width: "100%" },
   pauseBtn: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, backgroundColor: "#FFFFFF", borderRadius: 18, paddingVertical: 14, borderWidth: 1, borderColor: "rgba(0,0,0,0.12)" },
   pauseBtnTxt: { fontSize: 15, color: "#0f1115", fontWeight: "500" },
   stopBtn: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, backgroundColor: "#4B5FE8", borderRadius: 18, paddingVertical: 14 },
   stopBtnTxt: { fontSize: 15, color: "#fff", fontWeight: "600" },
-  startBtn: { width: 68, height: 68, borderRadius: 34, backgroundColor: "#4B5FE8", borderWidth: 1, borderColor: "#4B5FE8", alignItems: "center", justifyContent: "center", marginBottom: 8 },
+  startBtn: { width: 76, height: 76, borderRadius: 38, backgroundColor: "#4B5FE8", borderWidth: 1, borderColor: "#4B5FE8", alignItems: "center", justifyContent: "center", marginBottom: 8 },
   savedDot: { width: 12, height: 12, borderRadius: 6 },
-  savedTitle: { flex: 1, fontSize: 16, fontWeight: "700", color: "#0f1115", lineHeight: 22 },
-  savedLen: { fontSize: 13.5, color: "rgba(15,17,21,0.55)", fontWeight: "600" },
+  savedTitle: { flex: 1, fontSize: 19, fontWeight: "700", color: "#0f1115", lineHeight: 25 },
+  savedLen: { fontSize: 16, color: "rgba(15,17,21,0.78)", fontWeight: "600" },
   processBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 9, borderRadius: 16, paddingVertical: 16, marginTop: 10 },
-  processTxt: { fontSize: 16.5, color: "#fff", fontWeight: "700" },
+  processTxt: { fontSize: 18.5, color: "#fff", fontWeight: "700" },
   savedCard: { backgroundColor: "#FFFFFF", borderRadius: 20, padding: 16, borderWidth: 1, borderColor: "rgba(0,0,0,0.08)", marginBottom: 10 },
   listenBtn: { flexDirection: "row", alignItems: "center", gap: 10, backgroundColor: "rgba(75,95,232,0.1)", borderRadius: 14, padding: 14, borderWidth: 1, borderColor: "rgba(75,95,232,0.2)" },
-  listenTxt: { fontSize: 16, color: "#4B5FE8", fontWeight: "600" },
+  listenTxt: { fontSize: 18, color: "#4B5FE8", fontWeight: "600" },
   actionBtn: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 7, backgroundColor: "#FFFFFF", borderRadius: 14, paddingVertical: 13, borderWidth: 1, borderColor: "rgba(0,0,0,0.12)" },
   actionBtnPrimary: { backgroundColor: "#4B5FE8", borderColor: "#4B5FE8" },
   actionBtnTxt: { fontSize: 16, color: "rgba(15,17,21,0.8)", fontWeight: "600" },
-  hint: { fontSize: 15, color: "rgba(15,17,21,0.6)" },
+  hint: { fontSize: 18, color: "rgba(15,17,21,0.8)", marginTop: 10 },
   card: { backgroundColor: "#FFFFFF", borderRadius: 20, padding: 16, borderWidth: 1, borderColor: "rgba(0,0,0,0.08)", marginBottom: 10 },
   cardDesc: { fontSize: 14, color: "rgba(15,17,21,0.7)", lineHeight: 21 },
   primaryBtn: { backgroundColor: "#4B5FE8", borderRadius: 16, padding: 14, alignItems: "center", flexDirection: "row", justifyContent: "center", marginBottom: 16 },
   primaryBtnTxt: { fontSize: 15, color: "#fff", fontWeight: "600" },
   doneCard: { backgroundColor: "#FFFFFF", borderRadius: 24, padding: 28, alignItems: "center", borderWidth: 1, borderColor: "rgba(0,0,0,0.08)", marginBottom: 16 },
   doneIcon: { width: 50, height: 50, borderRadius: 25, backgroundColor: "#4B5FE8", alignItems: "center", justifyContent: "center", marginBottom: 14 },
-  doneTitle: { fontSize: 18, color: "#0f1115", fontWeight: "700", marginBottom: 12, textAlign: "center" },
-  doneSub: { fontSize: 15, color: "rgba(15,17,21,0.75)", textAlign: "center", lineHeight: 22 },
+  doneTitle: { fontSize: 21, color: "#0f1115", fontWeight: "700", marginBottom: 12, textAlign: "center" },
+  doneSub: { fontSize: 17, color: "rgba(15,17,21,0.85)", textAlign: "center", lineHeight: 24 },
   againBtn: { marginTop: 16, borderWidth: 1, borderColor: "rgba(0,0,0,0.12)", borderRadius: 999, paddingHorizontal: 18, paddingVertical: 7 },
-  againTxt: { fontSize: 15, color: "rgba(15,17,21,0.7)" },
+  againTxt: { fontSize: 17, color: "rgba(15,17,21,0.88)", fontWeight: "600" },
   progressSteps: { flexDirection: "row", gap: 12, marginBottom: 8, alignItems: "center" },
   progressStep: { alignItems: "center", gap: 4 },
-  stepDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: "rgba(0,0,0,0.12)" },
+  stepDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: "rgba(0,0,0,0.2)" },
   stepDotDone: { backgroundColor: "rgba(15,17,21,0.35)" },
   stepDotActive: { backgroundColor: "#4B5FE8" },
-  stepTxt: { fontSize: 12, color: "rgba(15,17,21,0.5)", textTransform: "capitalize" },
-  listLbl: { fontSize: 12.5, color: "rgba(15,17,21,0.6)", textTransform: "uppercase", letterSpacing: 2, fontWeight: "600", marginBottom: 8, marginTop: 16 },
-  listRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", backgroundColor: "#FFFFFF", borderRadius: 14, padding: 12, borderWidth: 1, borderColor: "rgba(0,0,0,0.08)", marginBottom: 6 },
+  stepTxt: { fontSize: 14.5, color: "rgba(15,17,21,0.65)", textTransform: "capitalize" },
+  listLbl: { fontSize: 15, color: "rgba(15,17,21,0.82)", textTransform: "uppercase", letterSpacing: 2, fontWeight: "700", marginBottom: 10, marginTop: 18 },
+  listRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", backgroundColor: "#FFFFFF", borderRadius: 14, padding: 14, borderWidth: 1, borderColor: "rgba(0,0,0,0.08)", marginBottom: 6 },
   listRowSelected: { borderColor: "#4B5FE8" },
-  listTitle: { fontSize: 16, color: "rgba(15,17,21,0.9)", flex: 1 },
-  listSub: { fontSize: 13, color: "rgba(15,17,21,0.55)", marginTop: 3 },
+  listTitle: { fontSize: 18, color: "#0f1115", fontWeight: "600" },
+  listMain: { flex: 1, flexDirection: "row", alignItems: "center", gap: 12 },
+  listIcon: { width: 36, height: 36, borderRadius: 10, alignItems: "center", justifyContent: "center" },
+  badge: { fontSize: 13.5, fontWeight: "700", borderRadius: 999, paddingHorizontal: 9, paddingVertical: 3, overflow: "hidden" },
+  badgeRow: { flexDirection: "row", alignItems: "center", borderRadius: 999, paddingRight: 9 },
+  trashBtn: { paddingLeft: 10, paddingVertical: 4 },
+  restoreBtn: { borderWidth: 1, borderColor: "rgba(0,0,0,0.14)", borderRadius: 999, paddingHorizontal: 14, paddingVertical: 6 },
+  restoreTxt: { fontSize: 15.5, fontWeight: "600", color: "rgba(15,17,21,0.88)" },
+  backLink: { flexDirection: "row", alignItems: "center", gap: 8, alignSelf: "flex-start", paddingVertical: 4 },
+  openHead: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 14, gap: 10 },
+  attachBtn: { flexDirection: "row", alignItems: "center", gap: 6, borderWidth: 1, borderRadius: 999, paddingHorizontal: 13, paddingVertical: 7 },
+  attachTxt: { fontSize: 15.5, fontWeight: "600", color: "#0f1115" },
+  attachChip: { flexDirection: "row", alignItems: "center", gap: 3, paddingHorizontal: 6, paddingVertical: 4, marginLeft: 6 },
+  attachChipTxt: { fontSize: 13.5, fontWeight: "700", color: "rgba(15,17,21,0.75)" },
+  backLinkTxt: { fontSize: 17, color: "rgba(15,17,21,0.82)", fontWeight: "500" },
+  liveTitle: { fontSize: 15.5, color: "rgba(15,17,21,0.75)", marginBottom: 10 },
+  nameHint: { fontSize: 15.5, color: "rgba(15,17,21,0.72)", lineHeight: 22, marginBottom: 22 },
+  photoSection: { marginTop: 14 },
+  photoHead: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 6 },
+  photoAddBtn: { flexDirection: "row", alignItems: "center", gap: 6, borderWidth: 1, borderColor: "rgba(0,0,0,0.12)", borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6 },
+  photoAddTxt: { fontSize: 15.5, color: "rgba(15,17,21,0.88)", fontWeight: "600" },
+  photoHint: { fontSize: 15.5, color: "rgba(15,17,21,0.72)", lineHeight: 22 },
+  savedThumb: { width: 84, height: 84, borderRadius: 12, backgroundColor: "rgba(0,0,0,0.05)" },
+  errorBox: { marginTop: 14, fontSize: 16, color: "#DC2626", backgroundColor: "rgba(220,38,38,0.06)", borderWidth: 1, borderColor: "rgba(220,38,38,0.2)", borderRadius: 12, padding: 12, overflow: "hidden" },
+  listSub: { fontSize: 15, color: "rgba(15,17,21,0.75)", marginTop: 4 },
   sessionRow: { flexDirection: "row", alignItems: "center", gap: 12, backgroundColor: "#FFFFFF", borderRadius: 18, padding: 14, borderWidth: 1, borderColor: "rgba(0,0,0,0.08)", marginBottom: 8 },
   sessionDate: { alignItems: "center", width: 40 },
   sessionMon: { fontSize: 11, color: "rgba(15,17,21,0.45)", textTransform: "uppercase", letterSpacing: 0.5 },
@@ -1157,6 +1596,7 @@ const a = StyleSheet.create({
   bubble: { maxWidth: "85%", borderRadius: 16, paddingHorizontal: 14, paddingVertical: 10 },
   bubbleUser: { backgroundColor: "#4B5FE8", borderBottomRightRadius: 5 },
   bubbleAi: { backgroundColor: "rgba(75,95,232,0.06)", borderWidth: 1, borderColor: "rgba(75,95,232,0.15)", borderBottomLeftRadius: 5 },
+  bubbleWide: { width: "85%" },
   bubbleTxt: { color: "#0f1115", fontSize: 15.5, lineHeight: 22 },
   citeWrap: { flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 8, maxWidth: "90%" },
   citeChip: { flexDirection: "row", alignItems: "center", gap: 5, backgroundColor: "rgba(75,95,232,0.1)", borderColor: "rgba(75,95,232,0.2)", borderWidth: 1, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4, maxWidth: 260 },
