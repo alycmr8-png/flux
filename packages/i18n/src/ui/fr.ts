@@ -745,4 +745,6 @@ export const fr: Record<string, string> = {
   "Maths, chemistry, physics, dosage calculations and statistics — build it with the buttons.": "Maths, chimie, physique, calculs de doses et statistiques — composez-la avec les boutons.",
   "Insert a science expression — maths, chemistry, physics, dosage, statistics": "Insérer une expression scientifique — maths, chimie, physique, doses, statistiques",
   "Tap to drop it into your note": "Touchez pour l'insérer dans votre note",
+  "Privacy Policy": "Politique de confidentialité",
+  "Terms of Service": "Conditions d'utilisation",
 };

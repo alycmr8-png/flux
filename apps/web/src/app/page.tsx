@@ -280,7 +280,11 @@ export default async function LandingPage() {
             </div>
           </div>
         </div>
-        <div className="text-center pb-8">
+        <div className="text-center pb-8 flex flex-col items-center gap-3">
+          <div className="flex items-center gap-5 flex-wrap justify-center">
+            <Link href="/privacy" className="text-[14px] hover:text-[#0f1115] transition-colors" style={{ color: "rgba(0,0,0,0.6)" }}>{tr("Privacy Policy")}</Link>
+            <Link href="/terms" className="text-[14px] hover:text-[#0f1115] transition-colors" style={{ color: "rgba(0,0,0,0.6)" }}>{tr("Terms of Service")}</Link>
+          </div>
           <span className="text-[14px]" style={{ color: "rgba(0,0,0,0.45)" }}>© {new Date().getFullYear()} Flux. {tr("All rights reserved.")}</span>
         </div>
       </footer>
