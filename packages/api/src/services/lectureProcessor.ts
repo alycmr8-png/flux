@@ -5,6 +5,7 @@ import { condenseTranscript, generateCheatSheet, generateQuiz, generateKeyPoints
 import { syncToDrive } from "./google";
 import { scheduleSpacedRepetition } from "./spaced-repetition";
 import { indexSource } from "./memory";
+import { withCostScope, recordAudioMinutes } from "../lib/cost";
 
 // Re-encodes a recording to 48 kbps mono mp3 next to the original, deletes the
 // original, and returns the new path — or null when ffmpeg is unavailable.
@@ -47,7 +48,20 @@ const APPENDED_SECTIONS = /\n\n\[(?:SLIDES|PHOTOS TAKEN IN CLASS|WRITTEN ON THE 
 /** The most photos a single recording can carry — during recording and attached later. */
 export const MAX_LECTURE_PHOTOS = 5;
 
+/**
+ * Processes a lecture inside a cost scope, so the log line at the end reports
+ * what this lecture actually cost to turn into study material — the number the
+ * plan prices have to clear.
+ */
 export async function processLecture(lectureId: string, userId: string, opts: { reprocess?: boolean } = {}) {
+  const { result } = await withCostScope(
+    `lecture ${lectureId}${opts.reprocess ? " (reprocess)" : ""}`,
+    () => processLectureInner(lectureId, userId, opts),
+  );
+  return result;
+}
+
+async function processLectureInner(lectureId: string, userId: string, opts: { reprocess?: boolean } = {}) {
   try {
     const lecture = await prisma.lecture.findUniqueOrThrow({ where: { id: lectureId } });
     // Reprocessing (photos attached to a finished recording) starts from the transcript
@@ -98,12 +112,19 @@ export async function processLecture(lectureId: string, userId: string, opts: { 
     } else if (liveIsComplete) {
       transcript = live;
       segments = liveSegs.map((x: any) => ({ start: Number(x.start) || 0, end: Number(x.end) || 0, text: String(x.text ?? "") }));
+      // Already paid to Deepgram while recording; counted here so the lecture's
+      // total reflects it, since the streaming happened on another connection.
+      recordAudioMinutes("deepgram", minutes);
       console.log(`[processLecture] using live transcript (${liveWords} words over ${minutes.toFixed(1)} min) — Whisper skipped`);
     } else {
       if (live) console.log(`[processLecture] live transcript looks incomplete (${liveWords} words over ${minutes.toFixed(1)} min) — falling back to Whisper`);
-      const result = await transcribeAudio(audioPath);
+      const spoken = (await prisma.user.findUnique({ where: { id: userId }, select: { language: true } }))?.language ?? "en";
+      const result = await transcribeAudio(audioPath, spoken);
       transcript = result.text;
       segments = result.segments;
+      // The worst case for margin: streamed live *and* re-transcribed in full.
+      if (live) recordAudioMinutes("deepgram", minutes);
+      recordAudioMinutes("whisper", minutes);
     }
 
     if (!transcript.trim()) throw new Error("Transcription returned an empty transcript");

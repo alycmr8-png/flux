@@ -4,7 +4,8 @@ import {
   StatusBar, ScrollView, TextInput, ActivityIndicator, KeyboardAvoidingView, Platform, Keyboard, AppState,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter, usePathname } from "expo-router";
+import { recordingSession, useRecordingSession } from "../../lib/recordingSession";
 import {
   useAudioRecorder, useAudioRecorderState, useAudioPlayer, useAudioPlayerStatus,
   requestRecordingPermissionsAsync, setAudioModeAsync,
@@ -23,9 +24,10 @@ import { LectureAudioBar } from "../../components/LectureAudioBar";
 import { TypingDots } from "../../components/TypingDots";
 import { MathText, hasMathDelimiters } from "../../components/MathText";
 import { useLiveTranscription } from "../../lib/useLiveTranscription";
-import { toMathNotation, type LiveEntry } from "@sano/shared";
+import { toMathNotation, SCIENCE_STRUCTURES, SCIENCE_SYMBOLS, type LiveEntry, type MathTemplate } from "@sano/shared";
 import * as ImagePicker from "expo-image-picker";
 import { Image } from "react-native";
+import { useTr } from "../../lib/useTr";
 
 const KEEP_AWAKE_TAG = "flux-recording";
 // Photos per recording — taken while recording or attached afterwards (the API enforces the same).
@@ -115,6 +117,7 @@ const CLASS_COLORS = [
 ];
 
 function ClassGate({ insets, onSelect }: { insets: any; onSelect: (c: any) => void }) {
+  const tr = useTr();
   const api = useApi();
   const { getToken } = useAuth();
   const fetcher = makeApiFetcher(getToken);
@@ -136,7 +139,7 @@ function ClassGate({ insets, onSelect }: { insets: any; onSelect: (c: any) => vo
       setCreating(false);
       onSelect(res.data?.data);
     } catch (e: any) {
-      Alert.alert("Error", e?.message ?? "Could not create class");
+      Alert.alert(tr("Error"), e?.message ?? tr("Could not create class"));
     } finally {
       setLoading(false);
     }
@@ -149,16 +152,16 @@ function ClassGate({ insets, onSelect }: { insets: any; onSelect: (c: any) => vo
       `Delete "${c.name}"?`,
       "This permanently deletes the class and everything in it — recordings, transcripts, summaries and notes. This cannot be undone.",
       [
-        { text: "Cancel", style: "cancel" },
+        { text: tr("Cancel"), style: "cancel" },
         {
-          text: "Delete",
+          text: tr("Delete"),
           style: "destructive",
           onPress: async () => {
             try {
               await api.delete(`/api/courses/${c.id}`);
               await mutate();
             } catch (e: any) {
-              Alert.alert("Couldn't delete", e?.response?.data?.error ?? e?.message ?? "Try again.");
+              Alert.alert(tr("Couldn't delete"), e?.response?.data?.error ?? e?.message ?? tr("Try again."));
             }
           },
         },
@@ -170,8 +173,8 @@ function ClassGate({ insets, onSelect }: { insets: any; onSelect: (c: any) => vo
     <ScrollView style={g.root} contentContainerStyle={[g.content, { paddingTop: insets.top + 16 }]}>
       <View style={g.headRow}>
         <View style={{ flex: 1 }}>
-          <Text style={g.title}>Workspace</Text>
-          <Text style={g.sub}>Select or create a class to get started</Text>
+          <Text style={g.title}>{tr("Workspace")}</Text>
+          <Text style={g.sub}>{tr("Select or create a class to get started")}</Text>
         </View>
         <TouchableOpacity
           style={[g.newBtn, creating && { backgroundColor: "rgba(15,17,21,0.08)" }]}
@@ -185,19 +188,19 @@ function ClassGate({ insets, onSelect }: { insets: any; onSelect: (c: any) => vo
       {(creating || courses.length === 0) && (
         <View style={g.createCard}>
           <Text style={[g.sectionLbl, { marginTop: 0 }]}>
-            {courses.length ? "New class" : "Create your first class"}
+            {courses.length ? tr("New class") : tr("Create your first class")}
           </Text>
           <TextInput
             style={g.input}
             value={name}
             onChangeText={setName}
-            placeholder="e.g. Calculus II, Biology 101…"
+            placeholder={tr("e.g. Calculus II, Biology 101…")}
             placeholderTextColor="rgba(15,17,21,0.35)"
             returnKeyType="done"
             onSubmitEditing={create}
           />
 
-          <Text style={[g.sectionLbl, { marginTop: 16 }]}>Colour</Text>
+          <Text style={[g.sectionLbl, { marginTop: 16 }]}>{tr("Colour")}</Text>
           <View style={g.swatchRow}>
             {CLASS_COLORS.map(c => (
               <TouchableOpacity
@@ -219,14 +222,14 @@ function ClassGate({ insets, onSelect }: { insets: any; onSelect: (c: any) => vo
           >
             {loading
               ? <ActivityIndicator size="small" color="#fff" />
-              : <Text style={g.createBtnTxt}>Create class</Text>}
+              : <Text style={g.createBtnTxt}>{tr("Create class")}</Text>}
           </TouchableOpacity>
         </View>
       )}
 
       {courses.length > 0 && (
         <>
-          <Text style={g.sectionLbl}>Your classes</Text>
+          <Text style={g.sectionLbl}>{tr("Your classes")}</Text>
           {courses.map((c) => {
             const tint = c.color || CLASS_COLORS[0];
             return (
@@ -261,11 +264,12 @@ function ClassGate({ insets, onSelect }: { insets: any; onSelect: (c: any) => vo
 }
 
 // ─── Class Workspace ──────────────────────────────────────────────────────────
-function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; onBack: () => void }) {
+function ClassWorkspace({ insets, course, onBack, hidden = false }: { insets: any; course: any; onBack: () => void; hidden?: boolean }) {
+  const tr = useTr();
   const api = useApi();
   const { getToken } = useAuth();
   const fetcher = makeApiFetcher(getToken);
-  const [tab, setTab] = useState<"ask" | "record" | "photo" | "note">("ask");
+  const [tab, setTab] = useState<"record" | "photo" | "note" | "ask">("record");
 
   const { data: lecturesData, mutate: mutateLectures } = useSWR(`/api/lectures?courseId=${course.id}`, fetcher);
   const lectures: any[] = lecturesData?.data ?? [];
@@ -284,7 +288,7 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
       await api.post("/api/ask/index", { courseId: course.id });
       await mutateAskStatus();
     } catch (e: any) {
-      Alert.alert("Failed", e?.response?.data?.error ?? e?.message ?? "Could not refresh memory");
+      Alert.alert(tr("Failed"), e?.response?.data?.error ?? e?.message ?? tr("Could not refresh memory"));
     } finally {
       setAskIndexing(false);
     }
@@ -320,7 +324,7 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
     } catch (e: any) {
       // Stopping is deliberate, so it shouldn't read as an error in the chat.
       if (e?.code !== "ERR_CANCELED") {
-        setAskMessages([...next, { role: "assistant", content: e?.response?.data?.error ?? "Something went wrong — try again." }]);
+        setAskMessages([...next, { role: "assistant", content: e?.response?.data?.error ?? tr("Something went wrong — try again.") }]);
       }
     } finally {
       askAbortRef.current = null;
@@ -379,8 +383,8 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
             if (recordAction === "transcribe") {
               try {
                 const lecRes = await api.get(`/api/lectures/${processingLectureId}`);
-                setLectureTranscript(lecRes.data?.data?.transcript ?? "Transcript not available.");
-              } catch { setLectureTranscript("Could not load transcript."); }
+                setLectureTranscript(lecRes.data?.data?.transcript ?? tr("Transcript not available."));
+              } catch { setLectureTranscript(tr("Could not load transcript.")); }
             } else {
               const sheetRes = await api.get(`/api/cheatsheets?lectureId=${processingLectureId}`);
               const sheets = (sheetRes.data?.data ?? []).filter((s: any) => !s.title?.startsWith("Study Book:"));
@@ -400,6 +404,29 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
   useEffect(() => {
     if (isSessionActive) setSeconds(Math.floor((recorderState.durationMillis ?? 0) / 1000));
   }, [recorderState.durationMillis, isSessionActive]);
+
+  // ── Share this class's recording with the rest of the app (floating bar) ──
+  const pathname = usePathname();
+  const ownsSession = isSessionActive || !!savedUri;
+  useEffect(() => {
+    if (ownsSession) {
+      recordingSession.set({
+        course: { id: course.id, name: course.name, color: course.color },
+        status: isSessionActive ? (paused ? "paused" : "recording") : "saved",
+        seconds,
+        onScreen: !hidden && tab === "record" && pathname === "/record",
+      });
+    } else if (recordingSession.get()?.course.id === course.id) {
+      recordingSession.set(null);
+    }
+  }, [ownsSession, isSessionActive, paused, seconds, hidden, tab, pathname, course.id, course.name, course.color]);
+  useEffect(() => {
+    if (ownsSession) recordingSession.setControls({ pause: pauseRecording, resume: resumeRecording });
+  });
+  useEffect(() => recordingSession.onOpen(id => { if (id === course.id) setTab("record"); }), [course.id]);
+  useEffect(() => () => {
+    if (recordingSession.get()?.course.id === course.id) recordingSession.set(null);
+  }, [course.id]);
 
   // Back in the foreground mid-lecture: pick up anything the OS paused (a call,
   // or foreground-only recording) and reconnect the live transcript.
@@ -426,9 +453,18 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
   }, [savedUri]);
 
   async function startRecording() {
+    const other = recordingSession.get();
+    if (other && other.course.id !== course.id) {
+      Alert.alert(
+        other.status === "saved" ? `Unprocessed recording in ${other.course.name}` : `Recording in ${other.course.name}`,
+        tr("One recording at a time — finish or delete that one before starting here."),
+        [{ text: tr("Cancel"), style: "cancel" }, { text: tr("Open it"), onPress: () => recordingSession.requestOpen(other.course.id) }],
+      );
+      return;
+    }
     try {
       const { granted } = await requestRecordingPermissionsAsync();
-      if (!granted) { Alert.alert("Microphone denied", "Enable mic in Settings."); return; }
+      if (!granted) { Alert.alert("Microphone denied", tr("Enable mic in Settings.")); return; }
       autoTitleRef.current = autoTitle();
       await startLectureRecorder(audioRecorder);
       activateKeepAwakeAsync(KEEP_AWAKE_TAG).catch(() => {});
@@ -436,7 +472,7 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
       live.start(0).catch(() => { /* recording still works without live text */ });
       setIsSessionActive(true);
       setSeconds(0);
-    } catch { Alert.alert("Error", "Could not start recording."); }
+    } catch { Alert.alert(tr("Error"), tr("Could not start recording.")); }
   }
 
   function pauseRecording() {
@@ -462,11 +498,11 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
       await audioRecorder.stop();
       const uri = audioRecorder.uri;
       setIsSessionActive(false);
-      if (!uri) { Alert.alert("Recording failed", "Could not read the audio file."); return null; }
+      if (!uri) { Alert.alert(tr("Recording failed"), tr("Could not read the audio file.")); return null; }
       setSavedUri(uri);
       return uri;
     } catch {
-      Alert.alert("Error", "Could not stop recording.");
+      Alert.alert(tr("Error"), tr("Could not stop recording."));
       setIsSessionActive(false);
       return null;
     }
@@ -477,7 +513,7 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
     pauseRecording();
     const limitLabel = maxRecSeconds >= 3600 ? `${maxRecSeconds / 3600}-hour` : `${Math.round(maxRecSeconds / 60)}-minute`;
     const process = {
-      text: "Process",
+      text: tr("Process"),
       onPress: async () => {
         const uri = await stopRecording();
         // Give the live stream a moment to deliver its last words, then wait for any
@@ -487,15 +523,15 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
         if (uri) await processAudio("summarize", uri);
       },
     };
-    const remove = { text: "Delete", style: "destructive" as const, onPress: () => confirmDelete(atLimit) };
+    const remove = { text: tr("Delete"), style: "destructive" as const, onPress: () => confirmDelete(atLimit) };
     Alert.alert(
-      atLimit ? "Recording limit reached" : "Recording paused",
+      atLimit ? tr("Recording limit reached") : tr("Recording paused"),
       atLimit
         ? `This recording hit the ${limitLabel} limit on your plan. Process it now, or delete it.`
         : `${fmt(seconds)} recorded${images.length ? ` · ${images.length} photo${images.length === 1 ? "" : "s"}` : ""}. What would you like to do?`,
       atLimit
         ? [remove, process]
-        : [remove, { text: "Resume", style: "cancel", onPress: resumeRecording }, process],
+        : [remove, { text: tr("Resume"), style: "cancel", onPress: resumeRecording }, process],
       atLimit ? { cancelable: false } : { cancelable: true, onDismiss: resumeRecording }
     );
   }
@@ -511,10 +547,10 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
   }, [seconds, isSessionActive, paused, maxRecSeconds]);
 
   function confirmDelete(atLimit = false) {
-    Alert.alert("Delete this recording?", "It can't be recovered.", [
+    Alert.alert(tr("Delete this recording?"), "It can't be recovered.", [
       { text: "Keep it", style: "cancel", onPress: () => requestStop(atLimit) },
       {
-        text: "Delete",
+        text: tr("Delete"),
         style: "destructive",
         onPress: async () => {
           deactivateKeepAwake(KEEP_AWAKE_TAG).catch(() => {});
@@ -557,7 +593,7 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
       ? await ImagePicker.requestCameraPermissionsAsync()
       : await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!perm.granted) {
-      Alert.alert(fromCamera ? "Camera denied" : "Photos denied", "Enable access in Settings to add board photos.");
+      Alert.alert(fromCamera ? tr("Camera denied") : tr("Photos denied"), tr("Enable access in Settings to add board photos."));
       return;
     }
     const res = fromCamera
@@ -597,8 +633,8 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
       setLectureTranscript(null);
       setSavedUri(null);
     } catch (e: any) {
-      const msg = e?.response?.data?.message ?? e?.response?.data?.error ?? e?.message ?? "Unknown error";
-      Alert.alert("Upload failed", msg);
+      const msg = e?.response?.data?.message ?? e?.response?.data?.error ?? e?.message ?? tr("Unknown error");
+      Alert.alert(tr("Upload failed"), msg);
     } finally {
       setUploading(false);
     }
@@ -643,12 +679,12 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
 
   function archiveLecture(l: any) {
     Alert.alert(`Delete "${l.title}"?`, "It moves to Archived below, where you can restore it.", [
-      { text: "Cancel", style: "cancel" },
+      { text: tr("Cancel"), style: "cancel" },
       {
-        text: "Delete",
+        text: tr("Delete"),
         style: "destructive",
         onPress: async () => {
-          try { await api.patch(`/api/lectures/${l.id}/archive`); } catch { Alert.alert("Couldn't delete that recording", "Try again."); }
+          try { await api.patch(`/api/lectures/${l.id}/archive`); } catch { Alert.alert(tr("Couldn't delete that recording"), tr("Try again.")); }
           mutateLectures();
           mutateArchived();
         },
@@ -657,19 +693,19 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
   }
 
   async function restoreLecture(id: string) {
-    try { await api.patch(`/api/lectures/${id}/restore`); } catch { Alert.alert("Couldn't restore that recording", "Try again."); }
+    try { await api.patch(`/api/lectures/${id}/restore`); } catch { Alert.alert(tr("Couldn't restore that recording"), tr("Try again.")); }
     mutateLectures();
     mutateArchived();
   }
 
   function deleteForever(l: any) {
-    Alert.alert(`Permanently delete "${l.title}"?`, "The recording, its transcript and everything generated from it are removed for good.", [
-      { text: "Cancel", style: "cancel" },
+    Alert.alert(`Permanently delete "${l.title}"?`, tr("The recording, its transcript and everything generated from it are removed for good."), [
+      { text: tr("Cancel"), style: "cancel" },
       {
-        text: "Delete forever",
+        text: tr("Delete forever"),
         style: "destructive",
         onPress: async () => {
-          try { await api.delete(`/api/lectures/${l.id}`); } catch { Alert.alert("Couldn't delete that recording", "Try again."); }
+          try { await api.delete(`/api/lectures/${l.id}`); } catch { Alert.alert(tr("Couldn't delete that recording"), tr("Try again.")); }
           mutateArchived();
         },
       },
@@ -682,21 +718,21 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
 
   function startAttach(l: any) {
     if (isSessionActive || savedUri) {
-      Alert.alert("Finish the current recording first", "Process or discard it, then attach photos.");
+      Alert.alert(tr("Finish the current recording first"), tr("Process or discard it, then attach photos."));
       return;
     }
     const room = MAX_LECTURE_PHOTOS - photoCount(l);
     if (room <= 0) {
-      Alert.alert("No room for more photos", `This recording already has ${MAX_LECTURE_PHOTOS} photos.`);
+      Alert.alert(tr("No room for more photos"), `This recording already has ${MAX_LECTURE_PHOTOS} photos.`);
       return;
     }
     Alert.alert(
-      "Attach photos",
+      tr("Attach photos"),
       `Add up to ${room} more photo${room === 1 ? "" : "s"}. They're processed together with the audio as one lecture — the summary, key points, flashcards and quiz are rebuilt to include them.`,
       [
-        { text: "Take photo", onPress: () => attachPhotos(l, true, room) },
-        { text: "Choose photos", onPress: () => attachPhotos(l, false, room) },
-        { text: "Cancel", style: "cancel" },
+        { text: tr("Take photo"), onPress: () => attachPhotos(l, true, room) },
+        { text: tr("Choose photos"), onPress: () => attachPhotos(l, false, room) },
+        { text: tr("Cancel"), style: "cancel" },
       ],
     );
   }
@@ -706,7 +742,7 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
       ? await ImagePicker.requestCameraPermissionsAsync()
       : await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!perm.granted) {
-      Alert.alert(fromCamera ? "Camera denied" : "Photos denied", "Enable access in Settings to attach photos.");
+      Alert.alert(fromCamera ? tr("Camera denied") : tr("Photos denied"), tr("Enable access in Settings to attach photos."));
       return;
     }
     // quality < 1 has the picker re-encode as JPEG, which the reader accepts (HEIC isn't).
@@ -737,9 +773,9 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
     } catch (e: any) {
       const status = e?.response?.status;
       Alert.alert(
-        "Couldn't attach photos",
-        status === 429 ? "You've hit this month's plan limit. Upgrade in Billing to keep going."
-          : e?.response?.data?.error ?? "Try again in a moment.",
+        tr("Couldn't attach photos"),
+        status === 429 ? tr("You've hit this month's plan limit. Upgrade in Billing to keep going.")
+          : e?.response?.data?.error ?? tr("Try again in a moment."),
       );
     } finally {
       setAttachingId(null);
@@ -776,9 +812,10 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
   const fmt = (s: number) =>
     `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
 
-  // ── notes (in-memory) ──
+  // ── notes — saved to the server and shared with the web app ──
   type NoteEntry = { id: string; name: string; text: string; updatedAt: string };
-  const [notes, setNotes] = useState<NoteEntry[]>([]);
+  const { data: notesData, mutate: mutateNotes } = useSWR(`/api/notes?courseId=${course.id}`, fetcher);
+  const notes: NoteEntry[] = notesData?.data ?? [];
   const [noteView, setNoteView] = useState<"list" | "create" | "edit">("list");
   const [activeNote, setActiveNote] = useState<NoteEntry | null>(null);
   const [newNoteName, setNewNoteName] = useState("");
@@ -786,47 +823,158 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
   const noteSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const noteInputRef = useRef<any>(null);
   const noteCursorRef = useRef(0);
+  const [creatingNote, setCreatingNote] = useState(false);
 
-  function createNote() {
-    if (!newNoteName.trim()) return;
-    const entry: NoteEntry = { id: String(Date.now()), name: newNoteName.trim(), text: "", updatedAt: new Date().toISOString() };
-    setNotes(prev => [entry, ...prev]);
-    setActiveNote(entry);
-    setNewNoteName("");
+  /** Web notes are rich text; the phone edits them as plain text with $…$ maths. */
+  function noteToPlain(text: string) {
+    if (!text.trimStart().startsWith("<")) return text;
+    return text
+      .replace(/<span[^>]*data-type="block-math"[^>]*data-latex="([^"]*)"[^>]*>(?:[\s\S]*?<\/span>)?/g, (_m, tex) => `\n$$${tex}$$\n`)
+      .replace(/<span[^>]*data-type="inline-math"[^>]*data-latex="([^"]*)"[^>]*>(?:[\s\S]*?<\/span>)?/g, (_m, tex) => `$${tex}$`)
+      .replace(/<li[^>]*>/g, "• ")
+      .replace(/<br\s*\/?>|<\/(p|h[1-6]|li|blockquote|pre)>/g, "\n")
+      .replace(/<[^>]+>/g, "")
+      .replace(/&nbsp;/g, " ").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, "&")
+      .replace(/\n{3,}/g, "\n\n")
+      .trim();
+  }
+
+  function openNote(n: NoteEntry) {
+    setActiveNote({ ...n, text: noteToPlain(n.text) });
+    setNoteSavedAt(null);
+    setNoteSuggestion(null);
     setNoteView("edit");
+  }
+
+  async function createNote() {
+    if (!newNoteName.trim() || creatingNote) return;
+    setCreatingNote(true);
+    try {
+      const res = await api.post("/api/notes", { courseId: course.id, name: newNoteName.trim() });
+      const entry: NoteEntry = res.data?.data;
+      await mutateNotes({ data: [entry, ...notes] }, { revalidate: false });
+      setNewNoteName("");
+      openNote(entry);
+    } catch {
+      Alert.alert(tr("Couldn't create the note"), tr("Check your connection and try again."));
+    } finally {
+      setCreatingNote(false);
+    }
+  }
+
+  async function saveNote(note: NoteEntry) {
+    try {
+      await api.patch(`/api/notes/${note.id}`, { text: note.text });
+      setNoteSavedAt(new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }));
+      mutateNotes({ data: notes.map(n => (n.id === note.id ? { ...n, text: note.text, updatedAt: new Date().toISOString() } : n)) }, { revalidate: false });
+    } catch {
+      setNoteSavedAt(null);
+    }
   }
 
   function handleNoteChange(val: string) {
     if (!activeNote) return;
     const updated = { ...activeNote, text: val, updatedAt: new Date().toISOString() };
     setActiveNote(updated);
-    setNotes(prev => prev.map(n => n.id === updated.id ? updated : n));
+    setNoteSuggestion(null);
+    // Autosave once typing settles.
     if (noteSaveTimer.current) clearTimeout(noteSaveTimer.current);
-    noteSaveTimer.current = setTimeout(() => {
-      setNoteSavedAt(new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }));
-    }, 800);
+    noteSaveTimer.current = setTimeout(() => saveNote(updated), 800);
   }
 
-  function insertSymbol(sym: string) {
-    const pos = noteCursorRef.current;
-    const text = activeNote?.text ?? "";
-    const next = text.slice(0, pos) + sym + text.slice(pos);
-    handleNoteChange(next);
-    noteCursorRef.current = pos + sym.length;
-  }
-
-  function deleteNote(id: string) {
-    setNotes(prev => prev.filter(n => n.id !== id));
+  async function deleteNote(id: string) {
     if (activeNote?.id === id) { setActiveNote(null); setNoteView("list"); }
+    await mutateNotes({ data: notes.filter(n => n.id !== id) }, { revalidate: false });
+    try { await api.delete(`/api/notes/${id}`); } catch { Alert.alert(tr("Couldn't delete the note"), tr("Try again.")); mutateNotes(); }
   }
 
-  const MATH_SYMBOLS = ["=","≠","+","−","×","÷","±","≤","≥","≈","∞","α","β","γ","δ","π","σ","φ","ω","Δ","Σ","∫","∂","∇","∑","√","²","³","°","∈","∅","ℝ","⊥"];
+  // ── note suggestions: after a pause at the end of the note, Flux suggests the rest ──
+  const [noteSuggestion, setNoteSuggestion] = useState<{ text: string; forText: string } | null>(null);
+  const suggestAbortRef = useRef<AbortController | null>(null);
+  useEffect(() => {
+    const note = activeNote;
+    suggestAbortRef.current?.abort();
+    if (tab !== "note" || noteView !== "edit" || !note) return;
+    const text = note.text;
+    const timer = setTimeout(async () => {
+      if (noteCursorRef.current < text.length || text.trim().length < 12 || /\n\s*$/.test(text)) return;
+      const controller = new AbortController();
+      suggestAbortRef.current = controller;
+      try {
+        const res = await api.post("/api/notes/complete",
+          { courseId: course.id, noteId: note.id, before: text.slice(-1500) },
+          { signal: controller.signal, timeout: 6000 });
+        const completion: string = res.data?.data?.completion ?? "";
+        if (completion && !controller.signal.aborted) setNoteSuggestion({ text: completion, forText: text });
+      } catch { /* no suggestion this time */ }
+    }, 900);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeNote?.text, activeNote?.id, tab, noteView]);
 
+  // ── math writer ──
+  const [mathOpen, setMathOpen] = useState(false);
+  const [mathDisplay, setMathDisplay] = useState(false);
+
+  /** A palette tap writes the notation in at the cursor, keeping the keyboard up. */
+  /**
+   * Tapping a citation opens what it points at: the recording it came from, the
+   * note, or the photo. Previously these chips were inert on the phone, so the
+   * one feature the product is sold on did nothing here.
+   */
+  async function openCitation(c: any) {
+    const id = String(c.sourceId ?? "").replace(/_photos$|_slides$/, "");
+    if (c.sourceType === "note") {
+      const note = notes.find((n: any) => n.id === id);
+      if (!note) return Alert.alert(tr("Couldn't find this note."));
+      setActiveNote({ ...note, text: noteToPlain(note.text) });
+      setNoteView("edit");
+      setTab("note");
+      return;
+    }
+    if (c.sourceType === "photo") {
+      setTab("photo");
+      return;
+    }
+    // lecture / video / file all live on a recording.
+    const lecture = (lectures ?? []).find((l: any) => l.id === id);
+    if (!lecture) return Alert.alert(tr("Couldn't locate this video."));
+    setTab("record");
+    await openPastLecture(lecture);
+  }
+
+  function insertFromPalette(t: MathTemplate) {
+    const latex = t.latex.trim();
+    if (latex) insertMath({ latex, display: mathDisplay });
+  }
+
+  function insertMath({ latex, display }: { latex: string; display: boolean }) {
+    if (!activeNote || !latex) return;
+    const text = activeNote.text;
+    const pos = Math.min(noteCursorRef.current, text.length);
+    const before = text.slice(0, pos);
+    const after = text.slice(pos);
+    const piece = display
+      ? `${before && !before.endsWith("\n") ? "\n" : ""}$$${latex}$$\n`
+      : `${before && !/\s$/.test(before) ? " " : ""}$${latex}$${after && !/^\s/.test(after) ? " " : ""}`;
+    noteCursorRef.current = pos + piece.length;
+    handleNoteChange(before + piece + after);
+  }
+
+  function acceptSuggestion() {
+    if (!activeNote || !noteSuggestion || noteSuggestion.forText !== activeNote.text) return;
+    const next = activeNote.text + noteSuggestion.text;
+    noteCursorRef.current = next.length;
+    handleNoteChange(next);
+  }
+
+
+  // Recording is what a student comes to a class for; Ask is where they end up after.
   const TABS = [
-    { key: "ask",       icon: "sparkles-outline",      label: "Ask"           },
-    { key: "record",    icon: "mic-outline",           label: "Record"        },
-    { key: "photo",     icon: "camera-outline",        label: "Add Photo"     },
-    { key: "note",      icon: "create-outline",        label: "Take Note"     },
+    { key: "record",    icon: "mic-outline",           label: tr("Record")        },
+    { key: "photo",     icon: "camera-outline",        label: tr("Add Photo")     },
+    { key: "note",      icon: "create-outline",        label: tr("Take Note")     },
+    { key: "ask",       icon: "sparkles-outline",      label: tr("Ask")           },
   ] as const;
 
   return (
@@ -876,7 +1024,7 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
           <View style={a.headRow}>
             <View style={a.sparkChip}>
               <Ionicons name="sparkles" size={12} color="#4B5FE8" />
-              <Text style={a.sparkTxt}>Ask your course</Text>
+              <Text style={a.sparkTxt}>{tr("Ask your course")}</Text>
             </View>
             <TouchableOpacity onPress={rebuildAskMemory} disabled={askIndexing} style={a.refreshBtn} activeOpacity={0.7}>
               {askIndexing
@@ -886,10 +1034,10 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
           </View>
           <Text style={a.memLine}>
             {askIndexing
-              ? "Building your course memory…"
+              ? tr("Building your course memory…")
               : askStatus
-                ? `In memory: ${askStatus.sources?.length ?? 0} source${(askStatus.sources?.length ?? 0) === 1 ? "" : "s"} · ${askStatus.chunkCount ?? 0} chunks`
-                : "Loading memory…"}
+                ? `In memory: ${askStatus.sources?.length ?? 0} source${(askStatus.sources?.length ?? 0) === 1 ? "" : "s"}`
+                : tr("Loading memory…")}
           </Text>
 
           {/* Empty state + quick prompts */}
@@ -897,9 +1045,9 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
             <View style={a.emptyBox}>
               <Ionicons name="sparkles-outline" size={26} color="#4B5FE8" style={{ marginBottom: 10 }} />
               <Text style={a.emptyTitle}>Ask anything about {course.name}</Text>
-              <Text style={a.emptySub}>Answers come from your lectures and notes — with sources.</Text>
+              <Text style={a.emptySub}>{tr("Answers come from your lectures and notes — with sources.")}</Text>
               <View style={a.promptWrap}>
-                {["What did the professor emphasize most?", "Quiz me on this course", "What should I review before the exam?"].map(p => (
+                {[tr("What did the professor emphasize most?"), tr("Quiz me on this course"), tr("What should I review before the exam?")].map(p => (
                   <TouchableOpacity key={p} style={a.promptChip} onPress={() => sendAsk(p)} activeOpacity={0.7}>
                     <Text style={a.promptTxt}>{p}</Text>
                   </TouchableOpacity>
@@ -917,12 +1065,26 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
               </View>
               {m.role === "assistant" && (m.citations?.length ?? 0) > 0 && (
                 <View style={a.citeWrap}>
-                  {m.citations!.map((c: any) => (
-                    <View key={c.n} style={a.citeChip}>
-                      <Text style={a.citeIdx}>[{c.n}]</Text>
-                      <Text style={a.citeTxt} numberOfLines={1}>{c.label}</Text>
-                    </View>
-                  ))}
+                  {m.citations!.map((c: any) => {
+                    const openable = ["lecture", "video", "file", "note", "photo"].includes(c.sourceType);
+                    return (
+                      <TouchableOpacity
+                        key={c.n}
+                        style={[a.citeChip, !openable && { opacity: 0.6 }]}
+                        onPress={() => openCitation(c)}
+                        disabled={!openable}
+                        activeOpacity={0.7}
+                      >
+                        <Ionicons
+                          name={c.sourceType === "note" ? "create-outline" : c.sourceType === "photo" ? "image-outline" : "play"}
+                          size={11}
+                          color="#4B5FE8"
+                        />
+                        <Text style={a.citeIdx}>[{c.n}]</Text>
+                        <Text style={a.citeTxt} numberOfLines={1}>{c.label}</Text>
+                      </TouchableOpacity>
+                    );
+                  })}
                 </View>
               )}
             </View>
@@ -941,7 +1103,7 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
               style={a.input}
               value={askInput}
               onChangeText={setAskInput}
-              placeholder="Ask anything about this course…"
+              placeholder={tr("Ask anything about this course…")}
               placeholderTextColor="rgba(15,17,21,0.35)"
               returnKeyType="send"
               onSubmitEditing={() => sendAsk()}
@@ -952,7 +1114,7 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
                 style={[a.sendBtn, { backgroundColor: "#0f1115" }]}
                 onPress={() => askAbortRef.current?.abort()}
                 activeOpacity={0.8}
-                accessibilityLabel="Stop"
+                accessibilityLabel={tr("Stop")}
               >
                 <Ionicons name="stop" size={16} color="#fff" />
               </TouchableOpacity>
@@ -962,7 +1124,7 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
                 onPress={() => sendAsk()}
                 disabled={!askInput.trim()}
                 activeOpacity={0.8}
-                accessibilityLabel="Send"
+                accessibilityLabel={tr("Send")}
               >
                 <Ionicons name="send" size={17} color="#fff" />
               </TouchableOpacity>
@@ -990,7 +1152,7 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
             <View style={w.openHead}>
               <TouchableOpacity onPress={closeOpenLecture} style={w.backLink} activeOpacity={0.7}>
                 <Ionicons name="arrow-back" size={18} color="rgba(15,17,21,0.8)" />
-                <Text style={w.backLinkTxt}>Back to recordings</Text>
+                <Text style={w.backLinkTxt}>{tr("Back to recordings")}</Text>
               </TouchableOpacity>
               {(() => {
                 const l = lectures.find((x: any) => x.id === processingLectureId);
@@ -1037,14 +1199,14 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
                 style={[w.titleInput, { marginBottom: 12 }]}
                 value={recTitle}
                 onChangeText={setRecTitle}
-                placeholder="Rename this lecture (optional)"
+                placeholder={tr("Rename this lecture (optional)")}
                 placeholderTextColor="rgba(15,17,21,0.55)"
                 returnKeyType="done"
               />
 
               <TouchableOpacity style={w.listenBtn} onPress={playAudio} activeOpacity={0.8}>
                 <Ionicons name={playerStatus.playing ? "pause-circle" : "play-circle"} size={22} color="#4B5FE8" />
-                <Text style={w.listenTxt}>{playerStatus.playing ? "Pause" : "Listen to recording"}</Text>
+                <Text style={w.listenTxt}>{playerStatus.playing ? tr("Pause") : tr("Listen to recording")}</Text>
               </TouchableOpacity>
 
               {/* Board photos ride along with the audio */}
@@ -1057,14 +1219,14 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
                     disabled={images.length >= MAX_LECTURE_PHOTOS}
                     style={[w.photoAddBtn, images.length >= MAX_LECTURE_PHOTOS && { opacity: 0.4 }]}
                     activeOpacity={0.7}
-                    onPress={() => Alert.alert("Add photos", "Capture the board or pick existing photos.", [
-                      { text: "Take photo", onPress: () => addPhoto(true) },
-                      { text: "Choose photos", onPress: () => addPhoto(false) },
-                      { text: "Cancel", style: "cancel" },
+                    onPress={() => Alert.alert(tr("Add photos"), tr("Capture the board or pick existing photos."), [
+                      { text: tr("Take photo"), onPress: () => addPhoto(true) },
+                      { text: tr("Choose photos"), onPress: () => addPhoto(false) },
+                      { text: tr("Cancel"), style: "cancel" },
                     ])}
                   >
                     <Ionicons name="image-outline" size={17} color="rgba(15,17,21,0.85)" />
-                    <Text style={w.photoAddTxt}>Add photos</Text>
+                    <Text style={w.photoAddTxt}>{tr("Add photos")}</Text>
                   </TouchableOpacity>
                 </View>
                 {images.length > 0 ? (
@@ -1077,7 +1239,7 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
                     ))}
                   </ScrollView>
                 ) : (
-                  <Text style={w.photoHint}>Photos of the whiteboard or slides are read alongside the audio.</Text>
+                  <Text style={w.photoHint}>{tr("Photos of the whiteboard or slides are read alongside the audio.")}</Text>
                 )}
               </View>
 
@@ -1092,11 +1254,11 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
                 {uploading
                   ? <ActivityIndicator size="small" color="#fff" />
                   : <Ionicons name="sparkles" size={18} color="#fff" />}
-                <Text style={w.processTxt}>{uploading ? "Sending it over…" : "Make my study material"}</Text>
+                <Text style={w.processTxt}>{uploading ? tr("Sending it over…") : tr("Make my study material")}</Text>
               </TouchableOpacity>
 
               <TouchableOpacity onPress={resetRecorder} style={{ alignSelf: "center", marginTop: 14 }}>
-                <Text style={{ fontSize: 16, color: "rgba(15,17,21,0.75)" }}>Discard recording</Text>
+                <Text style={{ fontSize: 16, color: "rgba(15,17,21,0.75)" }}>{tr("Discard recording")}</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -1112,7 +1274,7 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
                     <View style={w.liveHead}>
                       <View style={[w.liveDot, { backgroundColor: live.connected && !paused ? "#DC2626" : "rgba(15,17,21,0.25)" }]} />
                       <Text style={w.liveLbl}>
-                        {paused ? "Paused" : live.connected ? "Live transcript" : "Connecting…"}
+                        {paused ? tr("Paused") : live.connected ? tr("Live transcript") : tr("Connecting…")}
                       </Text>
                       <Text style={w.liveTimer}>{fmt(seconds)}</Text>
                     </View>
@@ -1128,7 +1290,7 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
                       {live.fullText ? (
                         <LiveTranscriptView entries={live.entries} partial={live.partial} />
                       ) : (
-                        <Text style={w.liveHint}>Start speaking — words appear here as you go.</Text>
+                        <Text style={w.liveHint}>{tr("Start speaking — words appear here as you go.")}</Text>
                       )}
                     </ScrollView>
 
@@ -1150,15 +1312,15 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
                     <View style={w.ctrlRow}>
                       <TouchableOpacity style={w.ctrlBtn} onPress={paused ? resumeRecording : pauseRecording} activeOpacity={0.8}>
                         <Ionicons name={paused ? "play" : "pause"} size={21} color="#0f1115" />
-                        <Text style={w.ctrlTxt}>{paused ? "Resume" : "Pause"}</Text>
+                        <Text style={w.ctrlTxt}>{paused ? tr("Resume") : tr("Pause")}</Text>
                       </TouchableOpacity>
 
                       <TouchableOpacity
                         style={w.ctrlBtn}
-                        onPress={() => Alert.alert("Add photo", "Capture the board or pick an existing photo.", [
-                          { text: "Take photo", onPress: () => addPhoto(true) },
-                          { text: "Choose photo", onPress: () => addPhoto(false) },
-                          { text: "Cancel", style: "cancel" },
+                        onPress={() => Alert.alert(tr("Add photo"), tr("Capture the board or pick an existing photo."), [
+                          { text: tr("Take photo"), onPress: () => addPhoto(true) },
+                          { text: tr("Choose photo"), onPress: () => addPhoto(false) },
+                          { text: tr("Cancel"), style: "cancel" },
                         ])}
                         activeOpacity={0.8}
                       >
@@ -1168,7 +1330,7 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
 
                       <TouchableOpacity style={w.ctrlStop} onPress={() => requestStop()} activeOpacity={0.8}>
                         <Ionicons name="stop" size={21} color="#fff" />
-                        <Text style={w.ctrlStopTxt}>Stop</Text>
+                        <Text style={w.ctrlStopTxt}>{tr("Stop")}</Text>
                       </TouchableOpacity>
                     </View>
                   </View>
@@ -1176,7 +1338,7 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
               ) : (
                 <View style={w.recCard}>
                   <View style={{ alignSelf: "stretch" }}>
-                    <Text style={[w.listLbl, { marginTop: 0 }]}>Lecture title (optional)</Text>
+                    <Text style={[w.listLbl, { marginTop: 0 }]}>{tr("Lecture title (optional)")}</Text>
                     <TextInput
                       style={w.titleInput}
                       value={recTitle}
@@ -1195,7 +1357,7 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
                   >
                     <Ionicons name="mic" size={30} color="#fff" />
                   </TouchableOpacity>
-                  <Text style={w.hint}>Tap to start recording</Text>
+                  <Text style={w.hint}>{tr("Tap to start recording")}</Text>
                 </View>
               )}
 
@@ -1206,7 +1368,7 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
               the live transcript gets the whole screen. */}
           {audioLectures.length > 0 && !savedUri && !isSessionActive && !resultsReady && (
             <>
-              <Text style={w.listLbl}>Recordings</Text>
+              <Text style={w.listLbl}>{tr("Recordings")}</Text>
               {audioLectures.map((l: any) => {
                 const ready = l.status === "ready";
                 const tint = course.color || "#4B5FE8";
@@ -1221,17 +1383,17 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
                         <Text style={w.listSub}>
                           {ready
                             ? `${new Date(l.recordedAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })} · Tap to open`
-                            : l.status === "error" ? "Processing failed" : "Still processing…"}
+                            : l.status === "error" ? tr("Processing failed") : tr("Still processing…")}
                         </Text>
                       </View>
                       {ready ? (
                         <Ionicons name="chevron-forward" size={19} color="rgba(15,17,21,0.6)" />
                       ) : l.status === "error" ? (
-                        <Text style={[w.badge, { color: "#DC2626", backgroundColor: "rgba(220,38,38,0.08)" }]}>Failed</Text>
+                        <Text style={[w.badge, { color: "#DC2626", backgroundColor: "rgba(220,38,38,0.08)" }]}>{tr("Failed")}</Text>
                       ) : (
                         <View style={[w.badgeRow, { backgroundColor: "rgba(0,0,0,0.06)" }]}>
                           <ActivityIndicator size="small" color="rgba(15,17,21,0.7)" style={{ transform: [{ scale: 0.6 }] }} />
-                          <Text style={[w.badge, { paddingHorizontal: 0, color: "rgba(15,17,21,0.78)" }]}>Processing</Text>
+                          <Text style={[w.badge, { paddingHorizontal: 0, color: "rgba(15,17,21,0.78)" }]}>{tr("Processing")}</Text>
                         </View>
                       )}
                     </TouchableOpacity>
@@ -1260,7 +1422,7 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
 
           {archivedLectures.length > 0 && !savedUri && !isSessionActive && !resultsReady && (
             <>
-              <Text style={w.listLbl}>Archived</Text>
+              <Text style={w.listLbl}>{tr("Archived")}</Text>
               {archivedLectures.map((l: any) => (
                 <View key={l.id} style={[w.listRow, { backgroundColor: "rgba(0,0,0,0.02)" }]}>
                   <View style={{ flex: 1 }}>
@@ -1268,7 +1430,7 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
                     <Text style={w.listSub}>{new Date(l.recordedAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}</Text>
                   </View>
                   <TouchableOpacity onPress={() => restoreLecture(l.id)} style={w.restoreBtn} activeOpacity={0.7}>
-                    <Text style={w.restoreTxt}>Restore</Text>
+                    <Text style={w.restoreTxt}>{tr("Restore")}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity onPress={() => deleteForever(l)} style={w.trashBtn} hitSlop={8} activeOpacity={0.6}>
                     <Ionicons name="trash-outline" size={19} color="rgba(15,17,21,0.62)" />
@@ -1289,36 +1451,43 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
       {tab === "note" && noteView === "list" && (
         <>
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-            <Text style={[w.listLbl, { marginTop: 0 }]}>Your Notes</Text>
+            <Text style={[w.listLbl, { marginTop: 0 }]}>{tr("Your Notes")}</Text>
             <TouchableOpacity
               onPress={() => { setNewNoteName(""); setNoteView("create"); }}
-              style={{ backgroundColor: "#4B5FE8", borderRadius: 999, paddingHorizontal: 14, paddingVertical: 6, flexDirection: "row", alignItems: "center", gap: 6 }}
+              style={{ backgroundColor: course.color || "#4B5FE8", borderRadius: 999, paddingHorizontal: 16, paddingVertical: 9, flexDirection: "row", alignItems: "center", gap: 6 }}
               activeOpacity={0.8}
             >
-              <Ionicons name="add" size={14} color="#fff" />
-              <Text style={{ fontSize: 11, fontWeight: "600", color: "#fff" }}>New Note</Text>
+              <Ionicons name="add" size={18} color="#fff" />
+              <Text style={{ fontSize: 15.5, fontWeight: "700", color: "#fff" }}>{tr("New Note")}</Text>
             </TouchableOpacity>
           </View>
           {notes.length === 0 ? (
             <View style={w.doneCard}>
               <Ionicons name="create-outline" size={28} color="rgba(15,17,21,0.35)" style={{ marginBottom: 12 }} />
-              <Text style={w.doneTitle}>No notes yet</Text>
+              <Text style={w.doneTitle}>{tr("No notes yet")}</Text>
               <Text style={w.doneSub}>Create your first note for {course.name}</Text>
               <TouchableOpacity onPress={() => { setNewNoteName(""); setNoteView("create"); }} style={w.againBtn}>
-                <Text style={w.againTxt}>Create a note</Text>
+                <Text style={w.againTxt}>{tr("Create a note")}</Text>
               </TouchableOpacity>
             </View>
           ) : (
             notes.map(n => (
               <View key={n.id} style={[w.listRow, { marginBottom: 6 }]}>
-                <TouchableOpacity style={{ flex: 1 }} onPress={() => { setActiveNote(n); setNoteSavedAt(null); setNoteView("edit"); }} activeOpacity={0.7}>
+                <TouchableOpacity style={{ flex: 1 }} onPress={() => openNote(n)} activeOpacity={0.7}>
                   <Text style={[w.listTitle, { color: "#0f1115" }]}>{n.name}</Text>
                   <Text style={w.listSub}>
                     {new Date(n.updatedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                   </Text>
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => deleteNote(n.id)} activeOpacity={0.7}>
-                  <Ionicons name="trash-outline" size={14} color="rgba(15,17,21,0.35)" />
+                <TouchableOpacity
+                  onPress={() => Alert.alert(tr("Delete note"), `Delete "${n.name}"?`, [
+                    { text: tr("Cancel"), style: "cancel" },
+                    { text: tr("Delete"), style: "destructive", onPress: () => deleteNote(n.id) },
+                  ])}
+                  hitSlop={8}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="trash-outline" size={18} color="rgba(15,17,21,0.55)" />
                 </TouchableOpacity>
               </View>
             ))
@@ -1330,29 +1499,29 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
       {tab === "note" && noteView === "create" && (
         <View>
           <TouchableOpacity onPress={() => setNoteView("list")} style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 24 }} activeOpacity={0.7}>
-            <Ionicons name="arrow-back" size={14} color="rgba(15,17,21,0.55)" />
-            <Text style={[w.cardDesc, { color: "rgba(15,17,21,0.55)" }]}>Back</Text>
+            <Ionicons name="arrow-back" size={20} color="#0f1115" />
+            <Text style={{ fontSize: 17, color: "rgba(15,17,21,0.85)" }}>{tr("Back")}</Text>
           </TouchableOpacity>
-          <Text style={[w.courseName, { marginBottom: 4 }]}>New Note</Text>
-          <Text style={[w.cardDesc, { marginBottom: 20 }]}>Give your note a name to get started.</Text>
-          <Text style={[w.listLbl, { marginTop: 0, marginBottom: 6 }]}>Note name</Text>
+          <Text style={[w.courseName, { marginBottom: 4 }]}>{tr("New Note")}</Text>
+          <Text style={[w.cardDesc, { marginBottom: 20, fontSize: 17, lineHeight: 24, color: "rgba(15,17,21,0.82)" }]}>{tr("Give your note a name to get started.")}</Text>
+          <Text style={[w.listLbl, { marginTop: 0, marginBottom: 6 }]}>{tr("Note name")}</Text>
           <TextInput
             style={[w.titleInput, { marginBottom: 12 }]}
             value={newNoteName}
             onChangeText={setNewNoteName}
-            placeholder="e.g. Chapter 3 — Derivatives, Lecture 5…"
+            placeholder={tr("e.g. Chapter 3 — Derivatives, Lecture 5…")}
             placeholderTextColor="rgba(15,17,21,0.35)"
             autoFocus
             returnKeyType="done"
             onSubmitEditing={createNote}
           />
           <TouchableOpacity
-            style={[w.primaryBtn, !newNoteName.trim() && { opacity: 0.4 }]}
+            style={[w.primaryBtn, (!newNoteName.trim() || creatingNote) && { opacity: 0.4 }]}
             onPress={createNote}
-            disabled={!newNoteName.trim()}
+            disabled={!newNoteName.trim() || creatingNote}
             activeOpacity={0.8}
           >
-            <Text style={w.primaryBtnTxt}>Create Note</Text>
+            <Text style={w.primaryBtnTxt}>{tr("Create Note")}</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -1361,60 +1530,104 @@ function ClassWorkspace({ insets, course, onBack }: { insets: any; course: any; 
       {tab === "note" && noteView === "edit" && activeNote && (
         <>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 16 }}>
-            <TouchableOpacity onPress={() => setNoteView("list")} activeOpacity={0.7}>
-              <Ionicons name="arrow-back" size={16} color="rgba(15,17,21,0.55)" />
+            <TouchableOpacity onPress={() => setNoteView("list")} activeOpacity={0.7} hitSlop={10} accessibilityLabel={tr("Back to notes")}>
+              <Ionicons name="arrow-back" size={24} color="#0f1115" />
             </TouchableOpacity>
-            <Text style={[w.listTitle, { color: "#0f1115", flex: 1 }]} numberOfLines={1}>{activeNote.name}</Text>
-            {noteSavedAt && <Text style={[w.listSub, { color: "rgba(15,17,21,0.35)" }]}>Saved {noteSavedAt}</Text>}
+            <Text style={w.noteName} numberOfLines={1}>{activeNote.name}</Text>
+            {noteSavedAt && <Text style={w.noteSaved}>Saved {noteSavedAt}</Text>}
             <TouchableOpacity
-              onPress={() => Alert.alert("Delete note", `Delete "${activeNote.name}"?`, [
-                { text: "Cancel", style: "cancel" },
-                { text: "Delete", style: "destructive", onPress: () => deleteNote(activeNote.id) },
+              onPress={() => Alert.alert(tr("Delete note"), `Delete "${activeNote.name}"?`, [
+                { text: tr("Cancel"), style: "cancel" },
+                { text: tr("Delete"), style: "destructive", onPress: () => deleteNote(activeNote.id) },
               ])}
               activeOpacity={0.7}
             >
-              <Ionicons name="trash-outline" size={15} color="rgba(15,17,21,0.35)" />
+              <Ionicons name="trash-outline" size={21} color="rgba(15,17,21,0.6)" />
             </TouchableOpacity>
           </View>
 
-          <View style={{ backgroundColor: "#FFFFFF", borderRadius: 16, borderWidth: 1, borderColor: "rgba(0,0,0,0.08)", padding: 12, marginBottom: 8 }}>
-            <Text style={[w.listLbl, { marginTop: 0, marginBottom: 8 }]}>Math Symbols</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              <View style={{ flexDirection: "row", gap: 6 }}>
-                {MATH_SYMBOLS.map(sym => (
-                  <TouchableOpacity
-                    key={sym}
-                    onPress={() => insertSymbol(sym)}
-                    style={{ backgroundColor: "rgba(75,95,232,0.06)", borderRadius: 8, borderWidth: 1, borderColor: "rgba(75,95,232,0.15)", paddingHorizontal: 10, paddingVertical: 6 }}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={{ color: "#4B5FE8", fontSize: 14, fontFamily: "monospace" }}>{sym}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </ScrollView>
+          <View style={w.noteTools}>
+            <TouchableOpacity onPress={() => setMathOpen(o => !o)} style={[w.mathBtn, { backgroundColor: mathOpen ? "#0f1115" : (course.color || "#4B5FE8") }]} activeOpacity={0.85}>
+              <Text style={w.mathBtnSigma}>∑</Text>
+              <Text style={w.mathBtnTxt}>{tr("Formula")}</Text>
+            </TouchableOpacity>
+            <Text style={w.noteToolsHint}>{tr("Maths, chemistry, physics, dosage calculations and statistics — build it with the buttons.")}</Text>
           </View>
+
+          {/* The palette sits in the note screen, not over it: a tap drops the
+              notation straight in where you were typing. */}
+          {mathOpen && (
+            <View style={w.palette}>
+              <View style={w.paletteHead}>
+                <Text style={w.paletteLbl}>{tr("Tap to drop it into your note")}</Text>
+                <View style={w.paletteSeg}>
+                  {([[false, tr("In the sentence")], [true, tr("Own line")]] as const).map(([value, label]) => (
+                    <TouchableOpacity key={label} onPress={() => setMathDisplay(value)}
+                      style={[w.paletteSegBtn, mathDisplay === value && w.paletteSegOn]} activeOpacity={0.8}>
+                      <Text style={[w.paletteSegTxt, mathDisplay === value && { color: "#0f1115" }]}>{label}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+              <ScrollView style={{ maxHeight: 190 }} keyboardShouldPersistTaps="always" nestedScrollEnabled>
+                <View style={w.paletteWrap}>
+                  {SCIENCE_STRUCTURES.map(t => (
+                    <TouchableOpacity key={t.latex} onPress={() => insertFromPalette(t)} style={w.paletteStruct} activeOpacity={0.7} accessibilityLabel={t.title}>
+                      <Text style={w.paletteStructTxt}>{t.label}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+                <View style={w.paletteWrap}>
+                  {SCIENCE_SYMBOLS.map(t => (
+                    <TouchableOpacity key={t.latex} onPress={() => insertFromPalette(t)} style={[w.paletteSym, { backgroundColor: `${course.color || "#4B5FE8"}14` }]} activeOpacity={0.7}>
+                      <Text style={w.paletteSymTxt}>{t.label}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </ScrollView>
+            </View>
+          )}
+
+          {noteSuggestion && activeNote && noteSuggestion.forText === activeNote.text && (
+            <TouchableOpacity onPress={acceptSuggestion} style={[w.suggestBar, { borderColor: `${course.color || "#4B5FE8"}55` }]} activeOpacity={0.8}>
+              <Ionicons name="sparkles" size={16} color={course.color || "#4B5FE8"} />
+              <Text style={w.suggestTxt} numberOfLines={3}>
+                <Text style={{ color: "rgba(15,17,21,0.55)" }}>…</Text>{noteSuggestion.text.trimStart()}
+              </Text>
+              <View style={[w.suggestInsert, { backgroundColor: course.color || "#4B5FE8" }]}>
+                <Text style={w.suggestInsertTxt}>{tr("Insert")}</Text>
+              </View>
+              <TouchableOpacity onPress={() => setNoteSuggestion(null)} hitSlop={10}>
+                <Ionicons name="close" size={18} color="rgba(15,17,21,0.55)" />
+              </TouchableOpacity>
+            </TouchableOpacity>
+          )}
 
           <TextInput
             ref={noteInputRef}
-            style={[w.titleInput, { height: 260, textAlignVertical: "top", paddingTop: 14, fontFamily: "monospace" }]}
+            style={[w.titleInput, w.noteInput]}
             value={activeNote.text}
             onChangeText={handleNoteChange}
             onSelectionChange={e => { noteCursorRef.current = e.nativeEvent.selection.end; }}
-            placeholder="Start writing…"
-            placeholderTextColor="rgba(15,17,21,0.35)"
+            placeholder={tr("Start writing… pause and Flux suggests the rest.")}
+            placeholderTextColor="rgba(15,17,21,0.5)"
             multiline
           />
 
+          {/\$/.test(activeNote.text) && (
+            <View style={w.notePreview}>
+              <Text style={[w.listLbl, { marginTop: 0, marginBottom: 8 }]}>{tr("Preview")}</Text>
+              <MathText text={activeNote.text} style={w.notePreviewTxt} interactive />
+            </View>
+          )}
+
+
           <TouchableOpacity
-            onPress={() => {
-              setNotes(prev => prev.map(n => n.id === activeNote.id ? activeNote : n));
-              setNoteSavedAt(new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }));
-            }}
+            onPress={() => activeNote && saveNote(activeNote)}
             style={[w.primaryBtn, { marginTop: 4 }]}
             activeOpacity={0.8}
           >
-            <Text style={w.primaryBtnTxt}>Save</Text>
+            <Text style={w.primaryBtnTxt}>{tr("Save")}</Text>
           </TouchableOpacity>
         </>
       )}
@@ -1430,6 +1643,14 @@ export default function WorkspaceScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ courseId?: string; courseName?: string; courseCode?: string; courseColor?: string }>();
   const [activeCourse, setActiveCourse] = useState<any | null>(null);
+  const session = useRecordingSession();
+  // The class that owns a recording stays mounted — hidden — while the student
+  // goes back to the class list or opens another class, so the lecture keeps recording.
+  const [recordingCourse, setRecordingCourse] = useState<any | null>(null);
+  useEffect(() => {
+    if (session && activeCourse?.id === session.course.id) setRecordingCourse(activeCourse);
+    if (!session) setRecordingCourse(null);
+  }, [session?.course.id, activeCourse?.id]);
 
   // Opening a class from Home hands it over as params. Clear them once consumed so
   // going back lands on the class list, and so re-picking the same class still opens it.
@@ -1439,13 +1660,27 @@ export default function WorkspaceScreen() {
     router.setParams({ courseId: "", courseName: "", courseCode: "", courseColor: "" });
   }, [params.courseId]);
 
+  // The floating bar's "Open" brings the recording's class back.
+  useEffect(() => recordingSession.onOpen(id => {
+    if (recordingCourse?.id === id) setActiveCourse(recordingCourse);
+  }), [recordingCourse]);
+
+  const mounted = [recordingCourse, activeCourse]
+    .filter(Boolean)
+    .filter((c, i, all) => all.findIndex(x => x.id === c.id) === i);
+
   return (
     <>
       <StatusBar barStyle="dark-content" />
-      {activeCourse
-        ? <ClassWorkspace insets={insets} course={activeCourse} onBack={() => setActiveCourse(null)} />
-        : <ClassGate insets={insets} onSelect={setActiveCourse} />
-      }
+      {mounted.map(c => {
+        const visible = c.id === activeCourse?.id;
+        return (
+          <View key={c.id} style={visible ? { flex: 1 } : { display: "none" }}>
+            <ClassWorkspace insets={insets} course={c} hidden={!visible} onBack={() => setActiveCourse(null)} />
+          </View>
+        );
+      })}
+      {!activeCourse && <ClassGate insets={insets} onSelect={setActiveCourse} />}
     </>
   );
 }
@@ -1471,7 +1706,7 @@ const g = StyleSheet.create({
   classBadgeTxt: { color: "#fff", fontSize: 18, fontWeight: "800" },
   className: { fontSize: 16.5, color: "#0f1115", fontWeight: "600" },
   createRow: { flexDirection: "row", gap: 10 },
-  input: { flex: 1, backgroundColor: "#FFFFFF", borderRadius: 14, paddingHorizontal: 14, paddingVertical: 13, fontSize: 15, color: "#0f1115", borderWidth: 1, borderColor: "rgba(0,0,0,0.08)" },
+  input: { flex: 1, backgroundColor: "#FFFFFF", borderRadius: 18, paddingHorizontal: 17, paddingVertical: 15, fontSize: 16.5, color: "#0f1115", borderWidth: 1, borderColor: "rgba(0,0,0,0.08)" },
   createBtn: { borderRadius: 16, paddingVertical: 15, alignItems: "center", justifyContent: "center", marginTop: 18 },
 });
 
@@ -1551,6 +1786,32 @@ const w = StyleSheet.create({
   trashBtn: { paddingLeft: 10, paddingVertical: 4 },
   restoreBtn: { borderWidth: 1, borderColor: "rgba(0,0,0,0.14)", borderRadius: 999, paddingHorizontal: 14, paddingVertical: 6 },
   restoreTxt: { fontSize: 15.5, fontWeight: "600", color: "rgba(15,17,21,0.88)" },
+  noteName: { fontSize: 22, fontWeight: "800", color: "#0f1115", flex: 1 },
+  noteSaved: { fontSize: 14, color: "rgba(15,17,21,0.6)" },
+  noteTools: { flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 10 },
+  palette: { backgroundColor: "rgba(0,0,0,0.02)", borderRadius: 16, borderWidth: 1, borderColor: "rgba(0,0,0,0.07)", padding: 10, marginBottom: 12 },
+  paletteHead: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 8 },
+  paletteLbl: { flex: 1, fontSize: 11, fontWeight: "800", letterSpacing: 1, textTransform: "uppercase", color: "rgba(15,17,21,0.5)" },
+  paletteSeg: { flexDirection: "row", backgroundColor: "rgba(0,0,0,0.06)", borderRadius: 999, padding: 2 },
+  paletteSegBtn: { paddingHorizontal: 11, paddingVertical: 5, borderRadius: 999 },
+  paletteSegOn: { backgroundColor: "#FFFFFF" },
+  paletteSegTxt: { fontSize: 12.5, fontWeight: "700", color: "rgba(15,17,21,0.7)" },
+  paletteWrap: { flexDirection: "row", flexWrap: "wrap", gap: 6, marginBottom: 6 },
+  paletteStruct: { minWidth: 44, alignItems: "center", backgroundColor: "#FFFFFF", borderRadius: 12, borderWidth: 1, borderColor: "rgba(0,0,0,0.12)", paddingHorizontal: 10, paddingVertical: 8 },
+  paletteStructTxt: { fontSize: 16, color: "#0f1115" },
+  paletteSym: { minWidth: 38, alignItems: "center", borderRadius: 10, paddingHorizontal: 8, paddingVertical: 7 },
+  paletteSymTxt: { fontSize: 15.5, color: "#0f1115" },
+  mathBtn: { flexDirection: "row", alignItems: "center", gap: 7, borderRadius: 999, paddingHorizontal: 16, paddingVertical: 10 },
+  mathBtnSigma: { fontSize: 20, color: "#fff", fontWeight: "700", lineHeight: 22 },
+  mathBtnTxt: { fontSize: 16, color: "#fff", fontWeight: "700" },
+  noteToolsHint: { flex: 1, fontSize: 14, color: "rgba(15,17,21,0.7)", lineHeight: 19 },
+  noteInput: { minHeight: 300, textAlignVertical: "top", paddingTop: 16, fontSize: 18, lineHeight: 27 },
+  notePreview: { backgroundColor: "#FFFFFF", borderRadius: 16, borderWidth: 1, borderColor: "rgba(0,0,0,0.08)", padding: 14, marginBottom: 10 },
+  notePreviewTxt: { fontSize: 17.5, color: "#0f1115", lineHeight: 27 },
+  suggestBar: { flexDirection: "row", alignItems: "center", gap: 10, backgroundColor: "#FFFFFF", borderWidth: 1, borderRadius: 14, paddingHorizontal: 12, paddingVertical: 10, marginBottom: 8 },
+  suggestTxt: { flex: 1, fontSize: 15.5, color: "#0f1115", lineHeight: 21 },
+  suggestInsert: { borderRadius: 999, paddingHorizontal: 12, paddingVertical: 5 },
+  suggestInsertTxt: { fontSize: 14, fontWeight: "700", color: "#fff" },
   backLink: { flexDirection: "row", alignItems: "center", gap: 8, alignSelf: "flex-start", paddingVertical: 4 },
   openHead: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 14, gap: 10 },
   attachBtn: { flexDirection: "row", alignItems: "center", gap: 6, borderWidth: 1, borderRadius: 999, paddingHorizontal: 13, paddingVertical: 7 },
@@ -1590,19 +1851,19 @@ const a = StyleSheet.create({
   promptWrap: { gap: 8, width: "100%" },
   promptChip: { borderWidth: 1, borderColor: "rgba(75,95,232,0.15)", backgroundColor: "rgba(75,95,232,0.06)", borderRadius: 999, paddingVertical: 9, paddingHorizontal: 14 },
   promptTxt: { color: "#4B5FE8", fontSize: 14, textAlign: "center" },
-  msgRow: { marginBottom: 12 },
+  msgRow: { marginBottom: 16 },
   msgRight: { alignItems: "flex-end" },
   msgLeft: { alignItems: "flex-start" },
-  bubble: { maxWidth: "85%", borderRadius: 16, paddingHorizontal: 14, paddingVertical: 10 },
-  bubbleUser: { backgroundColor: "#4B5FE8", borderBottomRightRadius: 5 },
-  bubbleAi: { backgroundColor: "rgba(75,95,232,0.06)", borderWidth: 1, borderColor: "rgba(75,95,232,0.15)", borderBottomLeftRadius: 5 },
-  bubbleWide: { width: "85%" },
-  bubbleTxt: { color: "#0f1115", fontSize: 15.5, lineHeight: 22 },
+  bubble: { maxWidth: "88%", borderRadius: 20, paddingHorizontal: 16, paddingVertical: 13 },
+  bubbleUser: { backgroundColor: "#4B5FE8", borderBottomRightRadius: 6 },
+  bubbleAi: { backgroundColor: "rgba(75,95,232,0.06)", borderWidth: 1, borderColor: "rgba(75,95,232,0.15)", borderBottomLeftRadius: 6 },
+  bubbleWide: { width: "88%" },
+  bubbleTxt: { color: "#0f1115", fontSize: 16.5, lineHeight: 25 },
   citeWrap: { flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 8, maxWidth: "90%" },
-  citeChip: { flexDirection: "row", alignItems: "center", gap: 5, backgroundColor: "rgba(75,95,232,0.1)", borderColor: "rgba(75,95,232,0.2)", borderWidth: 1, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4, maxWidth: 260 },
+  citeChip: { flexDirection: "row", alignItems: "center", gap: 5, backgroundColor: "rgba(75,95,232,0.1)", borderColor: "rgba(75,95,232,0.2)", borderWidth: 1, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 7, maxWidth: 280 },
   citeIdx: { color: "#4B5FE8", fontSize: 11.5, fontWeight: "800" },
-  citeTxt: { color: "#4B5FE8", fontSize: 12, flexShrink: 1 },
-  inputRow: { flexDirection: "row", gap: 10, marginTop: 6 },
-  input: { flex: 1, backgroundColor: "#FFFFFF", borderRadius: 14, paddingHorizontal: 14, paddingVertical: 13, fontSize: 15, color: "#0f1115", borderWidth: 1, borderColor: "rgba(0,0,0,0.08)" },
+  citeTxt: { color: "#4B5FE8", fontSize: 13.5, flexShrink: 1 },
+  inputRow: { flexDirection: "row", gap: 10, marginTop: 8, alignItems: "center" },
+  input: { flex: 1, backgroundColor: "#FFFFFF", borderRadius: 18, paddingHorizontal: 17, paddingVertical: 15, fontSize: 16.5, color: "#0f1115", borderWidth: 1, borderColor: "rgba(0,0,0,0.08)" },
   sendBtn: { width: 46, height: 46, borderRadius: 14, backgroundColor: "#4B5FE8", alignItems: "center", justifyContent: "center" },
 });

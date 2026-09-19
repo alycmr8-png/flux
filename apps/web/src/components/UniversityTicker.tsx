@@ -1,4 +1,5 @@
 "use client";
+import { useTr } from "@/lib/useTr";
 
 const UNIVERSITIES = [
   // serif italic — classic/prestigious
@@ -54,11 +55,10 @@ function UniLabel({ name, style, size }: { name: string; style: string; size: st
 }
 
 export function UniversityTicker() {
+  const tr = useTr();
   return (
     <div className="w-full py-14">
-      <p className="text-center text-sm font-bold uppercase tracking-[0.22em] mb-8" style={{ color: "rgba(0,0,0,0.8)" }}>
-        Trusted by students at
-      </p>
+      <p className="text-center text-sm font-bold uppercase tracking-[0.22em] mb-8" style={{ color: "rgba(0,0,0,0.8)" }}>{tr("Trusted by students at")}</p>
 
       <div className="relative overflow-hidden">
         {/* fade edges */}

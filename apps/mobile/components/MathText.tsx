@@ -15,6 +15,8 @@ import { memo, useCallback, useMemo, useState } from "react";
 import { Dimensions, StyleSheet, Text, View, type LayoutChangeEvent, type StyleProp, type TextStyle, type ViewStyle } from "react-native";
 import { WebView, type WebViewMessageEvent } from "react-native-webview";
 import katex from "katex";
+// Chemistry notation: \ce{2H2 + O2 -> 2H2O}.
+import "katex/contrib/mhchem";
 import { formulaSegments, latexToReadable, parseMath, type MathSegment } from "@sano/shared";
 
 export { formulaSegments, hasMathDelimiters, isBareLatex, parseMath, type MathSegment } from "@sano/shared";

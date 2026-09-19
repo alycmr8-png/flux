@@ -3,10 +3,12 @@ import { useState } from "react";
 import Link from "next/link";
 import useSWR from "swr";
 import { useUser, useClerk, useAuth } from "@clerk/nextjs";
-import { CreditCard, HelpCircle, LogOut, ChevronRight, ExternalLink, Pencil, Check, X } from "lucide-react";
+import { CreditCard, HelpCircle, LogOut, ChevronRight, ExternalLink, Pencil, Check, X, Trash2 } from "lucide-react";
 import { useApiSWRFetcher, useApiFetch } from "@/lib/apiFetch";
+import { apiBase } from "@/lib/apiBase";
+import { useTr } from "@/lib/useTr";
 
-const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
+const BASE = apiBase();
 
 const BRAND = "#4B5FE8";
 const INK = "#0f1115";
@@ -29,11 +31,30 @@ const avatarUrl = (seed: string, size = 160) =>
 const AVATAR_COLORS = ["#4B5FE8", "#9333EA", "#DC2626", "#EA580C", "#16A34A", "#0891B2", "#D97706", "#DB2777"];
 
 export default function AccountPage() {
+  const tr = useTr();
   const { user } = useUser();
   const { userId, isLoaded } = useAuth();
   const { signOut } = useClerk();
   const fetcher = useApiSWRFetcher();
   const apiFetch = useApiFetch();
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  async function deleteAccount() {
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      await apiFetch("/api/account", { method: "DELETE" });
+      // The account is gone; signing out clears the stale session in this browser.
+      await signOut();
+    } catch (e: any) {
+      setDeleting(false);
+      setDeleteError(
+        /"error":"([^"]+)"/.exec(String(e?.message ?? ""))?.[1] ?? tr("Try again in a moment."),
+      );
+    }
+  }
   const ready = isLoaded && !!userId;
 
   const { data: settings, mutate } = useSWR(ready ? `${BASE}/api/settings` : null, fetcher, {
@@ -70,12 +91,8 @@ export default function AccountPage() {
 
   return (
     <div style={{ maxWidth: 720 }}>
-      <div style={{ fontSize: 13.5, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", color: BRAND, marginBottom: 8 }}>
-        Account
-      </div>
-      <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 34, letterSpacing: "-0.5px", color: INK, marginBottom: 26 }}>
-        Settings
-      </h1>
+      <div style={{ fontSize: 13.5, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", color: BRAND, marginBottom: 8 }}>{tr("Account")}</div>
+      <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 34, letterSpacing: "-0.5px", color: INK, marginBottom: 26 }}>{tr("Settings")}</h1>
 
       {/* Profile */}
       <div
@@ -86,7 +103,7 @@ export default function AccountPage() {
           onClick={() => setPicking(true)}
           className="relative shrink-0 rounded-full flex items-center justify-center transition-transform hover:scale-[1.04]"
           style={{ width: 64, height: 64, background: avatarColor }}
-          title="Change avatar"
+          title={tr("Change avatar")}
         >
           {avatar ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -116,7 +133,7 @@ export default function AccountPage() {
         style={{ background: "#FFFFFF", border: `1px solid ${HAIRLINE}` }}
       >
         <CreditCard size={20} style={{ color: "rgba(15,17,21, 0.73)" }} />
-        <span className="flex-1" style={{ fontSize: 16.5, fontWeight: 600, color: INK }}>Billing &amp; plan</span>
+        <span className="flex-1" style={{ fontSize: 16.5, fontWeight: 600, color: INK }}>{tr("Billing &amp; plan")}</span>
         <ExternalLink size={17} style={{ color: "rgba(15,17,21, 0.73)" }} />
       </Link>
 
@@ -126,7 +143,7 @@ export default function AccountPage() {
         style={{ background: "#FFFFFF", border: `1px solid ${HAIRLINE}` }}
       >
         <HelpCircle size={20} style={{ color: "rgba(15,17,21, 0.73)" }} />
-        <span className="flex-1" style={{ fontSize: 16.5, fontWeight: 600, color: INK }}>Help &amp; support</span>
+        <span className="flex-1" style={{ fontSize: 16.5, fontWeight: 600, color: INK }}>{tr("Help &amp; support")}</span>
         <ChevronRight size={17} style={{ color: "rgba(15,17,21, 0.73)" }} />
       </Link>
 
@@ -137,23 +154,17 @@ export default function AccountPage() {
             className="flex flex-wrap items-center gap-3 rounded-2xl px-5 py-4"
             style={{ background: "#FFFFFF", border: "1px solid rgba(239,68,68,0.3)" }}
           >
-            <span className="flex-1" style={{ fontSize: 16, color: "rgba(15,17,21, 0.82)" }}>
-              Sign out? You can sign back in anytime.
-            </span>
+            <span className="flex-1" style={{ fontSize: 16, color: "rgba(15,17,21, 0.82)" }}>{tr("Sign out? You can sign back in anytime.")}</span>
             <button
               onClick={() => setConfirmSignOut(false)}
               className="rounded-xl px-4 py-2"
               style={{ fontSize: 15.5, fontWeight: 600, background: "rgba(0,0,0,0.05)", color: "rgba(15,17,21, 0.82)" }}
-            >
-              Cancel
-            </button>
+            >{tr("Cancel")}</button>
             <button
               onClick={() => signOut()}
               className="rounded-xl px-4 py-2"
               style={{ fontSize: 15.5, fontWeight: 700, background: "#DC2626", color: "#fff" }}
-            >
-              Sign out
-            </button>
+            >{tr("Sign out")}</button>
           </div>
         ) : (
           <button
@@ -162,7 +173,47 @@ export default function AccountPage() {
             style={{ background: "#FFFFFF", border: `1px solid ${HAIRLINE}` }}
           >
             <LogOut size={20} style={{ color: "#EF4444" }} />
-            <span className="flex-1 text-left" style={{ fontSize: 16.5, fontWeight: 600, color: "#DC2626" }}>Sign out</span>
+            <span className="flex-1 text-left" style={{ fontSize: 16.5, fontWeight: 600, color: "#DC2626" }}>{tr("Sign out")}</span>
+          </button>
+        )}
+      </div>
+
+      {/* Delete account — quieter than Sign out, which is the everyday action,
+          but present: deletion has to be reachable without emailing support. */}
+      <div className="mt-3">
+        {confirmDelete ? (
+          <div className="rounded-2xl px-5 py-4" style={{ background: "#FFFFFF", border: "1px solid rgba(239,68,68,0.3)" }}>
+            <div style={{ fontSize: 16.5, fontWeight: 700, color: "#0f1115", marginBottom: 6 }}>{tr("Delete your account?")}</div>
+            <p style={{ fontSize: 15, color: "rgba(15,17,21,0.75)", lineHeight: 1.55, marginBottom: 14 }}>
+              {tr("Your recordings, transcripts, notes, photos and study material are permanently deleted, and any subscription is cancelled.")}
+              {" "}{tr("There is no way to get your recordings back once they're deleted.")}
+            </p>
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                onClick={() => setConfirmDelete(false)}
+                disabled={deleting}
+                className="rounded-xl px-4 py-2"
+                style={{ fontSize: 15.5, fontWeight: 600, background: "rgba(0,0,0,0.05)", color: "rgba(15,17,21, 0.82)" }}
+              >{tr("Cancel")}</button>
+              <button
+                onClick={deleteAccount}
+                disabled={deleting}
+                className="rounded-xl px-4 py-2 disabled:opacity-60"
+                style={{ fontSize: 15.5, fontWeight: 700, background: "#DC2626", color: "#fff" }}
+              >{deleting ? tr("Deleting…") : tr("Delete forever")}</button>
+            </div>
+            {deleteError && (
+              <p style={{ fontSize: 14.5, color: "#B91C1C", marginTop: 10 }}>{deleteError}</p>
+            )}
+          </div>
+        ) : (
+          <button
+            onClick={() => setConfirmDelete(true)}
+            className="w-full flex items-center gap-3 rounded-2xl px-5 py-4 transition-colors hover:bg-[rgba(0,0,0,0.03)]"
+            style={{ background: "#FFFFFF", border: `1px solid ${HAIRLINE}` }}
+          >
+            <Trash2 size={20} style={{ color: "rgba(15,17,21,0.55)" }} />
+            <span className="flex-1 text-left" style={{ fontSize: 16.5, fontWeight: 600, color: "rgba(15,17,21,0.75)" }}>{tr("Delete account")}</span>
           </button>
         )}
       </div>
@@ -172,7 +223,7 @@ export default function AccountPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(15,17,21,0.35)" }}>
           {/* Backdrop click-away */}
           <button
-            aria-label="Close"
+            aria-label={tr("Close")}
             onClick={() => setPicking(false)}
             className="absolute inset-0 cursor-default"
             style={{ background: "transparent" }}
@@ -182,7 +233,7 @@ export default function AccountPage() {
             style={{ maxWidth: 480, maxHeight: "86vh", background: "#FFFFFF", border: `1px solid ${HAIRLINE}`, boxShadow: "0 24px 64px rgba(15,17,21,0.18)" }}
           >
             <div className="flex items-center justify-between mb-5">
-              <h2 style={{ fontSize: 21, fontWeight: 700, color: INK }}>Pick your avatar</h2>
+              <h2 style={{ fontSize: 21, fontWeight: 700, color: INK }}>{tr("Pick your avatar")}</h2>
               <button onClick={() => setPicking(false)} className="p-1.5 rounded-full" style={{ color: "rgba(15,17,21, 0.73)" }}>
                 <X size={19} />
               </button>
@@ -201,9 +252,7 @@ export default function AccountPage() {
               )}
             </div>
 
-            <div style={{ fontSize: 14, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(15,17,21, 0.75)", marginBottom: 10 }}>
-              Avatar
-            </div>
+            <div style={{ fontSize: 14, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(15,17,21, 0.75)", marginBottom: 10 }}>{tr("Avatar")}</div>
             <div className="flex flex-wrap gap-2.5 mb-6">
               {AVATARS.map(a => (
                 <button
@@ -224,9 +273,7 @@ export default function AccountPage() {
               ))}
             </div>
 
-            <div style={{ fontSize: 14, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(15,17,21, 0.75)", marginBottom: 10 }}>
-              Background
-            </div>
+            <div style={{ fontSize: 14, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(15,17,21, 0.75)", marginBottom: 10 }}>{tr("Background")}</div>
             <div className="flex flex-wrap gap-2.5 mb-6">
               {AVATAR_COLORS.map(c => (
                 <button
@@ -250,9 +297,7 @@ export default function AccountPage() {
               onClick={() => setPicking(false)}
               className="w-full rounded-2xl py-3.5"
               style={{ background: avatarColor, color: "#fff", fontSize: 17, fontWeight: 700 }}
-            >
-              Done
-            </button>
+            >{tr("Done")}</button>
           </div>
         </div>
       )}

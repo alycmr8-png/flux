@@ -1,8 +1,9 @@
 "use client";
 import { useState } from "react";
 import { CheckCircle, Loader2, Mail } from "lucide-react";
+import { apiBase } from "@/lib/apiBase";
 
-const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
+const BASE = apiBase();
 
 // Email capture for people who watched the demos but aren't ready to sign up.
 // One field, one promise, zero friction.

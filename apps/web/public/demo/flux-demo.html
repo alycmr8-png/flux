@@ -1,0 +1,565 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Flux Demo">
+<meta name="theme-color" content="#4B5FE8">
+<title>Flux — Product Demo</title>
+<meta name="description" content="One continuous loop of Flux: record a lecture, photograph the board, get your study material, ask your course anything.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Caveat:wght@500;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+  :root{
+    --indigo:#4B5FE8; --indigo-soft:#EEF0FD; --indigo-deep:#3A49C4;
+    --ink:#0F1115; --ink-2:#5A6072; --ink-3:#8A90A3;
+    --line:#E7E9F2; --card:#FFFFFF;
+    --green:#15803D; --green-soft:#E7F6EC;
+    --marker:#1B2A6B; --marker-red:#B3261E;
+    --board:#FBFBF7; --board-2:#EDEEE8;
+    --ui: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --hand: 'Caveat', 'Segoe Script', cursive;
+    --mono: 'IBM Plex Mono', ui-monospace, Menlo, monospace;
+    --math: 'Cambria Math', Cambria, Georgia, 'Times New Roman', serif;
+  }
+
+  *{box-sizing:border-box}
+  body{
+    margin:0; min-height:100vh; background:
+      radial-gradient(1100px 620px at 50% -12%, #E8ECFB 0%, transparent 62%),
+      linear-gradient(180deg,#F4F5FA 0%,#EDEFF7 100%);
+    font-family:var(--ui); color:var(--ink);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:18px; padding:26px 16px 30px;
+  }
+  body.bare{background:#FFFFFF; gap:0; padding:0; justify-content:center}
+  body.bare .stage-meta, body.bare .controls{display:none}
+
+  /* ── phone ───────────────────────────────────────────────── */
+  /* The frame keeps a fixed design size and is SCALED to fit the window (see
+     fit() below). Constraining its box instead made it narrow on short windows,
+     which reflowed the layout and overflowed the bubbles. */
+  .stage{display:flex; justify-content:center}
+  .phone{
+    width:390px; height:836px; flex:none; transform-origin:top center;
+    background:#fff; border-radius:44px; position:relative; overflow:hidden;
+    border:1px solid rgba(15,17,21,.10);
+    box-shadow:0 40px 90px rgba(24,32,74,.22), 0 4px 14px rgba(24,32,74,.10);
+    display:flex; flex-direction:column;
+  }
+  body.bare .phone{box-shadow:none; border-radius:0; border:none}
+
+  .statusbar{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:14px 26px 4px; font-size:12.5px; font-weight:600; color:var(--ink);
+    font-variant-numeric:tabular-nums;
+  }
+  .statusbar .dots{display:flex; gap:3px; align-items:center}
+  .statusbar .bar{width:3px; border-radius:1px; background:var(--ink)}
+
+  .apphead{
+    padding:8px 20px 12px; display:flex; align-items:center; gap:10px;
+    border-bottom:1px solid var(--line);
+  }
+  .swatch{width:10px;height:10px;border-radius:50%;background:var(--indigo);flex:none}
+  .apphead .t{font-size:15px; font-weight:700; letter-spacing:-.2px}
+  .apphead .s{font-size:11.5px; color:var(--ink-3); margin-top:1px}
+  .pill{
+    margin-left:auto; font-size:10.5px; font-weight:700; padding:5px 9px; border-radius:99px;
+    background:var(--indigo-soft); color:var(--indigo); white-space:nowrap;
+  }
+  .pill.live{background:#FDECEC; color:#C3352B}
+  .pill.ok{background:var(--green-soft); color:var(--green)}
+
+  /* tabs */
+  .tabs{display:flex; gap:6px; padding:10px 16px; border-bottom:1px solid var(--line)}
+  .tab{
+    flex:1; display:flex; align-items:center; justify-content:center; gap:5px;
+    font-size:11px; font-weight:600; color:var(--ink-3);
+    padding:7px 4px; border-radius:99px; transition:background .25s, color .25s;
+  }
+  .tab.on{background:var(--indigo); color:#fff}
+  .tab svg{width:12px;height:12px}
+
+  .screen{flex:1; position:relative; overflow:hidden}
+  .scene{
+    position:absolute; inset:0; padding:16px 18px 18px; display:flex; flex-direction:column; gap:12px;
+    opacity:0; transform:translateY(10px); pointer-events:none;
+    transition:opacity .45s ease, transform .45s ease;
+  }
+  .scene.on{opacity:1; transform:none}
+  /* These two acts don't fill the screen on their own, so centre them rather
+     than leaving the bottom half empty. */
+  .scene[data-scene="photo"], .scene[data-scene="study"]{justify-content:center}
+
+  .eyebrow{
+    font-size:9.5px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-3);
+  }
+
+  /* ── scene 1: recording ──────────────────────────────────── */
+  .rec-top{display:flex; align-items:center; gap:10px}
+  .rec-dot{width:9px;height:9px;border-radius:50%;background:#E5484D;animation:blink 1.1s infinite}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+  .clock{font-family:var(--mono); font-size:19px; font-weight:500; letter-spacing:-.5px}
+  .wave{display:flex; align-items:center; gap:2.5px; height:26px; margin-left:auto}
+  .wave i{display:block; width:2.5px; border-radius:2px; background:var(--indigo); opacity:.75}
+
+  .transcript{
+    flex:1; background:#FAFBFF; border:1px solid var(--line); border-radius:16px;
+    padding:14px; font-size:13.5px; line-height:1.72; overflow:hidden;
+  }
+  .transcript .settled{color:var(--ink)}
+  .transcript .pending{color:var(--ink-3)}
+
+  .rowbtns{display:flex; gap:8px}
+  .btn{
+    flex:1; text-align:center; font-size:11.5px; font-weight:600; padding:11px 6px;
+    border-radius:13px; border:1px solid var(--line); color:var(--ink); background:#fff;
+  }
+  .btn.solid{background:var(--indigo); color:#fff; border-color:transparent}
+  .btn.flash{animation:flash .5s ease}
+  @keyframes flash{0%{transform:scale(1)}45%{transform:scale(.95); filter:brightness(.92)}100%{transform:scale(1)}}
+
+  /* ── scene 2: the board ──────────────────────────────────── */
+  .board{
+    position:relative; border-radius:14px; overflow:hidden; padding:14px 13px;
+    background:linear-gradient(168deg,var(--board) 0%,var(--board-2) 100%);
+    border:1px solid rgba(0,0,0,.10); transform:rotate(-.8deg);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.85);
+    animation:pop .45s ease both;
+  }
+  @keyframes pop{from{opacity:0;transform:rotate(-.8deg) scale(.95)}to{opacity:1;transform:rotate(-.8deg) scale(1)}}
+  .board .glare{position:absolute; inset:0; background:linear-gradient(103deg,transparent 36%,rgba(255,255,255,.55) 52%,transparent 64%)}
+  .board .cols{position:relative; display:flex; gap:12px}
+  .board .col{display:flex; flex-direction:column; gap:4px; flex:1; min-width:0}
+  .hand{font-family:var(--hand); font-weight:600; color:var(--marker); line-height:1.15; align-self:flex-start}
+  .hand.red{color:var(--marker-red)}
+  .hand.rule{border-bottom:2px solid var(--marker); padding-bottom:1px}
+  .scan{
+    position:absolute; left:0; right:0; top:0; height:42px;
+    background:linear-gradient(180deg,transparent,rgba(75,95,232,.30),transparent);
+    animation:scan 1.5s ease-in-out infinite;
+  }
+  @keyframes scan{from{transform:translateY(-120%)}to{transform:translateY(520%)}}
+
+  .readout{display:flex; flex-direction:column; gap:7px}
+  .math{
+    font-family:var(--math); font-size:15px; color:var(--ink);
+    background:#F7F8FC; border:1px solid var(--line); border-radius:10px; padding:8px 11px;
+  }
+  .frac{display:inline-flex; flex-direction:column; vertical-align:middle; text-align:center; line-height:1.02; font-size:.66em; margin:0 .14em; position:relative; top:-.06em}
+  .frac b{font-weight:400; border-bottom:1px solid currentColor; padding:0 .25em}
+  .frac i{font-style:normal; padding:0 .25em}
+
+  /* ── scene 3: processing ─────────────────────────────────── */
+  .prog{height:5px; border-radius:99px; background:var(--line); overflow:hidden}
+  .prog i{display:block; height:100%; background:var(--indigo); border-radius:99px; transition:width .2s linear}
+  .grid{display:grid; grid-template-columns:1fr 1fr; gap:8px}
+  .out{
+    border:1px solid var(--line); border-radius:13px; padding:11px 10px; background:#fff;
+    display:flex; gap:8px; align-items:flex-start; opacity:.4; transition:opacity .35s, border-color .35s, background .35s;
+  }
+  .out.on{opacity:1; border-color:rgba(75,95,232,.32); background:rgba(75,95,232,.05)}
+  .out .ic{width:22px;height:22px;border-radius:7px;background:var(--indigo-soft);display:flex;align-items:center;justify-content:center;flex:none}
+  .out .ic svg{width:12px;height:12px}
+  .out .n{font-size:11.5px; font-weight:700; line-height:1.25}
+  .out .d{font-size:9.5px; color:var(--ink-3); margin-top:2px; line-height:1.35}
+
+  /* ── scene 4: ask ────────────────────────────────────────── */
+  /* Anchored to the bottom, the way a real conversation stacks up. */
+  .chat{flex:1; display:flex; flex-direction:column; justify-content:center; gap:9px; overflow:hidden}
+  .bub{max-width:88%; padding:10px 13px; font-size:12.5px; line-height:1.6; border-radius:16px}
+  .bub.me{align-self:flex-end; background:var(--indigo); color:#fff; border-bottom-right-radius:5px}
+  .bub.ai{align-self:flex-start; background:#F2F4FA; color:var(--ink); border-bottom-left-radius:5px}
+  .typing{display:inline-flex; gap:3px; align-items:center}
+  .typing i{width:5px;height:5px;border-radius:50%;background:var(--ink-3);animation:bounce 1s infinite}
+  .typing i:nth-child(2){animation-delay:.15s} .typing i:nth-child(3){animation-delay:.3s}
+  @keyframes bounce{0%,80%,100%{transform:translateY(0);opacity:.45}40%{transform:translateY(-4px);opacity:1}}
+  .cites{display:flex; flex-wrap:wrap; gap:5px}
+  .cite{
+    display:inline-flex; align-items:center; gap:5px; font-size:10.5px; font-weight:700;
+    padding:5px 9px; border-radius:99px; background:var(--indigo-soft); color:var(--indigo);
+    border:1px solid rgba(75,95,232,.24);
+  }
+  .cite.hit{background:var(--indigo); color:#fff; transform:scale(1.04)}
+  .cite svg{width:10px;height:10px}
+  .player{
+    display:flex; align-items:center; gap:9px; padding:9px 11px; border-radius:13px;
+    background:#fff; border:1px solid rgba(75,95,232,.3); box-shadow:0 6px 18px rgba(24,32,74,.09);
+    animation:pop2 .35s ease both;
+  }
+  @keyframes pop2{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .player .play{width:26px;height:26px;border-radius:50%;background:var(--indigo);display:flex;align-items:center;justify-content:center;flex:none}
+  .player .play svg{width:10px;height:10px}
+  .player .meta{flex:1; min-width:0}
+  .player .ttl{font-size:10.5px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .player .track{height:3.5px; border-radius:99px; background:var(--line); margin-top:5px; overflow:hidden}
+  .player .track i{display:block;height:100%;background:var(--indigo);border-radius:99px}
+  .player .tc{font-family:var(--mono); font-size:9.5px; color:var(--ink-3); flex:none}
+
+  /* ── caption + controls ──────────────────────────────────── */
+  .stage-meta{text-align:center; max-width:390px}
+  .stage-meta h1{margin:0; font-size:15px; font-weight:800; letter-spacing:-.2px}
+  .stage-meta p{margin:4px 0 0; font-size:12.5px; color:var(--ink-2); line-height:1.5; min-height:38px}
+
+  .controls{display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:center}
+  .ctl{
+    font:inherit; font-size:12px; font-weight:600; color:var(--ink-2); cursor:pointer;
+    background:#fff; border:1px solid var(--line); border-radius:99px; padding:7px 14px;
+  }
+  .ctl:hover{color:var(--ink); border-color:#CFD4E6}
+  .ctl:focus-visible{outline:2px solid var(--indigo); outline-offset:2px}
+  .ctl[aria-pressed="true"]{background:var(--indigo); color:#fff; border-color:transparent}
+  .hint{font-size:11px; color:var(--ink-3); font-family:var(--mono)}
+
+  @media (prefers-reduced-motion: reduce){
+    .rec-dot,.scan,.typing i{animation:none}
+  }
+</style>
+</head>
+<body>
+
+<div class="stage-meta">
+  <h1>Flux</h1>
+  <p id="caption">Record the lecture.</p>
+</div>
+
+<div class="stage" id="stage">
+<div class="phone" id="phone">
+  <div class="statusbar">
+    <span id="sbclock">9:41</span>
+    <span class="dots" aria-hidden="true">
+      <i class="bar" style="height:5px"></i><i class="bar" style="height:7px"></i>
+      <i class="bar" style="height:9px"></i><i class="bar" style="height:11px"></i>
+    </span>
+  </div>
+
+  <div class="apphead">
+    <span class="swatch"></span>
+    <div>
+      <div class="t">Anatomy &amp; Physiology</div>
+      <div class="s">Lecture 4 — The Cardiac Cycle</div>
+    </div>
+    <span class="pill" id="headpill">Recording</span>
+  </div>
+
+  <div class="tabs" id="tabs">
+    <div class="tab on" data-tab="record">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><path d="M12 19v3"/></svg>
+      Record
+    </div>
+    <div class="tab" data-tab="photo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3Z"/><circle cx="12" cy="13" r="3.2"/></svg>
+      Photo
+    </div>
+    <div class="tab" data-tab="study">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 19.5V5a2 2 0 0 1 2-2h13v18H6a2 2 0 0 1-2-1.5Z"/><path d="M8 7h7M8 11h7"/></svg>
+      Study
+    </div>
+    <div class="tab" data-tab="ask">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="m12 3 2.2 5.3L20 10l-5.8 1.7L12 17l-2.2-5.3L4 10l5.8-1.7L12 3Z"/></svg>
+      Ask
+    </div>
+  </div>
+
+  <div class="screen">
+
+    <!-- 1 · record -->
+    <section class="scene on" data-scene="record">
+      <div class="rec-top">
+        <span class="rec-dot"></span>
+        <span class="clock" id="clock">12:04</span>
+        <span class="wave" id="wave" aria-hidden="true"></span>
+      </div>
+      <div class="eyebrow">Live transcript</div>
+      <div class="transcript"><p id="tscript" style="margin:0"></p></div>
+      <div class="rowbtns">
+        <span class="btn">Pause</span>
+        <span class="btn" id="photoBtn">Photo</span>
+        <span class="btn solid">Stop</span>
+      </div>
+    </section>
+
+    <!-- 2 · the board -->
+    <section class="scene" data-scene="photo">
+      <div class="eyebrow">Photo of the board</div>
+      <div class="board">
+        <span class="glare"></span>
+        <div class="cols">
+          <div class="col">
+            <span class="hand rule" style="font-size:19px">Cardiac output</span>
+            <span class="hand" style="font-size:22px">CO = HR × SV</span>
+            <span class="hand" style="font-size:17px">SV = EDV − ESV</span>
+            <span class="hand" style="font-size:17px">EF = SV/EDV × 100</span>
+            <span class="hand red" style="font-size:16px">normal ≈ 5 L/min</span>
+            <svg viewBox="0 0 220 40" width="100%" height="26" fill="none" aria-hidden="true" style="margin-top:2px">
+              <path d="M2 27 L30 27 L36 23 L42 31 L48 27 L66 27 L72 6 L78 36 L84 27 L106 27 L114 20 L122 27 L150 27 L156 23 L162 31 L168 27 L186 27 L192 6 L198 36 L204 27 L218 27"
+                    stroke="#1B2A6B" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div class="col">
+            <span class="hand rule" style="font-size:17px">Cycle — 5 phases</span>
+            <span class="hand" style="font-size:14px">1. atrial systole</span>
+            <span class="hand" style="font-size:14px">2. isovol. contraction</span>
+            <span class="hand" style="font-size:14px">3. ventric. ejection</span>
+            <span class="hand" style="font-size:14px">4. isovol. relaxation</span>
+            <span class="hand" style="font-size:14px">5. filling</span>
+            <span class="hand" style="font-size:15px">↑ preload → ↑ SV</span>
+            <span class="hand red" style="font-size:17px">know this!!</span>
+          </div>
+        </div>
+        <span class="scan" id="scan"></span>
+      </div>
+
+      <div id="readWrap" style="display:none">
+        <div class="eyebrow" style="margin-bottom:6px">What Flux read</div>
+        <div class="readout">
+          <div class="math">CO = HR × SV</div>
+          <div class="math">SV = EDV − ESV</div>
+          <div class="math">MAP = DBP + <span class="frac"><b>1</b><i>3</i></span>(SBP − DBP)</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3 · processing -->
+    <section class="scene" data-scene="study">
+      <div class="eyebrow" id="procLabel">Building your study material</div>
+      <div class="prog"><i id="procBar" style="width:0%"></i></div>
+      <div class="grid" id="outs">
+        <div class="out"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="#4B5FE8" stroke-width="2.2" stroke-linecap="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5Z"/><path d="M9 13h6M9 17h4"/></svg></span><div><div class="n">Summary</div><div class="d">the lecture, condensed</div></div></div>
+        <div class="out"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="#4B5FE8" stroke-width="2.2" stroke-linecap="round"><path d="M4 5h16M4 10h16M4 15h11"/></svg></span><div><div class="n">Transcript</div><div class="d">every word, timestamped</div></div></div>
+        <div class="out"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="#4B5FE8" stroke-width="2.2" stroke-linecap="round"><path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"/></svg></span><div><div class="n">Key points</div><div class="d">what actually mattered</div></div></div>
+        <div class="out"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="#4B5FE8" stroke-width="2.2" stroke-linecap="round"><path d="m12 2 9 4.5-9 4.5-9-4.5L12 2Z"/><path d="m21 12-9 4.5L3 12"/></svg></span><div><div class="n">Flashcards</div><div class="d">ready to drill</div></div></div>
+        <div class="out"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="#4B5FE8" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.5a2.5 2.5 0 1 1 3.4 2.3c-.6.3-1 .9-1 1.7"/><path d="M12 17h.01"/></svg></span><div><div class="n">Practice quiz</div><div class="d">answers timestamped</div></div></div>
+        <div class="out"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="#4B5FE8" stroke-width="2.2" stroke-linecap="round"><path d="m12 3 2.2 5.3L20 10l-5.8 1.7L12 17l-2.2-5.3L4 10l5.8-1.7L12 3Z"/></svg></span><div><div class="n">Ask</div><div class="d">answers with sources</div></div></div>
+      </div>
+    </section>
+
+    <!-- 4 · ask -->
+    <section class="scene" data-scene="ask">
+      <div class="eyebrow">Ask this course</div>
+      <div class="chat">
+        <div class="bub me" id="q"></div>
+        <div class="bub ai" id="a" style="display:none"></div>
+        <div class="cites" id="cites" style="display:none">
+          <span class="cite" id="cite1">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7L8 5Z"/></svg>
+            [1] Lecture 4 · 12:04
+          </span>
+          <span class="cite" id="cite2">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3Z"/></svg>
+            [2] Board photo
+          </span>
+        </div>
+        <div class="player" id="player" style="display:none">
+          <span class="play"><svg viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7L8 5Z"/></svg></span>
+          <span class="meta">
+            <span class="ttl">Lecture 4 — The Cardiac Cycle</span>
+            <span class="track"><i id="ptrack" style="width:0%"></i></span>
+          </span>
+          <span class="tc" id="ptime">12:04</span>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</div>
+</div>
+
+<div class="controls">
+  <button class="ctl" id="playBtn" aria-pressed="false">Pause</button>
+  <button class="ctl" id="replayBtn">Replay</button>
+  <button class="ctl" id="bareBtn" aria-pressed="false">Recording mode</button>
+  <span class="hint" id="hint">space · R · B</span>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* The whole product in one loop. Each act is a slice of one clock, so pausing,
+     replaying and scrubbing all work without unwinding nested timers. */
+  const ACTS = [
+    { id:"record", tab:"record", ms:7600,  caption:"Record the lecture. The words appear as they're said." },
+    { id:"photo",  tab:"photo",  ms:7400,  caption:"Photograph the board — Flux reads the handwriting into real notation." },
+    { id:"study",  tab:"study",  ms:6200,  caption:"One tap turns it into six ways to study it." },
+    { id:"ask",    tab:"ask",    ms:9400,  caption:"Ask anything. Every answer cites the lecture and the minute." }
+  ];
+  const TOTAL = ACTS.reduce((n,a)=>n+a.ms,0);
+
+  const SCRIPT = ("Cardiac output is heart rate times stroke volume — so CO equals HR times SV. "
+    + "A normal resting output is about five litres a minute. "
+    + "Watch what happens to stroke volume when preload rises.").split(" ");
+
+  const QUESTION = "What did he say about cardiac output?";
+  const ANSWER = "He defined it as heart rate × stroke volume, and stressed that a normal resting output is about 5 L/min [1]. "
+    + "The board photo adds the ejection-fraction formula he wrote but never said out loud [2].";
+
+  const $ = s => document.querySelector(s);
+  const scenes = [...document.querySelectorAll(".scene")];
+  const tabs   = [...document.querySelectorAll(".tab")];
+  const outs   = [...document.querySelectorAll("#outs .out")];
+
+  /* waveform bars, built once */
+  const wave = $("#wave");
+  for (let i=0;i<14;i++) wave.appendChild(document.createElement("i"));
+  const bars = [...wave.children];
+
+  /* ?t=14 starts partway in and ?bare=1 opens with the chrome hidden, so a
+     screen recording can begin on the exact beat you want without waiting. */
+  const params = new URLSearchParams(location.search);
+  const startAt = Math.max(0, (parseFloat(params.get("t")) || 0) * 1000);
+  if (params.get("bare") === "1") document.body.classList.add("bare");
+
+  let elapsed = startAt, last = null, playing = true;
+
+  const clamp01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
+  const fmt = s => String(Math.floor(s/60)).padStart(2,"0")+":"+String(Math.floor(s%60)).padStart(2,"0");
+
+  function actAt(ms){
+    let acc = 0;
+    for (let i=0;i<ACTS.length;i++){
+      if (ms < acc + ACTS[i].ms) return { i, p: (ms-acc)/ACTS[i].ms };
+      acc += ACTS[i].ms;
+    }
+    return { i: ACTS.length-1, p: 1 };
+  }
+
+  function render(ms, t){
+    const { i, p } = actAt(ms);
+    const act = ACTS[i];
+
+    scenes.forEach(s => s.classList.toggle("on", s.dataset.scene === act.id));
+    tabs.forEach(b => b.classList.toggle("on", b.dataset.tab === act.tab));
+    $("#caption").textContent = act.caption;
+
+    const pill = $("#headpill");
+    pill.className = "pill" + (act.id === "record" ? " live" : act.id === "ask" || act.id === "study" ? " ok" : "");
+    pill.textContent = act.id === "record" ? "Recording"
+                     : act.id === "photo" ? "1 photo"
+                     : act.id === "study" ? "Processing" : "Ready";
+
+    /* ── 1 · record ─────────────────────────────────────────── */
+    if (act.id === "record"){
+      $("#clock").textContent = fmt(724 + p*ACTS[0].ms/1000);
+      const shown = Math.floor(clamp01(p/0.86) * SCRIPT.length);
+      const settled = SCRIPT.slice(0, Math.max(0, shown-3)).join(" ");
+      const pending = SCRIPT.slice(Math.max(0, shown-3), shown).join(" ");
+      $("#tscript").innerHTML =
+        '<span class="settled">'+settled+'</span> <span class="pending">'+pending+'</span>';
+      bars.forEach((b,k)=>{
+        const h = 5 + Math.abs(Math.sin(t/230 + k*0.7)) * 19;
+        b.style.height = h.toFixed(1)+"px";
+      });
+      $("#photoBtn").classList.toggle("flash", p > 0.9);
+    }
+
+    /* ── 2 · the board ──────────────────────────────────────── */
+    if (act.id === "photo"){
+      const readingNow = p > 0.18 && p < 0.55;
+      $("#scan").style.display = readingNow ? "block" : "none";
+      $("#readWrap").style.display = p >= 0.58 ? "block" : "none";
+    }
+
+    /* ── 3 · processing ─────────────────────────────────────── */
+    if (act.id === "study"){
+      const q = clamp01(p/0.85);
+      $("#procBar").style.width = (q*100).toFixed(1)+"%";
+      $("#procLabel").textContent = q < 1 ? "Building your study material" : "Ready";
+      outs.forEach((o,k)=> o.classList.toggle("on", q > (k+1)/(outs.length+0.6)));
+    }
+
+    /* ── 4 · ask ────────────────────────────────────────────── */
+    if (act.id === "ask"){
+      const qChars = Math.floor(clamp01(p/0.22) * QUESTION.length);
+      $("#q").textContent = QUESTION.slice(0, qChars);
+
+      const a = $("#a"), cites = $("#cites"), player = $("#player");
+      if (p > 0.26 && p < 0.40){
+        a.style.display = "block";
+        a.innerHTML = '<span class="typing"><i></i><i></i><i></i></span>';
+      } else if (p >= 0.40){
+        a.style.display = "block";
+        const n = Math.floor(clamp01((p-0.40)/0.30) * ANSWER.length);
+        a.textContent = ANSWER.slice(0, n);
+      } else {
+        a.style.display = "none";
+      }
+
+      cites.style.display = p >= 0.70 ? "flex" : "none";
+      $("#cite1").classList.toggle("hit", p >= 0.78 && p < 0.84);
+
+      if (p >= 0.82){
+        player.style.display = "flex";
+        const played = clamp01((p-0.82)/0.16);
+        $("#ptrack").style.width = (played*100).toFixed(1)+"%";
+        $("#ptime").textContent = fmt(724 + played*26);
+      } else {
+        player.style.display = "none";
+      }
+    }
+  }
+
+  function frame(now){
+    if (last == null) last = now;
+    const dt = Math.min(now - last, 60);   // a backgrounded tab must not jump
+    last = now;
+    if (playing) elapsed = (elapsed + dt) % TOTAL;
+    render(elapsed, now);
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  /* ── controls ─────────────────────────────────────────────── */
+  const playBtn = $("#playBtn"), replayBtn = $("#replayBtn"), bareBtn = $("#bareBtn");
+  bareBtn.setAttribute("aria-pressed", String(document.body.classList.contains("bare")));
+
+  function setPlaying(on){
+    playing = on;
+    playBtn.textContent = on ? "Pause" : "Play";
+    playBtn.setAttribute("aria-pressed", String(!on));
+  }
+  playBtn.addEventListener("click", ()=> setPlaying(!playing));
+  replayBtn.addEventListener("click", ()=>{ elapsed = startAt; setPlaying(true); });
+  bareBtn.addEventListener("click", ()=>{
+    const on = document.body.classList.toggle("bare");
+    bareBtn.setAttribute("aria-pressed", String(on));
+    fit();
+  });
+
+  document.addEventListener("keydown", e=>{
+    if (e.target.closest("button") && e.key === " ") return;
+    if (e.key === " "){ e.preventDefault(); setPlaying(!playing); }
+    if (e.key === "r" || e.key === "R"){ elapsed = startAt; setPlaying(true); }
+    if (e.key === "b" || e.key === "B"){ bareBtn.click(); }
+  });
+
+  /* Scale the fixed-size frame to whatever room the window gives us, so the
+     bottom of a scene is never cut off when recording. */
+  const stage = $("#stage"), phone = $("#phone");
+  const DESIGN_W = 390, DESIGN_H = 836;
+  function fit(){
+    const bare = document.body.classList.contains("bare");
+    const reserved = bare ? 0 : 172;           // caption + controls + padding
+    const availH = Math.max(320, window.innerHeight - reserved);
+    const availW = window.innerWidth * (bare ? 1 : 0.94);
+    const k = Math.min(1, availH / DESIGN_H, availW / DESIGN_W);
+    phone.style.transform = "scale(" + k.toFixed(4) + ")";
+    stage.style.width  = (DESIGN_W * k) + "px";
+    stage.style.height = (DESIGN_H * k) + "px";
+  }
+  window.addEventListener("resize", fit);
+  fit();
+
+  /* phone status-bar clock reads as a real device */
+  setInterval(()=>{
+    const d = new Date();
+    $("#sbclock").textContent = d.getHours()+":"+String(d.getMinutes()).padStart(2,"0");
+  }, 15000);
+})();
+</script>
+</body>
+</html>

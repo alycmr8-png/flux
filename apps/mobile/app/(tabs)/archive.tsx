@@ -4,8 +4,10 @@ import { Ionicons } from "@expo/vector-icons";
 import useSWR from "swr";
 import { useAuth } from "@clerk/clerk-expo";
 import { useApi, makeApiFetcher } from "../../lib/api";
+import { useTr } from "../../lib/useTr";
 
 export default function ArchiveScreen() {
+  const tr = useTr();
   const insets = useSafeAreaInsets();
   const api = useApi();
   const { getToken } = useAuth();
@@ -21,10 +23,10 @@ export default function ArchiveScreen() {
   function confirmDelete(l: any) {
     Alert.alert(
       `Delete "${l.title}"?`,
-      "This permanently removes the lecture and its content from your course memory. This can't be undone.",
+      tr("This permanently removes the lecture and its content from your course memory. This can't be undone."),
       [
-        { text: "Cancel", style: "cancel" },
-        { text: "Delete", style: "destructive", onPress: async () => { await api.delete(`/api/lectures/${l.id}`); mutate(); } },
+        { text: tr("Cancel"), style: "cancel" },
+        { text: tr("Delete"), style: "destructive", onPress: async () => { await api.delete(`/api/lectures/${l.id}`); mutate(); } },
       ]
     );
   }
@@ -33,15 +35,15 @@ export default function ArchiveScreen() {
     <>
       <StatusBar barStyle="dark-content" />
       <ScrollView style={s.root} contentContainerStyle={[s.content, { paddingTop: insets.top + 20 }]}>
-        <Text style={s.eyebrow}>Archive</Text>
-        <Text style={s.h1}>Archived items</Text>
+        <Text style={s.eyebrow}>{tr("Archive")}</Text>
+        <Text style={s.h1}>{tr("Archived items")}</Text>
 
         {isLoading ? (
-          <Text style={s.muted}>Loading…</Text>
+          <Text style={s.muted}>{tr("Loading…")}</Text>
         ) : lectures.length === 0 ? (
           <View style={s.emptyBox}>
             <Ionicons name="archive-outline" size={26} color="rgba(15,17,21,0.35)" style={{ marginBottom: 10 }} />
-            <Text style={s.muted}>Nothing archived. Deleted recordings and videos land here first.</Text>
+            <Text style={s.muted}>{tr("Nothing archived. Deleted recordings and videos land here first.")}</Text>
           </View>
         ) : (
           lectures.map((l: any) => (
@@ -54,7 +56,7 @@ export default function ArchiveScreen() {
                 <Text style={s.rowSub}>{l.course?.name ?? ""}</Text>
               </View>
               <TouchableOpacity onPress={() => restore(l.id)} style={s.actionBtn} activeOpacity={0.7}>
-                <Text style={s.restoreTxt}>Restore</Text>
+                <Text style={s.restoreTxt}>{tr("Restore")}</Text>
               </TouchableOpacity>
               <TouchableOpacity onPress={() => confirmDelete(l)} style={s.actionBtn} activeOpacity={0.7}>
                 <Ionicons name="trash-outline" size={15} color="#EF4444" />

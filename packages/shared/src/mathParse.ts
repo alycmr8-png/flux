@@ -378,6 +378,12 @@ function convert(s: string): string {
         out += sign + unit(convert(arg));
         continue;
       }
+      if (name === "ce" || name === "pu") {
+        const [arg, next2] = readArg(s, i);
+        i = next2;
+        out += chemToReadable(arg);
+        continue;
+      }
       if (name === "mathbb") {
         const [arg, next2] = readArg(s, i);
         i = next2;
@@ -461,6 +467,25 @@ function convert(s: string): string {
     i++;
   }
   return out;
+}
+
+/** mhchem source → readable Unicode: 2H2 + O2 -> 2H2O → 2H₂ + O₂ → 2H₂O. */
+function chemToReadable(src: string): string {
+  const sup = (t: string) => [...t].map(ch => SUPERSCRIPT[ch] ?? ch).join("");
+  const sub = (t: string) => [...t].map(ch => SUBSCRIPT[ch] ?? ch).join("");
+  return src
+    .replace(/\^\{(\d+)\}_\{(\d+)\}([A-Z][a-z]?)/g, (_m, mass, num, el) => `${sup(mass)}${sub(num)}${el}`)
+    .replace(/<=>|<->/g, "⇌")
+    .replace(/->\[[^\]]*\]|->/g, "→")
+    .replace(/<-/g, "←")
+    .replace(/\s\^(?=\s|$)/g, " ↑")
+    .replace(/\sv(?=\s|$)/g, " ↓")
+    .replace(/\^\{?([0-9]*[+-])\}?/g, (_m, charge) => sup(charge))
+    // A charge written without ^ at the end of a species: H+, Na+, Fe3+, Cl-.
+    .replace(/([A-Za-z)\]])(\d*[+-])(?=\s|$|[\])])/g, (_m, before, charge) => `${before}${sup(charge)}`)
+    .replace(/([A-Za-z)\]])(\d+)/g, (_m, before, n) => `${before}${sub(n)}`)
+    .replace(/\\Delta/g, "Δ")
+    .trim();
 }
 
 /** LaTeX source → readable Unicode: \int_0^1 x^2\,dx → ∫₀¹ x² dx. */

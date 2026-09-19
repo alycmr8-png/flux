@@ -2,8 +2,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { LiveTranscriptBuffer, type LiveEntry } from "@sano/shared";
+import { apiBase } from "@/lib/apiBase";
 
-const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
+const BASE = apiBase();
 const WS_URL = BASE.replace(/^http/, "ws") + "/ws/transcribe";
 const TARGET_RATE = 16000; // what the relay tells Deepgram to expect
 
@@ -101,7 +102,15 @@ export function useLiveTranscription() {
     ws.onerror = () => { try { ws.close(); } catch { /* already closing */ } };
   }, [getToken, publish]);
 
-  const start = useCallback(async (offsetSec = 0) => {
+  // Whether stop() should end the stream's tracks — only when this hook opened them.
+  const ownsStreamRef = useRef(true);
+
+  /**
+   * Starts streaming. By default it opens the microphone; pass `audio` to
+   * transcribe another stream instead — e.g. an online class's tab audio, which
+   * the recorder owns and stops itself.
+   */
+  const start = useCallback(async (offsetSec = 0, audio?: MediaStream) => {
     // A resume continues the same lecture: keep what's already transcribed and
     // shift new timestamps past the time already recorded.
     baseOffsetRef.current = offsetSec;
@@ -115,18 +124,24 @@ export function useLiveTranscription() {
     const token = await getToken();
     if (!token) throw new Error("Not signed in");
 
-    // Browsers only expose the microphone in a secure context, so this is
-    // missing entirely over plain http on a LAN address. Fail with something
-    // actionable instead of throwing on an undefined property.
-    if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) {
-      throw new Error(
-        "Microphone access needs a secure connection. Open the app at http://localhost:3000 (or over https) to record."
-      );
+    let stream: MediaStream;
+    if (audio) {
+      stream = audio;
+      ownsStreamRef.current = false;
+    } else {
+      // Browsers only expose the microphone in a secure context, so this is
+      // missing entirely over plain http on a LAN address. Fail with something
+      // actionable instead of throwing on an undefined property.
+      if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) {
+        throw new Error(
+          "Microphone access needs a secure connection. Open the app at http://localhost:3000 (or over https) to record."
+        );
+      }
+      stream = await navigator.mediaDevices.getUserMedia({
+        audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true },
+      });
+      ownsStreamRef.current = true;
     }
-
-    const stream = await navigator.mediaDevices.getUserMedia({
-      audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true },
-    });
     streamRef.current = stream;
 
     activeRef.current = true;
@@ -166,7 +181,7 @@ export function useLiveTranscription() {
     nodeRef.current = null;
     ctxRef.current?.close().catch(() => {});
     ctxRef.current = null;
-    streamRef.current?.getTracks().forEach((t) => t.stop());
+    if (ownsStreamRef.current) streamRef.current?.getTracks().forEach((t) => t.stop());
     streamRef.current = null;
 
     const ws = wsRef.current;

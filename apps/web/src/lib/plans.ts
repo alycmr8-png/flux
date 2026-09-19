@@ -28,7 +28,7 @@ export const PLANS: Plan[] = [
     period: "",
     billing: "No card needed",
     tagline: "Try it on your next lecture.",
-    limits: ["Up to 5 lectures a month", "20 questions a month", "Recordings up to 60 minutes"],
+    limits: ["2 hours of recording a month", "20 questions a month", "Recordings up to 60 minutes"],
   },
   {
     id: "student",
@@ -37,7 +37,7 @@ export const PLANS: Plan[] = [
     period: "/month",
     billing: "Billed monthly",
     tagline: "Your entire semester, remembered.",
-    limits: ["Up to 30 lectures a month", "300 questions a month", "Recordings up to 3 hours"],
+    limits: ["20 hours of recording a month", "150 questions a month", "Recordings up to 3 hours"],
   },
   {
     id: "semester",
@@ -48,7 +48,7 @@ export const PLANS: Plan[] = [
     billing: "Billed every 4 months",
     tagline: "Pay once per semester.",
     badge: "Save 12%",
-    limits: ["Up to 30 lectures a month", "300 questions a month", "Recordings up to 3 hours"],
+    limits: ["20 hours of recording a month", "150 questions a month", "Recordings up to 3 hours"],
   },
   {
     id: "annual",
@@ -60,7 +60,7 @@ export const PLANS: Plan[] = [
     tagline: "Best value for the whole degree.",
     badge: "Save 42%",
     recommended: true,
-    limits: ["Up to 30 lectures a month", "300 questions a month", "Recordings up to 3 hours"],
+    limits: ["20 hours of recording a month", "150 questions a month", "Recordings up to 3 hours"],
   },
 ];
 

@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
+import { useTr } from "@/lib/useTr";
 
 const FAQS = [
   { q: "What is Flux?", a: "Flux records your lectures and turns each one into study material. You see the transcript build live as your professor speaks, and when the lecture ends you get a summary, key points, flashcards, a practice quiz, and a chat that can answer questions about that lecture — plus one searchable memory per class." },
@@ -17,13 +18,14 @@ const FAQS = [
 
 export function FaqSection() {
   const [open, setOpen] = useState<number | null>(null);
+  const tr = useTr();
 
   return (
     <section id="faq" className="px-6 md:px-16 py-20 md:py-28 max-w-3xl mx-auto">
       <div className="text-center mb-12">
-        <div className="text-sm uppercase tracking-[0.2em] font-semibold mb-3" style={{ color: "#6E7FF3" }}>FAQ</div>
+        <div className="text-sm uppercase tracking-[0.2em] font-semibold mb-3" style={{ color: "#6E7FF3" }}>{tr("FAQ")}</div>
         <h2 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: "clamp(36px, 6vw, 56px)", color: "#0f1115", letterSpacing: "-0.03em" }}>
-          Frequently asked questions
+          {tr("Frequently asked questions")}
         </h2>
       </div>
 
@@ -35,12 +37,12 @@ export function FaqSection() {
               onClick={() => setOpen(open === i ? null : i)}
               className="w-full flex items-center justify-between px-6 py-4 text-left gap-4"
             >
-              <span style={{ fontSize: 18, fontWeight: 600, color: "#0f1115" }}>{item.q}</span>
+              <span style={{ fontSize: 18, fontWeight: 600, color: "#0f1115" }}>{tr(item.q)}</span>
               <ChevronDown size={16} style={{ color: "rgba(0,0,0,0.4)", flexShrink: 0, transform: open === i ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }} />
             </button>
             {open === i && (
               <div className="px-6 pb-5" style={{ fontSize: 16, color: "rgba(0,0,0,0.6)", lineHeight: 1.75 }}>
-                {item.a}
+                {tr(item.a)}
               </div>
             )}
           </div>

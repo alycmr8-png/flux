@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { Mic2, Camera, PenLine, Sparkles, Play, Layers } from "lucide-react";
+import { useTr } from "@/lib/useTr";
 
 /**
  * The goal demo: a class fills up with lectures, board photos and the student's
@@ -25,6 +26,7 @@ const ANSWER = "He called it the point of the whole chapter — differentiation 
 const STEPS = [700, 700, 700, 900, 1100, 900, 2600, 2800, 1600, 600];
 
 export function CourseMemoryDemo() {
+  const tr = useTr();
   const [step, setStep] = useState(0);
 
   useEffect(() => {
@@ -63,9 +65,9 @@ export function CourseMemoryDemo() {
             <div>
               <div className="flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full" style={{ background: CLASS_COLOR }} />
-                <span style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 700, fontSize: 14, color: "#0f1115" }}>Calculus II</span>
+                <span style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 700, fontSize: 14, color: "#0f1115" }}>{tr("Calculus II")}</span>
               </div>
-              <div style={{ fontSize: 10, color: "rgba(15,17,21,0.55)" }}>Course memory</div>
+              <div style={{ fontSize: 10, color: "rgba(15,17,21,0.55)" }}>{tr("Course memory")}</div>
             </div>
           </div>
 
@@ -86,8 +88,8 @@ export function CourseMemoryDemo() {
                     <Icon size={14} style={{ color: c.tint }} />
                   </div>
                   <div className="min-w-0">
-                    <div style={{ fontSize: 12.5, fontWeight: 600, color: "#0f1115" }} className="truncate">{c.title}</div>
-                    <div style={{ fontSize: 10.5, color: "rgba(15,17,21,0.55)" }}>{c.meta}</div>
+                    <div style={{ fontSize: 12.5, fontWeight: 600, color: "#0f1115" }} className="truncate">{tr(c.title)}</div>
+                    <div style={{ fontSize: 10.5, color: "rgba(15,17,21,0.55)" }}>{tr(c.meta)}</div>
                   </div>
                 </div>
               );
@@ -102,7 +104,7 @@ export function CourseMemoryDemo() {
             }}>
             <Sparkles size={12} style={{ color: memoryReady ? CLASS_COLOR : "rgba(15,17,21,0.4)" }} />
             <span style={{ fontSize: 11, fontWeight: 600, color: memoryReady ? CLASS_COLOR : "rgba(15,17,21,0.55)" }}>
-              {memoryReady ? "Every lecture, photo and note in this class" : "Building course memory…"}
+              {memoryReady ? tr("Every lecture, photo and note in this class") : tr("Building course memory…")}
             </span>
           </div>
         </div>
@@ -111,14 +113,14 @@ export function CourseMemoryDemo() {
         <div className="p-6 md:p-7 flex flex-col" style={{ minHeight: 340 }}>
           <div className="flex items-center gap-1.5 mb-4">
             <Sparkles size={12} style={{ color: CLASS_COLOR }} />
-            <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: CLASS_COLOR }}>Ask your course</span>
+            <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: CLASS_COLOR }}>{tr("Ask your course")}</span>
           </div>
 
           <div className="flex-1 space-y-3">
             {/* question */}
             <div className="flex justify-end" style={{ opacity: showQuestion ? 1 : 0, transform: showQuestion ? "none" : "translateY(8px)", transition: "all 0.4s ease" }}>
               <div className="px-4 py-2.5 max-w-[85%]" style={{ background: CLASS_COLOR, color: "white", borderRadius: "18px 18px 4px 18px", fontSize: 13.5, lineHeight: 1.5 }}>
-                {QUESTION}
+                {tr(QUESTION)}
               </div>
             </div>
 
@@ -138,7 +140,7 @@ export function CourseMemoryDemo() {
               <>
                 <div className="flex justify-start" style={{ animation: "cmFade 0.4s ease" }}>
                   <div className="px-4 py-3 max-w-[92%]" style={{ background: "#FFFFFF", border: "1px solid rgba(0,0,0,0.08)", color: "rgba(15,17,21,0.85)", borderRadius: "18px 18px 18px 4px", fontSize: 13.5, lineHeight: 1.6 }}>
-                    {ANSWER}
+                    {tr(ANSWER)}
                   </div>
                 </div>
                 <div className="flex flex-wrap items-center gap-2" style={{ animation: "cmFade 0.4s ease" }}>
@@ -175,7 +177,7 @@ export function CourseMemoryDemo() {
               <Play size={13} style={{ color: "white", marginLeft: 1 }} fill="white" />
             </div>
             <div className="flex-1 min-w-0">
-              <div style={{ fontSize: 12, fontWeight: 600, color: "#0f1115" }} className="truncate">{LECTURE}</div>
+              <div style={{ fontSize: 12, fontWeight: 600, color: "#0f1115" }} className="truncate">{tr(LECTURE)}</div>
               <div className="flex items-center gap-2 mt-1">
                 <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ background: "rgba(15,17,21,0.1)" }}>
                   <div className="h-1 rounded-full" style={{

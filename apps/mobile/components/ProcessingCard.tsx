@@ -6,6 +6,7 @@
 import { useEffect, useRef } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Animated, Easing } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useTr } from "../lib/useTr";
 
 const STEPS = ["processing", "transcribing", "generating", "ready"] as const;
 const STEP_LABEL: Record<(typeof STEPS)[number], string> = {
@@ -45,6 +46,7 @@ function PulseRing({ delay, size, color }: { delay: number; size: number; color:
 export function ProcessingCard({
   status, color, errorMessage, onBack,
 }: { status: string; color: string; errorMessage?: string | null; onBack: () => void }) {
+  const tr = useTr();
   const idx = STEPS.indexOf(status as any);
   const building = status === "generating";
   const done = status === "ready";
@@ -53,10 +55,10 @@ export function ProcessingCard({
     return (
       <View style={s.card}>
         <Ionicons name="alert-circle-outline" size={40} color="#DC2626" style={{ marginBottom: 12 }} />
-        <Text style={s.title}>Processing failed</Text>
-        <Text style={s.desc}>{errorMessage || "Check your internet connection and try again."}</Text>
+        <Text style={s.title}>{tr("Processing failed")}</Text>
+        <Text style={s.desc}>{errorMessage || tr("Check your internet connection and try again.")}</Text>
         <TouchableOpacity onPress={onBack} style={s.backBtn} activeOpacity={0.7}>
-          <Text style={s.backTxt}>Back to recordings</Text>
+          <Text style={s.backTxt}>{tr("Back to recordings")}</Text>
         </TouchableOpacity>
       </View>
     );
@@ -70,16 +72,16 @@ export function ProcessingCard({
       </View>
 
       <Text style={s.title}>
-        {status === "transcribing" ? "Writing down every word"
-          : building ? "Building your study material"
-          : "Getting your recording ready"}
+        {status === "transcribing" ? tr("Writing down every word")
+          : building ? tr("Building your study material")
+          : tr("Getting your recording ready")}
       </Text>
       <Text style={s.desc}>
         {status === "transcribing"
           ? "Transcribing the audio, then proofreading it for misheard terms, names and formulas — and reading in any photos you took in class."
           : building
           ? "Four things at once, from the whole lecture. It's also being filed into your course memory, so you can ask about it weeks from now."
-          : "Compressing the audio so it moves fast."}
+          : tr("Compressing the audio so it moves fast.")}
       </Text>
 
       <View style={s.grid}>
@@ -110,9 +112,9 @@ export function ProcessingCard({
         ))}
       </View>
 
-      <Text style={s.footer}>This runs on our servers — you can leave this screen and come back.</Text>
+      <Text style={s.footer}>{tr("This runs on our servers — you can leave this screen and come back.")}</Text>
       <TouchableOpacity onPress={onBack} style={s.backBtn} activeOpacity={0.7}>
-        <Text style={s.backTxt}>Back to recordings</Text>
+        <Text style={s.backTxt}>{tr("Back to recordings")}</Text>
       </TouchableOpacity>
     </View>
   );

@@ -2,8 +2,10 @@ import { useSignIn } from "@clerk/clerk-expo";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform } from "react-native";
+import { useTr } from "../../lib/useTr";
 
 export default function SignInEmailScreen() {
+  const tr = useTr();
   const { signIn, setActive, isLoaded } = useSignIn();
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -17,18 +19,18 @@ export default function SignInEmailScreen() {
       await setActive({ session: result.createdSessionId });
       router.replace("/(tabs)");
     } catch (e: any) {
-      setError(e.errors?.[0]?.message ?? "Sign in failed");
+      setError(e.errors?.[0]?.message ?? tr("Sign in failed"));
     }
   }
 
   return (
     <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={s.root}>
-      <Text style={s.title}>Sign in</Text>
+      <Text style={s.title}>{tr("Sign in")}</Text>
       {error ? <Text style={s.err}>{error}</Text> : null}
-      <TextInput style={s.input} placeholder="Email" placeholderTextColor="rgba(15,17,21,0.35)" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" />
-      <TextInput style={s.input} placeholder="Password" placeholderTextColor="rgba(15,17,21,0.35)" value={password} onChangeText={setPassword} secureTextEntry />
+      <TextInput style={s.input} placeholder={tr("Email")} placeholderTextColor="rgba(15,17,21,0.35)" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" />
+      <TextInput style={s.input} placeholder={tr("Password")} placeholderTextColor="rgba(15,17,21,0.35)" value={password} onChangeText={setPassword} secureTextEntry />
       <TouchableOpacity style={s.btn} onPress={handleSignIn}>
-        <Text style={s.btnTxt}>Sign in</Text>
+        <Text style={s.btnTxt}>{tr("Sign in")}</Text>
       </TouchableOpacity>
       <TouchableOpacity onPress={() => router.back()} style={s.back}>
         <Text style={s.backTxt}>← Back</Text>

@@ -14,6 +14,8 @@
  */
 import { createElement, useEffect, useMemo, type CSSProperties, type ReactNode } from "react";
 import katex from "katex";
+// Chemistry notation: \ce{2H2 + O2 -> 2H2O}.
+import "katex/contrib/mhchem";
 import { formulaSegments, isBareLatex, latexToReadable, parseMath, type MathSegment } from "@sano/shared";
 
 export { hasMathDelimiters, isBareLatex, parseMath, type MathSegment } from "@sano/shared";

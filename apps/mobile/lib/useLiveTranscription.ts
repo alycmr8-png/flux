@@ -2,8 +2,9 @@ import { useCallback, useRef, useState } from "react";
 import { useAudioStream } from "expo-audio";
 import { useAuth } from "@clerk/clerk-expo";
 import { LiveTranscriptBuffer, type LiveEntry } from "@sano/shared";
+import { API_BASE } from "./apiBase";
 
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:3001";
+const BASE_URL = API_BASE;
 const WS_URL = BASE_URL.replace(/^http/, "ws") + "/ws/transcribe";
 
 /**

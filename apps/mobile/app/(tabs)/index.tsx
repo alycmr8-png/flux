@@ -7,6 +7,7 @@ import { useMemo, useEffect } from "react";
 import useSWR from "swr";
 import { makeApiFetcher } from "../../lib/api";
 import { useAuth, useUser } from "@clerk/clerk-expo";
+import { useTr } from "../../lib/useTr";
 
 const TYPE_COLOR: Record<string, string> = {
   exam: "#EF4444", assignment: "#F97316", deadline: "#EAB308",
@@ -27,6 +28,7 @@ function daysUntil(dateStr: string) {
 }
 
 export default function HomeScreen() {
+  const tr = useTr();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { getToken } = useAuth();
@@ -62,15 +64,15 @@ export default function HomeScreen() {
     <>
       <StatusBar barStyle="dark-content" />
       <ScrollView style={s.root} contentContainerStyle={[s.content, { paddingTop: insets.top + 20 }]}>
-        <Text style={s.eyebrow}>Overview</Text>
+        <Text style={s.eyebrow}>{tr("Overview")}</Text>
         <Text style={s.h1}>{greeting()}{firstName ? `, ${firstName}` : ""}.</Text>
 
         {/* Coming up */}
-        <Text style={s.sectionLbl}>Coming up</Text>
+        <Text style={s.sectionLbl}>{tr("Coming up")}</Text>
         {events.length === 0 ? (
           <TouchableOpacity style={s.emptyRow} onPress={() => router.push("/(tabs)/calendar" as any)} activeOpacity={0.7}>
             <Ionicons name="add" size={16} color="rgba(15,17,21,0.55)" />
-            <Text style={s.emptyTxt}>No upcoming events — add one in Calendar</Text>
+            <Text style={s.emptyTxt}>{tr("No upcoming events — add one in Calendar")}</Text>
           </TouchableOpacity>
         ) : (
           events.map((e: any) => {
@@ -90,7 +92,7 @@ export default function HomeScreen() {
                 </View>
                 <View style={[s.countChip, { backgroundColor: diff === 0 ? "rgba(239,68,68,0.12)" : "rgba(15,17,21,0.06)" }]}>
                   <Text style={[s.countTxt, diff === 0 && { color: "#DC2626" }]}>
-                    {diff === 0 ? "Today" : diff === 1 ? "Tomorrow" : `In ${diff} days`}
+                    {diff === 0 ? tr("Today") : diff === 1 ? tr("Tomorrow") : `In ${diff} days`}
                   </Text>
                 </View>
               </TouchableOpacity>
@@ -99,11 +101,11 @@ export default function HomeScreen() {
         )}
 
         {/* My classes */}
-        <Text style={s.sectionLbl}>My classes</Text>
+        <Text style={s.sectionLbl}>{tr("My classes")}</Text>
         {courses.length === 0 ? (
           <TouchableOpacity style={s.emptyRow} onPress={() => router.push("/(tabs)/record" as any)} activeOpacity={0.7}>
             <Ionicons name="add" size={16} color="rgba(15,17,21,0.55)" />
-            <Text style={s.emptyTxt}>Create your first class</Text>
+            <Text style={s.emptyTxt}>{tr("Create your first class")}</Text>
           </TouchableOpacity>
         ) : (
           courses.map((c: any) => (
@@ -127,7 +129,7 @@ export default function HomeScreen() {
         {/* Saved notes */}
         {notes.length > 0 && (
           <>
-            <Text style={s.sectionLbl}>Saved notes</Text>
+            <Text style={s.sectionLbl}>{tr("Saved notes")}</Text>
             {notes.map((cs: any) => (
               <View key={cs.id} style={s.noteRow}>
                 <Ionicons name="document-text-outline" size={17} color="rgba(15,17,21,0.55)" />
@@ -145,23 +147,23 @@ export default function HomeScreen() {
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: "#FFFFFF" },
   content: { paddingHorizontal: 18, paddingBottom: 142 },
-  eyebrow: { fontSize: 11.5, fontWeight: "700", letterSpacing: 2, textTransform: "uppercase", color: "#4B5FE8", marginBottom: 8 },
-  h1: { fontSize: 31, color: "#0f1115", fontWeight: "800", letterSpacing: -0.5, marginBottom: 26 },
-  sectionLbl: { fontSize: 12, color: "#4B5FE8", textTransform: "uppercase", letterSpacing: 1.6, fontWeight: "700", marginBottom: 10, marginTop: 8 },
+  eyebrow: { fontSize: 12.5, fontWeight: "700", letterSpacing: 2, textTransform: "uppercase", color: "#4B5FE8", marginBottom: 8 },
+  h1: { fontSize: 33, color: "#0f1115", fontWeight: "800", letterSpacing: -0.5, marginBottom: 26 },
+  sectionLbl: { fontSize: 13, color: "#4B5FE8", textTransform: "uppercase", letterSpacing: 1.6, fontWeight: "700", marginBottom: 10, marginTop: 8 },
   emptyRow: { flexDirection: "row", alignItems: "center", gap: 8, borderWidth: 1, borderColor: "rgba(0,0,0,0.12)", borderStyle: "dashed", borderRadius: 16, padding: 15, marginBottom: 18 },
-  emptyTxt: { color: "rgba(15,17,21,0.6)", fontSize: 13.5 },
+  emptyTxt: { color: "rgba(15,17,21,0.6)", fontSize: 15.5, lineHeight: 21 },
   eventCard: { flexDirection: "row", alignItems: "center", gap: 13, backgroundColor: "#FFFFFF", borderWidth: 1, borderColor: "rgba(0,0,0,0.08)", borderLeftWidth: 3, borderRadius: 16, padding: 13, marginBottom: 9 },
   dateBlock: { width: 44, alignItems: "center" },
-  dateDay: { fontSize: 22, fontWeight: "800", color: "#0f1115", lineHeight: 25 },
-  dateMon: { fontSize: 10.5, textTransform: "uppercase", letterSpacing: 1, color: "rgba(15,17,21,0.55)", marginTop: 1 },
-  eventTitle: { fontSize: 15.5, fontWeight: "600", color: "#0f1115" },
-  eventSub: { fontSize: 12.5, color: "rgba(15,17,21,0.55)", marginTop: 2, textTransform: "capitalize" },
+  dateDay: { fontSize: 24, fontWeight: "800", color: "#0f1115", lineHeight: 27 },
+  dateMon: { fontSize: 11.5, textTransform: "uppercase", letterSpacing: 1, color: "rgba(15,17,21,0.55)", marginTop: 1 },
+  eventTitle: { fontSize: 17, fontWeight: "600", color: "#0f1115" },
+  eventSub: { fontSize: 14, color: "rgba(15,17,21,0.55)", marginTop: 2, textTransform: "capitalize" },
   countChip: { borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5 },
-  countTxt: { fontSize: 11.5, fontWeight: "700", color: "rgba(15,17,21,0.55)" },
+  countTxt: { fontSize: 12.5, fontWeight: "700", color: "rgba(15,17,21,0.55)" },
   classCard: { flexDirection: "row", alignItems: "center", gap: 13, backgroundColor: "#FFFFFF", borderWidth: 1, borderColor: "rgba(0,0,0,0.08)", borderRadius: 16, padding: 14, marginBottom: 9 },
   classIc: { width: 36, height: 36, borderRadius: 18, backgroundColor: "rgba(75,95,232,0.1)", borderWidth: 1, borderColor: "rgba(75,95,232,0.2)", alignItems: "center", justifyContent: "center" },
-  classIcTxt: { color: "#fff", fontSize: 16, fontWeight: "800" },
-  className: { fontSize: 16, color: "#0f1115", fontWeight: "600" },
+  classIcTxt: { color: "#fff", fontSize: 17.5, fontWeight: "800" },
+  className: { fontSize: 17.5, color: "#0f1115", fontWeight: "600" },
   noteRow: { flexDirection: "row", alignItems: "center", gap: 11, backgroundColor: "#FFFFFF", borderWidth: 1, borderColor: "rgba(0,0,0,0.08)", borderRadius: 14, padding: 13, marginBottom: 8 },
-  noteName: { flex: 1, fontSize: 14.5, color: "#0f1115", fontWeight: "500" },
+  noteName: { flex: 1, fontSize: 16, color: "#0f1115", fontWeight: "500" },
 });

@@ -1,8 +1,9 @@
 import axios from "axios";
 import { useAuth } from "@clerk/clerk-expo";
 import { useMemo } from "react";
+import { API_BASE } from "./apiBase";
 
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:3001";
+const BASE_URL = API_BASE;
 
 type GetToken = () => Promise<string | null>;
 

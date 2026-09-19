@@ -2,8 +2,9 @@
 import { useEffect, useState, useRef } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { initI18n, LANGUAGES, type Language } from "@/lib/i18nConfig";
+import { apiBase } from "@/lib/apiBase";
 
-const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
+const BASE = apiBase();
 
 export function I18nProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
@@ -32,6 +33,9 @@ export function LanguageSwitcher() {
   async function change(lang: Language) {
     setOpen(false);
     localStorage.setItem("lang", lang);
+    // The public pages are server-rendered, so their language has to travel in a
+    // cookie — localStorage is not readable while the HTML is being produced.
+    document.cookie = `lang=${lang}; path=/; max-age=31536000; samesite=lax`;
     // Persist to the API so AI answers (Ask, summaries, exam prep) match the UI language
     try {
       const token = await getToken();

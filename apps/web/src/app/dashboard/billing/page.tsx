@@ -5,13 +5,16 @@ import useSWR from "swr";
 import { Check, Zap, ArrowRight } from "lucide-react";
 import { useApiFetch, useApiSWRFetcher } from "@/lib/apiFetch";
 import { PLANS, PLAN_FEATURES, PLAN_LABEL, type PaidPlanId } from "@/lib/plans";
+import { apiBase } from "@/lib/apiBase";
+import { useTr } from "@/lib/useTr";
 
-const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
+const BASE = apiBase();
 
 // Plans live in one shared file so this page can't drift from the landing page.
 const PAID_PLANS = PLANS.filter((p) => p.id !== "free");
 
 export default function BillingPage() {
+  const tr = useTr();
   const router = useRouter();
   const searchParams = useSearchParams();
   const success = searchParams.get("success") === "1";
@@ -54,13 +57,13 @@ export default function BillingPage() {
       {/* Header */}
       {isNew ? (
         <>
-          <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(0,0,0, 0.64)", marginBottom: 6 }}>Billing</div>
-          <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 30, color: "#1F2328", marginBottom: 28 }}>Choose your plan</h1>
+          <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(0,0,0, 0.64)", marginBottom: 6 }}>{tr("Billing")}</div>
+          <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 30, color: "#1F2328", marginBottom: 28 }}>{tr("Choose your plan")}</h1>
         </>
       ) : (
         <>
-          <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(0,0,0, 0.64)", marginBottom: 6 }}>Account</div>
-          <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 30, color: "#1F2328", marginBottom: 28 }}>Billing</h1>
+          <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(0,0,0, 0.64)", marginBottom: 6 }}>{tr("Account")}</div>
+          <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 30, color: "#1F2328", marginBottom: 28 }}>{tr("Billing")}</h1>
         </>
       )}
 
@@ -76,8 +79,7 @@ export default function BillingPage() {
           <button
             onClick={() => router.push("/dashboard")}
             className="flex items-center gap-2 bg-indigo-600 text-white text-[15.5px] font-medium px-5 py-2.5 rounded-full hover:bg-indigo-500 transition-colors"
-          >
-            Start using Flux <ArrowRight size={14} />
+          >{tr("Start using Flux")}<ArrowRight size={14} />
           </button>
         </div>
       )}
@@ -85,18 +87,18 @@ export default function BillingPage() {
       {/* Current plan — only shown to paying users */}
       {!isLoading && currentPlan !== "free" && !success && (
         <div className="bg-[#FFFFFF] border border-[rgba(0,0,0,0.09)] rounded-2xl p-5 mb-6">
-          <div className="text-[10px] text-gray-800 uppercase tracking-widest mb-3">Current plan</div>
+          <div className="text-[10px] text-gray-800 uppercase tracking-widest mb-3">{tr("Current plan")}</div>
           <div className="flex items-center justify-between">
             <div>
               <div className="text-gray-900 font-medium text-lg">{planLabel[currentPlan]}</div>
-              <div className="text-[13.5px] text-gray-800 mt-0.5">Up to 30 lectures a month · recordings up to 3 hours</div>
+              <div className="text-[13.5px] text-gray-800 mt-0.5">{tr("20 hours of recording a month · recordings up to 3 hours")}</div>
             </div>
             <button
               onClick={openPortal}
               disabled={loading === "portal"}
               className="text-[13.5px] border border-[rgba(0,0,0,0.08)] text-gray-800 hover:text-gray-900 hover:border-[rgba(148,163,184,0.4)] rounded-full px-4 py-2 transition-colors disabled:opacity-50"
             >
-              {loading === "portal" ? "Loading…" : "Manage subscription"}
+              {loading === "portal" ? tr("Loading…") : "Manage subscription"}
             </button>
           </div>
         </div>
@@ -129,9 +131,7 @@ export default function BillingPage() {
                     </span>
                   )}
                   {isCurrent && (
-                    <span className="text-[12px] font-bold uppercase tracking-wider border border-[rgba(0,0,0,0.12)] text-gray-800 rounded-full px-2.5 py-0.5">
-                      Current
-                    </span>
+                    <span className="text-[12px] font-bold uppercase tracking-wider border border-[rgba(0,0,0,0.12)] text-gray-800 rounded-full px-2.5 py-0.5">{tr("Current")}</span>
                   )}
                 </div>
                 <div className="flex items-baseline gap-1.5 flex-wrap">
@@ -158,7 +158,7 @@ export default function BillingPage() {
                   style={featured ? { background: "#4B5FE8", color: "#FFFFFF" } : { border: "1px solid rgba(0,0,0,0.15)", color: "#0f1115" }}
                 >
                   <Zap size={13} />
-                  {loading === plan.id ? "Loading…" : "Start free trial"}
+                  {loading === plan.id ? tr("Loading…") : "Start free trial"}
                 </button>
               )}
             </div>
@@ -167,7 +167,7 @@ export default function BillingPage() {
       </div>
 
       <div className="mt-8 rounded-2xl p-6" style={{ background: "rgba(0,0,0,0.025)", border: "1px solid rgba(0,0,0,0.07)" }}>
-        <div className="text-[16px] font-bold text-gray-900 mb-4">Every plan includes</div>
+        <div className="text-[16px] font-bold text-gray-900 mb-4">{tr("Every plan includes")}</div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2.5">
           {PLAN_FEATURES.map((f) => (
             <div key={f} className="flex items-center gap-2 text-[15px] text-gray-800">
@@ -178,9 +178,7 @@ export default function BillingPage() {
         </div>
       </div>
 
-      <p className="text-[13.5px] text-gray-700 mt-6 text-center">
-        Paid plans start with a 7-day free trial. Cancel anytime.
-      </p>
+      <p className="text-[13.5px] text-gray-700 mt-6 text-center">{tr("Paid plans start with a 7-day free trial. Cancel anytime.")}</p>
     </div>
   );
 }

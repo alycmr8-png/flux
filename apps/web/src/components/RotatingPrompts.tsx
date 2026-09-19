@@ -1,7 +1,10 @@
 "use client";
 import { useEffect, useState } from "react";
 import { Sparkles } from "lucide-react";
+import { useTr } from "@/lib/useTr";
 
+// Kept in English here and translated where they are shown — a module constant
+// is built before any component runs, so the hook is not available yet.
 const PROMPTS = [
   "Turn today's lecture into study notes.",
   "Summarize the key points from Chapter 4.",
@@ -9,6 +12,7 @@ const PROMPTS = [
 ];
 
 export function RotatingPrompts() {
+  const tr = useTr();
   const [idx, setIdx] = useState(0);
   const [visible, setVisible] = useState(true);
 
@@ -45,7 +49,7 @@ export function RotatingPrompts() {
           textOverflow: "ellipsis",
         }}
       >
-        &ldquo;{PROMPTS[idx]}&rdquo;
+        &ldquo;{tr(PROMPTS[idx])}&rdquo;
       </span>
     </div>
   );

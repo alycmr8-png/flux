@@ -19,6 +19,7 @@
     "expo": "~57.0.22",
     "expo-audio": "~57.0.5",
     "expo-auth-session": "~57.0.12",
+    "expo-constants": "~57.0.18",
     "expo-crypto": "~57.0.3",
     "expo-dev-client": "~57.0.19",
     "expo-file-system": "~57.0.7",
@@ -38,6 +39,7 @@
     "react-native": "0.86.3",
     "react-native-safe-area-context": "~5.7.0",
     "react-native-screens": "~4.26.0",
+    "react-native-svg": "15.15.4",
     "react-native-web": "^0.21.0",
     "react-native-webview": "13.16.1",
     "swr": "^2.2.5"

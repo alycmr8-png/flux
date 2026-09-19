@@ -2,8 +2,10 @@
 import { useSignIn } from "@clerk/nextjs";
 import { useState, useEffect } from "react";
 import { X } from "lucide-react";
+import { useTr } from "@/lib/useTr";
 
 export function GoogleBanner() {
+  const tr = useTr();
   const { signIn, isLoaded } = useSignIn();
   const [visible, setVisible] = useState(false);
 
@@ -39,8 +41,8 @@ export function GoogleBanner() {
         </div>
 
         <div className="flex-1 min-w-0">
-          <div className="text-white text-sm font-medium mb-0.5">Continue with Google</div>
-          <div className="text-[#555] text-xs leading-snug">Sign in instantly — no password needed</div>
+          <div className="text-white text-sm font-medium mb-0.5">{tr("Continue with Google")}</div>
+          <div className="text-[#555] text-xs leading-snug">{tr("Sign in instantly — no password needed")}</div>
         </div>
 
         <div className="flex flex-col items-end gap-2 shrink-0">
@@ -53,9 +55,7 @@ export function GoogleBanner() {
           <button
             onClick={handleGoogle}
             className="bg-white text-black text-xs font-medium rounded-full px-4 py-1.5 hover:bg-[#eee] transition-colors whitespace-nowrap"
-          >
-            Continue
-          </button>
+          >{tr("Continue")}</button>
         </div>
       </div>
     </div>

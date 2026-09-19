@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, TextInput, ActivityIndicator,
 import { Ionicons } from "@expo/vector-icons";
 import { TypingDots } from "./TypingDots";
 import { MathText, hasMathDelimiters } from "./MathText";
+import { useTr } from "../lib/useTr";
 
 type View5 = "summary" | "transcript" | "points" | "cards" | "quiz" | "ask";
 
@@ -33,6 +34,7 @@ export function LectureResults({
   color?: string;
   onRecordAnother: () => void;
 }) {
+  const tr = useTr();
   const [view, setView] = useState<View5>("summary");
 
   const [points, setPoints] = useState<any[] | null>(null);
@@ -76,7 +78,7 @@ export function LectureResults({
         setQuiz(full.data?.data ?? null);
       }
     } catch (e: any) {
-      Alert.alert("Couldn't generate", e?.response?.data?.error ?? e?.message ?? "Try again in a moment.");
+      Alert.alert(tr("Couldn't generate"), e?.response?.data?.error ?? e?.message ?? tr("Try again in a moment."));
     } finally {
       setLoading(null);
     }
@@ -98,7 +100,7 @@ export function LectureResults({
       setMessages([...next, { role: "assistant", content: r.data?.data?.reply ?? "" }]);
     } catch (e: any) {
       if (e?.code !== "ERR_CANCELED") {
-        setMessages([...next, { role: "assistant", content: e?.response?.data?.error ?? "Something went wrong — try again." }]);
+        setMessages([...next, { role: "assistant", content: e?.response?.data?.error ?? tr("Something went wrong — try again.") }]);
       }
     } finally {
       chatAbortRef.current = null;
@@ -144,7 +146,7 @@ export function LectureResults({
       {loading === view && (
         <View style={s.loadingBox}>
           <ActivityIndicator size="small" color="#4B5FE8" />
-          <Text style={s.loadingTxt}>Generating…</Text>
+          <Text style={s.loadingTxt}>{tr("Generating…")}</Text>
         </View>
       )}
 
@@ -152,7 +154,7 @@ export function LectureResults({
       {view === "summary" && !sheet && (
         <View style={s.loadingBox}>
           <ActivityIndicator size="small" color={color} />
-          <Text style={s.loadingTxt}>Loading summary…</Text>
+          <Text style={s.loadingTxt}>{tr("Loading summary…")}</Text>
         </View>
       )}
       {view === "summary" && sheet && (
@@ -171,7 +173,7 @@ export function LectureResults({
 
           {(content.formulas ?? []).length > 0 && (
             <View style={s.tintBox}>
-              <Text style={s.sectionLbl}>Formulas</Text>
+              <Text style={s.sectionLbl}>{tr("Formulas")}</Text>
               {content.formulas.map((f: string, i: number) => (
                 <MathText key={i} text={f} style={s.formula} formula interactive />
               ))}
@@ -180,7 +182,7 @@ export function LectureResults({
 
           {(content.keyTerms ?? []).length > 0 && (
             <View style={{ marginTop: 12 }}>
-              <Text style={s.sectionLbl}>Key Terms</Text>
+              <Text style={s.sectionLbl}>{tr("Key Terms")}</Text>
               {content.keyTerms.map((kt: any, i: number) => (
                 <MathText
                   key={i}
@@ -195,7 +197,7 @@ export function LectureResults({
 
           {(content.examTips ?? []).length > 0 && (
             <View style={s.tintBox}>
-              <Text style={s.sectionLbl}>Exam Tips</Text>
+              <Text style={s.sectionLbl}>{tr("Exam Tips")}</Text>
               {content.examTips.map((t: string, i: number) => (
                 <View key={i} style={s.bulletRow}>
                   <Text style={s.bullet}>•</Text>
@@ -205,7 +207,7 @@ export function LectureResults({
             </View>
           )}
 
-          {!content.sections?.length && <Text style={s.body}>No summary was generated for this lecture.</Text>}
+          {!content.sections?.length && <Text style={s.body}>{tr("No summary was generated for this lecture.")}</Text>}
         </View>
       )}
 
@@ -214,7 +216,7 @@ export function LectureResults({
         <View style={s.card}>
           {transcript.trim()
             ? <MathText text={transcript} style={s.transcript} interactive />
-            : <Text style={s.body}>No transcript available for this lecture.</Text>}
+            : <Text style={s.body}>{tr("No transcript available for this lecture.")}</Text>}
         </View>
       )}
 
@@ -224,12 +226,12 @@ export function LectureResults({
           {points.map((p: any, i: number) => (
             <View key={i} style={s.pointRow}>
               <View style={[s.catChip, { backgroundColor: (CATEGORY_COLOR[p.category] ?? "#4B5FE8") + "1A" }]}>
-                <Text style={[s.catTxt, { color: CATEGORY_COLOR[p.category] ?? "#4B5FE8" }]}>{p.category}</Text>
+                <Text style={[s.catTxt, { color: CATEGORY_COLOR[p.category] ?? "#4B5FE8" }]}>{tr(p.category)}</Text>
               </View>
               <MathText text={p.point} style={[s.body, { flex: 1 }]} interactive />
             </View>
           ))}
-          {!points.length && <Text style={s.body}>No key points found.</Text>}
+          {!points.length && <Text style={s.body}>{tr("No key points found.")}</Text>}
         </View>
       )}
 
@@ -238,10 +240,10 @@ export function LectureResults({
         <View>
           {messages.length === 0 && (
             <View style={s.card}>
-              <Text style={s.bodyStrong}>Ask anything about this lecture</Text>
-              <Text style={[s.body, { marginTop: 4 }]}>Answers come from this recording's transcript.</Text>
+              <Text style={s.bodyStrong}>{tr("Ask anything about this lecture")}</Text>
+              <Text style={[s.body, { marginTop: 4 }]}>{tr("Answers come from this recording's transcript.")}</Text>
               <View style={{ gap: 8, marginTop: 12 }}>
-                {["Explain the main idea simply", "What formulas were covered?", "What might be on the exam?"].map(p => (
+                {[tr("Explain the main idea simply"), tr("What formulas were covered?"), tr("What might be on the exam?")].map(p => (
                   <TouchableOpacity key={p} style={s.promptChip} onPress={() => { setInput(p); }} activeOpacity={0.7}>
                     <Text style={s.promptTxt}>{p}</Text>
                   </TouchableOpacity>
@@ -271,7 +273,7 @@ export function LectureResults({
               style={s.input}
               value={input}
               onChangeText={setInput}
-              placeholder="Ask about this lecture…"
+              placeholder={tr("Ask about this lecture…")}
               placeholderTextColor="rgba(15,17,21,0.35)"
               onSubmitEditing={send}
               returnKeyType="send"
@@ -281,7 +283,7 @@ export function LectureResults({
                 style={[s.sendBtn, { backgroundColor: "#0f1115" }]}
                 onPress={() => chatAbortRef.current?.abort()}
                 activeOpacity={0.8}
-                accessibilityLabel="Stop"
+                accessibilityLabel={tr("Stop")}
               >
                 <Ionicons name="stop" size={17} color="#fff" />
               </TouchableOpacity>
@@ -291,7 +293,7 @@ export function LectureResults({
                 onPress={send}
                 disabled={!input.trim()}
                 activeOpacity={0.8}
-                accessibilityLabel="Send"
+                accessibilityLabel={tr("Send")}
               >
                 <Ionicons name="send" size={18} color="#fff" />
               </TouchableOpacity>
@@ -312,10 +314,10 @@ export function LectureResults({
             >
               <Text style={s.cardIdx}>{i + 1} / {cards.length}</Text>
               <MathText text={flipped[i] ? c.back : c.front} style={flipped[i] ? [s.bodyStrong, { color }] : s.bodyStrong} />
-              <Text style={s.flipHint}>{flipped[i] ? "Tap to hide" : "Tap to reveal"}</Text>
+              <Text style={s.flipHint}>{flipped[i] ? tr("Tap to hide") : tr("Tap to reveal")}</Text>
             </TouchableOpacity>
           ))}
-          {!cards.length && <View style={s.card}><Text style={s.body}>No flashcards were generated.</Text></View>}
+          {!cards.length && <View style={s.card}><Text style={s.body}>{tr("No flashcards were generated.")}</Text></View>}
         </View>
       )}
 
@@ -358,14 +360,14 @@ export function LectureResults({
             </View>
           ) : (
             <TouchableOpacity style={s.primaryBtn} onPress={submitQuiz} activeOpacity={0.85}>
-              <Text style={s.primaryBtnTxt}>Check answers</Text>
+              <Text style={s.primaryBtnTxt}>{tr("Check answers")}</Text>
             </TouchableOpacity>
           )}
         </View>
       )}
 
       <TouchableOpacity onPress={onRecordAnother} style={s.againBtn} activeOpacity={0.7}>
-        <Text style={s.againTxt}>Record another</Text>
+        <Text style={s.againTxt}>{tr("Record another")}</Text>
       </TouchableOpacity>
     </View>
   );

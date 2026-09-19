@@ -3,6 +3,7 @@ import { quotaMiddleware } from "../services/usage";
 import { prisma } from "../lib/prisma";
 import { answerCourseQuestion } from "../services/claude";
 import { indexSource, searchCourse, courseMemoryStatus, stripHtml } from "../services/memory";
+import { withCostScope } from "../lib/cost";
 
 const router = Router();
 
@@ -177,11 +178,15 @@ router.post("/", quotaMiddleware("ask"), async (req, res) => {
     return { n, ...g, label, content: g.contents.join("\n\n") };
   });
 
-  const reply = await answerCourseQuestion(
-    course.name,
-    sources.map(s => ({ n: s.n, label: s.label, content: s.content })),
-    messages,
-    user.language ?? "en"
+  // Scoped so the log shows what one question costs — the other half of the
+  // plan maths, since a plan allows hundreds of them a month.
+  const { result: reply } = await withCostScope(`ask ${course.name}`, () =>
+    answerCourseQuestion(
+      course.name,
+      sources.map(s => ({ n: s.n, label: s.label, content: s.content })),
+      messages,
+      user.language ?? "en"
+    )
   );
 
   // Only return citations the model actually used

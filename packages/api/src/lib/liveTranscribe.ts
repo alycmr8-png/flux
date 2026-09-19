@@ -6,6 +6,7 @@
 import type { Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { verifyToken } from "@clerk/backend";
+import { prisma } from "./prisma";
 import { looksLikeSpokenMath, typesetSpokenMath } from "../services/claude";
 
 // Typesetting runs alongside the stream; a few at a time keeps a burst of maths
@@ -14,16 +15,29 @@ const TYPESET_CONCURRENCY = 4;
 // After the student stops, wait this long at most for sentences still being typeset.
 const TYPESET_DRAIN_MS = 8000;
 
-const DG_URL =
-  "wss://api.deepgram.com/v1/listen" +
-  "?model=nova-3" +
-  "&encoding=linear16" +
-  "&sample_rate=16000" +
-  "&channels=1" +
-  "&interim_results=true" +
-  "&punctuate=true" +
-  "&smart_format=true" +
-  "&endpointing=300";
+// Deepgram needs to be told the lecture's language, or French is heard as English.
+// nova-3 is the best English model; nova-2 covers the other languages Flux speaks.
+const DG_MODEL: Record<string, { model: string; language: string }> = {
+  en: { model: "nova-3", language: "en" },
+  fr: { model: "nova-2", language: "fr" },
+  es: { model: "nova-2", language: "es" },
+  pt: { model: "nova-2", language: "pt" },
+  ar: { model: "nova-2", language: "multi" },
+};
+
+function dgUrl(language: string): string {
+  const { model, language: dgLanguage } = DG_MODEL[language] ?? DG_MODEL.en;
+  return "wss://api.deepgram.com/v1/listen" +
+    `?model=${model}` +
+    `&language=${dgLanguage}` +
+    "&encoding=linear16" +
+    "&sample_rate=16000" +
+    "&channels=1" +
+    "&interim_results=true" +
+    "&punctuate=true" +
+    "&smart_format=true" +
+    "&endpointing=300";
+}
 
 export function attachLiveTranscribe(server: Server) {
   const key = process.env.DEEPGRAM_API_KEY;
@@ -37,13 +51,21 @@ export function attachLiveTranscribe(server: Server) {
   wss.on("connection", async (client, req) => {
     const token = new URL(req.url ?? "", "http://x").searchParams.get("token");
     if (!token) return client.close(4001, "Missing token");
+    let clerkUserId: string;
     try {
-      await verifyToken(token, { secretKey: process.env.CLERK_SECRET_KEY! });
+      const payload = await verifyToken(token, { secretKey: process.env.CLERK_SECRET_KEY! });
+      clerkUserId = payload.sub as string;
     } catch {
       return client.close(4001, "Invalid session");
     }
 
-    const dg = new WebSocket(DG_URL, { headers: { Authorization: `Token ${key}` } });
+    // The lecture is transcribed in the language the student set for Flux.
+    let language = "en";
+    try {
+      language = (await prisma.user.findUnique({ where: { clerkId: clerkUserId }, select: { language: true } }))?.language ?? "en";
+    } catch { /* fall back to English */ }
+
+    const dg = new WebSocket(dgUrl(language), { headers: { Authorization: `Token ${key}` } });
     // Audio that arrives before Deepgram is ready would otherwise be dropped.
     const pending: Buffer[] = [];
     let dgReady = false;
@@ -109,6 +131,7 @@ export function attachLiveTranscribe(server: Server) {
     });
 
     dg.on("error", (err) => {
+      console.error(`[live] Deepgram error (${language}):`, err.message);
       client.send(JSON.stringify({ type: "error", message: err.message }));
       client.close();
     });

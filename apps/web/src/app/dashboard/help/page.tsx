@@ -1,5 +1,6 @@
 "use client";
 import { Mail, MessageCircle, Camera, Mic, Calendar } from "lucide-react";
+import { useTr } from "@/lib/useTr";
 
 const FAQS = [
   {
@@ -27,19 +28,16 @@ const FEATURES = [
 ];
 
 export default function HelpPage() {
+  const tr = useTr();
   return (
     <div style={{ color: "#1F2328", maxWidth: 720, margin: "0 auto" }}>
       <div className="mb-8">
-        <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 28 }}>
-          Help
-        </h1>
-        <p style={{ color: "rgba(31,35,40, 0.75)", fontSize: 14.5, marginTop: 2 }}>
-          Everything you need to get the most out of Flux
-        </p>
+        <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 28 }}>{tr("Help")}</h1>
+        <p style={{ color: "rgba(31,35,40, 0.75)", fontSize: 14.5, marginTop: 2 }}>{tr("Everything you need to get the most out of Flux")}</p>
       </div>
 
       {/* Quick feature overview */}
-      <p className="text-[13.5px] uppercase tracking-widest mb-3" style={{ color: "rgba(31,35,40, 0.7)" }}>What Flux can do</p>
+      <p className="text-[13.5px] uppercase tracking-widest mb-3" style={{ color: "rgba(31,35,40, 0.7)" }}>{tr("What Flux can do")}</p>
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-10">
         {FEATURES.map(({ icon: Icon, label, desc }) => (
           <div key={label} className="rounded-2xl p-4 border" style={{ background: "rgba(0,0,0,0.04)", borderColor: "rgba(0,0,0,0.06)" }}>
@@ -53,7 +51,7 @@ export default function HelpPage() {
       </div>
 
       {/* FAQs */}
-      <p className="text-[13.5px] uppercase tracking-widest mb-3" style={{ color: "rgba(31,35,40, 0.7)" }}>Frequently asked questions</p>
+      <p className="text-[13.5px] uppercase tracking-widest mb-3" style={{ color: "rgba(31,35,40, 0.7)" }}>{tr("Frequently asked questions")}</p>
       <div className="flex flex-col gap-3 mb-10">
         {FAQS.map(({ q, a }) => (
           <div key={q} className="rounded-2xl p-5 border" style={{ background: "rgba(0,0,0,0.04)", borderColor: "rgba(0,0,0,0.06)" }}>
@@ -64,7 +62,7 @@ export default function HelpPage() {
       </div>
 
       {/* Contact */}
-      <p className="text-[13.5px] uppercase tracking-widest mb-3" style={{ color: "rgba(31,35,40, 0.7)" }}>Still need help?</p>
+      <p className="text-[13.5px] uppercase tracking-widest mb-3" style={{ color: "rgba(31,35,40, 0.7)" }}>{tr("Still need help?")}</p>
       <div className="flex flex-col sm:flex-row gap-3">
         <a
           href="mailto:support@fluxstudy.ai"
@@ -73,7 +71,7 @@ export default function HelpPage() {
         >
           <Mail size={16} style={{ color: "rgba(31,35,40, 0.8)" }} />
           <div>
-            <div className="text-[15.5px] font-medium">Email support</div>
+            <div className="text-[15.5px] font-medium">{tr("Email support")}</div>
             <div style={{ fontSize: 13, color: "rgba(31,35,40, 0.73)" }}>support@fluxstudy.ai</div>
           </div>
         </a>
@@ -86,8 +84,8 @@ export default function HelpPage() {
         >
           <MessageCircle size={16} style={{ color: "rgba(31,35,40, 0.8)" }} />
           <div>
-            <div className="text-[15.5px] font-medium">Join our Discord</div>
-            <div style={{ fontSize: 13, color: "rgba(31,35,40, 0.73)" }}>Chat with the community</div>
+            <div className="text-[15.5px] font-medium">{tr("Join our Discord")}</div>
+            <div style={{ fontSize: 13, color: "rgba(31,35,40, 0.73)" }}>{tr("Chat with the community")}</div>
           </div>
         </a>
       </div>

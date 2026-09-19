@@ -8,8 +8,10 @@ import {
 } from "date-fns";
 import { ChevronLeft, ChevronRight, Plus, X } from "lucide-react";
 import { useApiFetch, useApiSWRFetcher } from "@/lib/apiFetch";
+import { apiBase } from "@/lib/apiBase";
+import { useTr } from "@/lib/useTr";
 
-const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
+const BASE = apiBase();
 
 type CalView = "day" | "week" | "month";
 const VIEWS: CalView[] = ["day", "week", "month"];
@@ -49,6 +51,7 @@ function itemColor(it: Item) {
 }
 
 export default function CalendarPage() {
+  const tr = useTr();
   const fetcher = useApiSWRFetcher();
   const apiFetch = useApiFetch();
 
@@ -215,19 +218,21 @@ export default function CalendarPage() {
 
       {/* Header */}
       <div className="flex items-start justify-between mb-6">
+        {/* Same header system as Home: a brand eyebrow naming the section, then
+            the sentence as the heading — Plus Jakarta Sans 800, not serif italic. */}
         <div>
-          <h1 className="font-serif italic" style={{ fontSize: 32, fontWeight: 300 }}>Schedule</h1>
-          <p style={{ fontSize: 14.5, color: "rgba(15,17,21, 0.75)", marginTop: 2 }}>
-            Reviews Flux plans for you, plus everything you add yourself.
-          </p>
+          <div style={{ fontSize: 13.5, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", color: "#4B5FE8", marginBottom: 8 }}>
+            {tr("Schedule")}
+          </div>
+          <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 34, letterSpacing: "-0.5px", color: "#0f1115", margin: 0 }}>
+            {tr("Reviews Flux plans for you, plus everything you add yourself.")}
+          </h1>
         </div>
         <button
           onClick={connectGoogle}
           className="flex items-center gap-2 rounded-full"
           style={{ border: "1px solid rgba(0,0,0,0.12)", padding: "8px 16px", fontSize: 14.5, fontWeight: 500, background: "#FFFFFF" }}
-        >
-          Google
-        </button>
+        >{tr("Google")}</button>
       </div>
 
       {notice && (
@@ -265,18 +270,16 @@ export default function CalendarPage() {
         }}
       >
         <div className="flex items-center justify-between mb-4">
-          <button onClick={() => step(-1)} className="cal-nav rounded-lg" style={{ padding: 7, color: "rgba(15,17,21, 0.73)" }} aria-label="Previous">
+          <button onClick={() => step(-1)} className="cal-nav rounded-lg" style={{ padding: 7, color: "rgba(15,17,21, 0.73)" }} aria-label={tr("Previous")}>
             <ChevronLeft size={20} />
           </button>
           <div className="flex items-center gap-3">
             <span style={{ fontSize: 17, fontWeight: 700 }}>{headerLabel}</span>
             {view !== "day" && !isSameDay(anchor, new Date()) && (
-              <button onClick={goToday} className="rounded-full" style={{ border: "1px solid rgba(0,0,0,0.12)", padding: "5px 12px", fontSize: 14, fontWeight: 600 }}>
-                Today
-              </button>
+              <button onClick={goToday} className="rounded-full" style={{ border: "1px solid rgba(0,0,0,0.12)", padding: "5px 12px", fontSize: 14, fontWeight: 600 }}>{tr("Today")}</button>
             )}
           </div>
-          <button onClick={() => step(1)} className="cal-nav rounded-lg" style={{ padding: 7, color: "rgba(15,17,21, 0.73)" }} aria-label="Next">
+          <button onClick={() => step(1)} className="cal-nav rounded-lg" style={{ padding: 7, color: "rgba(15,17,21, 0.73)" }} aria-label={tr("Next")}>
             <ChevronRight size={20} />
           </button>
         </div>
@@ -416,9 +419,7 @@ export default function CalendarPage() {
                 </div>
               ))}
             </div>
-            <p style={{ fontSize: 13.5, color: "rgba(15,17,21, 0.65)", textAlign: "center", marginTop: 12 }}>
-              Click any slot to schedule something
-            </p>
+            <p style={{ fontSize: 13.5, color: "rgba(15,17,21, 0.65)", textAlign: "center", marginTop: 12 }}>{tr("Click any slot to schedule something")}</p>
           </div>
         )}
 
@@ -439,9 +440,7 @@ export default function CalendarPage() {
                 onClick={goToday}
                 className="rounded-full"
                 style={{ marginLeft: "auto", border: "1px solid rgba(0,0,0,0.12)", padding: "8px 16px", fontSize: 14.5, fontWeight: 600 }}
-              >
-                Today
-              </button>
+              >{tr("Today")}</button>
             )}
           </div>
         )}
@@ -450,7 +449,7 @@ export default function CalendarPage() {
       {/* Day list */}
       <div className="flex items-center justify-between mb-4">
         <span style={{ fontSize: 13.5, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(15,17,21, 0.7)" }}>
-          {isToday(listDate) ? "Today" : format(listDate, "EEEE")} · {format(listDate, "d MMM")}
+          {isToday(listDate) ? tr("Today") : format(listDate, "EEEE")} · {format(listDate, "d MMM")}
         </span>
         <button
           onClick={() => (adding ? setAdding(false) : openForm())}
@@ -462,7 +461,7 @@ export default function CalendarPage() {
           }}
         >
           {adding ? <X size={16} /> : <Plus size={16} />}
-          {adding ? "Cancel" : "Schedule"}
+          {adding ? tr("Cancel") : tr("Schedule")}
         </button>
       </div>
 
@@ -479,7 +478,7 @@ export default function CalendarPage() {
             value={newTitle}
             onChange={(e) => setNewTitle(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter") addEvent(); }}
-            placeholder="Exam, assignment, reading…"
+            placeholder={tr("Exam, assignment, reading…")}
             className="w-full outline-none"
             style={{ border: "1px solid rgba(0,0,0,0.1)", borderRadius: 12, padding: "12px 14px", fontSize: 16, color: "#0f1115", maxWidth: 520 }}
           />
@@ -502,9 +501,7 @@ export default function CalendarPage() {
             ))}
           </div>
 
-          <div style={{ fontSize: 13, fontWeight: 700, color: "rgba(15,17,21, 0.68)", textTransform: "uppercase", letterSpacing: "0.1em", margin: "18px 0 9px" }}>
-            Time
-          </div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: "rgba(15,17,21, 0.68)", textTransform: "uppercase", letterSpacing: "0.1em", margin: "18px 0 9px" }}>{tr("Time")}</div>
           <div className="flex flex-wrap gap-2">
             {HOURS.map((h) => (
               <button
@@ -541,7 +538,7 @@ export default function CalendarPage() {
             }}
           >
             {saving
-              ? "Scheduling…"
+              ? tr("Scheduling…")
               : !newTitle.trim()
               ? "Name it first"
               : `Add to ${format(listDate, "d MMM")} · ${shortHour(newHour)}`}
@@ -550,9 +547,7 @@ export default function CalendarPage() {
       )}
 
       {listItems.length === 0 ? (
-        <p style={{ fontSize: 15.5, color: "rgba(15,17,21, 0.7)", lineHeight: 1.5 }}>
-          Nothing on this day — click Schedule to add an exam, assignment or deadline.
-        </p>
+        <p style={{ fontSize: 15.5, color: "rgba(15,17,21, 0.7)", lineHeight: 1.5 }}>{tr("Nothing on this day — click Schedule to add an exam, assignment or deadline.")}</p>
       ) : (
         <div className="flex flex-col gap-2.5" style={{ maxWidth: 760 }}>
           {listItems.map((it) => (
@@ -577,7 +572,7 @@ export default function CalendarPage() {
                     className="cal-del"
                     style={{ color: "rgba(15,17,21, 0.68)", padding: 2, marginLeft: 12, flexShrink: 0 }}
                     aria-label={`Delete ${it.title}`}
-                    title="Delete"
+                    title={tr("Delete")}
                   >
                     <X size={15} />
                   </button>

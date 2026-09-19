@@ -4,6 +4,7 @@ import {
   Home, Layers, Calendar, CreditCard, Archive, HelpCircle,
   FileText, BookOpen, ListChecks, Sparkles, Plus, Mic2,
 } from "lucide-react";
+import { useTr } from "@/lib/useTr";
 
 // Hero demo: one processed lecture, seen through the six tabs the app really
 // produces — Summary · Transcript · Key Points · Quizzes · Flashcards · Ask.
@@ -116,11 +117,12 @@ const ASK_A = "Two. The worked example gave ∫₀¹ x² dx = 1/3, and the sum y
 
 // ── Sidebar ─────────────────────────────────────────────────────────────────
 function Sidebar() {
+  const tr = useTr();
   return (
     <div className="w-36 shrink-0 hidden sm:flex flex-col py-5" style={{ background: "rgba(0,0,0,0.02)", borderRight: "1px solid rgba(0,0,0,0.06)" }}>
       <div className="px-4 pb-4 mb-2" style={{ borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
         <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 17, fontWeight: 800, color: "#0f1115" }}>Flux</div>
-        <div style={{ fontSize: 7.5, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(15,17,21,0.45)", marginTop: 1 }}>Study Assistant</div>
+        <div style={{ fontSize: 7.5, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(15,17,21,0.45)", marginTop: 1 }}>{tr("Study Assistant")}</div>
       </div>
       <div className="flex-1 px-2 pt-1 flex flex-col gap-0.5">
         <div style={{ fontSize: 7.5, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(15,17,21,0.4)", padding: "6px 8px 4px" }}>Menu</div>
@@ -130,7 +132,7 @@ function Sidebar() {
             <div key={key} className="flex items-center gap-2 px-2.5 py-2 rounded-lg"
               style={{ background: active ? "rgba(75,95,232,0.12)" : "transparent", color: active ? CLASS_COLOR : "rgba(15,17,21,0.55)" }}>
               <Icon size={11} />
-              <span style={{ fontSize: 10, fontWeight: active ? 600 : 400 }}>{label}</span>
+              <span style={{ fontSize: 10, fontWeight: active ? 600 : 400 }}>{tr(label)}</span>
             </div>
           );
         })}
@@ -141,13 +143,13 @@ function Sidebar() {
 
 // ── Classes view ─────────────────────────────────────────────────────────────
 function ClassesView({ cardRef }: { cardRef: React.RefObject<HTMLDivElement | null> }) {
+  const tr = useTr();
   return (
     <div className="flex-1 p-6">
       <div className="flex items-center justify-between mb-5">
-        <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 20, color: "#0f1115", fontWeight: 700 }}>Workspace</div>
+        <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 20, color: "#0f1115", fontWeight: 700 }}>{tr("Workspace")}</div>
         <div className="flex items-center gap-1 px-3 py-1.5 rounded-full" style={{ background: CLASS_COLOR, color: "white", fontSize: 11 }}>
-          <Plus size={11} /> New Class
-        </div>
+          <Plus size={11} />{tr("New Class")}</div>
       </div>
       <div className="grid grid-cols-2 gap-3">
         {COURSES.map((c, i) => (
@@ -158,9 +160,9 @@ function ClassesView({ cardRef }: { cardRef: React.RefObject<HTMLDivElement | nu
             </div>
             <div className="flex items-center gap-1.5" style={{ marginBottom: 2 }}>
               <span className="w-2 h-2 rounded-full" style={{ background: c.tint }} />
-              <span style={{ fontSize: 12, fontWeight: 600, color: "#0f1115" }}>{c.name}</span>
+              <span style={{ fontSize: 12, fontWeight: 600, color: "#0f1115" }}>{tr(c.name)}</span>
             </div>
-            <div style={{ fontSize: 10, color: "rgba(15,17,21,0.55)" }}>{c.meta}</div>
+            <div style={{ fontSize: 10, color: "rgba(15,17,21,0.55)" }}>{tr(c.meta)}</div>
           </div>
         ))}
       </div>
@@ -173,6 +175,7 @@ function LectureView({ tab, phase, refs }: {
   tab: string; phase: string;
   refs: Record<string, React.RefObject<HTMLDivElement | null>>;
 }) {
+  const tr = useTr();
   const label = { fontSize: 8.5, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase" as const, color: "rgba(15,17,21,0.55)", marginBottom: 5 };
   const body = { fontSize: 11.5, lineHeight: 1.6, color: "rgba(15,17,21,0.75)" };
 
@@ -181,7 +184,7 @@ function LectureView({ tab, phase, refs }: {
       {/* Lecture title */}
       <div className="flex items-center gap-2 px-5 pt-4">
         <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: CLASS_COLOR }} />
-        <span style={{ fontSize: 13, fontWeight: 600, color: "#0f1115" }}>{LECTURE_TITLE}</span>
+        <span style={{ fontSize: 13, fontWeight: 600, color: "#0f1115" }}>{tr(LECTURE_TITLE)}</span>
         <span className="flex items-center gap-1 ml-auto" style={{ fontSize: 9.5, color: "rgba(15,17,21,0.55)" }}>
           <Mic2 size={10} /> 48 min · 2 board photos
         </span>
@@ -201,7 +204,7 @@ function LectureView({ tab, phase, refs }: {
                   fontWeight: active ? 600 : 500,
                   whiteSpace: "nowrap",
                 }}>
-                <Icon size={10} />{tabLabel}
+                <Icon size={10} />{tr(tabLabel)}
               </div>
             );
           })}
@@ -217,29 +220,29 @@ function LectureView({ tab, phase, refs }: {
             <ul className="space-y-1 mb-3">
               {SUMMARY_BULLETS.map(b => (
                 <li key={b} className="flex gap-2" style={body}>
-                  <span style={{ color: "rgba(15,17,21,0.35)" }}>•</span><span>{b}</span>
+                  <span style={{ color: "rgba(15,17,21,0.35)" }}>•</span><span>{tr(b)}</span>
                 </li>
               ))}
             </ul>
 
             <div className="rounded-xl p-3 mb-3" style={{ background: `${CLASS_COLOR}0F`, border: `1px solid ${CLASS_COLOR}26` }}>
-              <div style={label}>Formulas</div>
+              <div style={label}>{tr("Formulas")}</div>
               {SUMMARY_FORMULAS.map(f => (
                 <div key={f} style={{ fontSize: 14, lineHeight: 1.7, color: "#0f1115" }}>{f}</div>
               ))}
             </div>
 
             <div className="mb-3">
-              <div style={label}>Key Terms</div>
+              <div style={label}>{tr("Key Terms")}</div>
               <div style={body}>
-                <span style={{ fontWeight: 600, color: "#0f1115" }}>{KEY_TERM.term}</span> — {KEY_TERM.def}
+                <span style={{ fontWeight: 600, color: "#0f1115" }}>{tr(KEY_TERM.term)}</span> — {tr(KEY_TERM.def)}
               </div>
             </div>
 
             <div className="rounded-xl p-3" style={{ background: `${CLASS_COLOR}0F`, border: `1px solid ${CLASS_COLOR}26` }}>
-              <div style={label}>Exam Tips</div>
+              <div style={label}>{tr("Exam Tips")}</div>
               <div className="flex gap-2" style={body}>
-                <span style={{ color: "rgba(15,17,21,0.35)" }}>•</span><span>{EXAM_TIP}</span>
+                <span style={{ color: "rgba(15,17,21,0.35)" }}>•</span><span>{tr(EXAM_TIP)}</span>
               </div>
             </div>
           </div>
@@ -252,9 +255,9 @@ function LectureView({ tab, phase, refs }: {
               <div key={p.cat} className="flex gap-3 items-start mb-2.5 last:mb-0" style={{ animation: `pdIn 0.35s ease ${i * 0.06}s both` }}>
                 <span className="shrink-0 text-center px-2 py-1 rounded-full"
                   style={{ fontSize: 9, fontWeight: 700, color: p.color, background: `${p.color}1A`, minWidth: 64 }}>
-                  {p.cat}
+                  {tr(p.cat)}
                 </span>
-                <span style={body}>{p.text}</span>
+                <span style={body}>{tr(p.text)}</span>
               </div>
             ))}
           </div>
@@ -264,7 +267,7 @@ function LectureView({ tab, phase, refs }: {
         {tab === "quiz" && (
           <div className="rounded-2xl p-4" style={{ background: "#FFFFFF", border: "1px solid rgba(0,0,0,0.08)", animation: "pdIn 0.35s ease both" }}>
             <div className="flex items-center justify-between mb-2.5">
-              <span style={{ fontSize: 12, fontWeight: 600, color: "#0f1115" }}>1. {QUIZ_Q}</span>
+              <span style={{ fontSize: 12, fontWeight: 600, color: "#0f1115" }}>1. {tr(QUIZ_Q)}</span>
               <span className="shrink-0 ml-3" style={{ fontSize: 9.5, color: "rgba(15,17,21,0.55)" }}>1 of 8</span>
             </div>
             <div className="space-y-1.5">
@@ -279,7 +282,7 @@ function LectureView({ tab, phase, refs }: {
                       color: right ? CLASS_COLOR : "rgba(15,17,21,0.85)",
                       fontWeight: right ? 600 : 400,
                     }}>
-                    {opt}
+                    {tr(opt)}
                   </div>
                 );
               })}
@@ -295,10 +298,10 @@ function LectureView({ tab, phase, refs }: {
                 style={{ background: "#FFFFFF", border: "1px solid rgba(0,0,0,0.08)", minHeight: 132 }}>
                 <div style={{ fontSize: 10, fontWeight: 600, color: "rgba(15,17,21,0.35)", marginBottom: 6 }}>{i + 1} / 14</div>
                 <div style={c.flipped ? body : { fontSize: 13, fontWeight: 600, lineHeight: 1.5, color: "#0f1115" }}>
-                  {c.flipped ? c.back : c.front}
+                  {tr(c.flipped ? c.back : c.front)}
                 </div>
                 <div className="mt-auto pt-3" style={{ fontSize: 10, color: "rgba(15,17,21,0.35)" }}>
-                  {c.flipped ? "Click to hide" : "Click to reveal"}
+                  {c.flipped ? tr("Click to hide") : tr("Click to reveal")}
                 </div>
               </div>
             ))}
@@ -311,7 +314,7 @@ function LectureView({ tab, phase, refs }: {
             <div className="flex justify-end">
               <div className="px-3.5 py-2.5 max-w-[85%]"
                 style={{ background: CLASS_COLOR, color: "white", borderRadius: "18px 18px 4px 18px", fontSize: 12, lineHeight: 1.5, fontWeight: 500 }}>
-                {ASK_Q}
+                {tr(ASK_Q)}
               </div>
             </div>
 
@@ -327,7 +330,7 @@ function LectureView({ tab, phase, refs }: {
               <div className="flex justify-start">
                 <div className="px-3.5 py-3 max-w-[92%]"
                   style={{ background: "#FFFFFF", border: "1px solid rgba(0,0,0,0.08)", color: "rgba(15,17,21,0.85)", borderRadius: "18px 18px 18px 4px", fontSize: 12, lineHeight: 1.7 }}>
-                  {ASK_A}
+                  {tr(ASK_A)}
                 </div>
               </div>
             )}
@@ -337,8 +340,8 @@ function LectureView({ tab, phase, refs }: {
             </div>
 
             <div className="flex gap-2 mt-auto">
-              <div className="flex-1 px-3.5 py-2.5 rounded-xl" style={{ border: "1px solid rgba(0,0,0,0.08)", fontSize: 11, color: "rgba(15,17,21,0.4)" }}>Ask about this lecture…</div>
-              <div className="px-4 py-2.5 rounded-xl font-semibold" style={{ background: CLASS_COLOR, color: "white", fontSize: 11 }}>Send</div>
+              <div className="flex-1 px-3.5 py-2.5 rounded-xl" style={{ border: "1px solid rgba(0,0,0,0.08)", fontSize: 11, color: "rgba(15,17,21,0.4)" }}>{tr("Ask about this lecture…")}</div>
+              <div className="px-4 py-2.5 rounded-xl font-semibold" style={{ background: CLASS_COLOR, color: "white", fontSize: 11 }}>{tr("Send")}</div>
             </div>
           </div>
         )}
@@ -398,6 +401,7 @@ export function ProductDemo() {
     return () => clearTimeout(t);
   }, [stepIdx, step.dur]);
 
+  const tr = useTr();
   const cap = CAPTIONS[stepKey];
   const CapIcon = cap?.icon ?? Sparkles;
 
@@ -440,7 +444,7 @@ export function ProductDemo() {
           <div className="flex-1 min-w-0 text-left">
             <div className="flex items-center gap-2 flex-wrap">
               <span style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 18, fontWeight: 700, color: "#0f1115", letterSpacing: "-0.01em" }}>
-                {cap?.title}
+                {cap?.title ? tr(cap.title) : null}
               </span>
               {cap?.flagship && (
                 <span className="px-2 py-0.5 rounded-full" style={{ fontSize: 9, fontWeight: 800, letterSpacing: "0.08em", textTransform: "uppercase", color: CLASS_COLOR, background: "rgba(75,95,232,0.12)", border: "1px solid rgba(75,95,232,0.3)" }}>
@@ -449,7 +453,7 @@ export function ProductDemo() {
               )}
             </div>
             <p style={{ fontSize: 14, lineHeight: 1.55, color: "rgba(15,17,21,0.6)", marginTop: 4 }}>
-              {cap?.desc}
+              {cap?.desc ? tr(cap.desc) : null}
             </p>
           </div>
         </div>

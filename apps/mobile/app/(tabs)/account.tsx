@@ -1,12 +1,15 @@
-import { ScrollView, View, Text, StyleSheet, TouchableOpacity, StatusBar, Alert, Modal, Image } from "react-native";
+import { ScrollView, View, Text, StyleSheet, TouchableOpacity, StatusBar, Alert, Modal, Image, ActivityIndicator } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useUser, useClerk } from "@clerk/clerk-expo";
 import * as WebBrowser from "expo-web-browser";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { LANGUAGES } from "@sano/i18n";
+import { setLanguage, currentLanguage } from "../../lib/i18n";
 import useSWR from "swr";
 import { useApi, makeApiFetcher } from "../../lib/api";
 import { useAuth } from "@clerk/clerk-expo";
+import { useTr } from "../../lib/useTr";
 
 // Illustrated people rather than emoji. Each seed deterministically produces the
 // same character, so a stored seed always renders the avatar the student chose.
@@ -25,14 +28,19 @@ const AVATAR_COLORS = ["#4B5FE8","#9333EA","#DC2626","#EA580C","#16A34A","#0891B
 const WEB_URL = process.env.EXPO_PUBLIC_WEB_URL ?? "";
 
 export default function AccountScreen() {
+  const tr = useTr();
   const insets = useSafeAreaInsets();
   const { user } = useUser();
   const { signOut } = useClerk();
   const api = useApi();
+  const [langOpen, setLangOpen] = useState(false);
+  const [lang, setLang] = useState("en");
+  useEffect(() => { currentLanguage().then(setLang); }, []);
   const { getToken } = useAuth();
   const { data: settings, mutate } = useSWR("/api/settings", makeApiFetcher(getToken));
 
   const [picking, setPicking] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [emoji, setEmoji] = useState<string | null>(null);
   const [tint, setTint] = useState<string | null>(null);
 
@@ -47,23 +55,63 @@ export default function AccountScreen() {
       await api.patch("/api/settings/avatar", { avatar: nextEmoji, avatarColor: nextColor });
       await mutate();
     } catch (e: any) {
-      Alert.alert("Couldn't save", e?.response?.data?.error ?? e?.message ?? "Try again.");
+      Alert.alert(tr("Couldn't save"), e?.response?.data?.error ?? e?.message ?? tr("Try again."));
     }
   }
 
   function confirmSignOut() {
-    Alert.alert("Sign out?", "You can sign back in anytime.", [
-      { text: "Cancel", style: "cancel" },
-      { text: "Sign out", style: "destructive", onPress: () => signOut() },
+    Alert.alert(tr("Sign out?"), tr("You can sign back in anytime."), [
+      { text: tr("Cancel"), style: "cancel" },
+      { text: tr("Sign out"), style: "destructive", onPress: () => signOut() },
     ]);
+  }
+
+  // Deleting an account is irreversible, so it takes two deliberate taps and
+  // says plainly what goes — including the subscription, which people assume
+  // keeps running.
+  function confirmDelete() {
+    Alert.alert(
+      tr("Delete your account?"),
+      tr("Your recordings, transcripts, notes, photos and study material are permanently deleted, and any subscription is cancelled."),
+      [
+        { text: tr("Cancel"), style: "cancel" },
+        { text: tr("Continue"), style: "destructive", onPress: confirmDeleteFinal },
+      ],
+    );
+  }
+
+  function confirmDeleteFinal() {
+    Alert.alert(
+      tr("This can't be undone"),
+      tr("There is no way to get your recordings back once they're deleted."),
+      [
+        { text: tr("Cancel"), style: "cancel" },
+        { text: tr("Delete forever"), style: "destructive", onPress: deleteAccount },
+      ],
+    );
+  }
+
+  async function deleteAccount() {
+    setDeleting(true);
+    try {
+      await api.delete("/api/account");
+      // The account is gone; signing out clears the stale session on this device.
+      await signOut();
+    } catch (e: any) {
+      setDeleting(false);
+      Alert.alert(
+        tr("Couldn't delete your account"),
+        e?.response?.data?.error ?? tr("Try again in a moment."),
+      );
+    }
   }
 
   return (
     <>
       <StatusBar barStyle="dark-content" />
       <ScrollView style={s.root} contentContainerStyle={[s.content, { paddingTop: insets.top + 20 }]}>
-        <Text style={s.eyebrow}>Account</Text>
-        <Text style={s.h1}>Settings</Text>
+        <Text style={s.eyebrow}>{tr("Account")}</Text>
+        <Text style={s.h1}>{tr("Settings")}</Text>
 
         {/* Profile */}
         <View style={s.card}>
@@ -80,10 +128,45 @@ export default function AccountScreen() {
             </View>
           </TouchableOpacity>
           <View style={{ flex: 1 }}>
-            <Text style={s.name}>{user?.fullName ?? "Student"}</Text>
+            <Text style={s.name}>{user?.fullName ?? tr("Student")}</Text>
             <Text style={s.email}>{user?.emailAddresses?.[0]?.emailAddress ?? ""}</Text>
           </View>
         </View>
+
+        {/* Language — the app, lectures and everything Flux writes */}
+        <TouchableOpacity style={s.row} activeOpacity={0.7} onPress={() => setLangOpen(true)}>
+          <Ionicons name="language-outline" size={20} color="rgba(15,17,21,0.55)" />
+          <Text style={s.rowTxt}>{tr("Language")}</Text>
+          <Text style={{ fontSize: 16, color: "rgba(15,17,21,0.7)" }}>
+            {LANGUAGES.find(l => l.code === lang)?.flag} {LANGUAGES.find(l => l.code === lang)?.label ?? "English"}
+          </Text>
+          <Ionicons name="chevron-forward" size={17} color="rgba(15,17,21,0.35)" />
+        </TouchableOpacity>
+
+        <Modal visible={langOpen} transparent animationType="fade" onRequestClose={() => setLangOpen(false)}>
+          <TouchableOpacity style={s.langBackdrop} activeOpacity={1} onPress={() => setLangOpen(false)}>
+            <View style={s.langSheet}>
+              <Text style={s.langTitle}>{tr("Language")}</Text>
+              <Text style={s.langHint}>{tr("Flux speaks this language: the app, your lecture transcripts, and every summary, quiz and answer.")}</Text>
+              {LANGUAGES.map(l => (
+                <TouchableOpacity
+                  key={l.code}
+                  style={s.langRow}
+                  activeOpacity={0.7}
+                  onPress={async () => {
+                    setLang(l.code);
+                    setLangOpen(false);
+                    await setLanguage(l.code, language => api.patch("/api/settings/language", { language }));
+                  }}
+                >
+                  <Text style={{ fontSize: 22 }}>{l.flag}</Text>
+                  <Text style={[s.rowTxt, { fontWeight: l.code === lang ? "700" : "500" }]}>{l.label}</Text>
+                  {l.code === lang && <Ionicons name="checkmark" size={20} color="#4B5FE8" />}
+                </TouchableOpacity>
+              ))}
+            </View>
+          </TouchableOpacity>
+        </Modal>
 
         {/* Billing */}
         <TouchableOpacity
@@ -91,11 +174,11 @@ export default function AccountScreen() {
           activeOpacity={0.7}
           onPress={() => {
             if (WEB_URL) WebBrowser.openBrowserAsync(`${WEB_URL}/dashboard/billing`);
-            else Alert.alert("Billing", "Manage your plan from the Flux website (Dashboard → Billing).");
+            else Alert.alert(tr("Billing"), "Manage your plan from the Flux website (Dashboard → Billing).");
           }}
         >
           <Ionicons name="card-outline" size={20} color="rgba(15,17,21,0.55)" />
-          <Text style={s.rowTxt}>Billing & plan</Text>
+          <Text style={s.rowTxt}>{tr("Billing & plan")}</Text>
           <Ionicons name="open-outline" size={17} color="rgba(15,17,21,0.35)" />
         </TouchableOpacity>
 
@@ -103,17 +186,28 @@ export default function AccountScreen() {
         <TouchableOpacity
           style={s.row}
           activeOpacity={0.7}
-          onPress={() => Alert.alert("Help", "Questions or issues? Email us and we'll get you sorted.")}
+          onPress={() => Alert.alert(tr("Help"), tr("Questions or issues? Email us and we'll get you sorted."))}
         >
           <Ionicons name="help-circle-outline" size={20} color="rgba(15,17,21,0.55)" />
-          <Text style={s.rowTxt}>Help & support</Text>
+          <Text style={s.rowTxt}>{tr("Help & support")}</Text>
           <Ionicons name="chevron-forward" size={17} color="rgba(15,17,21,0.35)" />
         </TouchableOpacity>
 
         {/* Sign out */}
         <TouchableOpacity style={[s.row, { marginTop: 18 }]} onPress={confirmSignOut} activeOpacity={0.7}>
           <Ionicons name="log-out-outline" size={20} color="#EF4444" />
-          <Text style={[s.rowTxt, { color: "#DC2626" }]}>Sign out</Text>
+          <Text style={[s.rowTxt, { color: "#DC2626" }]}>{tr("Sign out")}</Text>
+        </TouchableOpacity>
+
+        {/* Delete account — last, and visually quieter than signing out, so it
+            is findable without being easy to hit by accident. */}
+        <TouchableOpacity style={s.row} onPress={confirmDelete} activeOpacity={0.7} disabled={deleting}>
+          {deleting
+            ? <ActivityIndicator size="small" color="rgba(15,17,21,0.55)" />
+            : <Ionicons name="trash-outline" size={20} color="rgba(15,17,21,0.55)" />}
+          <Text style={[s.rowTxt, { color: "rgba(15,17,21,0.75)" }]}>
+            {deleting ? tr("Deleting…") : tr("Delete account")}
+          </Text>
         </TouchableOpacity>
       </ScrollView>
 
@@ -121,7 +215,7 @@ export default function AccountScreen() {
         <TouchableOpacity style={s.backdrop} activeOpacity={1} onPress={() => setPicking(false)} />
         <View style={s.sheet}>
           <View style={s.sheetGrip} />
-          <Text style={s.sheetTitle}>Pick your avatar</Text>
+          <Text style={s.sheetTitle}>{tr("Pick your avatar")}</Text>
 
           <View style={[s.preview, { backgroundColor: avatarColor }]}>
             {avatar
@@ -129,7 +223,7 @@ export default function AccountScreen() {
               : <Text style={s.previewTxt}>{initial}</Text>}
           </View>
 
-          <Text style={s.pickLbl}>Avatar</Text>
+          <Text style={s.pickLbl}>{tr("Avatar")}</Text>
           <View style={s.grid}>
             {AVATARS.map(a => (
               <TouchableOpacity
@@ -143,7 +237,7 @@ export default function AccountScreen() {
             ))}
           </View>
 
-          <Text style={s.pickLbl}>Background</Text>
+          <Text style={s.pickLbl}>{tr("Background")}</Text>
           <View style={s.swatchRow}>
             {AVATAR_COLORS.map(c => (
               <TouchableOpacity
@@ -158,7 +252,7 @@ export default function AccountScreen() {
           </View>
 
           <TouchableOpacity style={[s.doneBtn, { backgroundColor: avatarColor }]} onPress={() => setPicking(false)} activeOpacity={0.85}>
-            <Text style={s.doneTxt}>Done</Text>
+            <Text style={s.doneTxt}>{tr("Done")}</Text>
           </TouchableOpacity>
         </View>
       </Modal>
@@ -167,6 +261,11 @@ export default function AccountScreen() {
 }
 
 const s = StyleSheet.create({
+  langBackdrop: { flex: 1, backgroundColor: "rgba(15,17,21,0.45)", justifyContent: "flex-end" },
+  langSheet: { backgroundColor: "#FFFFFF", borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 38, gap: 4 },
+  langTitle: { fontSize: 21, fontWeight: "800", color: "#0f1115" },
+  langHint: { fontSize: 15.5, color: "rgba(15,17,21,0.75)", lineHeight: 22, marginBottom: 8 },
+  langRow: { flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 13, borderTopWidth: 1, borderTopColor: "rgba(0,0,0,0.06)" },
   root: { flex: 1, backgroundColor: "#FFFFFF" },
   content: { paddingHorizontal: 18, paddingBottom: 142 },
   eyebrow: { fontSize: 11.5, fontWeight: "700", letterSpacing: 2, textTransform: "uppercase", color: "#4B5FE8", marginBottom: 8 },

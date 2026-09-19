@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { QRCodeSVG } from "qrcode.react";
 import { Smartphone, X } from "lucide-react";
+import { useTr } from "@/lib/useTr";
 
 /**
  * "Download" in the navbar. On a computer it shows a QR code to scan with a
@@ -10,6 +11,7 @@ import { Smartphone, X } from "lucide-react";
  * store — so it keeps working after the app is published, without reprinting.
  */
 export function DownloadQR({ variant = "link" }: { variant?: "link" | "compact" }) {
+  const tr = useTr();
   const [open, setOpen] = useState(false);
   const [url, setUrl] = useState("");
 
@@ -32,7 +34,7 @@ export function DownloadQR({ variant = "link" }: { variant?: "link" | "compact" 
           href="/download"
           className="md:hidden flex items-center justify-center w-10 h-10 rounded-full"
           style={{ border: "1px solid rgba(0,0,0,0.12)", color: "#0f1115" }}
-          aria-label="Download the app"
+          aria-label={tr("Download the app")}
         >
           <Smartphone size={18} />
         </a>
@@ -41,9 +43,7 @@ export function DownloadQR({ variant = "link" }: { variant?: "link" | "compact" 
           onClick={() => setOpen(true)}
           className="navbar-link"
           style={{ fontSize: 18, fontWeight: 500, background: "none", border: "none", cursor: "pointer", padding: 0 }}
-        >
-          Download
-        </button>
+        >{tr("Download")}</button>
       )}
 
       {/* Portalled to <body>: the navbar's backdrop-filter would otherwise
@@ -64,19 +64,15 @@ export function DownloadQR({ variant = "link" }: { variant?: "link" | "compact" 
           >
             <button
               onClick={() => setOpen(false)}
-              aria-label="Close"
+              aria-label={tr("Close")}
               className="absolute top-4 right-4 w-9 h-9 rounded-full flex items-center justify-center hover:bg-black/[0.05]"
               style={{ color: "rgba(15,17,21,0.6)" }}
             >
               <X size={18} />
             </button>
 
-            <div id="download-title" style={{ fontSize: 22, fontWeight: 800, color: "#0f1115", letterSpacing: "-0.02em" }}>
-              Get Flux on your phone
-            </div>
-            <p className="mt-2 mb-6" style={{ fontSize: 15, color: "rgba(15,17,21,0.65)", lineHeight: 1.5 }}>
-              Scan with your phone&apos;s camera to download the app for iPhone or Android.
-            </p>
+            <div id="download-title" style={{ fontSize: 22, fontWeight: 800, color: "#0f1115", letterSpacing: "-0.02em" }}>{tr("Get Flux on your phone")}</div>
+            <p className="mt-2 mb-6" style={{ fontSize: 15, color: "rgba(15,17,21,0.65)", lineHeight: 1.5 }}>{tr("Scan with your phone&apos;s camera to download the app for iPhone or Android.")}</p>
 
             <div
               className="mx-auto inline-flex rounded-2xl p-4"
@@ -93,8 +89,7 @@ export function DownloadQR({ variant = "link" }: { variant?: "link" | "compact" 
               )}
             </div>
 
-            <p className="mt-5" style={{ fontSize: 13.5, color: "rgba(15,17,21,0.5)" }}>
-              Or open <a href="/download" style={{ color: "#4B5FE8", fontWeight: 600 }}>{url.replace(/^https?:\/\//, "")}</a>
+            <p className="mt-5" style={{ fontSize: 13.5, color: "rgba(15,17,21,0.5)" }}>{tr("Or open")}<a href="/download" style={{ color: "#4B5FE8", fontWeight: 600 }}>{url.replace(/^https?:\/\//, "")}</a>
             </p>
           </div>
         </div>,

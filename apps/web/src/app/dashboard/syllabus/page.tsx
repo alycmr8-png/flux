@@ -6,8 +6,10 @@ import {
 } from "lucide-react";
 import { useApiFetch, useApiSWRFetcher } from "@/lib/apiFetch";
 import useSWR from "swr";
+import { apiBase } from "@/lib/apiBase";
+import { useTr } from "@/lib/useTr";
 
-const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
+const BASE = apiBase();
 
 const BRAND = "#4B5FE8";
 const INK = "#0f1115";
@@ -38,6 +40,7 @@ const cardStyle = { background: "#FFFFFF", border: `1px solid ${HAIRLINE}` };
 
 // ─── Semester Progress Bar ────────────────────────────────────────────────────
 function SemesterProgress({ start, end }: { start: string; end: string }) {
+  const tr = useTr();
   const s = new Date(start), e = new Date(end), now = new Date();
   const pct = Math.min(100, Math.max(0, ((now.getTime() - s.getTime()) / (e.getTime() - s.getTime())) * 100));
   const daysLeft = Math.max(0, Math.ceil((e.getTime() - now.getTime()) / 86400000));
@@ -48,7 +51,7 @@ function SemesterProgress({ start, end }: { start: string; end: string }) {
     <div className="rounded-[20px] p-5 mb-5" style={cardStyle}>
       <div className="flex items-center justify-between mb-3">
         <div>
-          <div style={{ fontSize: 13.5, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(15,17,21, 0.75)", marginBottom: 4 }}>Semester Progress</div>
+          <div style={{ fontSize: 13.5, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(15,17,21, 0.75)", marginBottom: 4 }}>{tr("Semester Progress")}</div>
           <div style={{ fontSize: 16.5, fontWeight: 600, color: INK }}>Week {currentWeek} of {totalWeeks}</div>
         </div>
         <div className="text-right">
@@ -72,6 +75,7 @@ function SemesterProgress({ start, end }: { start: string; end: string }) {
 
 // ─── Grade Calculator ─────────────────────────────────────────────────────────
 function GradeCalculator({ weights }: { weights: { category: string; weight: number }[] }) {
+  const tr = useTr();
   const [grades, setGrades] = useState<Record<string, string>>({});
   const [open, setOpen] = useState(true);
 
@@ -108,7 +112,7 @@ function GradeCalculator({ weights }: { weights: { category: string; weight: num
       >
         <div className="flex items-center gap-2.5">
           <Star size={15} style={{ color: BRAND }} />
-          <span style={{ fontSize: 13.5, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(15,17,21, 0.78)" }}>Grade Calculator</span>
+          <span style={{ fontSize: 13.5, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(15,17,21, 0.78)" }}>{tr("Grade Calculator")}</span>
           {projected !== null && (
             <span className="rounded-full px-2.5 py-1" style={{ fontSize: 14, fontWeight: 600, background: "rgba(0,0,0,0.04)", color: "rgba(15,17,21, 0.8)" }}>
               {projected.toFixed(1)}% · {letterGrade(projected)}
@@ -166,6 +170,7 @@ function GradeCalculator({ weights }: { weights: { category: string; weight: num
 
 // ─── Deadlines List ───────────────────────────────────────────────────────────
 function DeadlinesList({ schedule }: { schedule: any[] }) {
+  const tr = useTr();
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const [showAll, setShowAll] = useState(false);
@@ -191,9 +196,7 @@ function DeadlinesList({ schedule }: { schedule: any[] }) {
       <div className="px-5 py-4 border-b flex flex-wrap items-center justify-between gap-2" style={{ borderColor: HAIRLINE }}>
         <div className="flex items-center gap-2.5">
           <ClipboardList size={15} style={{ color: BRAND }} />
-          <span style={{ fontSize: 13.5, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(15,17,21, 0.78)" }}>
-            Deadlines at a Glance
-          </span>
+          <span style={{ fontSize: 13.5, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(15,17,21, 0.78)" }}>{tr("Deadlines at a Glance")}</span>
           <span className="rounded-full px-2.5 py-1" style={{ fontSize: 13.5, fontWeight: 600, background: "rgba(0,0,0,0.04)", color: "rgba(15,17,21, 0.8)" }}>{upcoming.length} upcoming</span>
         </div>
         {past.length > 0 && (
@@ -202,7 +205,7 @@ function DeadlinesList({ schedule }: { schedule: any[] }) {
       </div>
 
       {upcoming.length === 0 ? (
-        <div className="px-5 py-10 text-center" style={{ fontSize: 16, color: "rgba(15,17,21, 0.78)" }}>No upcoming deadlines.</div>
+        <div className="px-5 py-10 text-center" style={{ fontSize: 16, color: "rgba(15,17,21, 0.78)" }}>{tr("No upcoming deadlines.")}</div>
       ) : (
         <div>
           {displayed.map((item, i) => {
@@ -219,7 +222,7 @@ function DeadlinesList({ schedule }: { schedule: any[] }) {
                     {new Date(item.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                   </div>
                   <div style={{ fontSize: 14, fontWeight: 600, color: urgencyColor(days), marginTop: 2 }}>
-                    {days === 0 ? "Today" : days === 1 ? "Tomorrow" : `${days}d`}
+                    {days === 0 ? tr("Today") : days === 1 ? "Tomorrow" : `${days}d`}
                   </div>
                 </div>
 
@@ -238,7 +241,7 @@ function DeadlinesList({ schedule }: { schedule: any[] }) {
                   className="shrink-0 rounded-full px-3 py-1.5"
                   style={{ fontSize: 13.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", background: tint, color: "#FFFFFF" }}
                 >
-                  {item.type}
+                  {tr(item.type)}
                 </div>
 
                 {/* Importance */}
@@ -264,6 +267,7 @@ function DeadlinesList({ schedule }: { schedule: any[] }) {
 
 // ─── Weekly Topics Gantt ──────────────────────────────────────────────────────
 function WeeklyGantt({ topics, semesterStart, totalWeeks }: { topics: any[]; semesterStart: string; totalWeeks: number }) {
+  const tr = useTr();
   const [open, setOpen] = useState(false);
   const today = new Date();
   const start = new Date(semesterStart);
@@ -277,9 +281,7 @@ function WeeklyGantt({ topics, semesterStart, totalWeeks }: { topics: any[]; sem
       >
         <div className="flex items-center gap-2.5">
           <Calendar size={15} style={{ color: BRAND }} />
-          <span style={{ fontSize: 13.5, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(15,17,21, 0.78)" }}>
-            Semester Timeline
-          </span>
+          <span style={{ fontSize: 13.5, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(15,17,21, 0.78)" }}>{tr("Semester Timeline")}</span>
         </div>
         <ChevronDown size={16} className={`transition-transform ${open ? "rotate-180" : ""}`} style={{ color: "rgba(15,17,21, 0.75)" }} />
       </button>
@@ -326,7 +328,7 @@ function WeeklyGantt({ topics, semesterStart, totalWeeks }: { topics: any[]; sem
 
             {/* Current week indicator */}
             <div className="flex mt-3">
-              <div className="w-36 shrink-0" style={{ fontSize: 14, fontWeight: 700, color: INK }}>Today →</div>
+              <div className="w-36 shrink-0" style={{ fontSize: 14, fontWeight: 700, color: INK }}>{tr("Today →")}</div>
               <div className="flex-1 flex">
                 {Array.from({ length: totalWeeks }, (_, i) => (
                   <div key={i} className="flex-1 h-1" style={{ background: i + 1 <= currentWeek ? BRAND : "rgba(0,0,0,0.06)" }} />
@@ -342,6 +344,7 @@ function WeeklyGantt({ topics, semesterStart, totalWeeks }: { topics: any[]; sem
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function SyllabusPage() {
+  const tr = useTr();
   const fetcher = useApiSWRFetcher();
   const apiFetch = useApiFetch();
   const { data: coursesData } = useSWR(`${BASE}/api/courses`, fetcher);
@@ -385,12 +388,8 @@ export default function SyllabusPage() {
 
   return (
     <div style={{ maxWidth: 900 }}>
-      <div style={{ fontSize: 13.5, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", color: BRAND, marginBottom: 8 }}>
-        Syllabus
-      </div>
-      <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 34, letterSpacing: "-0.5px", color: INK, marginBottom: 8 }}>
-        Syllabus Parser
-      </h1>
+      <div style={{ fontSize: 13.5, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", color: BRAND, marginBottom: 8 }}>{tr("Syllabus")}</div>
+      <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 34, letterSpacing: "-0.5px", color: INK, marginBottom: 8 }}>{tr("Syllabus Parser")}</h1>
       <p className="mb-8" style={{ fontSize: 16, color: "rgba(15,17,21, 0.78)", maxWidth: 620 }}>
         Upload your syllabus — AI extracts every deadline, resolves &quot;Week X&quot; into real dates, and builds your dashboard.
       </p>
@@ -399,8 +398,7 @@ export default function SyllabusPage() {
         <div className="flex flex-col gap-5" style={{ maxWidth: 560 }}>
           {courses.length > 0 && (
             <div>
-              <label className="block mb-2.5" style={{ fontSize: 13.5, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(15,17,21, 0.75)" }}>
-                Class <span style={{ textTransform: "none", letterSpacing: 0, fontWeight: 500, color: "rgba(15,17,21, 0.73)" }}>— optional</span>
+              <label className="block mb-2.5" style={{ fontSize: 13.5, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(15,17,21, 0.75)" }}>{tr("Class")}<span style={{ textTransform: "none", letterSpacing: 0, fontWeight: 500, color: "rgba(15,17,21, 0.73)" }}>— optional</span>
               </label>
               <div className="flex flex-wrap gap-2">
                 {courses.map((c: any) => {
@@ -427,8 +425,7 @@ export default function SyllabusPage() {
           )}
 
           <div>
-            <label className="block mb-2.5" style={{ fontSize: 13.5, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(15,17,21, 0.75)" }}>
-              Semester start date <span style={{ textTransform: "none", letterSpacing: 0, fontWeight: 500, color: "rgba(15,17,21, 0.73)" }}>— helps resolve &quot;Week X&quot; dates</span>
+            <label className="block mb-2.5" style={{ fontSize: 13.5, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(15,17,21, 0.75)" }}>{tr("Semester start date")}<span style={{ textTransform: "none", letterSpacing: 0, fontWeight: 500, color: "rgba(15,17,21, 0.73)" }}>— helps resolve &quot;Week X&quot; dates</span>
             </label>
             <input
               type="date"
@@ -446,7 +443,7 @@ export default function SyllabusPage() {
             <FileUp size={30} />
             <div className="text-center">
               <div style={{ fontSize: 16.5, fontWeight: 600 }}>{file ? file.name : "Click to upload your syllabus"}</div>
-              {!file && <div style={{ fontSize: 15, color: "rgba(15,17,21, 0.75)", marginTop: 6 }}>PDF files only</div>}
+              {!file && <div style={{ fontSize: 15, color: "rgba(15,17,21, 0.75)", marginTop: 6 }}>{tr("PDF files only")}</div>}
             </div>
             <input type="file" accept=".pdf" className="hidden" onChange={e => setFile(e.target.files?.[0] ?? null)} />
           </label>
@@ -460,7 +457,7 @@ export default function SyllabusPage() {
             style={{ background: selectedCourse ? classColor(selectedCourse) : BRAND, color: "#FFFFFF", fontSize: 17, fontWeight: 700 }}
           >
             {loading
-              ? <><Loader2 size={16} className="animate-spin" /> Analysing syllabus…</>
+              ? <><Loader2 size={16} className="animate-spin" />{tr("Analysing syllabus…")}</>
               : "Build My Syllabus Dashboard"}
           </button>
         </div>
@@ -518,7 +515,7 @@ export default function SyllabusPage() {
             <div className="rounded-[20px] px-5 py-4 flex items-center gap-3" style={cardStyle}>
               <Clock size={15} className="shrink-0" style={{ color: BRAND }} />
               <div>
-                <div style={{ fontSize: 13.5, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(15,17,21, 0.75)", marginBottom: 4 }}>Office Hours</div>
+                <div style={{ fontSize: 13.5, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(15,17,21, 0.75)", marginBottom: 4 }}>{tr("Office Hours")}</div>
                 <div style={{ fontSize: 16, color: INK }}>{meta.officeHours}</div>
               </div>
             </div>

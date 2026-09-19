@@ -2,8 +2,10 @@ import { useSignUp } from "@clerk/clerk-expo";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from "react-native";
+import { useTr } from "../../lib/useTr";
 
 export default function VerifyScreen() {
+  const tr = useTr();
   const { signUp, setActive } = useSignUp();
   const router = useRouter();
   const [code, setCode] = useState("");
@@ -15,18 +17,18 @@ export default function VerifyScreen() {
       await setActive!({ session: result.createdSessionId });
       router.replace("/(tabs)");
     } catch (e: any) {
-      setError(e.errors?.[0]?.message ?? "Verification failed");
+      setError(e.errors?.[0]?.message ?? tr("Verification failed"));
     }
   }
 
   return (
     <View style={s.root}>
-      <Text style={s.title}>Check your email</Text>
-      <Text style={s.sub}>Enter the 6-digit code we sent you</Text>
+      <Text style={s.title}>{tr("Check your email")}</Text>
+      <Text style={s.sub}>{tr("Enter the 6-digit code we sent you")}</Text>
       {error ? <Text style={s.err}>{error}</Text> : null}
       <TextInput style={s.input} placeholder="000000" placeholderTextColor="rgba(15,17,21,0.35)" value={code} onChangeText={setCode} keyboardType="number-pad" textAlign="center" maxLength={6} />
       <TouchableOpacity style={s.btn} onPress={verify}>
-        <Text style={s.btnTxt}>Verify</Text>
+        <Text style={s.btnTxt}>{tr("Verify")}</Text>
       </TouchableOpacity>
     </View>
   );

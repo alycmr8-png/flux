@@ -4,8 +4,10 @@ import useSWR from "swr";
 import { useApiSWRFetcher, useApiFetch } from "@/lib/apiFetch";
 import { format } from "date-fns";
 import { Pencil, Check, X, ChevronDown, ChevronRight, BookOpen, Mic2, TrendingUp } from "lucide-react";
+import { apiBase } from "@/lib/apiBase";
+import { useTr } from "@/lib/useTr";
 
-const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
+const BASE = apiBase();
 
 const BRAND = "#4B5FE8";
 const INK = "#0f1115";
@@ -72,6 +74,7 @@ function RetentionBar({ name, code, avg, tint }: { name: string; code: string; a
 
 // ── Lecture row ───────────────────────────────────────────────────────────────
 function LectureRow({ lecture, onRename }: { lecture: any; onRename: (id: string, title: string) => Promise<void> }) {
+  const tr = useTr();
   const [editing, setEditing] = useState(false);
   const [val, setVal] = useState(lecture.title);
   const [saving, setSaving] = useState(false);
@@ -122,6 +125,7 @@ function LectureRow({ lecture, onRename }: { lecture: any; onRename: (id: string
 
 // ── Class accordion ───────────────────────────────────────────────────────────
 function ClassSection({ cls, tint, onRename }: { cls: any; tint: string; onRename: (id: string, title: string) => Promise<void> }) {
+  const tr = useTr();
   const [open, setOpen] = useState(false);
   const count = cls.lectures.length;
 
@@ -147,7 +151,7 @@ function ClassSection({ cls, tint, onRename }: { cls: any; tint: string; onRenam
       {open && (
         <div className="px-5 pb-3 border-t" style={{ borderColor: HAIRLINE }}>
           {count === 0
-            ? <p className="py-4" style={{ fontSize: 15.5, color: "rgba(15,17,21, 0.75)" }}>No recordings yet.</p>
+            ? <p className="py-4" style={{ fontSize: 15.5, color: "rgba(15,17,21, 0.75)" }}>{tr("No recordings yet.")}</p>
             : cls.lectures.map((l: any) => <LectureRow key={l.id} lecture={l} onRename={onRename} />)
           }
         </div>
@@ -158,6 +162,7 @@ function ClassSection({ cls, tint, onRename }: { cls: any; tint: string; onRenam
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function ProgressPage() {
+  const tr = useTr();
   const fetcher = useApiSWRFetcher();
   const apiFetch = useApiFetch();
   const { data, isLoading, mutate } = useSWR(`${BASE}/api/progress`, fetcher);
@@ -189,8 +194,8 @@ export default function ProgressPage() {
     <div style={{ color: INK, maxWidth: 860 }}>
       {/* Header */}
       <div className="mb-8">
-        <div style={{ fontSize: 13.5, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", color: BRAND, marginBottom: 8 }}>Analytics</div>
-        <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 34, letterSpacing: "-0.5px", color: INK }}>Progress</h1>
+        <div style={{ fontSize: 13.5, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", color: BRAND, marginBottom: 8 }}>{tr("Analytics")}</div>
+        <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 34, letterSpacing: "-0.5px", color: INK }}>{tr("Progress")}</h1>
       </div>
 
       {/* ── Top stat cards ── */}
@@ -203,7 +208,7 @@ export default function ProgressPage() {
           </div>
           <div>
             <div style={{ fontSize: 36, fontWeight: 800, color: INK, lineHeight: 1 }}>{isLoading ? "—" : lectures}</div>
-            <div style={{ fontSize: 15, color: "rgba(15,17,21, 0.78)", marginTop: 5 }}>Lectures recorded</div>
+            <div style={{ fontSize: 15, color: "rgba(15,17,21, 0.78)", marginTop: 5 }}>{tr("Lectures recorded")}</div>
           </div>
         </div>
 
@@ -215,7 +220,7 @@ export default function ProgressPage() {
             <RingChart value={avgScore} />
           )}
           <div>
-            <div style={{ fontSize: 16, fontWeight: 700, color: INK }}>Avg Quiz Score</div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: INK }}>{tr("Avg Quiz Score")}</div>
             <div style={{ fontSize: 15, color: "rgba(15,17,21, 0.78)", marginTop: 4 }}>
               {avgScore >= 70 ? "Great work!" : avgScore >= 50 ? "Keep studying" : "Needs attention"}
             </div>
@@ -235,7 +240,7 @@ export default function ProgressPage() {
           </div>
           <div>
             <div style={{ fontSize: 36, fontWeight: 800, color: INK, lineHeight: 1 }}>{isLoading ? "—" : streak}</div>
-            <div style={{ fontSize: 15, color: "rgba(15,17,21, 0.78)", marginTop: 5 }}>Day streak</div>
+            <div style={{ fontSize: 15, color: "rgba(15,17,21, 0.78)", marginTop: 5 }}>{tr("Day streak")}</div>
             {streak >= 3 && <div style={{ fontSize: 14, fontWeight: 600, color: "#EA580C", marginTop: 5 }}>🔥 On fire!</div>}
           </div>
         </div>
@@ -246,9 +251,7 @@ export default function ProgressPage() {
         <div className="rounded-[20px] p-6 mb-6" style={{ background: "#FFFFFF", border: `1px solid ${HAIRLINE}` }}>
           <div className="flex items-center gap-2 mb-6">
             <BookOpen size={15} style={{ color: BRAND }} />
-            <p style={{ fontSize: 13.5, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(15,17,21, 0.78)" }}>
-              Quiz retention by course
-            </p>
+            <p style={{ fontSize: 13.5, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(15,17,21, 0.78)" }}>{tr("Quiz retention by course")}</p>
           </div>
           <div className="flex flex-col gap-5">
             {retention.map((c: any) => (
@@ -257,7 +260,7 @@ export default function ProgressPage() {
           </div>
           {/* Legend */}
           <div className="flex flex-wrap items-center gap-5 mt-6 pt-4 border-t" style={{ borderColor: HAIRLINE }}>
-            {[{ label: "Strong (≥70%)", color: "#16A34A" }, { label: "Average (50–70%)", color: "#EA580C" }, { label: "Needs work (<50%)", color: "#DC2626" }].map(l => (
+            {[{ label: tr("Strong (≥70%)"), color: "#16A34A" }, { label: tr("Average (50–70%)"), color: "#EA580C" }, { label: tr("Needs work (<50%)"), color: "#DC2626" }].map(l => (
               <div key={l.label} className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full" style={{ background: l.color }} />
                 <span style={{ fontSize: 14, color: "rgba(15,17,21, 0.78)" }}>{l.label}</span>
@@ -270,9 +273,7 @@ export default function ProgressPage() {
       {/* ── Recordings by class ── */}
       <div className="mb-3 flex items-center gap-2">
         <Mic2 size={15} style={{ color: BRAND }} />
-        <p style={{ fontSize: 13.5, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(15,17,21, 0.78)" }}>
-          Recordings by class
-        </p>
+        <p style={{ fontSize: 13.5, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(15,17,21, 0.78)" }}>{tr("Recordings by class")}</p>
       </div>
 
       {isLoading && (
@@ -286,7 +287,7 @@ export default function ProgressPage() {
       {!isLoading && !p?.lecturesByClass?.length && (
         <div className="rounded-[20px] p-10 text-center" style={{ background: "#FFFFFF", border: `1px dashed ${HAIRLINE}` }}>
           <Mic2 size={30} className="mx-auto mb-3" style={{ color: "rgba(15,17,21, 0.55)" }} />
-          <p style={{ fontSize: 16, color: "rgba(15,17,21, 0.78)" }}>No classes yet. Create one in the Workspace.</p>
+          <p style={{ fontSize: 16, color: "rgba(15,17,21, 0.78)" }}>{tr("No classes yet. Create one in the Workspace.")}</p>
         </div>
       )}
 

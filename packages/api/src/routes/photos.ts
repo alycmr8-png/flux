@@ -8,12 +8,12 @@ import { describeLectureImage } from "../services/claude";
 import { indexSource, deleteSource } from "../services/memory";
 import { consumeQuota, sendQuotaError } from "../services/usage";
 import { photoSig } from "../lib/audioSign";
+import { ensureUploadDir } from "../lib/storage";
 
 export const photoRouter = Router();
 
-// Same storage as lecture audio: UPLOAD_DIR is the persistent volume in production.
-const uploadDir = process.env.UPLOAD_DIR || path.join(os.tmpdir(), "sano");
-fs.mkdirSync(uploadDir, { recursive: true });
+// Same storage as lecture audio — see lib/storage.ts.
+const uploadDir = ensureUploadDir();
 
 // The vision model reads these formats; HEIC has to be converted on the device first.
 const READABLE = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);

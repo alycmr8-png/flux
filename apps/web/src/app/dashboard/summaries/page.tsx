@@ -5,8 +5,10 @@ import { ExternalLink, AlarmClock, Clock, BookOpen, School, CheckSquare, Calenda
 import { useAuth } from "@clerk/nextjs";
 import { useApiSWRFetcher } from "@/lib/apiFetch";
 import { MathText, FormulaText } from "@/components/MathText";
+import { apiBase } from "@/lib/apiBase";
+import { useTr } from "@/lib/useTr";
 
-const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
+const BASE = apiBase();
 
 const BRAND = "#4B5FE8";
 const INK = "#0f1115";
@@ -25,6 +27,7 @@ function ClassBadge({ name, color, size = 34 }: { name?: string; color?: string 
 }
 
 function ScheduleButton({ lectureId }: { lectureId: string }) {
+  const tr = useTr();
   const { getToken } = useAuth();
   const [state, setState] = useState<"idle" | "loading" | "done" | "error">("idle");
   const [examDate, setExamDate] = useState("");
@@ -50,8 +53,7 @@ function ScheduleButton({ lectureId }: { lectureId: string }) {
 
   if (state === "done") return (
     <div className="flex items-center gap-1.5" style={{ fontSize: 14.5, color: "rgba(15,17,21, 0.78)" }}>
-      <Check size={13} style={{ color: "#16A34A" }} /> Scheduled
-    </div>
+      <Check size={13} style={{ color: "#16A34A" }} />{tr("Scheduled")}</div>
   );
 
   return (
@@ -61,11 +63,10 @@ function ScheduleButton({ lectureId }: { lectureId: string }) {
         className="flex items-center gap-1.5 rounded-full px-3.5 py-1.5 border transition-colors hover:bg-[rgba(0,0,0,0.03)]"
         style={{ fontSize: 14.5, fontWeight: 600, color: "rgba(15,17,21, 0.81)", borderColor: HAIRLINE }}
       >
-        <CalendarPlus size={12} /> Schedule
-      </button>
+        <CalendarPlus size={12} />{tr("Schedule")}</button>
       {open && (
         <div className="absolute right-0 top-10 z-10 rounded-2xl p-4 w-60 border" style={{ background: "#FFFFFF", borderColor: HAIRLINE, boxShadow: "0 16px 48px rgba(15,17,21,0.14)" }}>
-          <p className="mb-2.5" style={{ fontSize: 14.5, color: "rgba(15,17,21, 0.78)" }}>Optional: set your exam date</p>
+          <p className="mb-2.5" style={{ fontSize: 14.5, color: "rgba(15,17,21, 0.78)" }}>{tr("Optional: set your exam date")}</p>
           <input
             type="date"
             value={examDate}
@@ -73,14 +74,14 @@ function ScheduleButton({ lectureId }: { lectureId: string }) {
             className="w-full rounded-xl px-3 py-2 mb-2.5 outline-none border"
             style={{ background: "#FFFFFF", borderColor: HAIRLINE, color: INK, fontSize: 15.5 }}
           />
-          {state === "error" && <p className="mb-2" style={{ fontSize: 14.5, color: "#DC2626" }}>Failed — is Google Calendar connected?</p>}
+          {state === "error" && <p className="mb-2" style={{ fontSize: 14.5, color: "#DC2626" }}>{tr("Failed — is Google Calendar connected?")}</p>}
           <button
             onClick={schedule}
             disabled={state === "loading"}
             className="w-full py-2.5 rounded-xl transition-opacity hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-1.5"
             style={{ background: BRAND, color: "white", fontSize: 15.5, fontWeight: 600 }}
           >
-            {state === "loading" ? <><Loader2 size={12} className="animate-spin" /> Scheduling…</> : "Schedule review sessions"}
+            {state === "loading" ? <><Loader2 size={12} className="animate-spin" />{tr("Scheduling…")}</> : "Schedule review sessions"}
           </button>
         </div>
       )}
@@ -89,6 +90,7 @@ function ScheduleButton({ lectureId }: { lectureId: string }) {
 }
 
 export default function SummariesPage() {
+  const tr = useTr();
   const fetcher = useApiSWRFetcher();
   const { data, isLoading } = useSWR(`${BASE}/api/cheatsheets`, fetcher);
   // Study Book was removed; its old rows have no renderer, so keep them out of the list.
@@ -98,12 +100,12 @@ export default function SummariesPage() {
 
   return (
     <div style={{ maxWidth: 760 }}>
-      <div style={{ fontSize: 13.5, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", color: BRAND, marginBottom: 8 }}>Summaries</div>
-      <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 34, letterSpacing: "-0.5px", color: INK, marginBottom: 28 }}>Cheat Sheets</h1>
+      <div style={{ fontSize: 13.5, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", color: BRAND, marginBottom: 8 }}>{tr("Summaries")}</div>
+      <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 34, letterSpacing: "-0.5px", color: INK, marginBottom: 28 }}>{tr("Cheat Sheets")}</h1>
 
-      {isLoading && <p style={{ fontSize: 16, color: "rgba(15,17,21, 0.78)" }}>Loading…</p>}
+      {isLoading && <p style={{ fontSize: 16, color: "rgba(15,17,21, 0.78)" }}>{tr("Loading…")}</p>}
       {!isLoading && !sheets.length && (
-        <p style={{ fontSize: 16, color: "rgba(15,17,21, 0.78)" }}>No cheat sheets yet. Record a lecture to get started.</p>
+        <p style={{ fontSize: 16, color: "rgba(15,17,21, 0.78)" }}>{tr("No cheat sheets yet. Record a lecture to get started.")}</p>
       )}
 
       <div className="flex flex-col gap-4">
@@ -132,8 +134,7 @@ export default function SummariesPage() {
                     <a href={cs.driveUrl} target="_blank" rel="noopener"
                       className="flex items-center gap-1.5 rounded-full px-3.5 py-1.5 border transition-colors hover:bg-[rgba(0,0,0,0.03)]"
                       style={{ fontSize: 14.5, fontWeight: 600, color: "rgba(15,17,21, 0.81)", borderColor: HAIRLINE }}>
-                      <ExternalLink size={12} /> Drive
-                    </a>
+                      <ExternalLink size={12} />{tr("Drive")}</a>
                   )}
                 </div>
               </div>
@@ -142,7 +143,7 @@ export default function SummariesPage() {
                 <div className="rounded-[16px] p-4 mb-4 border" style={{ background: "rgba(0,0,0,0.02)", borderColor: HAIRLINE }}>
                   <div className="flex items-center gap-2 mb-3">
                     <AlarmClock size={13} style={{ color: "rgba(15,17,21, 0.82)" }} />
-                    <span style={{ fontSize: 13.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.12em", color: "rgba(15,17,21, 0.82)" }}>Action items</span>
+                    <span style={{ fontSize: 13.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.12em", color: "rgba(15,17,21, 0.82)" }}>{tr("Action items")}</span>
                   </div>
                   <div className="flex flex-col gap-2">
                     {cs.content.actionItems.map((item: any, i: number) => {
@@ -174,7 +175,7 @@ export default function SummariesPage() {
 
               {cs.content?.keyTerms?.length > 0 && (
                 <div className="mb-4">
-                  <div style={label}>Key Terms</div>
+                  <div style={label}>{tr("Key Terms")}</div>
                   <div className="flex flex-col gap-1.5">
                     {cs.content.keyTerms.slice(0, 4).map((kt: any, i: number) => (
                       <div key={i} style={{ fontSize: 16 }}>
@@ -188,7 +189,7 @@ export default function SummariesPage() {
 
               {cs.content?.formulas?.length > 0 && (
                 <div className="mb-4">
-                  <div style={label}>Formulas</div>
+                  <div style={label}>{tr("Formulas")}</div>
                   <div className="flex flex-col gap-1.5">
                     {cs.content.formulas.map((f: string, i: number) => (
                       <FormulaText key={i} as="div" className="font-mono" style={{ fontSize: 15.5, color: "rgba(15,17,21, 0.8)" }} text={f} />
@@ -199,7 +200,7 @@ export default function SummariesPage() {
 
               {cs.content?.examTips?.[0] && (
                 <div className="rounded-[16px] p-4 mt-2 border" style={{ background: "rgba(0,0,0,0.02)", borderColor: HAIRLINE }}>
-                  <div style={{ fontSize: 13.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.12em", color: "rgba(15,17,21, 0.81)", marginBottom: 6 }}>Exam tip</div>
+                  <div style={{ fontSize: 13.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.12em", color: "rgba(15,17,21, 0.81)", marginBottom: 6 }}>{tr("Exam tip")}</div>
                   <MathText as="div" className="leading-relaxed" style={{ fontSize: 16, color: "rgba(15,17,21, 0.81)" }} text={cs.content.examTips[0]} />
                 </div>
               )}

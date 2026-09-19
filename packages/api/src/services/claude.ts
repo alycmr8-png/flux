@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import { recordCall } from "../lib/cost";
 
 let _openai: OpenAI | null = null;
 function getClient() {
@@ -8,19 +9,25 @@ function getClient() {
 
 async function createWithRetry(params: any, retries = 3): Promise<any> {
   const models = [params.model, "gpt-4o-mini"];
+  // Names the spend in the cost log; falls back to the caller's function name.
+  const op = params.op ?? new Error().stack?.split("\n")[2]?.trim().split(/\s+/)[1] ?? "model";
   let modelIdx = 0;
   for (let i = 0; i < retries; i++) {
     try {
-      const { system, messages, model, max_tokens, ...rest } = { ...params, model: models[modelIdx] };
+      const { system, messages, model, max_tokens, op: _op, ...rest } = { ...params, model: models[modelIdx] };
       const openaiMessages: OpenAI.Chat.ChatCompletionMessageParam[] = [];
       if (system) openaiMessages.push({ role: "system", content: system });
       if (messages) openaiMessages.push(...messages);
-      return await getClient().chat.completions.create({
+      const msg = await getClient().chat.completions.create({
         ...rest,
         model,
         max_tokens,
         messages: openaiMessages,
       });
+      // Retries and cheap-model fallbacks are billed too, so record the call that
+      // actually went through rather than what the caller asked for.
+      recordCall(op, model, (msg as any)?.usage);
+      return msg;
     } catch (err: any) {
       const status = err?.status ?? err?.error?.status;
       const isRetryable = status >= 500 || status === 429;
@@ -82,11 +89,27 @@ function parseJsonItems(text: string): any[] {
   return (Object.values(parsed ?? {}).find(Array.isArray) as any[]) ?? [];
 }
 
-async function batchPromises<T>(tasks: (() => Promise<T>)[], limit: number): Promise<T[]> {
+/**
+ * Runs tasks `limit` at a time.
+ *
+ * With a `fallback`, one task failing no longer throws away the work of all the
+ * others — it contributes the fallback value and the rest keep their results.
+ * That matters for transcripts: a single failed chunk used to discard the whole
+ * correction and silently return the raw speech-to-text.
+ */
+async function batchPromises<T>(
+  tasks: (() => Promise<T>)[],
+  limit: number,
+  fallback?: (index: number, error: unknown) => T,
+): Promise<T[]> {
   const results: T[] = [];
   for (let i = 0; i < tasks.length; i += limit) {
-    const batch = tasks.slice(i, i + limit).map(t => t());
-    results.push(...(await Promise.all(batch)));
+    const settled = await Promise.allSettled(tasks.slice(i, i + limit).map(t => t()));
+    settled.forEach((r, k) => {
+      if (r.status === "fulfilled") results.push(r.value);
+      else if (fallback) results.push(fallback(i + k, r.reason));
+      else throw r.reason;
+    });
   }
   return results;
 }
@@ -398,6 +421,7 @@ export async function condenseTranscript(
   }
 
   // MAP: batch to 3 concurrent Haiku calls to avoid rate-limit spikes
+  let summaryFailures = 0;
   const summaries = await batchPromises(
     chunks.map((chunk, i) => () =>
       summarizeChunk(
@@ -406,8 +430,16 @@ export async function condenseTranscript(
         language
       )
     ),
-    3
+    3,
+    // A chunk we couldn't summarise keeps its own text — losing a slice of the
+    // lecture is far better than failing the whole recording.
+    (i, err) => {
+      if (summaryFailures === 0) console.warn("[condenseTranscript] chunk failed:", (err as any)?.message);
+      summaryFailures++;
+      return chunks[i].text;
+    },
   );
+  if (summaryFailures) console.warn(`[condenseTranscript] ${summaryFailures}/${chunks.length} chunks kept raw`);
 
   return (
     `[CONDENSED FROM ${chunks.length} SEGMENTS — "${title}"]\n\n` +
@@ -813,6 +845,75 @@ ${MATH_STYLE}`,
   return normalizeMathDelimiters(extractText(msg).trim() || text);
 }
 
+// ─── Note autocomplete ────────────────────────────────────────────────────────
+// Suggests how the sentence a student is typing in their notes carries on,
+// grounded in what their class actually covered. Short and cheap by design:
+// it fires only after a pause in typing.
+
+export async function completeNote(before: string, context: { label: string; content: string }[], language = "en"): Promise<string> {
+  const material = context.map(c => `(${c.label}) ${c.content.slice(0, 700)}`).join("\n\n");
+  const msg = await createWithRetry({
+    model: "gpt-4o-mini",
+    max_tokens: 36,
+    temperature: 0.3,
+    stop: ["\n"],
+    system: `You are the autocomplete in a student's lecture notes, written in ${LANG_NAMES[language] ?? "English"} — continue in that language, matching how the student writes.
+Continue the text from exactly where it stops: finish the sentence being typed — or, if the last sentence is complete, write the one short sentence that naturally comes next. One sentence, at most 20 words.
+Prefer what the class material below says. Never invent specifics (topics, names, dates, numbers) that neither the notes nor the material mention — a shorter, general continuation is better.
+Output only the continuation — never repeat what is already written, no quotes, no preamble. If there is nothing useful to add, output nothing.
+Write maths in inline $...$ LaTeX (e.g. $f'(x) = 2x$), matching how the notes are written.
+${material ? `\nClass material:\n${material}` : ""}`,
+    messages: [{ role: "user", content: `Notes so far:\n${before}` }],
+  }, 1);
+  let out = normalizeMathDelimiters(extractText(msg)).replace(/^["'“]|["'”]$/g, "");
+  if (!out.trim()) return "";
+  // Never hand back an echo of the last words already typed.
+  const tail = before.slice(-40).trim();
+  if (tail && out.trim().startsWith(tail)) out = out.trim().slice(tail.length);
+  // Join cleanly: a space between words, none before punctuation.
+  if (/\S$/.test(before) && /^[A-Za-z0-9$(]/.test(out)) out = ` ${out}`;
+  if (/\s$/.test(before)) out = out.replace(/^\s+/, "");
+  // One sentence only: stop at the first sentence end ("9.8" and "$…$" don't count).
+  const end = /[.!?](?=\s|$)/.exec(out.replace(/\$[^$]*\$/g, m => "x".repeat(m.length)));
+  if (end) out = out.slice(0, end.index + 1);
+  return out.replace(/\s+$/, "");
+}
+
+// ─── Handwritten maths → LaTeX ─────────────────────────────────────────────────
+// A formula the student wrote with a finger, stylus or mouse in their notes.
+
+export async function readHandwrittenMath(base64: string, mimeType: string, subjectHint = "", language = "en"): Promise<string> {
+  const msg = await createWithRetry({
+    model: "gpt-4o",
+    max_tokens: 400,
+    temperature: 0,
+    system: `You read handwritten formulas from a student's note and write them as LaTeX.${subjectHint ? `\nThe student is writing ${subjectHint}.` : ""}
+Return ONLY the LaTeX for what is written — no $ or \\[ \\] delimiters, no code fences, no explanation.
+Write it the way a textbook would: \\frac{a}{b}, x^{2}, a_{n}, \\sqrt{x}, \\int_{0}^{1} f(x)\\,dx, \\sum_{i=1}^{n}, \\lim_{x \\to 0}, \\sin x, Greek letters as \\alpha \\theta \\pi, matrices with \\begin{pmatrix} … \\end{pmatrix}.
+Several lines of working become \\begin{aligned} … \\end{aligned} with the equals signs aligned (&=).
+Chemistry uses mhchem: \\ce{2H2 + O2 -> 2H2O}, \\ce{SO4^2-}, \\ce{N2 + 3H2 <=> 2NH3}, \\ce{NaCl(aq)}.
+Units are upright with a thin space: 250\\,\\mathrm{mg}, 5\\,\\mathrm{mL}, 30\\,\\mathrm{gtt/min}; words in formulas (e.g. "dose", "volume") go in \\text{…}.
+Copy exactly what is written — do not solve, simplify or correct it. Words written alongside go in \\text{…}, in ${LANG_NAMES[language] ?? "English"} as the student wrote them.
+If nothing mathematical is legible, return exactly: NONE`,
+    messages: [{
+      role: "user",
+      content: [
+        { type: "text", text: "Transcribe this handwritten maths as LaTeX." },
+        { type: "image_url", image_url: { url: `data:${mimeType};base64,${base64}`, detail: "high" } },
+      ],
+    }],
+  }, 2);
+  let out = extractText(msg).trim()
+    .replace(/^```(?:latex|tex)?\s*|\s*```$/g, "")
+    .replace(/^\$\$([\s\S]*)\$\$$/, "$1")
+    .replace(/^\$([\s\S]*)\$$/, "$1")
+    .replace(/^\\\[([\s\S]*)\\\]$/, "$1")
+    .replace(/^\\\(([\s\S]*)\\\)$/, "$1")
+    .trim();
+  if (!out || out === "NONE") return "";
+  return tidyTex(out);
+}
+
 // ─── Live transcript typesetting ──────────────────────────────────────────────
 // During a recording, each finished sentence that sounds like maths is rewritten
 // so the live view uses the same LaTeX style as the notes. Sentences with no sign
@@ -889,13 +990,22 @@ export async function correctTranscript(transcript: string): Promise<string> {
   }
   if (current) chunks.push(current);
 
+  let failed = 0;
   try {
     const corrected = await batchPromises(
       chunks.map(c => () => correctChunk(c)),
-      6
+      6,
+      // A chunk we couldn't proofread keeps its original wording.
+      (i, err) => {
+        if (failed === 0) console.warn("[correctTranscript] chunk failed:", (err as any)?.message);
+        failed++;
+        return chunks[i];
+      },
     );
+    if (failed) console.warn(`[correctTranscript] ${failed}/${chunks.length} chunks kept as-is`);
     return corrected.join(" ");
-  } catch {
+  } catch (e: any) {
+    console.error("[correctTranscript] correction abandoned:", e?.message);
     return transcript;
   }
 }

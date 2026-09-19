@@ -11,6 +11,7 @@ import { useApi, makeApiFetcher } from "../../lib/api";
 import { useAuth } from "@clerk/clerk-expo";
 import { Ionicons } from "@expo/vector-icons";
 import { syncEventReminders } from "../../lib/eventReminders";
+import { useTr } from "../../lib/useTr";
 
 type CalView = "day" | "week" | "month";
 const VIEWS: CalView[] = ["day", "week", "month"];
@@ -26,6 +27,7 @@ const TYPE_COLOR: Record<string, string> = {
 };
 
 export default function CalendarScreen() {
+  const tr = useTr();
   const insets = useSafeAreaInsets();
   const [view, setView] = useState<CalView>("week");
   const [anchor, setAnchor] = useState(new Date());
@@ -67,7 +69,7 @@ export default function CalendarScreen() {
   // Reviews Flux schedules and events the student adds share the day list.
   const itemsOn = (d: Date) => [
     ...sessions.filter((ev) => isSameDay(new Date(ev.scheduledAt), d))
-      .map((ev) => ({ kind: "session" as const, id: ev.id, at: new Date(ev.scheduledAt), title: ev.lecture?.title ?? "Study session", sub: ev.type, course: ev.lecture?.course?.name })),
+      .map((ev) => ({ kind: "session" as const, id: ev.id, at: new Date(ev.scheduledAt), title: ev.lecture?.title ?? tr("Study session"), sub: ev.type, course: ev.lecture?.course?.name })),
     ...events.filter((ev) => isSameDay(new Date(ev.date), d))
       .map((ev) => ({ kind: "event" as const, id: ev.id, at: new Date(ev.date), title: ev.title, sub: ev.type, course: ev.course?.name })),
   ].sort((a, b) => a.at.getTime() - b.at.getTime());
@@ -99,20 +101,20 @@ export default function CalendarScreen() {
       setNewTitle("");
       setAdding(false);
     } catch (e: any) {
-      Alert.alert("Couldn't schedule", e?.response?.data?.error ?? e?.message ?? "Try again.");
+      Alert.alert(tr("Couldn't schedule"), e?.response?.data?.error ?? e?.message ?? tr("Try again."));
     } finally {
       setSaving(false);
     }
   }
 
   function removeEvent(id: string, title: string) {
-    Alert.alert("Delete event?", `"${title}" will be removed from your schedule.`, [
-      { text: "Cancel", style: "cancel" },
+    Alert.alert(tr("Delete event?"), `"${title}" will be removed from your schedule.`, [
+      { text: tr("Cancel"), style: "cancel" },
       {
-        text: "Delete", style: "destructive",
+        text: tr("Delete"), style: "destructive",
         onPress: async () => {
           try { await api.delete(`/api/events/${id}`); await mutateEvents(); }
-          catch (e: any) { Alert.alert("Couldn't delete", e?.message ?? "Try again."); }
+          catch (e: any) { Alert.alert(tr("Couldn't delete"), e?.message ?? tr("Try again.")); }
         },
       },
     ]);
@@ -139,10 +141,10 @@ export default function CalendarScreen() {
       <StatusBar barStyle="dark-content" />
       <ScrollView style={s.root} contentContainerStyle={[s.content, { paddingTop: insets.top + 16 }]}>
         <View style={s.topbar}>
-          <Text style={s.title}>Schedule</Text>
+          <Text style={s.title}>{tr("Schedule")}</Text>
           <TouchableOpacity style={s.connectBtn} onPress={connectGoogle} activeOpacity={0.7}>
             <Ionicons name="logo-google" size={14} color="#0f1115" />
-            <Text style={s.connectTxt}>Google</Text>
+            <Text style={s.connectTxt}>{tr("Google")}</Text>
           </TouchableOpacity>
         </View>
 
@@ -156,7 +158,7 @@ export default function CalendarScreen() {
               activeOpacity={0.8}
             >
               <Text style={[s.segTxt, view === v && s.segTxtOn]}>
-                {v === "day" ? "Day" : v === "week" ? "Week" : "Month"}
+                {v === "day" ? "Day" : v === "week" ? tr("Week") : "Month"}
               </Text>
             </TouchableOpacity>
           ))}
@@ -267,7 +269,7 @@ export default function CalendarScreen() {
                   </View>
                 ))}
               </ScrollView>
-              <Text style={s.wkHintTxt}>Tap any slot to schedule something</Text>
+              <Text style={s.wkHintTxt}>{tr("Tap any slot to schedule something")}</Text>
             </View>
           )}
 
@@ -279,12 +281,12 @@ export default function CalendarScreen() {
                 <Text style={s.dayHeroSub}>
                   {listEvents.length
                     ? `${listEvents.length} session${listEvents.length === 1 ? "" : "s"}`
-                    : "Nothing scheduled"}
+                    : tr("Nothing scheduled")}
                 </Text>
               </View>
               {!isToday(anchor) && (
                 <TouchableOpacity onPress={() => { setAnchor(new Date()); setSelected(new Date()); }} style={s.todayBtn} activeOpacity={0.7}>
-                  <Text style={s.todayTxt}>Today</Text>
+                  <Text style={s.todayTxt}>{tr("Today")}</Text>
                 </TouchableOpacity>
               )}
             </View>
@@ -293,7 +295,7 @@ export default function CalendarScreen() {
 
         <View style={s.listHead}>
           <Text style={[s.sectionLbl, { marginBottom: 0 }]}>
-            {isToday(listDate) ? "Today" : format(listDate, "EEEE")} · {format(listDate, "d MMM")}
+            {isToday(listDate) ? tr("Today") : format(listDate, "EEEE")} · {format(listDate, "d MMM")}
           </Text>
           <TouchableOpacity
             style={[s.addBtn, adding && { backgroundColor: "rgba(15,17,21,0.08)" }]}
@@ -301,7 +303,7 @@ export default function CalendarScreen() {
             activeOpacity={0.8}
           >
             <Ionicons name={adding ? "close" : "add"} size={17} color={adding ? "#0f1115" : "#fff"} />
-            <Text style={[s.addTxt, adding && { color: "#0f1115" }]}>{adding ? "Cancel" : "Schedule"}</Text>
+            <Text style={[s.addTxt, adding && { color: "#0f1115" }]}>{adding ? tr("Cancel") : tr("Schedule")}</Text>
           </TouchableOpacity>
         </View>
 
@@ -323,7 +325,7 @@ export default function CalendarScreen() {
               style={s.addInput}
               value={newTitle}
               onChangeText={setNewTitle}
-              placeholder="Exam, assignment, reading…"
+              placeholder={tr("Exam, assignment, reading…")}
               placeholderTextColor="rgba(15,17,21,0.35)"
               returnKeyType="done"
               onSubmitEditing={addEvent}
@@ -340,7 +342,7 @@ export default function CalendarScreen() {
                 </TouchableOpacity>
               ))}
             </View>
-            <Text style={s.fieldLbl}>Time</Text>
+            <Text style={s.fieldLbl}>{tr("Time")}</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={s.hourRow}>
               {HOURS.map(h => (
                 <TouchableOpacity
@@ -364,7 +366,7 @@ export default function CalendarScreen() {
             >
               <Text style={s.saveTxt}>
                 {saving
-                  ? "Scheduling…"
+                  ? tr("Scheduling…")
                   : !newTitle.trim()
                   ? "Name it first"
                   : `Add to ${format(listDate, "d MMM")} · ${newHour === 0 ? "12am" : newHour < 12 ? `${newHour}am` : newHour === 12 ? "12pm" : `${newHour - 12}pm`}`}

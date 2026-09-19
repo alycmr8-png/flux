@@ -13,8 +13,10 @@ import * as ImagePicker from "expo-image-picker";
 import useSWR from "swr";
 import { mathToPlainText } from "@sano/shared";
 import { MathText } from "./MathText";
+import { API_BASE } from "../lib/apiBase";
+import { useTr } from "../lib/useTr";
 
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:3001";
+const BASE_URL = API_BASE;
 const MAX_PER_UPLOAD = 10;
 
 type Photo = { id: string; text: string; status: "reading" | "ready" | "error"; createdAt: string; imageUrl: string };
@@ -25,6 +27,7 @@ function when(iso: string) {
 }
 
 export function ClassPhotos({ api, fetcher, course, color }: { api: any; fetcher: any; course: { id: string; name: string }; color: string }) {
+  const tr = useTr();
   const { data, mutate } = useSWR(`/api/photos?courseId=${course.id}`, fetcher, {
     // Poll only while a photo is still being read.
     refreshInterval: (latest: any) => ((latest?.data ?? []).some((p: Photo) => p.status === "reading") ? 2500 : 0),
@@ -39,7 +42,7 @@ export function ClassPhotos({ api, fetcher, course, color }: { api: any; fetcher
       ? await ImagePicker.requestCameraPermissionsAsync()
       : await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!perm.granted) {
-      Alert.alert(fromCamera ? "Camera denied" : "Photos denied", "Enable access in Settings to add photos.");
+      Alert.alert(fromCamera ? tr("Camera denied") : tr("Photos denied"), tr("Enable access in Settings to add photos."));
       return;
     }
     // quality < 1 has the picker re-encode as JPEG, which the reader accepts (HEIC isn't).
@@ -64,10 +67,10 @@ export function ClassPhotos({ api, fetcher, course, color }: { api: any; fetcher
     } catch (e: any) {
       const status = e?.response?.status;
       Alert.alert(
-        "Couldn't add photos",
-        status === 429 ? "You've hit this month's plan limit. Upgrade in Billing to keep going."
-          : status === 415 ? "Photos must be JPEG, PNG, WebP or GIF."
-          : "Try again in a moment.",
+        tr("Couldn't add photos"),
+        status === 429 ? tr("You've hit this month's plan limit. Upgrade in Billing to keep going.")
+          : status === 415 ? tr("Photos must be JPEG, PNG, WebP or GIF.")
+          : tr("Try again in a moment."),
       );
     } finally {
       setUploading(false);
@@ -75,15 +78,15 @@ export function ClassPhotos({ api, fetcher, course, color }: { api: any; fetcher
   }
 
   function remove(id: string) {
-    Alert.alert("Delete this photo?", "The photo and what Flux read from it are removed, and Ask will stop using it.", [
-      { text: "Cancel", style: "cancel" },
+    Alert.alert(tr("Delete this photo?"), tr("The photo and what Flux read from it are removed, and Ask will stop using it."), [
+      { text: tr("Cancel"), style: "cancel" },
       {
-        text: "Delete",
+        text: tr("Delete"),
         style: "destructive",
         onPress: async () => {
           setOpenId(null);
           await mutate({ data: photos.filter(p => p.id !== id) }, { revalidate: false });
-          try { await api.delete(`/api/photos/${id}`); } catch { Alert.alert("Couldn't delete that photo", "Try again."); mutate(); }
+          try { await api.delete(`/api/photos/${id}`); } catch { Alert.alert(tr("Couldn't delete that photo"), tr("Try again.")); mutate(); }
         },
       },
     ]);
@@ -107,21 +110,21 @@ export function ClassPhotos({ api, fetcher, course, color }: { api: any; fetcher
           style={[s.addBtn, { backgroundColor: color }, uploading && { opacity: 0.6 }]}
           disabled={uploading}
           activeOpacity={0.85}
-          onPress={() => Alert.alert("Add photos", "Capture the board or pick existing photos.", [
-            { text: "Take photo", onPress: () => pick(true) },
-            { text: "Choose photos", onPress: () => pick(false) },
-            { text: "Cancel", style: "cancel" },
+          onPress={() => Alert.alert(tr("Add photos"), tr("Capture the board or pick existing photos."), [
+            { text: tr("Take photo"), onPress: () => pick(true) },
+            { text: tr("Choose photos"), onPress: () => pick(false) },
+            { text: tr("Cancel"), style: "cancel" },
           ])}
         >
           {uploading ? <ActivityIndicator size="small" color="#fff" /> : <Ionicons name="camera" size={20} color="#fff" />}
-          <Text style={s.addTxt}>{uploading ? "Adding…" : "Take or add photos"}</Text>
+          <Text style={s.addTxt}>{uploading ? tr("Adding…") : tr("Take or add photos")}</Text>
         </TouchableOpacity>
       </View>
 
       {photos.length === 0 && !uploading ? (
         <View style={s.empty}>
           <Ionicons name="images-outline" size={30} color="rgba(15,17,21,0.5)" />
-          <Text style={s.emptyTxt}>No photos in this class yet.</Text>
+          <Text style={s.emptyTxt}>{tr("No photos in this class yet.")}</Text>
         </View>
       ) : (
         <View style={s.grid}>
@@ -132,21 +135,21 @@ export function ClassPhotos({ api, fetcher, course, color }: { api: any; fetcher
                 {p.status === "reading" && (
                   <View style={[s.badge, { backgroundColor: "rgba(15,17,21,0.75)" }]}>
                     <ActivityIndicator size="small" color="#fff" style={{ transform: [{ scale: 0.7 }] }} />
-                    <Text style={s.badgeTxt}>Reading…</Text>
+                    <Text style={s.badgeTxt}>{tr("Reading…")}</Text>
                   </View>
                 )}
                 {p.status === "error" && (
                   <View style={[s.badge, { backgroundColor: "#DC2626" }]}>
                     <Ionicons name="alert-circle" size={13} color="#fff" />
-                    <Text style={s.badgeTxt}>Couldn't read</Text>
+                    <Text style={s.badgeTxt}>{tr("Couldn't read")}</Text>
                   </View>
                 )}
               </View>
               <View style={s.tileBody}>
                 <Text style={[s.tilePreview, !p.text && { color: "rgba(15,17,21,0.62)" }]} numberOfLines={2}>
-                  {p.status === "reading" ? "Flux is reading this photo…"
-                    : p.status === "error" ? "Tap to try again."
-                    : p.text ? mathToPlainText(p.text).replace(/\s+/g, " ").trim() : "Nothing readable in this photo."}
+                  {p.status === "reading" ? tr("Flux is reading this photo…")
+                    : p.status === "error" ? tr("Tap to try again.")
+                    : p.text ? mathToPlainText(p.text).replace(/\s+/g, " ").trim() : tr("Nothing readable in this photo.")}
                 </Text>
                 <Text style={s.tileDate}>{when(p.createdAt)}</Text>
               </View>
@@ -159,7 +162,7 @@ export function ClassPhotos({ api, fetcher, course, color }: { api: any; fetcher
         {open && (
           <View style={s.viewer}>
             <View style={s.viewerHead}>
-              <Text style={s.viewerTitle}>What Flux read</Text>
+              <Text style={s.viewerTitle}>{tr("What Flux read")}</Text>
               <Text style={s.viewerDate}>· {when(open.createdAt)}</Text>
               <TouchableOpacity onPress={() => setOpenId(null)} style={s.closeBtn} hitSlop={10}>
                 <Ionicons name="close" size={24} color="#0f1115" />
@@ -173,25 +176,25 @@ export function ClassPhotos({ api, fetcher, course, color }: { api: any; fetcher
                 {open.status === "reading" ? (
                   <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
                     <ActivityIndicator size="small" color={color} />
-                    <Text style={s.viewerMuted}>Reading this photo…</Text>
+                    <Text style={s.viewerMuted}>{tr("Reading this photo…")}</Text>
                   </View>
                 ) : open.status === "error" ? (
                   <View style={{ gap: 12 }}>
-                    <Text style={s.viewerMuted}>Flux couldn't read this photo.</Text>
+                    <Text style={s.viewerMuted}>{tr("Flux couldn't read this photo.")}</Text>
                     <TouchableOpacity onPress={() => retry(open.id)} style={[s.retryBtn, { backgroundColor: color }]} activeOpacity={0.85}>
                       <Ionicons name="refresh" size={17} color="#fff" />
-                      <Text style={s.retryTxt}>Try again</Text>
+                      <Text style={s.retryTxt}>{tr("Try again")}</Text>
                     </TouchableOpacity>
                   </View>
                 ) : open.text ? (
                   <MathText text={open.text} style={s.viewerText} interactive />
                 ) : (
-                  <Text style={s.viewerMuted}>Nothing readable in this photo.</Text>
+                  <Text style={s.viewerMuted}>{tr("Nothing readable in this photo.")}</Text>
                 )}
               </View>
               <TouchableOpacity onPress={() => remove(open.id)} style={s.deleteBtn} activeOpacity={0.7}>
                 <Ionicons name="trash-outline" size={18} color="#DC2626" />
-                <Text style={s.deleteTxt}>Delete photo</Text>
+                <Text style={s.deleteTxt}>{tr("Delete photo")}</Text>
               </TouchableOpacity>
             </ScrollView>
           </View>

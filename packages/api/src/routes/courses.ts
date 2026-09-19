@@ -29,6 +29,12 @@ courseRouter.post("/", async (req, res) => {
 
 courseRouter.delete("/:id", async (req, res) => {
   const user = (req as any).user;
-  await prisma.course.deleteMany({ where: { id: req.params.id, userId: user.id } });
+  const gone = await prisma.course.deleteMany({ where: { id: req.params.id, userId: user.id } });
+  // MemoryChunk holds courseId as a plain column, not a relation, so nothing
+  // cascades — the course's memory has to be cleared by hand or it lingers
+  // forever, still holding the transcript text it was built from.
+  if (gone.count) {
+    await prisma.memoryChunk.deleteMany({ where: { courseId: req.params.id, userId: user.id } });
+  }
   res.json({ data: { deleted: true } });
 });

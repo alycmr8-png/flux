@@ -7,3 +7,6 @@ dist
 .expo
 *.log
 *.tsbuildinfo
+
+# Uploaded lecture audio and class photos (local dev storage)
+packages/api/uploads/

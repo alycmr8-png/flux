@@ -6,6 +6,8 @@ import { Home, Layers, HelpCircle, Calendar, CreditCard, Archive, User } from "l
 import { LanguageSwitcher } from "@/components/I18nProvider";
 import { useState, useEffect } from "react";
 import { useT } from "@/lib/useT";
+import { RecorderProvider, RecordingBar } from "@/lib/recorder";
+import { useTr } from "@/lib/useTr";
 
 // Design language is shared with the mobile app: white ground, #0f1115 text,
 // #4B5FE8 brand blue, hairline rgba(0,0,0,0.08) borders.
@@ -16,6 +18,7 @@ const HAIRLINE = "rgba(0,0,0,0.08)";
 // nav labels are translated inside the component via useT()
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const tr = useTr();
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
@@ -37,6 +40,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     pathname === href || (href !== "/dashboard" && pathname.startsWith(href));
 
   return (
+    // The recorder lives here so a lecture keeps recording on every dashboard page.
+    <RecorderProvider>
     <div className="flex flex-col md:flex-row h-screen overflow-hidden" style={{ background: "#FFFFFF" }}>
 
       {/* Sidebar — desktop only */}
@@ -57,9 +62,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 22, color: INK, letterSpacing: "-0.5px", lineHeight: 1.1 }}>
                 Flux
               </div>
-              <div style={{ fontSize: 12.5, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(15,17,21, 0.73)" }}>
-                Study Assistant
-              </div>
+              <div style={{ fontSize: 12.5, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(15,17,21, 0.73)" }}>{tr("Study Assistant")}</div>
             </div>
           </div>
         </div>
@@ -125,6 +128,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           );
         })}
       </nav>
+
+      <RecordingBar />
     </div>
+    </RecorderProvider>
   );
 }

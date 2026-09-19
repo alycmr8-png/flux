@@ -7,8 +7,9 @@ import { useEffect, useState } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, type LayoutChangeEvent, type GestureResponderEvent } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useAudioPlayer, useAudioPlayerStatus } from "expo-audio";
+import { API_BASE } from "../lib/apiBase";
 
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:3001";
+const BASE_URL = API_BASE;
 
 const clock = (sec: number) => {
   const s = Math.max(0, Math.floor(sec || 0));

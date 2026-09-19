@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { View, Text, StyleSheet, Animated, ActivityIndicator } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useTr } from "../lib/useTr";
 
 const STAGE_MS = 3000;
 const FADE_MS = 200;
@@ -63,6 +64,7 @@ function DemoFrame({
   stage: number;
   children: React.ReactNode;
 }) {
+  const tr = useTr();
   return (
     <View style={s.card}>
       <View style={s.chromeRow}>
@@ -70,7 +72,7 @@ function DemoFrame({
           <Ionicons name={icon} size={11} color="#4B5FE8" />
           <Text style={s.tabChipTxt}>{tab}</Text>
         </View>
-        <Text style={s.courseTxt}>Calculus II</Text>
+        <Text style={s.courseTxt}>{tr("Calculus II")}</Text>
       </View>
 
       <Animated.View style={[s.stageBody, { opacity: fade }]}>{children}</Animated.View>
@@ -87,6 +89,7 @@ function DemoFrame({
 /* ── Demo 1 — record a lecture, get study material out of it ─────────────── */
 
 export function RecordingDemo() {
+  const tr = useTr();
   const { stage, fade } = useStageCycle(4);
   const lines = useStagger(stage, stage === 2 || stage === 3, 4);
 
@@ -123,14 +126,14 @@ export function RecordingDemo() {
   }, [stage, waves]);
 
   return (
-    <DemoFrame tab="Record" icon="mic-outline" fade={fade} dots={4} stage={stage}>
+    <DemoFrame tab={tr("Record")} icon="mic-outline" fade={fade} dots={4} stage={stage}>
       {stage === 0 && (
         <View>
           <View style={s.headerRow}>
             <Animated.View style={[s.iconBox, s.iconRed, { transform: [{ scale: pulse }] }]}>
               <Ionicons name="mic" size={15} color="#DC2626" />
             </Animated.View>
-            <Text style={s.title}>Recording lecture…</Text>
+            <Text style={s.title}>{tr("Recording lecture…")}</Text>
             <Text style={s.timer}>00:47</Text>
           </View>
           <View style={s.waveRow}>
@@ -150,7 +153,7 @@ export function RecordingDemo() {
             <View style={[s.iconBox, s.iconBlue]}>
               <ActivityIndicator size="small" color="#4B5FE8" />
             </View>
-            <Text style={s.title}>Generating your summary…</Text>
+            <Text style={s.title}>{tr("Generating your summary…")}</Text>
           </View>
           <View style={{ gap: 7 }}>
             {[0.92, 0.74, 0.55].map((w, i) => (
@@ -166,22 +169,22 @@ export function RecordingDemo() {
             <View style={[s.iconBox, s.iconBlue]}>
               <Ionicons name="document-text-outline" size={15} color="#4B5FE8" />
             </View>
-            <Text style={s.title}>Lecture 5</Text>
+            <Text style={s.title}>{tr("Lecture 5")}</Text>
           </View>
           <Reveal anim={lines[0]}>
-            <Text style={s.sectionLbl}>Summary</Text>
-            <Text style={s.body}>Derivatives of composite functions, worked end to end.</Text>
+            <Text style={s.sectionLbl}>{tr("Summary")}</Text>
+            <Text style={s.body}>{tr("Derivatives of composite functions, worked end to end.")}</Text>
           </Reveal>
           <Reveal anim={lines[1]} style={{ marginTop: 8 }}>
-            <Text style={s.sectionLbl}>Key Points</Text>
+            <Text style={s.sectionLbl}>{tr("Key Points")}</Text>
           </Reveal>
           <Reveal anim={lines[2]} style={s.bulletRow}>
             <Text style={s.bullet}>•</Text>
-            <Text style={s.body}>Differentiate the outside, multiply by the inside</Text>
+            <Text style={s.body}>{tr("Differentiate the outside, multiply by the inside")}</Text>
           </Reveal>
           <Reveal anim={lines[3]} style={s.bulletRow}>
             <Text style={s.bullet}>•</Text>
-            <Text style={s.body}>He circled this twice — expect it on the midterm</Text>
+            <Text style={s.body}>{tr("He circled this twice — expect it on the midterm")}</Text>
           </Reveal>
         </View>
       )}
@@ -192,22 +195,22 @@ export function RecordingDemo() {
             <View style={[s.iconBox, s.iconBlue]}>
               <Ionicons name="sparkles-outline" size={15} color="#4B5FE8" />
             </View>
-            <Text style={s.title}>Ask your course</Text>
+            <Text style={s.title}>{tr("Ask your course")}</Text>
           </View>
           <Reveal anim={lines[0]} style={s.bubbleRight}>
             <View style={s.bubbleUser}>
-              <Text style={s.bubbleUserTxt}>What did the professor emphasize most?</Text>
+              <Text style={s.bubbleUserTxt}>{tr("What did the professor emphasize most?")}</Text>
             </View>
           </Reveal>
           <Reveal anim={lines[1]} style={s.bubbleLeft}>
             <View style={s.bubbleAi}>
-              <Text style={s.body}>The chain rule — he spent 18 minutes on it.</Text>
+              <Text style={s.body}>{tr("The chain rule — he spent 18 minutes on it.")}</Text>
             </View>
           </Reveal>
           <Reveal anim={lines[2]} style={s.bubbleLeft}>
             <View style={s.citeChip}>
               <Ionicons name="play" size={8} color="#4B5FE8" />
-              <Text style={s.citeTxt}>Lecture 5 · 32:10</Text>
+              <Text style={s.citeTxt}>{tr("Lecture 5 · 32:10")}</Text>
             </View>
           </Reveal>
         </View>
@@ -222,6 +225,7 @@ const NOTE_TEXT = "Chain rule: d/dx f(g(x)) = f′(g(x))·g′(x)";
 const SYMBOLS = ["∫", "√", "π", "Δ", "Σ", "∂"];
 
 export function NotesDemo() {
+  const tr = useTr();
   const { stage, fade } = useStageCycle(4);
   const lines = useStagger(stage, stage === 1 || stage === 2 || stage === 3);
 
@@ -239,14 +243,14 @@ export function NotesDemo() {
   }, [stage]);
 
   return (
-    <DemoFrame tab="Take Note" icon="create-outline" fade={fade} dots={4} stage={stage}>
+    <DemoFrame tab={tr("Take Note")} icon="create-outline" fade={fade} dots={4} stage={stage}>
       {stage === 0 && (
         <View>
           <View style={s.headerRow}>
             <View style={[s.iconBox, s.iconPurple]}>
               <Ionicons name="create-outline" size={15} color="#9333EA" />
             </View>
-            <Text style={s.title}>Chapter 3 — Derivatives</Text>
+            <Text style={s.title}>{tr("Chapter 3 — Derivatives")}</Text>
           </View>
           <View style={s.symbolRow}>
             {SYMBOLS.map((sym) => (
@@ -268,16 +272,16 @@ export function NotesDemo() {
             <View style={[s.iconBox, s.iconGreen]}>
               <Ionicons name="checkmark-circle" size={15} color="#16A34A" />
             </View>
-            <Text style={s.title}>Your Notes</Text>
-            <Text style={s.savedTxt}>Saved 14:32</Text>
+            <Text style={s.title}>{tr("Your Notes")}</Text>
+            <Text style={s.savedTxt}>{tr("Saved 14:32")}</Text>
           </View>
           <Reveal anim={lines[0]} style={s.row}>
             <Ionicons name="create-outline" size={13} color="#9333EA" />
-            <Text style={s.rowTitle}>Chapter 3 — Derivatives</Text>
+            <Text style={s.rowTitle}>{tr("Chapter 3 — Derivatives")}</Text>
           </Reveal>
           <Reveal anim={lines[1]} style={s.row}>
             <Ionicons name="mic-outline" size={13} color="#DC2626" />
-            <Text style={s.rowTitle}>Lecture 5</Text>
+            <Text style={s.rowTitle}>{tr("Lecture 5")}</Text>
             <Text style={s.rowSub}>ready</Text>
           </Reveal>
         </View>
@@ -289,24 +293,24 @@ export function NotesDemo() {
             <View style={[s.iconBox, s.iconBlue]}>
               <Ionicons name="layers-outline" size={15} color="#4B5FE8" />
             </View>
-            <Text style={s.title}>One memory per class</Text>
+            <Text style={s.title}>{tr("One memory per class")}</Text>
           </View>
           <Reveal anim={lines[0]} style={s.mergeRow}>
             <View style={s.mergePill}>
               <Ionicons name="mic-outline" size={11} color="#DC2626" />
-              <Text style={s.mergeTxt}>Lecture 5</Text>
+              <Text style={s.mergeTxt}>{tr("Lecture 5")}</Text>
             </View>
             <View style={s.mergePill}>
               <Ionicons name="create-outline" size={11} color="#9333EA" />
-              <Text style={s.mergeTxt}>Your note</Text>
+              <Text style={s.mergeTxt}>{tr("Your note")}</Text>
             </View>
           </Reveal>
           <Reveal anim={lines[1]} style={{ alignItems: "center", marginVertical: 4 }}>
             <Ionicons name="arrow-down" size={13} color="rgba(15,17,21,0.35)" />
           </Reveal>
           <Reveal anim={lines[2]} style={s.tintBox}>
-            <Text style={s.bodyStrong}>Calculus II memory</Text>
-            <Text style={s.body}>In memory: 2 sources · 34 chunks</Text>
+            <Text style={s.bodyStrong}>{tr("Calculus II memory")}</Text>
+            <Text style={s.body}>{tr("In memory: 2 sources")}</Text>
           </Reveal>
         </View>
       )}
@@ -317,26 +321,26 @@ export function NotesDemo() {
             <View style={[s.iconBox, s.iconBlue]}>
               <Ionicons name="sparkles-outline" size={15} color="#4B5FE8" />
             </View>
-            <Text style={s.title}>Answers from both</Text>
+            <Text style={s.title}>{tr("Answers from both")}</Text>
           </View>
           <Reveal anim={lines[0]} style={s.bubbleRight}>
             <View style={s.bubbleUser}>
-              <Text style={s.bubbleUserTxt}>Explain the chain rule</Text>
+              <Text style={s.bubbleUserTxt}>{tr("Explain the chain rule")}</Text>
             </View>
           </Reveal>
           <Reveal anim={lines[1]} style={s.bubbleLeft}>
             <View style={s.bubbleAi}>
-              <Text style={s.body}>Differentiate the outside, multiply by the inside's derivative.</Text>
+              <Text style={s.body}>{tr("Differentiate the outside, multiply by the inside's derivative.")}</Text>
             </View>
           </Reveal>
           <Reveal anim={lines[2]} style={[s.bubbleLeft, { flexDirection: "row", gap: 6 }]}>
             <View style={s.citeChip}>
               <Ionicons name="mic-outline" size={8} color="#4B5FE8" />
-              <Text style={s.citeTxt}>Lecture 5</Text>
+              <Text style={s.citeTxt}>{tr("Lecture 5")}</Text>
             </View>
             <View style={s.citeChip}>
               <Ionicons name="create-outline" size={8} color="#4B5FE8" />
-              <Text style={s.citeTxt}>Chapter 3</Text>
+              <Text style={s.citeTxt}>{tr("Chapter 3")}</Text>
             </View>
           </Reveal>
         </View>

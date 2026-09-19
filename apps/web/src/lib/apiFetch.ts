@@ -1,8 +1,9 @@
 "use client";
 import { useAuth } from "@clerk/nextjs";
 import { useCallback } from "react";
+import { apiBase } from "@/lib/apiBase";
 
-const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
+const BASE = apiBase();
 
 export function useApiFetch() {
   const { getToken } = useAuth();

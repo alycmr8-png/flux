@@ -10,6 +10,7 @@ import { CapabilityTicker } from "@/components/CapabilityTicker";
 import { DemoQuote } from "@/components/HeroQuote";
 import { ProductDemo } from "@/components/ProductDemo";
 import { RecordingDemo } from "@/components/RecordingDemo";
+import { BoardPhotoDemo } from "@/components/BoardPhotoDemo";
 import { CourseMemoryDemo } from "@/components/CourseMemoryDemo";
 import { Navbar } from "@/components/Navbar";
 import { RotatingPrompts } from "@/components/RotatingPrompts";
@@ -17,10 +18,15 @@ import { Hero3DLogo } from "@/components/Hero3DLogo";
 import { PricingSection } from "@/components/PricingSection";
 import { ScrollReveal } from "@/components/ScrollReveal";
 import { FaqSection } from "@/components/FaqSection";
+import { getLang } from "@/lib/lang";
+import { makeTranslator } from "@sano/i18n/ui";
 
 export default async function LandingPage() {
   const { userId } = await auth();
   if (userId) redirect("/dashboard");
+  const lang = await getLang();
+  // A server component cannot use the hook — the translator itself is a plain function.
+  const tr = makeTranslator(lang);
 
   return (
     <main className="min-h-screen flex flex-col" style={{ background: "#ffffff", position: "relative", overflow: "hidden" }}>
@@ -64,11 +70,11 @@ export default async function LandingPage() {
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-9" style={{ background: "rgba(75,95,232,0.08)", border: "1px solid rgba(75,95,232,0.25)" }}>
             <Layers size={12} style={{ color: "#4B5FE8" }} />
             <span className="text-[10px] md:text-xs uppercase tracking-[0.12em] md:tracking-[0.2em] font-semibold" style={{ color: "#4B5FE8" }}>
-              Built for university students
+              {tr("Built for university students")}
             </span>
           </div>
           <h1 className="mb-6 leading-[1.05]" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: "clamp(30px, 6.4vw, 64px)", fontWeight: 800, color: "#0f1115", letterSpacing: "-0.03em" }}>
-            Record the lecture.{" "}
+            {tr("Record the lecture.")}{" "}
             <br />
             <span
               style={{
@@ -78,13 +84,13 @@ export default async function LandingPage() {
                 color: "transparent",
               }}
             >
-              Get the flashcards, quiz{" "}
+              {tr("Get the flashcards, quiz")}{" "}
               <br className="hidden md:inline" />
-              and summary.
+              {tr("and summary.")}
             </span>
           </h1>
           <p className="text-base md:text-lg mb-7 leading-relaxed max-w-xl" style={{ color: "rgba(15,17,21,0.6)" }}>
-            Flux turns your recordings, PDFs, slides and YouTube links into study material — then answers anything about your course, cited to the lecture and the minute.
+            {tr("Flux turns your recordings, PDFs, slides and YouTube links into study material — then answers anything about your course, cited to the lecture and the minute.")}
           </p>
           <div className="mb-9 px-2 w-full flex justify-center">
             <RotatingPrompts />
@@ -99,17 +105,17 @@ export default async function LandingPage() {
                 boxShadow: "0 10px 30px rgba(75,95,232,0.35)",
               }}
             >
-              Get started free →
+              {tr("Get started free →")}
             </Link>
             <Link
               href="/sign-in"
               className="font-medium px-10 py-4 rounded-full text-base transition-all hover:border-[rgba(75,95,232,0.4)]"
               style={{ border: "1.5px solid rgba(15,17,21,0.15)", color: "#0f1115", background: "white" }}
             >
-              Sign in
+              {tr("Sign in")}
             </Link>
           </div>
-          <span className="text-sm" style={{ color: "rgba(15,17,21,0.4)" }}>Free to start · No credit card needed</span>
+          <span className="text-sm" style={{ color: "rgba(15,17,21,0.4)" }}>{tr("Free to start · No credit card needed")}</span>
         </div>
       </div>
 
@@ -126,21 +132,19 @@ export default async function LandingPage() {
       <ScrollReveal id="how-it-works" className="px-6 md:px-16 py-16 md:py-20">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-12">
-            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: "#6E7FF3", marginBottom: 14 }}>How it works</div>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: "#6E7FF3", marginBottom: 14 }}>{tr("How it works")}</div>
             <h2 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: "clamp(28px, 4.5vw, 44px)", color: "#0f1115", letterSpacing: "-0.03em", lineHeight: 1.1 }}>
-              One recording.<br />Everything you need.
+              {tr("One recording.")}<br />{tr("Everything you need.")}
             </h2>
             <p className="text-base md:text-lg mt-5 max-w-2xl mx-auto leading-relaxed" style={{ color: "rgba(0,0,0,0.55)" }}>
-              Imagine you&apos;re taking Calculus. You hit record and the words appear on screen as they&apos;re
-              said. The professor fills the board, so you photograph it — Flux reads the formulas straight
-              off the photo. When the lecture ends, one tap turns all of it into study material.
+              {tr("Imagine you're taking Calculus. You hit record and the words appear on screen as they're said. The professor fills the board, so you photograph it — Flux reads the formulas straight off the photo. When the lecture ends, one tap turns all of it into study material.")}
             </p>
           </div>
           <div className="grid md:grid-cols-3 gap-5">
             {[
-              { n: "01", title: "Record, and read along", text: "Words appear on screen as they're spoken. Photograph the whiteboard and Flux reads it into the same transcript — including the formulas." },
-              { n: "02", title: "Six things from one tap", text: "Summary, full transcript, key points, flashcards, a practice quiz, and a chat that knows this lecture. Generated once, yours forever." },
-              { n: "03", title: "Ask your whole course", text: "Every lecture and note becomes one memory per class. Ask anything and the answer cites the lecture and the minute it was said." },
+              { n: "01", title: tr("Record, and read along"), text: tr("Words appear on screen as they're spoken. Photograph the whiteboard and Flux reads it into the same transcript — including the formulas.") },
+              { n: "02", title: tr("Six things from one tap"), text: tr("Summary, full transcript, key points, flashcards, a practice quiz, and a chat that knows this lecture. Generated once, yours forever.") },
+              { n: "03", title: tr("Ask your whole course"), text: tr("Every lecture and note becomes one memory per class. Ask anything and the answer cites the lecture and the minute it was said.") },
             ].map(step => (
               <div key={step.n} className="rounded-2xl p-7" style={{ background: "rgba(0,0,0,0.03)", border: "1px solid rgba(0,0,0,0.08)" }}>
                 <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 13, color: "#6E7FF3", letterSpacing: "0.1em", marginBottom: 14 }}>{step.n}</div>
@@ -155,14 +159,12 @@ export default async function LandingPage() {
       {/* Capture step — recording demo */}
       <ScrollReveal className="flex flex-col items-center px-4 md:px-12 pb-20 gap-8" delay={150}>
         <div className="text-center max-w-2xl">
-          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: "#6E7FF3", marginBottom: 14 }}>Step 1 — Capture</div>
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: "#6E7FF3", marginBottom: 14 }}>{tr("Step 1 — Capture")}</div>
           <h2 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: "clamp(30px, 5vw, 52px)", color: "#0f1115", letterSpacing: "-0.03em", lineHeight: 1.1, marginBottom: 16 }}>
-            Watch it write itself.<br />While the lecture happens.
+            {tr("Watch it write itself.")}<br />{tr("While the lecture happens.")}
           </h2>
           <p style={{ fontSize: 18, color: "rgba(0,0,0,0.5)", lineHeight: 1.65 }}>
-            The transcript builds live as your professor talks, so you can follow along instead of
-            scribbling. Photograph the board and those formulas join the same notes — written properly
-            as ∫₀¹ x² dx, not &ldquo;the integral from zero to one of x squared&rdquo;.
+            {tr("The transcript builds live as your professor talks, so you can follow along instead of scribbling. Photograph the board and those formulas join the same notes — written properly as ∫₀¹ x² dx, not \u201cthe integral from zero to one of x squared\u201d.")}
           </p>
         </div>
         <div className="relative">
@@ -170,21 +172,35 @@ export default async function LandingPage() {
         </div>
       </ScrollReveal>
 
+      {/* Board photos attached to the recording */}
+      <ScrollReveal className="flex flex-col items-center px-4 md:px-12 pb-20 gap-8" delay={150}>
+        <div className="text-center max-w-2xl">
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: "#6E7FF3", marginBottom: 14 }}>{tr("Step 2 — The board")}</div>
+          <h2 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: "clamp(30px, 5vw, 52px)", color: "#0f1115", letterSpacing: "-0.03em", lineHeight: 1.1, marginBottom: 16 }}>
+            {tr("It reads the board.")}<br />{tr("Formulas and all.")}
+          </h2>
+          <p style={{ fontSize: 18, color: "rgba(0,0,0,0.5)", lineHeight: 1.65 }}>
+            {tr("Photograph what the professor wrote and Flux attaches it to the same lecture, reading the handwriting into real notation — so the summary and the quiz cover what went on the board but was never said out loud.")}
+          </p>
+        </div>
+        <div className="relative w-full flex justify-center">
+          <BoardPhotoDemo />
+        </div>
+      </ScrollReveal>
+
       {/* The goal — course memory + cited answers */}
       <div style={{ background: "linear-gradient(180deg, rgba(75,95,232,0.05) 0%, rgba(75,95,232,0.01) 100%)" }}>
       <ScrollReveal className="flex flex-col items-center px-4 md:px-12 py-16 md:py-24 gap-10">
         <div className="text-center max-w-2xl">
-          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: "#6E7FF3", marginBottom: 14 }}>Step 2 — Ask</div>
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: "#6E7FF3", marginBottom: 14 }}>{tr("Step 3 — Ask")}</div>
           <h2 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: "clamp(30px, 5vw, 52px)", color: "#0f1115", letterSpacing: "-0.03em", lineHeight: 1.1, marginBottom: 16 }}>
-            Six ways to study it.<br />
+            {tr("Six ways to study it.")}<br />
             <span style={{ backgroundImage: "linear-gradient(110deg, #4B5FE8 0%, #6E7FF3 55%, #9F7BFA 100%)", WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent" }}>
-              From one recording.
+              {tr("From one recording.")}
             </span>
           </h2>
           <p style={{ fontSize: 18, color: "rgba(0,0,0,0.5)", lineHeight: 1.65 }}>
-            Summary, transcript, key points, flashcards, a practice quiz, and a chat that answers from
-            this lecture alone. Ask across the whole class and every answer is cited to the lecture and
-            the minute — one click from replaying what was actually said.
+            {tr("Summary, transcript, key points, flashcards, a practice quiz, and a chat that answers from this lecture alone. Ask across the whole class and every answer is cited to the lecture and the minute — one click from replaying what was actually said.")}
           </p>
         </div>
         <div className="relative">
@@ -197,10 +213,10 @@ export default async function LandingPage() {
       {/* Tagline */}
       <ScrollReveal className="text-center py-10 px-6">
         <p className="text-sm uppercase tracking-[0.22em] font-semibold mb-3" style={{ color: "rgba(0,0,0,0.8)" }}>
-          Built for how you actually take notes
+          {tr("Built for how you actually take notes")}
         </p>
         <p className="text-2xl md:text-3xl" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, color: "#0f1115", letterSpacing: "-0.02em" }}>
-          Every lecture. Every formula. Every class.
+          {tr("Every lecture. Every formula. Every class.")}
         </p>
       </ScrollReveal>
 
@@ -224,13 +240,13 @@ export default async function LandingPage() {
       {/* CTA footer */}
       <ScrollReveal className="py-24 text-center px-6">
         <h2 className="text-4xl md:text-5xl mb-4" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, color: "#0f1115", letterSpacing: "-0.03em" }}>
-          Walk out of class <span style={{ color: "#6E7FF3" }}>already revised.</span>
+          {tr("Walk out of class")} <span style={{ color: "#6E7FF3" }}>{tr("already revised.")}</span>
         </h2>
         <p className="text-sm mb-8 max-w-sm mx-auto" style={{ color: "rgba(0,0,0,0.55)", lineHeight: 1.7 }}>
-          Record it once. Keep the transcript, the summary, the flashcards and the quiz — and ask your course anything, all semester long.
+          {tr("Record it once. Keep the transcript, the summary, the flashcards and the quiz — and ask your course anything, all semester long.")}
         </p>
         <Link href="/sign-up" className="font-semibold px-10 py-3.5 rounded-full text-sm transition-all hover:opacity-90" style={{ background: "#4B5FE8", color: "white" }}>
-          Get started free
+          {tr("Get started free")}
         </Link>
       </ScrollReveal>
 
@@ -247,25 +263,25 @@ export default async function LandingPage() {
               </span>
             </div>
             <p className="text-[19px] max-w-[360px] text-center md:text-left" style={{ color: "rgba(0,0,0,0.65)", lineHeight: 1.5, fontWeight: 500 }}>
-              Your lecture, already written down.
+              {tr("Your lecture, already written down.")}
             </p>
           </div>
           <div className="flex gap-12">
             <div className="flex flex-col gap-3.5">
-              <span className="text-[13px] font-bold uppercase tracking-[0.15em]" style={{ color: "rgba(0,0,0,0.5)" }}>Product</span>
-              <Link href="#how-it-works" className="text-[17px] hover:text-[#0f1115] transition-colors" style={{ color: "rgba(0,0,0,0.7)" }}>How it works</Link>
-              <Link href="#pricing" className="text-[17px] hover:text-[#0f1115] transition-colors" style={{ color: "rgba(0,0,0,0.7)" }}>Pricing</Link>
+              <span className="text-[13px] font-bold uppercase tracking-[0.15em]" style={{ color: "rgba(0,0,0,0.5)" }}>{tr("Product")}</span>
+              <Link href="#how-it-works" className="text-[17px] hover:text-[#0f1115] transition-colors" style={{ color: "rgba(0,0,0,0.7)" }}>{tr("How it works")}</Link>
+              <Link href="#pricing" className="text-[17px] hover:text-[#0f1115] transition-colors" style={{ color: "rgba(0,0,0,0.7)" }}>{tr("Pricing")}</Link>
               <Link href="#faq" className="text-[17px] hover:text-[#0f1115] transition-colors" style={{ color: "rgba(0,0,0,0.7)" }}>FAQ</Link>
             </div>
             <div className="flex flex-col gap-3.5">
-              <span className="text-[13px] font-bold uppercase tracking-[0.15em]" style={{ color: "rgba(0,0,0,0.5)" }}>Account</span>
-              <Link href="/sign-up" className="text-[17px] hover:text-[#0f1115] transition-colors" style={{ color: "rgba(0,0,0,0.7)" }}>Get started</Link>
-              <Link href="/sign-in" className="text-[17px] hover:text-[#0f1115] transition-colors" style={{ color: "rgba(0,0,0,0.7)" }}>Sign in</Link>
+              <span className="text-[13px] font-bold uppercase tracking-[0.15em]" style={{ color: "rgba(0,0,0,0.5)" }}>{tr("Account")}</span>
+              <Link href="/sign-up" className="text-[17px] hover:text-[#0f1115] transition-colors" style={{ color: "rgba(0,0,0,0.7)" }}>{tr("Get started")}</Link>
+              <Link href="/sign-in" className="text-[17px] hover:text-[#0f1115] transition-colors" style={{ color: "rgba(0,0,0,0.7)" }}>{tr("Sign in")}</Link>
             </div>
           </div>
         </div>
         <div className="text-center pb-8">
-          <span className="text-[14px]" style={{ color: "rgba(0,0,0,0.45)" }}>© {new Date().getFullYear()} Flux. All rights reserved.</span>
+          <span className="text-[14px]" style={{ color: "rgba(0,0,0,0.45)" }}>© {new Date().getFullYear()} Flux. {tr("All rights reserved.")}</span>
         </div>
       </footer>
 

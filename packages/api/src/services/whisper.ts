@@ -24,7 +24,7 @@ export interface TranscriptionResult {
 const MAX_SINGLE_BYTES = 20 * 1024 * 1024; // safety margin under the 25 MB cap
 const CHUNK_SECONDS = 600;
 
-async function transcribeOne(filePath: string, prompt?: string): Promise<TranscriptionResult> {
+async function transcribeOne(filePath: string, prompt?: string, language?: string): Promise<TranscriptionResult> {
   const ext = path.extname(filePath) || ".m4a";
   const mime = ext === ".webm" ? "audio/webm" : ext === ".mp3" ? "audio/mpeg" : "audio/mp4";
 
@@ -42,6 +42,8 @@ async function transcribeOne(filePath: string, prompt?: string): Promise<Transcr
         response_format: "verbose_json",
         timestamp_granularities: ["segment"],
         ...(prompt ? { prompt } : {}),
+        // Naming the language stops a French lecture being heard as English.
+        ...(language ? { language } : {}),
       },
       { signal: controller.signal }
     ) as any;
@@ -70,10 +72,10 @@ function chunkDurationSec(filePath: string): number {
   return Number.isFinite(d) ? d : CHUNK_SECONDS;
 }
 
-export async function transcribeAudio(filePath: string): Promise<TranscriptionResult> {
+export async function transcribeAudio(filePath: string, language?: string): Promise<TranscriptionResult> {
   const size = fs.statSync(filePath).size;
   if (size <= MAX_SINGLE_BYTES) {
-    return transcribeOne(filePath);
+    return transcribeOne(filePath, undefined, language);
   }
 
   console.log(`[whisper] ${Math.round(size / 1024 / 1024)}MB recording — chunking for transcription`);
@@ -116,7 +118,7 @@ export async function transcribeAudio(filePath: string): Promise<TranscriptionRe
     const results: TranscriptionResult[] = new Array(chunks.length);
     for (let i = 0; i < chunks.length; i += CONCURRENCY) {
       const slice = chunks.slice(i, i + CONCURRENCY);
-      const done = await Promise.all(slice.map((c) => transcribeOne(c)));
+      const done = await Promise.all(slice.map((c) => transcribeOne(c, undefined, language)));
       done.forEach((r, j) => { results[i + j] = r; });
     }
 

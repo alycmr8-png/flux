@@ -4,6 +4,7 @@ import {
   Mic2, Sparkles, Pause, Camera, StopCircle, PenLine,
   Home, Layers, Calendar, Archive, CreditCard, HelpCircle,
 } from "lucide-react";
+import { useTr } from "@/lib/useTr";
 
 // Live-recording demo: the transcript writes itself while the professor talks,
 // board photos get folded in, and it ends on the one Process Lecture button.
@@ -54,6 +55,7 @@ function fmt(s: number) {
 }
 
 export function RecordingDemo() {
+  const tr = useTr();
   const [phase, setPhase] = useState<Phase>("live");
   const [spoken, setSpoken] = useState(0);
   const [seconds, setSeconds] = useState(START_SEC);
@@ -122,7 +124,7 @@ export function RecordingDemo() {
           <div className="hidden sm:flex w-44 shrink-0 flex-col py-5" style={{ background: "rgba(0,0,0,0.02)", borderRight: "1px solid rgba(0,0,0,0.06)" }}>
             <div className="px-4 pb-4 mb-2" style={{ borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
               <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 17, color: "#0f1115" }}>Flux</div>
-              <div style={{ fontSize: 7.5, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(15,17,21,0.45)", marginTop: 1 }}>Study Assistant</div>
+              <div style={{ fontSize: 7.5, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(15,17,21,0.45)", marginTop: 1 }}>{tr("Study Assistant")}</div>
             </div>
             <div className="flex-1 px-2">
               <div style={{ fontSize: 8, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(15,17,21,0.4)", padding: "6px 8px 4px" }}>Menu</div>
@@ -130,7 +132,7 @@ export function RecordingDemo() {
                 <div key={label} className="flex items-center gap-2 px-2.5 py-2 rounded-lg"
                   style={{ background: label === "Workspace" ? "rgba(75,95,232,0.12)" : "transparent", color: label === "Workspace" ? CLASS_COLOR : "rgba(15,17,21,0.55)" }}>
                   <Icon size={11} />
-                  <span style={{ fontSize: 10, fontWeight: label === "Workspace" ? 600 : 400 }}>{label}</span>
+                  <span style={{ fontSize: 10, fontWeight: label === "Workspace" ? 600 : 400 }}>{tr(label)}</span>
                 </div>
               ))}
             </div>
@@ -141,12 +143,12 @@ export function RecordingDemo() {
 
             {/* Class pills */}
             <div className="px-5 pt-4">
-              <div style={{ fontSize: 8, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "#6E7FF3", marginBottom: 8 }}>Workspace</div>
+              <div style={{ fontSize: 8, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "#6E7FF3", marginBottom: 8 }}>{tr("Workspace")}</div>
               <div className="flex gap-1.5 flex-wrap">
                 {[
-                  { name: "Calculus II",   tint: CLASS_COLOR },
-                  { name: "Biology 101",   tint: "#16A34A"   },
-                  { name: "History 201",   tint: "#EA580C"   },
+                  { name: tr("Calculus II"),   tint: CLASS_COLOR },
+                  { name: tr("Biology 101"),   tint: "#16A34A"   },
+                  { name: tr("History 201"),   tint: "#EA580C"   },
                 ].map((c, i) => (
                   <div key={c.name} className="flex items-center gap-1.5 px-3 py-1 rounded-full" style={{
                     fontSize: 10, fontWeight: i === 0 ? 700 : 400,
@@ -172,7 +174,7 @@ export function RecordingDemo() {
                       border: i === 1 ? `1px solid ${CLASS_COLOR}` : "1px solid rgba(0,0,0,0.08)",
                       fontSize: 9.5, fontWeight: i === 1 ? 600 : 500,
                     }}>
-                    <Icon size={9} />{label}
+                    <Icon size={9} />{tr(label)}
                   </div>
                 ))}
               </div>
@@ -187,10 +189,10 @@ export function RecordingDemo() {
                   <span className="w-2.5 h-2.5 rounded-full shrink-0"
                     style={{ background: live ? "#DC2626" : CLASS_COLOR, animation: live ? "rdPulse 1.4s ease-in-out infinite" : "none" }} />
                   <span style={{ fontSize: 12, fontWeight: 600, color: "#0f1115" }}>
-                    {live ? "Live transcript" : TITLE}
+                    {live ? tr("Live transcript") : TITLE}
                   </span>
                   {live && (
-                    <span className="hidden sm:block truncate" style={{ fontSize: 10.5, color: "rgba(15,17,21,0.55)" }}>· {TITLE}</span>
+                    <span className="hidden sm:block truncate" style={{ fontSize: 10.5, color: "rgba(15,17,21,0.55)" }}>· {tr(TITLE)}</span>
                   )}
                   <span className="ml-auto tabular-nums shrink-0"
                     style={{ fontSize: 15, fontWeight: 500, color: "#0f1115", letterSpacing: -0.4 }}>
@@ -206,7 +208,7 @@ export function RecordingDemo() {
                       <span style={{ color: "rgba(15,17,21,0.4)" }}>{settled ? " " : ""}{pending}</span>
                     )}
                     {!settled && !pending && (
-                      <span style={{ color: "rgba(15,17,21,0.4)" }}>Start speaking — words appear here as you go.</span>
+                      <span style={{ color: "rgba(15,17,21,0.4)" }}>{tr("Start speaking — words appear here as you go.")}</span>
                     )}
                   </p>
                 </div>
@@ -237,16 +239,14 @@ export function RecordingDemo() {
                     <div className="flex gap-2.5">
                       <div className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl"
                         style={{ border: "1px solid rgba(0,0,0,0.12)", fontSize: 11, fontWeight: 500, color: "#0f1115" }}>
-                        <Pause size={13} /> Pause
-                      </div>
+                        <Pause size={13} />{tr("Pause")}</div>
                       <div className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl"
                         style={{ border: "1px solid rgba(0,0,0,0.12)", fontSize: 11, fontWeight: 500, color: "#0f1115" }}>
                         <Camera size={13} /> Photo{photos.length ? ` (${photos.length})` : ""}
                       </div>
                       <div className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl"
                         style={{ background: "#DC2626", fontSize: 11, fontWeight: 500, color: "white" }}>
-                        <StopCircle size={13} /> Stop
-                      </div>
+                        <StopCircle size={13} />{tr("Stop")}</div>
                     </div>
                   ) : (
                     <div className="flex items-center justify-center gap-2 py-3 rounded-xl"
@@ -271,8 +271,8 @@ export function RecordingDemo() {
       {/* Caption */}
       <p className="text-center mt-4" style={{ fontSize: 13.5, color: "rgba(15,17,21,0.55)" }}>
         {live
-          ? "The words appear as they're said — grey while they settle, then final."
-          : "One button turns the lecture and its board photos into your study material."}
+          ? tr("The words appear as they're said — grey while they settle, then final.")
+          : tr("One button turns the lecture and its board photos into your study material.")}
       </p>
 
       {/* Dots */}

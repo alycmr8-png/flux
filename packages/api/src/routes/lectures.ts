@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { quotaMiddleware, planFor, MAX_RECORDING_MINUTES } from "../services/usage";
+import { quotaMiddleware, planFor, MAX_RECORDING_MINUTES, assertMinutesAvailable, sendQuotaError } from "../services/usage";
 import multer from "multer";
 import { z } from "zod";
 import path from "path";
@@ -8,20 +8,13 @@ import fs from "fs";
 import { prisma } from "../lib/prisma";
 import { processLecture, MAX_LECTURE_PHOTOS } from "../services/lectureProcessor";
 import { audioSig } from "../lib/audioSign";
+import { ensureUploadDir, resolveStoredPath } from "../lib/storage";
 
 export const lectureRouter = Router();
 
-// UPLOAD_DIR should point at persistent storage in production (Railway volume);
-// the OS temp dir fallback is for local dev only — it does not survive restarts.
-const uploadDir = process.env.UPLOAD_DIR || path.join(os.tmpdir(), "sano");
-fs.mkdirSync(uploadDir, { recursive: true });
+const uploadDir = ensureUploadDir();
 
-// Older rows may store paths from before the persistent volume existed.
-function resolveAudioPath(stored: string): string | null {
-  if (fs.existsSync(stored)) return stored;
-  const relocated = path.join(uploadDir, path.basename(stored));
-  return fs.existsSync(relocated) ? relocated : null;
-}
+const resolveAudioPath = resolveStoredPath;
 
 const storage = multer.diskStorage({
   destination: uploadDir,
@@ -136,6 +129,16 @@ lectureRouter.post(
       for (const f of [audioFile, slidesFile, ...imageFiles]) if (f?.path) fs.promises.unlink(f.path).catch(() => {});
       const hours = capMinutes >= 60 ? `${capMinutes / 60} hour${capMinutes === 60 ? "" : "s"}` : `${capMinutes} minutes`;
       return res.status(413).json({ error: `Recordings on your plan can be up to ${hours} long.` });
+    }
+
+    // Transcription is bought by the minute, so the month's total audio — not the
+    // number of lectures — is what has to stay inside the plan.
+    try {
+      await assertMinutesAvailable(user.id, Math.round((durationSeconds ?? 0) / 60));
+    } catch (e) {
+      for (const f of [audioFile, slidesFile, ...imageFiles]) if (f?.path) fs.promises.unlink(f.path).catch(() => {});
+      if (sendQuotaError(res, e)) return;
+      throw e;
     }
 
     let segments: any = undefined;

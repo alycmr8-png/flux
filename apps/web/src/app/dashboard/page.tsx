@@ -7,6 +7,9 @@ import useSWR from "swr";
 import { useApiSWRFetcher } from "@/lib/apiFetch";
 import { FileText, Calendar, ChevronRight, Plus, Clock, Layers } from "lucide-react";
 import { startOfDay, format, differenceInCalendarDays } from "date-fns";
+import { apiBase } from "@/lib/apiBase";
+import { useRecorder } from "@/lib/recorder";
+import { useTr } from "@/lib/useTr";
 
 const BRAND = "#4B5FE8";
 const INK = "#0f1115";
@@ -26,7 +29,7 @@ const TYPE_LABEL: Record<string, string> = {
   quiz: "Quiz", class: "Class", other: "Other",
 };
 
-const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
+const BASE = apiBase();
 
 // Classes are identified by colour everywhere, exactly as on mobile: a solid
 // circle in the class colour with the first letter in white. Never a pale tint
@@ -55,6 +58,9 @@ function greetingKey(): "goodMorning" | "goodAfternoon" | "goodEvening" {
 }
 
 export default function DashboardHome() {
+  const tr = useTr();
+  // Opening a class goes straight into it, not to the class list.
+  const recorder = useRecorder();
   const { user } = useUser();
   const { userId, isLoaded: authLoaded } = useAuth();
   const firstName = user?.firstName ?? user?.username ?? "";
@@ -106,7 +112,7 @@ export default function DashboardHome() {
   function dayLabel(dateStr: string) {
     const d = new Date(dateStr);
     const diff = differenceInCalendarDays(d, today);
-    if (diff === 0) return "Today";
+    if (diff === 0) return tr("Today");
     if (diff === 1) return "Tomorrow";
     if (diff <= 7) return `In ${diff} days`;
     return format(d, "MMM d");
@@ -145,7 +151,7 @@ export default function DashboardHome() {
               className="flex items-center gap-3 rounded-[18px] px-5 py-4 border transition-colors hover:bg-[rgba(75,95,232,0.04)]"
               style={{ background: "#FFFFFF", borderColor: HAIRLINE, borderStyle: "dashed" }}>
               <Plus size={16} style={{ color: "rgba(15,17,21, 0.73)" }} />
-              <span style={{ fontSize: 16, color: "rgba(15,17,21, 0.78)" }}>No upcoming events — add one in Calendar</span>
+              <span style={{ fontSize: 16, color: "rgba(15,17,21, 0.78)" }}>{tr("No upcoming events — add one in Calendar")}</span>
             </Link>
           ) : (
             <>
@@ -198,13 +204,14 @@ export default function DashboardHome() {
               className="flex items-center gap-3 rounded-[18px] px-5 py-4 border transition-colors hover:bg-[rgba(75,95,232,0.04)]"
               style={{ background: "#FFFFFF", borderColor: HAIRLINE, borderStyle: "dashed" }}>
               <Plus size={16} style={{ color: "rgba(15,17,21, 0.73)" }} />
-              <span style={{ fontSize: 16, color: "rgba(15,17,21, 0.78)" }}>Add your first class</span>
+              <span style={{ fontSize: 16, color: "rgba(15,17,21, 0.78)" }}>{tr("Add your first class")}</span>
             </Link>
           ) : (
             courses.map((cls: any) => {
               const tint = classColor(cls);
               return (
                 <Link key={cls.id} href="/dashboard/record"
+                  onClick={() => recorder.requestOpen(cls.id)}
                   className="flex items-center gap-3.5 rounded-[18px] px-5 py-4 border transition-colors hover:bg-[rgba(0,0,0,0.02)]"
                   style={{ background: "#FFFFFF", borderColor: HAIRLINE, borderLeft: `5px solid ${tint}` }}>
                   <ClassBadge name={cls.name} color={tint} size={40} />
@@ -259,7 +266,7 @@ export default function DashboardHome() {
         {/* Panel header */}
         <div className="flex items-center justify-between mb-5 pl-6">
           <div>
-            <div style={{ fontSize: 13.5, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", color: "rgba(15,17,21, 0.75)", marginBottom: 5 }}>Upcoming</div>
+            <div style={{ fontSize: 13.5, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", color: "rgba(15,17,21, 0.75)", marginBottom: 5 }}>{tr("Upcoming")}</div>
             <div style={{ fontSize: 18, fontWeight: 600, color: INK }}>
               {allUpcoming.length === 0 ? "No events" : `${allUpcoming.length} event${allUpcoming.length !== 1 ? "s" : ""}`}
             </div>
@@ -268,7 +275,7 @@ export default function DashboardHome() {
             href="/dashboard/calendar"
             className="flex items-center justify-center w-9 h-9 rounded-full transition-opacity hover:opacity-90"
             style={{ background: BRAND }}
-            title="Add event"
+            title={tr("Add event")}
           >
             <Plus size={16} style={{ color: "#fff" }} />
           </Link>
@@ -310,9 +317,7 @@ export default function DashboardHome() {
                 href="/dashboard/calendar"
                 className="transition-colors hover:opacity-80"
                 style={{ fontSize: 15, color: BRAND, fontWeight: 600 }}
-              >
-                Add one
-              </Link>
+              >{tr("Add one")}</Link>
             </div>
           ) : (
             displayedEvents.map((e: any) => {
@@ -368,8 +373,7 @@ export default function DashboardHome() {
                         className="inline-flex items-center gap-1 font-bold uppercase tracking-wider mt-2.5 transition-opacity hover:opacity-80"
                         style={{ fontSize: 13.5, color }}
                         onClick={(ev: React.MouseEvent) => ev.stopPropagation()}
-                      >
-                        Open in calendar <ChevronRight size={11} />
+                      >{tr("Open in calendar")}<ChevronRight size={11} />
                       </Link>
                     </div>
                   )}

@@ -2,8 +2,11 @@
 import Link from "next/link";
 import { Layers } from "lucide-react";
 import { DownloadQR } from "./DownloadQR";
+import { LanguageMenu } from "./LanguageMenu";
+import { useTr } from "@/lib/useTr";
 
 export function Navbar() {
+  const tr = useTr();
   return (
     <header className="fixed left-0 right-0 z-50 flex justify-center px-4" style={{ top: 20, pointerEvents: "none" }}>
       <div
@@ -31,9 +34,9 @@ export function Navbar() {
         {/* Nav links */}
         <nav className="hidden md:flex items-center gap-8">
           {[
-            { label: "How it works", href: "#how-it-works" },
-            { label: "Pricing",  href: "#pricing"  },
-            { label: "FAQ",      href: "#faq"      },
+            { label: tr("How it works"), href: "#how-it-works" },
+            { label: tr("Pricing"),  href: "#pricing"  },
+            { label: tr("FAQ"),      href: "#faq"      },
           ].map(({ label, href }) => (
             <Link
               key={label}
@@ -49,20 +52,21 @@ export function Navbar() {
 
         {/* Auth buttons */}
         <div className="flex items-center gap-2">
+          <LanguageMenu />
           <DownloadQR variant="compact" />
           <Link
             href="/sign-in"
             className="navbar-link hidden md:block"
             style={{ fontSize: 16, fontWeight: 500, textDecoration: "none", padding: "8px 16px", borderRadius: 999 }}
           >
-            Sign in
+            {tr("Sign in")}
           </Link>
           <Link
             href="/sign-up"
             className="font-semibold"
             style={{ fontSize: 15, background: "#4B5FE8", color: "white", textDecoration: "none", padding: "9px 22px", borderRadius: 999 }}
           >
-            Get started
+            {tr("Get started")}
           </Link>
         </div>
       </div>

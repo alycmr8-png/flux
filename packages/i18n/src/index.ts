@@ -27,5 +27,6 @@ export function initI18n(lng = "en") {
   return i18n;
 }
 
+export * from "./ui";
 export { i18n };
 export type Language = "en" | "fr" | "ar" | "es" | "pt";

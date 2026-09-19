@@ -1,6 +1,7 @@
 "use client";
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { CheckCircle2, AlertCircle, Info, X, AlertTriangle } from "lucide-react";
+import { useTr } from "@/lib/useTr";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 type ToastKind = "success" | "error" | "info";
@@ -30,6 +31,7 @@ const KIND = {
 
 // ── Provider ─────────────────────────────────────────────────────────────────
 export function FeedbackProvider({ children }: { children: React.ReactNode }) {
+  const tr = useTr();
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [dialog, setDialog] = useState<ConfirmState | null>(null);
   const seq = useRef(0);
@@ -105,7 +107,7 @@ export function FeedbackProvider({ children }: { children: React.ReactNode }) {
               </span>
               <button
                 onClick={() => dismiss(t.id)}
-                aria-label="Dismiss"
+                aria-label={tr("Dismiss")}
                 className="shrink-0 -mr-1 -mt-0.5 rounded-lg p-1 transition-colors hover:bg-black/[0.05]"
                 style={{ color: "rgba(31,35,40,0.45)" }}
               >
@@ -158,7 +160,7 @@ export function FeedbackProvider({ children }: { children: React.ReactNode }) {
                 className="px-4 py-2 rounded-xl text-sm font-medium transition-colors hover:bg-black/[0.05]"
                 style={{ color: "rgba(31,35,40,0.6)", border: "1px solid rgba(0,0,0,0.08)" }}
               >
-                {dialog.cancelLabel ?? "Cancel"}
+                {dialog.cancelLabel ?? tr("Cancel")}
               </button>
               <button
                 autoFocus

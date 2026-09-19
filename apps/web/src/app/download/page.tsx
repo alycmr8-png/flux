@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Layers, Apple, Smartphone } from "lucide-react";
 import { WaitlistForm } from "@/components/WaitlistForm";
+import { useTr } from "@/lib/useTr";
 
 // Set these once the app is live in the stores; until then the page offers the
 // waitlist and the web app instead. The QR code never needs to change.
@@ -12,6 +13,7 @@ const PLAY_STORE_URL = process.env.NEXT_PUBLIC_PLAY_STORE_URL ?? "";
 type Platform = "ios" | "android" | "other";
 
 export default function DownloadPage() {
+  const tr = useTr();
   const [platform, setPlatform] = useState<Platform>("other");
 
   useEffect(() => {
@@ -37,35 +39,31 @@ export default function DownloadPage() {
       </Link>
 
       <div className="w-full max-w-md text-center">
-        <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 34, fontWeight: 800, color: "#0f1115", letterSpacing: "-0.03em", lineHeight: 1.1 }}>
-          Get Flux on your phone
-        </h1>
+        <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 34, fontWeight: 800, color: "#0f1115", letterSpacing: "-0.03em", lineHeight: 1.1 }}>{tr("Get Flux on your phone")}</h1>
 
         {live ? (
           <>
-            <p className="mt-3 mb-8" style={{ fontSize: 16.5, color: "rgba(15,17,21,0.7)", lineHeight: 1.55 }}>
-              Record lectures, read the transcript live, and study from anywhere.
-            </p>
+            <p className="mt-3 mb-8" style={{ fontSize: 16.5, color: "rgba(15,17,21,0.7)", lineHeight: 1.55 }}>{tr("Record lectures, read the transcript live, and study from anywhere.")}</p>
             <div className="flex flex-col gap-3">
               {APP_STORE_URL && (
                 <a href={APP_STORE_URL} className="flex items-center justify-center gap-2.5 py-4 rounded-2xl text-white"
                   style={{ background: "#0f1115", fontSize: 16.5, fontWeight: 600, textDecoration: "none" }}>
-                  <Apple size={20} /> Download for iPhone
-                </a>
+                  <Apple size={20} />{tr("Download for iPhone")}</a>
               )}
               {PLAY_STORE_URL && (
                 <a href={PLAY_STORE_URL} className="flex items-center justify-center gap-2.5 py-4 rounded-2xl"
                   style={{ border: "1px solid rgba(0,0,0,0.14)", color: "#0f1115", fontSize: 16.5, fontWeight: 600, textDecoration: "none" }}>
-                  <Smartphone size={20} /> Download for Android
-                </a>
+                  <Smartphone size={20} />{tr("Download for Android")}</a>
               )}
             </div>
           </>
         ) : (
           <>
             <p className="mt-3 mb-8" style={{ fontSize: 16.5, color: "rgba(15,17,21,0.7)", lineHeight: 1.55 }}>
-              {platform === "ios" ? "The iPhone app is" : platform === "android" ? "The Android app is" : "The mobile app is"} almost ready.
-              Leave your email and we&apos;ll let you know the moment it&apos;s in the store.
+              {platform === "ios" ? tr("The iPhone app is almost ready.")
+                : platform === "android" ? tr("The Android app is almost ready.")
+                : tr("The mobile app is almost ready.")}{" "}
+              {tr("Leave your email and we'll let you know the moment it's in the store.")}
             </p>
             <div className="flex justify-center">
               <WaitlistForm source="download-page" />
@@ -74,8 +72,8 @@ export default function DownloadPage() {
         )}
 
         <p className="mt-10" style={{ fontSize: 15, color: "rgba(15,17,21,0.6)" }}>
-          On a computer?{" "}
-          <Link href="/sign-up" style={{ color: "#4B5FE8", fontWeight: 600 }}>Use Flux on the web</Link>
+          {tr("On a computer?")}{" "}
+          <Link href="/sign-up" style={{ color: "#4B5FE8", fontWeight: 600 }}>{tr("Use Flux on the web")}</Link>
         </p>
       </div>
     </main>

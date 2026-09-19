@@ -24,6 +24,7 @@ import { askRouter } from "./routes/ask";
 import { examPrepRouter } from "./routes/examprep";
 import { canvasRouter } from "./routes/canvas";
 import { photoRouter } from "./routes/photos";
+import { accountRouter } from "./routes/account";
 import { usageSummary } from "./services/usage";
 import { errorHandler } from "./middleware/errorHandler";
 import { attachLiveTranscribe } from "./lib/liveTranscribe";
@@ -60,6 +61,7 @@ app.use("/api/ask", askRouter);
 app.use("/api/examprep", examPrepRouter);
 app.use("/api/canvas", canvasRouter);
 app.use("/api/photos", photoRouter);
+app.use("/api/account", accountRouter);
 app.get("/api/usage", async (req, res) => {
   const user = (req as any).user;
   res.json({ data: await usageSummary(user.id) });

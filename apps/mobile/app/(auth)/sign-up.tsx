@@ -4,11 +4,13 @@ import { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, Alert } from "react-native";
 import * as WebBrowser from "expo-web-browser";
 import * as AuthSession from "expo-auth-session";
+import { useTr } from "../../lib/useTr";
 
 // Required so the OAuth browser popup can hand the session back to the app
 WebBrowser.maybeCompleteAuthSession();
 
 export default function SignUpScreen() {
+  const tr = useTr();
   const { signUp, setActive, isLoaded } = useSignUp();
   const { startSSOFlow } = useSSO();
   const router = useRouter();
@@ -28,11 +30,11 @@ export default function SignUpScreen() {
         router.replace("/(tabs)");
       } else {
         // Flow finished without a session (cancelled, or extra steps required)
-        Alert.alert("Almost there", "Google didn't complete sign-in. Try again, or use email and password below.");
+        Alert.alert(tr("Almost there"), tr("Google didn't complete sign-in. Try again, or use email and password below."));
       }
     } catch (e: any) {
-      const msg = e?.errors?.[0]?.longMessage ?? e?.errors?.[0]?.message ?? e?.message ?? "Unknown error";
-      Alert.alert("Google sign-in failed", msg);
+      const msg = e?.errors?.[0]?.longMessage ?? e?.errors?.[0]?.message ?? e?.message ?? tr("Unknown error");
+      Alert.alert(tr("Google sign-in failed"), msg);
     }
   }
 
@@ -44,16 +46,16 @@ export default function SignUpScreen() {
       await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
       router.push("/(auth)/verify");
     } catch (e: any) {
-      setError(e.errors?.[0]?.message ?? "Sign up failed");
+      setError(e.errors?.[0]?.message ?? tr("Sign up failed"));
     }
   }
 
   return (
     <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={s.root}>
-      <Text style={s.title}>Create Account</Text>
+      <Text style={s.title}>{tr("Create Account")}</Text>
 
       <TouchableOpacity style={s.google} onPress={handleGoogle} activeOpacity={0.85}>
-        <Text style={s.googleTxt}>Continue with Google</Text>
+        <Text style={s.googleTxt}>{tr("Continue with Google")}</Text>
       </TouchableOpacity>
 
       <View style={s.divider}>
@@ -63,12 +65,12 @@ export default function SignUpScreen() {
       </View>
 
       {error ? <Text style={s.err}>{error}</Text> : null}
-      <TextInput style={s.input} placeholder="Full name" placeholderTextColor="rgba(15,17,21,0.35)" value={name} onChangeText={setName} />
-      <TextInput style={s.input} placeholder="Email" placeholderTextColor="rgba(15,17,21,0.35)" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" />
-      <TextInput style={s.input} placeholder="Password" placeholderTextColor="rgba(15,17,21,0.35)" value={password} onChangeText={setPassword} secureTextEntry />
+      <TextInput style={s.input} placeholder={tr("Full name")} placeholderTextColor="rgba(15,17,21,0.35)" value={name} onChangeText={setName} />
+      <TextInput style={s.input} placeholder={tr("Email")} placeholderTextColor="rgba(15,17,21,0.35)" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" />
+      <TextInput style={s.input} placeholder={tr("Password")} placeholderTextColor="rgba(15,17,21,0.35)" value={password} onChangeText={setPassword} secureTextEntry />
 
       <TouchableOpacity style={s.btn} onPress={handleSignUp} activeOpacity={0.85}>
-        <Text style={s.btnTxt}>Create Account</Text>
+        <Text style={s.btnTxt}>{tr("Create Account")}</Text>
       </TouchableOpacity>
 
       <TouchableOpacity onPress={() => router.back()} style={s.back}>
