@@ -50,6 +50,25 @@ const acceptLecturePhotos = (req: any, res: any, next: any) =>
     next(err);
   });
 
+/**
+ * Rebuilding starts a short while after the last photo lands, not immediately.
+ *
+ * Students add board photos one at a time. Kicking off a rebuild on the first
+ * one locked the recording as "processing", so the second photo was refused and
+ * the work was redone for each photo besides. Each new photo now resets the
+ * timer, so a burst of them costs one rebuild.
+ */
+const REPROCESS_DELAY_MS = 20_000;
+const pendingReprocess = new Map<string, ReturnType<typeof setTimeout>>();
+
+function scheduleReprocess(lectureId: string, userId: string) {
+  clearTimeout(pendingReprocess.get(lectureId));
+  pendingReprocess.set(lectureId, setTimeout(() => {
+    pendingReprocess.delete(lectureId);
+    processLecture(lectureId, userId, { reprocess: true }).catch(console.error);
+  }, REPROCESS_DELAY_MS));
+}
+
 lectureRouter.post("/:id/photos", acceptLecturePhotos, async (req, res) => {
   const user = (req as any).user;
   const files = (req.files as Express.Multer.File[] | undefined) ?? [];
@@ -58,7 +77,9 @@ lectureRouter.post("/:id/photos", acceptLecturePhotos, async (req, res) => {
   const lecture = await prisma.lecture.findFirst({ where: { id: String(req.params.id), userId: user.id } });
   if (!lecture) { discard(); return res.status(404).json({ error: "Recording not found" }); }
   if (!files.length) return res.status(400).json({ error: "Add at least one photo." });
-  if (!["ready", "error"].includes(lecture.status)) {
+  // "processing" only blocks when a rebuild is actually running; if one is merely
+  // queued, this photo joins it rather than being turned away.
+  if (!["ready", "error"].includes(lecture.status) && !pendingReprocess.has(lecture.id)) {
     discard();
     return res.status(409).json({ error: "This recording is still being processed — try again when it's ready." });
   }
@@ -83,8 +104,16 @@ lectureRouter.post("/:id/photos", acceptLecturePhotos, async (req, res) => {
     where: { id: lecture.id },
     data: { imageUrls: [...existing, ...files.map(f => f.path)], status: "processing" },
   });
-  processLecture(lecture.id, user.id, { reprocess: true }).catch(console.error);
-  res.status(202).json({ data: { id: updated.id, status: updated.status, photoCount: updated.imageUrls.length } });
+  scheduleReprocess(lecture.id, user.id);
+  res.status(202).json({
+    data: {
+      id: updated.id,
+      status: updated.status,
+      photoCount: updated.imageUrls.length,
+      // The client can tell the student how long they have to add another.
+      startsInMs: REPROCESS_DELAY_MS,
+    },
+  });
 });
 
 lectureRouter.get("/:id", async (req, res) => {

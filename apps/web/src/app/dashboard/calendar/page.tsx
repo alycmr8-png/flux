@@ -191,18 +191,6 @@ export default function CalendarPage() {
     }
   }
 
-  async function connectGoogle() {
-    setNotice("");
-    try {
-      const res = await apiFetch("/api/calendar/auth-url");
-      const url = res?.data?.url;
-      if (url) window.location.href = url;
-      else setNotice("Google Calendar isn't configured yet.");
-    } catch (e: any) {
-      setNotice(e?.message ?? "Couldn't reach Google Calendar.");
-    }
-  }
-
   const goToday = () => { const now = new Date(); setAnchor(now); setSelected(now); };
 
   return (
@@ -217,7 +205,7 @@ export default function CalendarPage() {
       `}</style>
 
       {/* Header */}
-      <div className="flex items-start justify-between mb-6">
+      <div className="mb-6">
         {/* Same header system as Home: a brand eyebrow naming the section, then
             the sentence as the heading — Plus Jakarta Sans 800, not serif italic. */}
         <div>
@@ -228,11 +216,6 @@ export default function CalendarPage() {
             {tr("Reviews Flux plans for you, plus everything you add yourself.")}
           </h1>
         </div>
-        <button
-          onClick={connectGoogle}
-          className="flex items-center gap-2 rounded-full"
-          style={{ border: "1px solid rgba(0,0,0,0.12)", padding: "8px 16px", fontSize: 14.5, fontWeight: 500, background: "#FFFFFF" }}
-        >{tr("Google")}</button>
       </div>
 
       {notice && (

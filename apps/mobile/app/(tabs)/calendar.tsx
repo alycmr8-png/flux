@@ -1,4 +1,4 @@
-import { ScrollView, View, Text, StyleSheet, TouchableOpacity, Linking, StatusBar, TextInput, Alert, Modal, KeyboardAvoidingView, Platform } from "react-native";
+import { ScrollView, View, Text, StyleSheet, TouchableOpacity, StatusBar, TextInput, Alert, Modal, KeyboardAvoidingView, Platform } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, startOfDay, endOfDay,
@@ -120,11 +120,6 @@ export default function CalendarScreen() {
     ]);
   }
 
-  async function connectGoogle() {
-    const res = await api.get("/api/calendar/auth-url");
-    await Linking.openURL(res.data.data.url);
-  }
-
   const monthDays = eachDayOfInterval({ start: startOfMonth(anchor), end: endOfMonth(anchor) });
   const weekDays = eachDayOfInterval({ start: startOfWeek(anchor), end: endOfWeek(anchor) });
   const headerLabel =
@@ -142,10 +137,6 @@ export default function CalendarScreen() {
       <ScrollView style={s.root} contentContainerStyle={[s.content, { paddingTop: insets.top + 16 }]}>
         <View style={s.topbar}>
           <Text style={s.title}>{tr("Schedule")}</Text>
-          <TouchableOpacity style={s.connectBtn} onPress={connectGoogle} activeOpacity={0.7}>
-            <Ionicons name="logo-google" size={14} color="#0f1115" />
-            <Text style={s.connectTxt}>{tr("Google")}</Text>
-          </TouchableOpacity>
         </View>
 
         {/* Day / Week / Month */}
@@ -410,8 +401,6 @@ const s = StyleSheet.create({
   content: { paddingHorizontal: 16, paddingBottom: 132 },
   topbar: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 },
   title: { fontSize: 32, color: "#0f1115", fontStyle: "italic", fontWeight: "300" },
-  connectBtn: { flexDirection: "row", alignItems: "center", gap: 7, borderWidth: 1, borderColor: "rgba(0,0,0,0.12)", borderRadius: 999, paddingHorizontal: 14, paddingVertical: 8 },
-  connectTxt: { fontSize: 13, color: "#0f1115", fontWeight: "500" },
 
   segment: { flexDirection: "row", gap: 6, backgroundColor: "#FFFFFF", borderRadius: 24, padding: 5, borderWidth: 1, borderColor: "rgba(0,0,0,0.08)", marginBottom: 16 },
   segBtn: { flex: 1, alignItems: "center", paddingVertical: 11, borderRadius: 19 },

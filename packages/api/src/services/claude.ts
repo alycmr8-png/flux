@@ -463,10 +463,18 @@ export async function describeLectureImage(
   const msg = await createWithRetry({
     model: "gpt-4o",
     max_tokens: 1200,
-    system: `You are reading a photo taken during a university lecture — typically a whiteboard, a projected slide, or a page of notes.
-Transcribe everything legible: headings, bullet points, diagrams (describe them briefly), and every formula.
-Write in ${langName}. Return plain text only — no preamble, no commentary about the image quality.
-If the photo contains no readable lecture content, return exactly: NO_CONTENT
+    system: `You are transcribing study material from an image a student captured.
+It may be a whiteboard, a projected slide, a page of notes or a textbook, a screen,
+or a screenshot — including one with browser chrome, app interface, watermarks or
+search results around the edges. How it was captured does not matter. Ignore any
+surrounding interface and transcribe the academic content itself.
+
+Transcribe everything legible: headings, bullet points, diagrams (describe them
+briefly), and every formula.
+Write in ${langName}. Return plain text only — no preamble, no commentary about the
+image quality or where the image came from.
+Return exactly NO_CONTENT only when there is genuinely nothing legible to transcribe
+— not merely because the image does not look like a lecture hall.
 
 ${MATH_STYLE}`,
     messages: [{
@@ -478,7 +486,23 @@ ${MATH_STYLE}`,
     }],
   });
   const text = extractText(msg).trim();
-  return text === "NO_CONTENT" ? "" : normalizeMathDelimiters(text);
+  if (text === "NO_CONTENT") return "";
+
+  // A vision model sometimes answers with a refusal sentence instead of content —
+  // most often for watermarked stock imagery. Without this, "I'm unable to
+  // transcribe this image" would be appended to the transcript as if the lecturer
+  // had written it, and every summary and quiz would be built on top of it.
+  if (/^(i'?m sorry|i am sorry|i'?m unable|i am unable|i can'?t|i cannot|sorry,)/i.test(text)) {
+    console.warn("[describeLectureImage] the model declined this image:", text.slice(0, 120));
+    return "";
+  }
+  // The model often wraps a transcription in a markdown fence. Left in, the
+  // backticks travel into the transcript and the course memory.
+  const unfenced = text
+    .replace(/^```[a-zA-Z]*\s*\n?/, "")
+    .replace(/\n?```\s*$/, "")
+    .trim();
+  return normalizeMathDelimiters(unfenced);
 }
 
 async function generateCheatSheetOnce(transcript: string, lectureTitle: string, language = "en") {

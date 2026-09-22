@@ -6,6 +6,7 @@ import { syncToDrive } from "./google";
 import { scheduleSpacedRepetition } from "./spaced-repetition";
 import { indexSource } from "./memory";
 import { withCostScope, recordAudioMinutes } from "../lib/cost";
+import { resolveStoredPath } from "../lib/storage";
 
 // Re-encodes a recording to 48 kbps mono mp3 next to the original, deletes the
 // original, and returns the new path — or null when ffmpeg is unavailable.
@@ -178,7 +179,11 @@ async function processLectureInner(lectureId: string, userId: string, opts: { re
     // Whiteboards and slides carry the formulas the lecturer never said out loud,
     // so this runs before generation and feeds the same transcript.
     let extractedImageText = "";
-    const imagePaths: string[] = ((lecture as any).imageUrls ?? []).filter((f: string) => f && fs.existsSync(f));
+    const storedImages: string[] = ((lecture as any).imageUrls ?? []).filter(Boolean);
+    const imagePaths: string[] = storedImages
+      .map((f: string) => resolveStoredPath(f))
+      .filter((f: string | null): f is string => !!f);
+    const missingFiles = storedImages.length - imagePaths.length;
     if (imagePaths.length) {
       const lang = (await prisma.user.findUnique({ where: { id: userId }, select: { language: true } }))?.language ?? "en";
       const mimeFor = (f: string) => {
@@ -194,6 +199,13 @@ async function processLectureInner(lectureId: string, userId: string, opts: { re
         } catch (imgErr) {
           console.error(`[processLecture] photo ${i + 1} unreadable (non-fatal):`, (imgErr as any)?.message);
         }
+      }
+      if (parts.length < imagePaths.length || missingFiles) {
+        console.warn(
+          `[processLecture] ${storedImages.length} photo(s) attached, ${parts.length} readable` +
+          (missingFiles ? `, ${missingFiles} file(s) no longer on disk` : "") +
+          " — the unreadable ones contribute nothing to the summary or quiz",
+        );
       }
       if (parts.length) {
         extractedImageText = parts.join("\n\n");

@@ -8,7 +8,7 @@ import { describeLectureImage } from "../services/claude";
 import { indexSource, deleteSource } from "../services/memory";
 import { consumeQuota, sendQuotaError } from "../services/usage";
 import { photoSig } from "../lib/audioSign";
-import { ensureUploadDir } from "../lib/storage";
+import { ensureUploadDir, resolveStoredPath } from "../lib/storage";
 
 export const photoRouter = Router();
 
@@ -56,10 +56,19 @@ async function readPhoto(photoId: string, userId: string) {
   if (!photo) return;
   try {
     const user = await prisma.user.findUnique({ where: { id: userId }, select: { language: true } });
-    const base64 = fs.readFileSync(photo.filePath).toString("base64");
+    const stored = resolveStoredPath(photo.filePath);
+    if (!stored) throw new Error(`image file is no longer on disk: ${photo.filePath}`);
+    const base64 = fs.readFileSync(stored).toString("base64");
     const text = await describeLectureImage(base64, photo.mimeType, user?.language ?? "en");
-    await prisma.classPhoto.update({ where: { id: photoId }, data: { text, status: "ready" } });
-    if (text.trim()) {
+    // An empty read means the model declined or found nothing legible. Marking it
+    // "ready" would tell the student it worked while showing them nothing.
+    const readable = !!text.trim();
+    if (!readable) console.warn(`[photos] nothing readable in ${photoId} — leaving it marked as unread`);
+    await prisma.classPhoto.update({
+      where: { id: photoId },
+      data: { text, status: readable ? "ready" : "error" },
+    });
+    if (readable) {
       await indexSource({
         userId,
         courseId: photo.courseId,
@@ -123,10 +132,11 @@ photoRouter.get("/", async (req, res) => {
 photoRouter.get("/:id/image", async (req, res) => {
   const user = (req as any).user;
   const photo = await prisma.classPhoto.findFirst({ where: { id: req.params.id, userId: user.id } });
-  if (!photo || !fs.existsSync(photo.filePath)) return res.status(404).json({ error: "Photo not found" });
+  const onDisk = photo ? resolveStoredPath(photo.filePath) : null;
+  if (!photo || !onDisk) return res.status(404).json({ error: "Photo not found" });
   res.setHeader("Content-Type", photo.mimeType);
   res.setHeader("Cache-Control", "private, max-age=21600");
-  fs.createReadStream(photo.filePath).pipe(res);
+  fs.createReadStream(onDisk).pipe(res);
 });
 
 // POST /api/photos/:id/retry — read a photo again after an error
@@ -146,6 +156,8 @@ photoRouter.delete("/:id", async (req, res) => {
   if (!photo) return res.status(404).json({ error: "Photo not found" });
   await prisma.classPhoto.delete({ where: { id: photo.id } });
   await deleteSource(photo.id, user.id).catch(() => {});
-  fs.promises.unlink(photo.filePath).catch(() => {});
+  // Resolve first, or a photo that moved when storage relocated leaks its file.
+  const stored = resolveStoredPath(photo.filePath);
+  if (stored) fs.promises.unlink(stored).catch(() => {});
   res.json({ data: { ok: true } });
 });

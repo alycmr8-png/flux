@@ -1,6 +1,6 @@
 [build]
 builder = "nixpacks"
-buildCommand = "npm install && npx prisma generate --schema=packages/api/prisma/schema.prisma && npm run build -w api"
+buildCommand = "npm install && npm run build -w @sano/shared && npx prisma generate --schema=packages/api/prisma/schema.prisma && npm run build -w api"
 
 [deploy]
 startCommand = "node packages/api/dist/index.js"

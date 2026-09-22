@@ -291,7 +291,6 @@ export const fr: Record<string, string> = {
   "Click any slot to schedule something": "Cliquez sur un créneau pour planifier quelque chose",
   "Nothing on this day — click Schedule to add an exam, assignment or deadline.": "Rien ce jour-là — cliquez sur Planifier pour ajouter un examen, un devoir ou une échéance.",
   "Failed — is Google Calendar connected?": "Échec — Google Agenda est-il connecté ?",
-  "Google": "Google",
   "Drive": "Drive",
   "Exam tip": "Conseil pour l'examen",
   "Optional: set your exam date": "Facultatif : indiquez la date de votre examen",
