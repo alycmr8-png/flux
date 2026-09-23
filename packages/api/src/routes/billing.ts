@@ -40,7 +40,10 @@ router.post("/checkout", async (req, res) => {
   const session = await s.checkout.sessions.create({
     customer: customerId,
     mode: "subscription",
-    payment_method_types: ["card"],
+    // payment_method_types is deliberately absent: Managed Payments is enabled on
+    // the account and chooses the methods itself. Passing it is rejected outright,
+    // and letting Stripe decide also surfaces wallets and local methods we would
+    // otherwise have to enumerate by hand.
     line_items: [{ price: priceId, quantity: 1 }],
     subscription_data: { trial_period_days: 7 },
     metadata: { userId: user.id, plan },
