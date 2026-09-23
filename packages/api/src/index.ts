@@ -44,7 +44,16 @@ app.use("/webhooks/stripe", express.raw({ type: "application/json" }), stripeWeb
 
 app.use(express.json());
 
-app.get("/health", (_req, res) => res.json({ ok: true }));
+// Reports which build is answering, not just that something is. A plain {ok:true}
+// is identical before and after a deploy, so it can't tell you whether the fix you
+// just pushed is actually live — which is the only question anyone asks it.
+// Railway sets RAILWAY_GIT_COMMIT_SHA; empty elsewhere, and that's fine.
+const COMMIT = (process.env.RAILWAY_GIT_COMMIT_SHA ?? process.env.COMMIT_SHA ?? "").slice(0, 7);
+const BOOTED_AT = new Date().toISOString();
+
+app.get("/health", (_req, res) =>
+  res.json({ ok: true, commit: COMMIT || null, bootedAt: BOOTED_AT }),
+);
 
 app.use("/public/waitlist", waitlistRouter);
 app.use("/api", requireAuth);
