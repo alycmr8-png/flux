@@ -20,6 +20,7 @@ export default function BillingPage() {
   const success = searchParams.get("success") === "1";
   const fetcher = useApiSWRFetcher();
   const apiFetch = useApiFetch();
+  const [billingError, setBillingError] = useState<string | null>(null);
   const { data, isLoading } = useSWR(`${BASE}/api/billing/status`, fetcher);
   const currentPlan: string = data?.data?.plan ?? "free";
   const [loading, setLoading] = useState<string | null>(null);
@@ -28,13 +29,22 @@ export default function BillingPage() {
 
   async function upgrade(plan: PaidPlanId) {
     setLoading(plan);
+    setBillingError(null);
     try {
       const res = await apiFetch(`/api/billing/checkout`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ plan }),
       });
+      // Without a URL there is nothing to send the student to, and silently
+      // doing nothing is indistinguishable from the button being broken.
       if (res.data?.url) window.location.href = res.data.url;
+      else setBillingError(tr("Couldn't start checkout — try again in a moment."));
+    } catch (e: any) {
+      setBillingError(
+        /"error":"([^"]+)"/.exec(String(e?.message ?? ""))?.[1]
+          ?? tr("Couldn't start checkout — try again in a moment."),
+      );
     } finally {
       setLoading(null);
     }
@@ -42,9 +52,16 @@ export default function BillingPage() {
 
   async function openPortal() {
     setLoading("portal");
+    setBillingError(null);
     try {
       const res = await apiFetch(`/api/billing/portal`, { method: "POST" });
       if (res.data?.url) window.location.href = res.data.url;
+      else setBillingError(tr("Couldn't open billing — try again in a moment."));
+    } catch (e: any) {
+      setBillingError(
+        /"error":"([^"]+)"/.exec(String(e?.message ?? ""))?.[1]
+          ?? tr("Couldn't open billing — try again in a moment."),
+      );
     } finally {
       setLoading(null);
     }
@@ -81,6 +98,19 @@ export default function BillingPage() {
             className="flex items-center gap-2 bg-indigo-600 text-white text-[15.5px] font-medium px-5 py-2.5 rounded-full hover:bg-indigo-500 transition-colors"
           >{tr("Start using Ucorns")}<ArrowRight size={14} />
           </button>
+        </div>
+      )}
+
+      {billingError && (
+        <div
+          className="rounded-2xl mb-6 px-5 py-4"
+          style={{ background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.28)" }}
+          role="alert"
+        >
+          <div style={{ fontSize: 15.5, fontWeight: 600, color: "#B91C1C", marginBottom: 2 }}>
+            {tr("Couldn't start checkout")}
+          </div>
+          <div style={{ fontSize: 14.5, color: "rgba(15,17,21,0.75)" }}>{billingError}</div>
         </div>
       )}
 

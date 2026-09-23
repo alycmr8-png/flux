@@ -746,4 +746,7 @@ export const fr: Record<string, string> = {
   "Tap to drop it into your note": "Touchez pour l'insérer dans votre note",
   "Privacy Policy": "Politique de confidentialité",
   "Terms of Service": "Conditions d'utilisation",
+  "Couldn't start checkout": "Impossible de démarrer le paiement",
+  "Couldn't start checkout — try again in a moment.": "Impossible de démarrer le paiement — réessayez dans un instant.",
+  "Couldn't open billing — try again in a moment.": "Impossible d'ouvrir la facturation — réessayez dans un instant.",
 };
