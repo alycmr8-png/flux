@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * 3D animated Flux logo — plays like a looping video: the three layers of
+ * 3D animated Ucorns logo — plays like a looping video: the three layers of
  * the mark drop in and stack on top of each other, hold as the assembled
  * logo (slowly rotating), then fade and rebuild. Pure CSS 3D (no three.js);
  * freezes to the assembled mark for reduced-motion users.

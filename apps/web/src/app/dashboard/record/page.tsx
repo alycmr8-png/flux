@@ -735,7 +735,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: {
   const audioLectures: any[] = lectures.filter((l: any) => l.audioUrl && !isYoutubeUrl(l.audioUrl));
 
   // ── Photos ─────────────────────────────────────────────────────────────────
-  // Whiteboards, slides, handwritten pages. Flux reads each one (maths typeset)
+  // Whiteboards, slides, handwritten pages. Ucorns reads each one (maths typeset)
   // and files it into this class's memory, so Ask can answer from it.
   const { data: photosData, mutate: mutatePhotos } = useSWR(
     visitedTabs.has("photo") ? `${BASE}/api/photos?courseId=${course.id}` : null,
@@ -781,7 +781,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: {
   async function deletePhoto(id: string) {
     const ok = await confirm({
       title: tr("Delete this photo?"),
-      message: tr("The photo and what Flux read from it are removed, and Ask will stop using it."),
+      message: tr("The photo and what Ucorns read from it are removed, and Ask will stop using it."),
       confirmLabel: tr("Delete"),
       danger: true,
     });
@@ -1231,7 +1231,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: {
       return;
     }
 
-    // Photo → open it large, beside what Flux read from it
+    // Photo → open it large, beside what Ucorns read from it
     if (c.sourceType === "photo") {
       switchTab("photo");
       setOpenPhotoId(c.sourceId);
@@ -2137,7 +2137,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: {
                 Add photos to {course.name}
               </h2>
               <p className="text-[17px] leading-relaxed" style={{ color: "rgba(15,17,21,0.82)" }}>
-                The whiteboard, a slide, your handwritten notes, a page of the textbook. Flux reads each photo — formulas included — so Ask can answer from it.
+                The whiteboard, a slide, your handwritten notes, a page of the textbook. Ucorns reads each photo — formulas included — so Ask can answer from it.
               </p>
             </div>
             <button
@@ -2179,7 +2179,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: {
                   </div>
                   <div className="p-3">
                     <p className="text-[15px] leading-snug line-clamp-2" style={{ color: p.text ? "rgba(15,17,21,0.85)" : "rgba(15,17,21,0.6)" }}>
-                      {p.status === "reading" ? tr("Flux is reading this photo…")
+                      {p.status === "reading" ? tr("Ucorns is reading this photo…")
                         : p.status === "error" ? tr("Tap to try again.")
                         : p.text ? latexToReadablePreview(p.text) : tr("Nothing readable in this photo.")}
                     </p>
@@ -2209,7 +2209,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: {
                 </div>
                 <div className="md:flex-[2] min-h-0 flex flex-col">
                   <div className="flex items-center gap-2 px-5 py-4 border-b" style={{ borderColor: "rgba(0,0,0,0.08)" }}>
-                    <span className="text-[17px] font-semibold" style={{ color: "#0f1115" }}>{tr("What Flux read")}</span>
+                    <span className="text-[17px] font-semibold" style={{ color: "#0f1115" }}>{tr("What Ucorns read")}</span>
                     <span className="text-[14px]" style={{ color: "rgba(15,17,21,0.6)" }}>· {format(new Date(openPhoto.createdAt), "d MMM, h:mm a")}</span>
                     <button onClick={() => setOpenPhotoId(null)} className="ml-auto p-1.5 rounded-lg hover:bg-black/5" aria-label={tr("Close")}>
                       <X size={18} style={{ color: "#0f1115" }} />
@@ -2221,7 +2221,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: {
                         <Loader2 size={16} className="animate-spin" />{tr("Reading this photo…")}</p>
                     ) : openPhoto.status === "error" ? (
                       <div className="space-y-3">
-                        <p className="text-[16px]" style={{ color: "rgba(15,17,21,0.8)" }}>{tr("Flux couldn't read this photo.")}</p>
+                        <p className="text-[16px]" style={{ color: "rgba(15,17,21,0.8)" }}>{tr("Ucorns couldn't read this photo.")}</p>
                         <button onClick={() => retryPhoto(openPhoto.id)} className="flex items-center gap-2 rounded-xl px-4 py-2 text-[15px] font-semibold text-white" style={{ background: color }}>
                           <RotateCcw size={15} />{tr("Try again")}</button>
                       </div>

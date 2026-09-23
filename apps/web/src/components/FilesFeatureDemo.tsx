@@ -69,7 +69,7 @@ export function FilesFeatureDemo() {
             Drop a PDF. <span style={{ color: "#6E7FF3" }}>Understand everything.</span>
           </h2>
           <p className="text-base md:text-lg mt-3 max-w-xl mx-auto" style={{ color: "rgba(0,0,0,0.55)" }}>
-            Upload any lecture slide, textbook chapter, or study guide — Flux breaks it down into summaries, key terms, practice questions, and exam tips.
+            Upload any lecture slide, textbook chapter, or study guide — Ucorns breaks it down into summaries, key terms, practice questions, and exam tips.
           </p>
         </div>
 

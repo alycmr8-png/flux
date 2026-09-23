@@ -89,7 +89,7 @@ export default function CalendarPage() {
   );
   const events: any[] = eventsData?.data ?? [];
 
-  // Reviews Flux schedules and events the student adds share the day list.
+  // Reviews Ucorns schedules and events the student adds share the day list.
   const allItems: Item[] = useMemo(() => [
     ...sessions.map((ev: any) => ({
       kind: "session" as const,
@@ -213,7 +213,7 @@ export default function CalendarPage() {
             {tr("Schedule")}
           </div>
           <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 34, letterSpacing: "-0.5px", color: "#0f1115", margin: 0 }}>
-            {tr("Reviews Flux plans for you, plus everything you add yourself.")}
+            {tr("Reviews Ucorns plans for you, plus everything you add yourself.")}
           </h1>
         </div>
       </div>

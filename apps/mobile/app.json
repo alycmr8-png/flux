@@ -1,10 +1,10 @@
 {
   "expo": {
     "entryPoint": "./index.js",
-    "name": "Flux",
-    "slug": "Flux",
+    "name": "Ucorns",
+    "slug": "Ucorns",
     "version": "1.0.0",
-    "scheme": "Flux",
+    "scheme": "Ucorns",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "splash": {
@@ -12,16 +12,16 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.Flux.app",
+      "bundleIdentifier": "com.Ucorns.app",
       "infoPlist": {
-        "NSMicrophoneUsageDescription": "Flux records your lectures to generate cheat sheets.",
+        "NSMicrophoneUsageDescription": "Ucorns records your lectures to generate cheat sheets.",
         "ITSAppUsesNonExemptEncryption": false,
-        "NSCameraUsageDescription": "Flux lets you photograph the board or slides during a lecture.",
-        "NSPhotoLibraryUsageDescription": "Flux lets you attach existing photos of the board or slides to a lecture."
+        "NSCameraUsageDescription": "Ucorns lets you photograph the board or slides during a lecture.",
+        "NSPhotoLibraryUsageDescription": "Ucorns lets you attach existing photos of the board or slides to a lecture."
       }
     },
     "android": {
-      "package": "com.Flux.app",
+      "package": "com.Ucorns.app",
       "permissions": [
         "RECORD_AUDIO",
         "CAMERA",
@@ -44,15 +44,15 @@
       [
         "expo-audio",
         {
-          "microphonePermission": "Flux records your lectures to generate cheat sheets.",
+          "microphonePermission": "Ucorns records your lectures to generate cheat sheets.",
           "enableBackgroundRecording": true
         }
       ],
       [
         "expo-image-picker",
         {
-          "photosPermission": "Flux lets you attach photos of the board or slides to a lecture.",
-          "cameraPermission": "Flux lets you photograph the board or slides during a lecture."
+          "photosPermission": "Ucorns lets you attach photos of the board or slides to a lecture.",
+          "cameraPermission": "Ucorns lets you photograph the board or slides during a lecture."
         }
       ]
     ],

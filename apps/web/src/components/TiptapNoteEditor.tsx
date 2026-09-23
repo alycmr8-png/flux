@@ -114,7 +114,7 @@ export function TiptapNoteEditor({
       }),
       InlineSuggestion,
       Placeholder.configure({
-        placeholder: "Start writing… press ∑ Formula to drop in an equation anywhere. Pause and Flux suggests the rest — Tab to accept.",
+        placeholder: "Start writing… press ∑ Formula to drop in an equation anywhere. Pause and Ucorns suggests the rest — Tab to accept.",
       }),
     ],
     content: initialContent,

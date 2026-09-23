@@ -16,7 +16,7 @@ const TYPESET_CONCURRENCY = 4;
 const TYPESET_DRAIN_MS = 8000;
 
 // Deepgram needs to be told the lecture's language, or French is heard as English.
-// nova-3 is the best English model; nova-2 covers the other languages Flux speaks.
+// nova-3 is the best English model; nova-2 covers the other languages Ucorns speaks.
 const DG_MODEL: Record<string, { model: string; language: string }> = {
   en: { model: "nova-3", language: "en" },
   fr: { model: "nova-2", language: "fr" },
@@ -59,7 +59,7 @@ export function attachLiveTranscribe(server: Server) {
       return client.close(4001, "Invalid session");
     }
 
-    // The lecture is transcribed in the language the student set for Flux.
+    // The lecture is transcribed in the language the student set for Ucorns.
     let language = "en";
     try {
       language = (await prisma.user.findUnique({ where: { clerkId: clerkUserId }, select: { language: true } }))?.language ?? "en";

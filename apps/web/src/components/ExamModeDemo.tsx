@@ -61,7 +61,7 @@ export function ExamModeDemo() {
         <span className="w-3 h-3 rounded-full" style={{ background: "#ff5f57" }} />
         <span className="w-3 h-3 rounded-full" style={{ background: "#febc2e" }} />
         <span className="w-3 h-3 rounded-full" style={{ background: "#28c840" }} />
-        <span className="mx-auto text-xs" style={{ color: "rgba(31,35,40,0.4)", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Flux — Exam Mode</span>
+        <span className="mx-auto text-xs" style={{ color: "rgba(31,35,40,0.4)", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Ucorns — Exam Mode</span>
       </div>
 
       <div className="p-5 md:p-7" style={{ minHeight: 420 }}>

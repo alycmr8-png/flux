@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Board + Lecture">
 <meta name="theme-color" content="#4B5FE8">
-<title>Flux — Board + Lecture</title>
+<title>Ucorns — Board + Lecture</title>
 <meta name="description" content="What the lecturer said and what he wrote become one lecture — so the quiz covers the formula he never said out loud.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -231,7 +231,7 @@
   /* The argument this demo makes: neither source alone produces the quiz
      question, because the formula that matters was written and never spoken. */
   const ACTS = [
-    { id:"said",    ms:7200, pill:"Recording", cls:"live", caption:"He says it out loud — Flux writes it down as he talks." },
+    { id:"said",    ms:7200, pill:"Recording", cls:"live", caption:"He says it out loud — Ucorns writes it down as he talks." },
     { id:"written", ms:6600, pill:"1 photo",   cls:"",     caption:"He writes the rest on the board. That part is never spoken." },
     { id:"merge",   ms:6400, pill:"Processing",cls:"",     caption:"Both go into one lecture — not two separate files." },
     { id:"payoff",  ms:9200, pill:"Ready",     cls:"ok",   caption:"So the quiz asks the formula he only ever wrote." },
@@ -291,7 +291,7 @@
     if (act.id === "written"){
       $("#scan").style.display = (p > .2 && p < .62) ? "block" : "none";
       $("#writtenNote").innerHTML = p >= .66
-        ? 'Flux reads it into the <strong>same lecture</strong> as the audio — formulas typeset, not a photo in a folder.'
+        ? 'Ucorns reads it into the <strong>same lecture</strong> as the audio — formulas typeset, not a photo in a folder.'
         : "";
     }
 

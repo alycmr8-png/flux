@@ -5,25 +5,25 @@ import { useTr } from "@/lib/useTr";
 const FAQS = [
   {
     q: "How do I record a lecture?",
-    a: "Go to Workspace → Record tab. Name your lecture, then press Start Recording. When done, press Stop — Flux will automatically generate your cheat sheet.",
+    a: "Go to Workspace → Record tab. Name your lecture, then press Start Recording. When done, press Stop — Ucorns will automatically generate your cheat sheet.",
   },
   {
     q: "How do I add events to my Calendar?",
-    a: "Go to Calendar, click any future day, then press Add. Fill in the title, type (Exam, Assignment, etc.), and date. Flux will remind you as the date approaches.",
+    a: "Go to Calendar, click any future day, then press Add. Fill in the title, type (Exam, Assignment, etc.), and date. Ucorns will remind you as the date approaches.",
   },
   {
     q: "How do I add photos to a class?",
-    a: "Open a class and go to Add Photo. Take or pick photos of the whiteboard, slides or your handwritten notes — Flux reads each one, formulas included, and Ask can answer from what's in them.",
+    a: "Open a class and go to Add Photo. Take or pick photos of the whiteboard, slides or your handwritten notes — Ucorns reads each one, formulas included, and Ask can answer from what's in them.",
   },
   {
     q: "How do I change the language?",
-    a: "Use the language switcher at the bottom of the sidebar. Flux will generate all study materials in your selected language.",
+    a: "Use the language switcher at the bottom of the sidebar. Ucorns will generate all study materials in your selected language.",
   },
 ];
 
 const FEATURES = [
   { icon: Mic,        label: "Record",       desc: "Record lectures and get instant cheat sheets" },
-  { icon: Camera,     label: "Add Photo",    desc: "Photos of the board and your notes, read by Flux" },
+  { icon: Camera,     label: "Add Photo",    desc: "Photos of the board and your notes, read by Ucorns" },
   { icon: Calendar,   label: "Calendar",     desc: "Track exams, assignments, and deadlines" },
 ];
 
@@ -33,11 +33,11 @@ export default function HelpPage() {
     <div style={{ color: "#1F2328", maxWidth: 720, margin: "0 auto" }}>
       <div className="mb-8">
         <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 28 }}>{tr("Help")}</h1>
-        <p style={{ color: "rgba(31,35,40, 0.75)", fontSize: 14.5, marginTop: 2 }}>{tr("Everything you need to get the most out of Flux")}</p>
+        <p style={{ color: "rgba(31,35,40, 0.75)", fontSize: 14.5, marginTop: 2 }}>{tr("Everything you need to get the most out of Ucorns")}</p>
       </div>
 
       {/* Quick feature overview */}
-      <p className="text-[13.5px] uppercase tracking-widest mb-3" style={{ color: "rgba(31,35,40, 0.7)" }}>{tr("What Flux can do")}</p>
+      <p className="text-[13.5px] uppercase tracking-widest mb-3" style={{ color: "rgba(31,35,40, 0.7)" }}>{tr("What Ucorns can do")}</p>
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-10">
         {FEATURES.map(({ icon: Icon, label, desc }) => (
           <div key={label} className="rounded-2xl p-4 border" style={{ background: "rgba(0,0,0,0.04)", borderColor: "rgba(0,0,0,0.06)" }}>

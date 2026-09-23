@@ -73,13 +73,13 @@ export default function BillingPage() {
           <div className="flex items-center gap-2 text-[#4caf50] mb-3">
             <Check size={16} />
             <span className="text-[15.5px] font-medium">
-              You&apos;re on {planLabel[currentPlan]} — welcome to Flux!
+              You&apos;re on {planLabel[currentPlan]} — welcome to Ucorns!
             </span>
           </div>
           <button
             onClick={() => router.push("/dashboard")}
             className="flex items-center gap-2 bg-indigo-600 text-white text-[15.5px] font-medium px-5 py-2.5 rounded-full hover:bg-indigo-500 transition-colors"
-          >{tr("Start using Flux")}<ArrowRight size={14} />
+          >{tr("Start using Ucorns")}<ArrowRight size={14} />
           </button>
         </div>
       )}

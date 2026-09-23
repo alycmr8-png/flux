@@ -2,21 +2,21 @@ import type { Metadata } from "next";
 import { LegalPage, Fill } from "@/components/LegalPage";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy — Flux",
-  description: "What Flux collects, who processes it, and how to delete it.",
+  title: "Privacy Policy — Ucorns",
+  description: "What Ucorns collects, who processes it, and how to delete it.",
 };
 
 export default function PrivacyPage() {
   return (
     <LegalPage title="Privacy Policy" updated="19 September 2026">
       <p>
-        Flux records university lectures and turns them into study material. That means we handle
+        Ucorns records university lectures and turns them into study material. That means we handle
         recordings of classrooms, the notes you write, and the questions you ask. This page explains
         exactly what we hold, who else processes it, and how to get rid of it.
       </p>
       <p>
-        Flux is operated by <Fill>[LEGAL ENTITY NAME]</Fill>, <Fill>[REGISTERED ADDRESS]</Fill>
-        {" "}("Flux", "we", "us"). Questions about this policy go to <Fill>[PRIVACY CONTACT EMAIL]</Fill>.
+        Ucorns is operated by <Fill>[LEGAL ENTITY NAME]</Fill>, <Fill>[REGISTERED ADDRESS]</Fill>
+        {" "}("Ucorns", "we", "us"). Questions about this policy go to <Fill>[PRIVACY CONTACT EMAIL]</Fill>.
       </p>
 
       <h2>1. What we collect</h2>
@@ -37,7 +37,7 @@ export default function PrivacyPage() {
         <li><strong>Notes</strong> you write yourself.</li>
       </ul>
 
-      <h3>What Flux generates from it</h3>
+      <h3>What Ucorns generates from it</h3>
       <p>
         Summaries, key points, flashcards, practice quizzes and exam packs; your quiz answers and
         scores; and a searchable index of your course, stored as short excerpts with numerical
@@ -46,14 +46,14 @@ export default function PrivacyPage() {
 
       <h3>Connected services, if you choose to connect them</h3>
       <p>
-        If you connect Google, we store access tokens so Flux can add study events to your calendar
+        If you connect Google, we store access tokens so Ucorns can add study events to your calendar
         and save study material to your Drive. If you connect Canvas, we store the credentials needed
         to read your course information. You can disconnect either at any time.
       </p>
 
       <h3>Messages and sharing</h3>
       <p>
-        Flux lets you connect with other students, send them messages, and share study material. Those
+        Ucorns lets you connect with other students, send them messages, and share study material. Those
         messages and shared items are stored so the other person can read them. Treat them as visible
         to their recipient — they are not end-to-end encrypted.
       </p>
@@ -75,7 +75,7 @@ export default function PrivacyPage() {
       <div className="callout">
         <p>
           <strong>A lecture recording captures other people — usually your lecturer, sometimes
-          classmates who ask questions.</strong> Those people are not Flux users and have not agreed to
+          classmates who ask questions.</strong> Those people are not Ucorns users and have not agreed to
           anything with us.
         </p>
         <p>
@@ -106,7 +106,7 @@ export default function PrivacyPage() {
       </p>
 
       <h2>4. Who else processes your data</h2>
-      <p>These providers process data on our behalf so Flux can work:</p>
+      <p>These providers process data on our behalf so Ucorns can work:</p>
       <table>
         <thead>
           <tr><th>Provider</th><th>What it handles</th></tr>
@@ -149,7 +149,7 @@ export default function PrivacyPage() {
 
       <h2>7. Deleting your account</h2>
       <p>
-        You can delete your account from inside Flux: <strong>Account → Delete account</strong>, on the
+        You can delete your account from inside Ucorns: <strong>Account → Delete account</strong>, on the
         web and in the phone app. It cannot be undone. Deleting removes:
       </p>
       <ul>
@@ -183,7 +183,7 @@ export default function PrivacyPage() {
 
       <h2>9. Children</h2>
       <p>
-        Flux is for university and college students. It is not intended for children under{" "}
+        Ucorns is for university and college students. It is not intended for children under{" "}
         <Fill>[MINIMUM AGE — 13, or 16 in parts of the EU]</Fill>, and we do not knowingly collect their
         data. If you believe a child has given us personal data, write to{" "}
         <Fill>[PRIVACY CONTACT EMAIL]</Fill> and we will delete it.

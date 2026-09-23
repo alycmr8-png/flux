@@ -8,7 +8,7 @@ import "katex/dist/katex.min.css";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Flux",
+  title: "Ucorns",
   description: "The AI that went to every one of your classes. Capture lectures, videos, files and notes — then ask your course anything, with sources.",
 };
 

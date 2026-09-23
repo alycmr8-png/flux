@@ -71,7 +71,7 @@ export function DownloadQR({ variant = "link" }: { variant?: "link" | "compact" 
               <X size={18} />
             </button>
 
-            <div id="download-title" style={{ fontSize: 22, fontWeight: 800, color: "#0f1115", letterSpacing: "-0.02em" }}>{tr("Get Flux on your phone")}</div>
+            <div id="download-title" style={{ fontSize: 22, fontWeight: 800, color: "#0f1115", letterSpacing: "-0.02em" }}>{tr("Get Ucorns on your phone")}</div>
             <p className="mt-2 mb-6" style={{ fontSize: 15, color: "rgba(15,17,21,0.65)", lineHeight: 1.5 }}>{tr("Scan with your phone&apos;s camera to download the app for iPhone or Android.")}</p>
 
             <div

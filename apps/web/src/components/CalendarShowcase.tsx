@@ -128,7 +128,7 @@ export function CalendarShowcase() {
             <span className="w-3 h-3 rounded-full" style={{ background: "#ff5f57" }} />
             <span className="w-3 h-3 rounded-full" style={{ background: "#febc2e" }} />
             <span className="w-3 h-3 rounded-full" style={{ background: "#28c840" }} />
-            <span className="ml-4 text-xs" style={{ color: "rgba(0,0,0,0.3)" }}>Flux — Calendar</span>
+            <span className="ml-4 text-xs" style={{ color: "rgba(0,0,0,0.3)" }}>Ucorns — Calendar</span>
           </div>
 
           <div className="flex" style={{ minHeight: 480 }}>

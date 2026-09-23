@@ -22,20 +22,22 @@ router.post("/", async (req, res) => {
 
   let event: any;
 
-  if (webhookSecret && sig) {
-    try {
-      const s = stripe();
-      event = s.webhooks.constructEvent(req.body, sig, webhookSecret);
-    } catch (err: any) {
-      console.error("[stripe-webhook] signature verification failed:", err.message);
-      return res.status(400).json({ error: `Webhook Error: ${err.message}` });
-    }
-  } else {
-    try {
-      event = JSON.parse(req.body.toString());
-    } catch {
-      return res.status(400).json({ error: "Invalid payload" });
-    }
+  // This endpoint grants paid subscriptions, and anyone on the internet can reach
+  // it. Without a verified signature a forged "checkout.session.completed" would
+  // hand out a plan for free, so an unsigned or unverifiable request is refused
+  // rather than parsed.
+  if (!webhookSecret) {
+    console.error("[stripe-webhook] STRIPE_WEBHOOK_SECRET is not set — refusing to process events");
+    return res.status(500).json({ error: "Webhook secret not configured" });
+  }
+  if (!sig) {
+    return res.status(400).json({ error: "Missing stripe-signature header" });
+  }
+  try {
+    event = stripe().webhooks.constructEvent(req.body, sig, webhookSecret);
+  } catch (err: any) {
+    console.error("[stripe-webhook] signature verification failed:", err.message);
+    return res.status(400).json({ error: `Webhook Error: ${err.message}` });
   }
 
   try {

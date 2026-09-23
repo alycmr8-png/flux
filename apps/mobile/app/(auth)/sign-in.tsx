@@ -30,7 +30,7 @@ const FEATURES = [
 ];
 
 /**
- * The Flux mark: the same three layers as the app icon and the web logo.
+ * The Ucorns mark: the same three layers as the app icon and the web logo.
  *
  * Each layer is its own path, so the stack assembles itself — the two lower
  * plates land first and the top diamond arrives last, building toward the
@@ -119,7 +119,7 @@ function AnimatedMark() {
           },
         ]}
       >
-        Fl<Text style={s.wordmarkU}>u</Text>x
+        <Text style={s.wordmarkU}>U</Text>corns
       </Animated.Text>
     </View>
   );

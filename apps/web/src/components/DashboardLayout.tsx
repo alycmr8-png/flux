@@ -60,7 +60,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </div>
             <div>
               <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 22, color: INK, letterSpacing: "-0.5px", lineHeight: 1.1 }}>
-                Flux
+                Ucorns
               </div>
               <div style={{ fontSize: 12.5, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(15,17,21, 0.73)" }}>{tr("Study Assistant")}</div>
             </div>

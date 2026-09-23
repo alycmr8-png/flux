@@ -26,7 +26,7 @@ const STEPS = [
 const CAPTIONS: Record<string, { icon: any; title: string; desc: string; flagship?: boolean }> = {
   "classes-summary-idle": {
     icon: Layers, title: "Every class, in its own colour",
-    desc: "You pick a colour per class and Flux uses it everywhere — tabs, formulas, quiz answers.",
+    desc: "You pick a colour per class and Ucorns uses it everywhere — tabs, formulas, quiz answers.",
   },
   "lecture-summary-idle": {
     icon: Sparkles, title: "One tap. Six ways to study it.", flagship: true,
@@ -121,7 +121,7 @@ function Sidebar() {
   return (
     <div className="w-36 shrink-0 hidden sm:flex flex-col py-5" style={{ background: "rgba(0,0,0,0.02)", borderRight: "1px solid rgba(0,0,0,0.06)" }}>
       <div className="px-4 pb-4 mb-2" style={{ borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
-        <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 17, fontWeight: 800, color: "#0f1115" }}>Flux</div>
+        <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 17, fontWeight: 800, color: "#0f1115" }}>Ucorns</div>
         <div style={{ fontSize: 7.5, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(15,17,21,0.45)", marginTop: 1 }}>{tr("Study Assistant")}</div>
       </div>
       <div className="flex-1 px-2 pt-1 flex flex-col gap-0.5">
@@ -418,7 +418,7 @@ export function ProductDemo() {
           <div className="w-2.5 h-2.5 rounded-full" style={{ background: "rgba(0,0,0,0.12)" }} />
           <div className="w-2.5 h-2.5 rounded-full" style={{ background: "rgba(0,0,0,0.12)" }} />
           <div className="w-2.5 h-2.5 rounded-full" style={{ background: "rgba(0,0,0,0.12)" }} />
-          <div className="mx-auto text-sm" style={{ color: "rgba(15,17,21,0.45)", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Flux — Study Assistant</div>
+          <div className="mx-auto text-sm" style={{ color: "rgba(15,17,21,0.45)", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Ucorns — Study Assistant</div>
         </div>
 
         <div ref={bodyRef} className="flex relative" style={{ height: 440 }}>

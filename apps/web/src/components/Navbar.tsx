@@ -27,7 +27,7 @@ export function Navbar() {
             <Layers size={17} style={{ color: "white" }} />
           </div>
           <span style={{ fontSize: 22, fontWeight: 800, color: "#111110", letterSpacing: "-0.5px" }}>
-            Fl<span style={{ color: "#4B5FE8" }}>u</span>x
+            <span style={{ color: "#4B5FE8" }}>U</span>corns
           </span>
         </Link>
 

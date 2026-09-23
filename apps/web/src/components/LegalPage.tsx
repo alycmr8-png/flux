@@ -21,7 +21,7 @@ export function LegalPage({
             <Layers size={15} style={{ color: "#fff" }} />
           </span>
           <span style={{ fontSize: 19, fontWeight: 800, color: "#111110", letterSpacing: "-0.4px" }}>
-            Fl<span style={{ color: "#4B5FE8" }}>u</span>x
+            <span style={{ color: "#4B5FE8" }}>U</span>corns
           </span>
         </Link>
 
@@ -36,7 +36,7 @@ export function LegalPage({
         <div style={{ marginTop: 56, paddingTop: 22, borderTop: "1px solid rgba(0,0,0,0.1)", display: "flex", gap: 22, flexWrap: "wrap" }}>
           <Link href="/privacy" style={{ fontSize: 15, color: "#4B5FE8" }}>Privacy Policy</Link>
           <Link href="/terms" style={{ fontSize: 15, color: "#4B5FE8" }}>Terms of Service</Link>
-          <Link href="/" style={{ fontSize: 15, color: "rgba(15,17,21,0.6)" }}>Back to Flux</Link>
+          <Link href="/" style={{ fontSize: 15, color: "rgba(15,17,21,0.6)" }}>Back to Ucorns</Link>
         </div>
       </div>
 

@@ -1,5 +1,5 @@
 /**
- * The "Add Photo" tab: whiteboards, slides, handwritten pages. Flux reads each
+ * The "Add Photo" tab: whiteboards, slides, handwritten pages. Ucorns reads each
  * photo (maths typeset) and files it into the class's memory so Ask can answer
  * from it. Mirrors the web workspace's Add Photo tab.
  */
@@ -78,7 +78,7 @@ export function ClassPhotos({ api, fetcher, course, color }: { api: any; fetcher
   }
 
   function remove(id: string) {
-    Alert.alert(tr("Delete this photo?"), tr("The photo and what Flux read from it are removed, and Ask will stop using it."), [
+    Alert.alert(tr("Delete this photo?"), tr("The photo and what Ucorns read from it are removed, and Ask will stop using it."), [
       { text: tr("Cancel"), style: "cancel" },
       {
         text: tr("Delete"),
@@ -104,7 +104,7 @@ export function ClassPhotos({ api, fetcher, course, color }: { api: any; fetcher
       <View style={s.hero}>
         <Text style={s.heroTitle}>Add photos to {course.name}</Text>
         <Text style={s.heroSub}>
-          The whiteboard, a slide, your handwritten notes, a page of the textbook. Flux reads each photo — formulas included — so Ask can answer from it.
+          The whiteboard, a slide, your handwritten notes, a page of the textbook. Ucorns reads each photo — formulas included — so Ask can answer from it.
         </Text>
         <TouchableOpacity
           style={[s.addBtn, { backgroundColor: color }, uploading && { opacity: 0.6 }]}
@@ -147,7 +147,7 @@ export function ClassPhotos({ api, fetcher, course, color }: { api: any; fetcher
               </View>
               <View style={s.tileBody}>
                 <Text style={[s.tilePreview, !p.text && { color: "rgba(15,17,21,0.62)" }]} numberOfLines={2}>
-                  {p.status === "reading" ? tr("Flux is reading this photo…")
+                  {p.status === "reading" ? tr("Ucorns is reading this photo…")
                     : p.status === "error" ? tr("Tap to try again.")
                     : p.text ? mathToPlainText(p.text).replace(/\s+/g, " ").trim() : tr("Nothing readable in this photo.")}
                 </Text>
@@ -162,7 +162,7 @@ export function ClassPhotos({ api, fetcher, course, color }: { api: any; fetcher
         {open && (
           <View style={s.viewer}>
             <View style={s.viewerHead}>
-              <Text style={s.viewerTitle}>{tr("What Flux read")}</Text>
+              <Text style={s.viewerTitle}>{tr("What Ucorns read")}</Text>
               <Text style={s.viewerDate}>· {when(open.createdAt)}</Text>
               <TouchableOpacity onPress={() => setOpenId(null)} style={s.closeBtn} hitSlop={10}>
                 <Ionicons name="close" size={24} color="#0f1115" />
@@ -180,7 +180,7 @@ export function ClassPhotos({ api, fetcher, course, color }: { api: any; fetcher
                   </View>
                 ) : open.status === "error" ? (
                   <View style={{ gap: 12 }}>
-                    <Text style={s.viewerMuted}>{tr("Flux couldn't read this photo.")}</Text>
+                    <Text style={s.viewerMuted}>{tr("Ucorns couldn't read this photo.")}</Text>
                     <TouchableOpacity onPress={() => retry(open.id)} style={[s.retryBtn, { backgroundColor: color }]} activeOpacity={0.85}>
                       <Ionicons name="refresh" size={17} color="#fff" />
                       <Text style={s.retryTxt}>{tr("Try again")}</Text>

@@ -36,8 +36,11 @@ const PORT = process.env.PORT || 3001;
 
 app.use(cors({ origin: process.env.ALLOWED_ORIGINS?.split(",") || "*" }));
 
-app.post("/webhooks/clerk", express.raw({ type: "application/json" }), webhookRouter);
-app.post("/webhooks/stripe", express.raw({ type: "application/json" }), stripeWebhookRouter);
+// app.use, not app.post: mounting a Router with app.post leaves the mount path on
+// req.url, so the routers' own `post("/")` never matches and every delivery 404s.
+// Both must stay above express.json() — signature verification needs the raw body.
+app.use("/webhooks/clerk", express.raw({ type: "application/json" }), webhookRouter);
+app.use("/webhooks/stripe", express.raw({ type: "application/json" }), stripeWebhookRouter);
 
 app.use(express.json());
 

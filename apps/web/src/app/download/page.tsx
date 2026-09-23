@@ -34,12 +34,12 @@ export default function DownloadPage() {
           <Layers size={19} style={{ color: "white" }} />
         </div>
         <span style={{ fontSize: 24, fontWeight: 800, color: "#111110", letterSpacing: "-0.5px" }}>
-          Fl<span style={{ color: "#4B5FE8" }}>u</span>x
+          <span style={{ color: "#4B5FE8" }}>U</span>corns
         </span>
       </Link>
 
       <div className="w-full max-w-md text-center">
-        <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 34, fontWeight: 800, color: "#0f1115", letterSpacing: "-0.03em", lineHeight: 1.1 }}>{tr("Get Flux on your phone")}</h1>
+        <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 34, fontWeight: 800, color: "#0f1115", letterSpacing: "-0.03em", lineHeight: 1.1 }}>{tr("Get Ucorns on your phone")}</h1>
 
         {live ? (
           <>
@@ -73,7 +73,7 @@ export default function DownloadPage() {
 
         <p className="mt-10" style={{ fontSize: 15, color: "rgba(15,17,21,0.6)" }}>
           {tr("On a computer?")}{" "}
-          <Link href="/sign-up" style={{ color: "#4B5FE8", fontWeight: 600 }}>{tr("Use Flux on the web")}</Link>
+          <Link href="/sign-up" style={{ color: "#4B5FE8", fontWeight: 600 }}>{tr("Use Ucorns on the web")}</Link>
         </p>
       </div>
     </main>

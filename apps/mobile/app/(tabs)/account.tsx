@@ -133,7 +133,7 @@ export default function AccountScreen() {
           </View>
         </View>
 
-        {/* Language — the app, lectures and everything Flux writes */}
+        {/* Language — the app, lectures and everything Ucorns writes */}
         <TouchableOpacity style={s.row} activeOpacity={0.7} onPress={() => setLangOpen(true)}>
           <Ionicons name="language-outline" size={20} color="rgba(15,17,21,0.55)" />
           <Text style={s.rowTxt}>{tr("Language")}</Text>
@@ -147,7 +147,7 @@ export default function AccountScreen() {
           <TouchableOpacity style={s.langBackdrop} activeOpacity={1} onPress={() => setLangOpen(false)}>
             <View style={s.langSheet}>
               <Text style={s.langTitle}>{tr("Language")}</Text>
-              <Text style={s.langHint}>{tr("Flux speaks this language: the app, your lecture transcripts, and every summary, quiz and answer.")}</Text>
+              <Text style={s.langHint}>{tr("Ucorns speaks this language: the app, your lecture transcripts, and every summary, quiz and answer.")}</Text>
               {LANGUAGES.map(l => (
                 <TouchableOpacity
                   key={l.code}
@@ -174,7 +174,7 @@ export default function AccountScreen() {
           activeOpacity={0.7}
           onPress={() => {
             if (WEB_URL) WebBrowser.openBrowserAsync(`${WEB_URL}/dashboard/billing`);
-            else Alert.alert(tr("Billing"), "Manage your plan from the Flux website (Dashboard → Billing).");
+            else Alert.alert(tr("Billing"), "Manage your plan from the Ucorns website (Dashboard → Billing).");
           }}
         >
           <Ionicons name="card-outline" size={20} color="rgba(15,17,21,0.55)" />

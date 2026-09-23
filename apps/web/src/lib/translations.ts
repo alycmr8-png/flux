@@ -65,7 +65,7 @@ const translations = {
       exam: {
         tab: "Exam Mode",
         title: "Exam Mode",
-        tagline: "Flux reads everything this course has captured — every lecture, file and note — and predicts what your exam will look like.",
+        tagline: "Ucorns reads everything this course has captured — every lecture, file and note — and predicts what your exam will look like.",
         dateLabel: "Exam date",
         generate: "Predict my exam",
         note: "No selecting, no organizing — it uses your entire course memory.",
@@ -228,7 +228,7 @@ const translations = {
       exam: {
         tab: "Mode Examen",
         title: "Mode Examen",
-        tagline: "Flux relit tout ce que ce cours a capturé — chaque cours, fichier et note — et prédit à quoi ressemblera ton examen.",
+        tagline: "Ucorns relit tout ce que ce cours a capturé — chaque cours, fichier et note — et prédit à quoi ressemblera ton examen.",
         dateLabel: "Date de l'examen",
         generate: "Prédire mon examen",
         note: "Rien à sélectionner, rien à organiser — toute la mémoire du cours est utilisée.",

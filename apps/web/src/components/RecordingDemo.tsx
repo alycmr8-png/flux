@@ -115,7 +115,7 @@ export function RecordingDemo() {
           <span className="w-3 h-3 rounded-full" style={{ background: "#ff5f57" }} />
           <span className="w-3 h-3 rounded-full" style={{ background: "#febc2e" }} />
           <span className="w-3 h-3 rounded-full" style={{ background: "#28c840" }} />
-          <span className="mx-auto text-xs" style={{ color: "rgba(15,17,21,0.45)", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Flux — Workspace</span>
+          <span className="mx-auto text-xs" style={{ color: "rgba(15,17,21,0.45)", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Ucorns — Workspace</span>
         </div>
 
         <div className="flex" style={{ height: 480 }}>
@@ -123,7 +123,7 @@ export function RecordingDemo() {
           {/* Sidebar */}
           <div className="hidden sm:flex w-44 shrink-0 flex-col py-5" style={{ background: "rgba(0,0,0,0.02)", borderRight: "1px solid rgba(0,0,0,0.06)" }}>
             <div className="px-4 pb-4 mb-2" style={{ borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
-              <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 17, color: "#0f1115" }}>Flux</div>
+              <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 17, color: "#0f1115" }}>Ucorns</div>
               <div style={{ fontSize: 7.5, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(15,17,21,0.45)", marginTop: 1 }}>{tr("Study Assistant")}</div>
             </div>
             <div className="flex-1 px-2">

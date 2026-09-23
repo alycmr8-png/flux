@@ -8,7 +8,7 @@ import { useTr } from "@/lib/useTr";
  * The board photo, attached to the recording.
  *
  * This is the step nothing else on the page shows: the professor fills the board,
- * the student photographs it, and Flux reads the handwriting into the *same*
+ * the student photographs it, and Ucorns reads the handwriting into the *same*
  * lecture as real notation — so the summary and quiz cover what was written but
  * never said out loud.
  *
@@ -48,7 +48,7 @@ const BOARD_RIGHT: Line[] = [
   { text: "know this!!", size: 22, tilt: 1.6, red: true },
 ];
 
-// What Flux gets back out of it — the same board, organised.
+// What Ucorns gets back out of it — the same board, organised.
 type ReadItem = { kind: "heading" | "math" | "list" | "note"; value: string; items?: string[] };
 const READ: ReadItem[] = [
   { kind: "heading", value: "Cardiac output" },
@@ -222,17 +222,17 @@ export function BoardPhotoDemo() {
             )}
           </div>
 
-          {/* ── What Flux read out of it ── */}
+          {/* ── What Ucorns read out of it ── */}
           <div className="p-5">
             <div className="uppercase" style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.14em", color: "rgba(15,17,21,0.45)", marginBottom: 10 }}>
-              {tr("What Flux read")}
+              {tr("What Ucorns read")}
             </div>
 
             <div style={{ minHeight: 330 }}>
               {reading && (
                 <div className="flex items-center gap-2" style={{ fontSize: 13, color: "rgba(15,17,21,0.6)" }}>
                   <Loader2 size={14} className="animate-spin" style={{ color: CLASS_COLOR }} />
-                  {tr("Flux is reading this photo…")}
+                  {tr("Ucorns is reading this photo…")}
                 </div>
               )}
 

@@ -888,7 +888,7 @@ function ClassWorkspace({ insets, course, onBack, hidden = false }: { insets: an
     try { await api.delete(`/api/notes/${id}`); } catch { Alert.alert(tr("Couldn't delete the note"), tr("Try again.")); mutateNotes(); }
   }
 
-  // ── note suggestions: after a pause at the end of the note, Flux suggests the rest ──
+  // ── note suggestions: after a pause at the end of the note, Ucorns suggests the rest ──
   const [noteSuggestion, setNoteSuggestion] = useState<{ text: string; forText: string } | null>(null);
   const suggestAbortRef = useRef<AbortController | null>(null);
   useEffect(() => {
@@ -1609,7 +1609,7 @@ function ClassWorkspace({ insets, course, onBack, hidden = false }: { insets: an
             value={activeNote.text}
             onChangeText={handleNoteChange}
             onSelectionChange={e => { noteCursorRef.current = e.nativeEvent.selection.end; }}
-            placeholder={tr("Start writing… pause and Flux suggests the rest.")}
+            placeholder={tr("Start writing… pause and Ucorns suggests the rest.")}
             placeholderTextColor="rgba(15,17,21,0.5)"
             multiline
           />

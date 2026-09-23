@@ -66,7 +66,7 @@ export default function CalendarScreen() {
     syncEventReminders(eventsData.data, { from: range.from, to: range.to }).catch(() => {});
   }, [eventsData]);
 
-  // Reviews Flux schedules and events the student adds share the day list.
+  // Reviews Ucorns schedules and events the student adds share the day list.
   const itemsOn = (d: Date) => [
     ...sessions.filter((ev) => isSameDay(new Date(ev.scheduledAt), d))
       .map((ev) => ({ kind: "session" as const, id: ev.id, at: new Date(ev.scheduledAt), title: ev.lecture?.title ?? tr("Study session"), sub: ev.type, course: ev.lecture?.course?.name })),

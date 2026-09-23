@@ -60,7 +60,7 @@ export default async function LandingPage() {
           }}
         />
 
-        {/* 3D animated Flux logo */}
+        {/* 3D animated Ucorns logo */}
         <div className="w-full mb-6" style={{ position: "relative" }}>
           <Hero3DLogo />
         </div>
@@ -90,7 +90,7 @@ export default async function LandingPage() {
             </span>
           </h1>
           <p className="text-base md:text-lg mb-7 leading-relaxed max-w-xl" style={{ color: "rgba(15,17,21,0.6)" }}>
-            {tr("Flux turns your recordings, PDFs, slides and YouTube links into study material — then answers anything about your course, cited to the lecture and the minute.")}
+            {tr("Ucorns turns your recordings, PDFs, slides and YouTube links into study material — then answers anything about your course, cited to the lecture and the minute.")}
           </p>
           <div className="mb-9 px-2 w-full flex justify-center">
             <RotatingPrompts />
@@ -137,12 +137,12 @@ export default async function LandingPage() {
               {tr("One recording.")}<br />{tr("Everything you need.")}
             </h2>
             <p className="text-base md:text-lg mt-5 max-w-2xl mx-auto leading-relaxed" style={{ color: "rgba(0,0,0,0.55)" }}>
-              {tr("Imagine you're taking Calculus. You hit record and the words appear on screen as they're said. The professor fills the board, so you photograph it — Flux reads the formulas straight off the photo. When the lecture ends, one tap turns all of it into study material.")}
+              {tr("Imagine you're taking Calculus. You hit record and the words appear on screen as they're said. The professor fills the board, so you photograph it — Ucorns reads the formulas straight off the photo. When the lecture ends, one tap turns all of it into study material.")}
             </p>
           </div>
           <div className="grid md:grid-cols-3 gap-5">
             {[
-              { n: "01", title: tr("Record, and read along"), text: tr("Words appear on screen as they're spoken. Photograph the whiteboard and Flux reads it into the same transcript — including the formulas.") },
+              { n: "01", title: tr("Record, and read along"), text: tr("Words appear on screen as they're spoken. Photograph the whiteboard and Ucorns reads it into the same transcript — including the formulas.") },
               { n: "02", title: tr("Six things from one tap"), text: tr("Summary, full transcript, key points, flashcards, a practice quiz, and a chat that knows this lecture. Generated once, yours forever.") },
               { n: "03", title: tr("Ask your whole course"), text: tr("Every lecture and note becomes one memory per class. Ask anything and the answer cites the lecture and the minute it was said.") },
             ].map(step => (
@@ -180,7 +180,7 @@ export default async function LandingPage() {
             {tr("It reads the board.")}<br />{tr("Formulas and all.")}
           </h2>
           <p style={{ fontSize: 18, color: "rgba(0,0,0,0.5)", lineHeight: 1.65 }}>
-            {tr("Photograph what the professor wrote and Flux attaches it to the same lecture, reading the handwriting into real notation — so the summary and the quiz cover what went on the board but was never said out loud.")}
+            {tr("Photograph what the professor wrote and Ucorns attaches it to the same lecture, reading the handwriting into real notation — so the summary and the quiz cover what went on the board but was never said out loud.")}
           </p>
         </div>
         <div className="relative w-full flex justify-center">
@@ -259,7 +259,7 @@ export default async function LandingPage() {
                 <Layers size={21} style={{ color: "#FFFFFF" }} />
               </div>
               <span style={{ fontSize: 30, fontWeight: 800, color: "#0f1115", letterSpacing: "-0.6px" }}>
-                Fl<span style={{ color: "#6E7FF3" }}>u</span>x
+                <span style={{ color: "#6E7FF3" }}>U</span>corns
               </span>
             </div>
             <p className="text-[19px] max-w-[360px] text-center md:text-left" style={{ color: "rgba(0,0,0,0.65)", lineHeight: 1.5, fontWeight: 500 }}>
@@ -285,7 +285,7 @@ export default async function LandingPage() {
             <Link href="/privacy" className="text-[14px] hover:text-[#0f1115] transition-colors" style={{ color: "rgba(0,0,0,0.6)" }}>{tr("Privacy Policy")}</Link>
             <Link href="/terms" className="text-[14px] hover:text-[#0f1115] transition-colors" style={{ color: "rgba(0,0,0,0.6)" }}>{tr("Terms of Service")}</Link>
           </div>
-          <span className="text-[14px]" style={{ color: "rgba(0,0,0,0.45)" }}>© {new Date().getFullYear()} Flux. {tr("All rights reserved.")}</span>
+          <span className="text-[14px]" style={{ color: "rgba(0,0,0,0.45)" }}>© {new Date().getFullYear()} Ucorns. {tr("All rights reserved.")}</span>
         </div>
       </footer>
 
