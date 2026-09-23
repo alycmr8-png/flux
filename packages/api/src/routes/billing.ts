@@ -1,13 +1,8 @@
 import { Router } from "express";
 import { prisma } from "../lib/prisma";
+import { stripe } from "../lib/stripe";
 
 const router = Router();
-
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-function stripe() {
-  const Stripe = require("stripe");
-  return new Stripe(process.env.STRIPE_SECRET_KEY!);
-}
 
 async function getOrCreateCustomer(s: any, user: any): Promise<string> {
   const sub = await prisma.subscription.findUnique({ where: { userId: user.id } });

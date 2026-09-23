@@ -2,7 +2,7 @@ import { Router } from "express";
 import fs from "fs";
 import { prisma } from "../lib/prisma";
 import { createClerkClient } from "@clerk/backend";
-import Stripe from "stripe";
+import { stripe } from "../lib/stripe";
 import { resolveStoredPath } from "../lib/storage";
 
 export const accountRouter = Router();
@@ -33,8 +33,7 @@ accountRouter.delete("/", async (req, res) => {
   const sub = await prisma.subscription.findUnique({ where: { userId: user.id } });
   if (sub?.stripeSubscriptionId && process.env.STRIPE_SECRET_KEY) {
     try {
-      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-      await stripe.subscriptions.cancel(sub.stripeSubscriptionId);
+      await stripe().subscriptions.cancel(sub.stripeSubscriptionId);
     } catch (e: any) {
       // A subscription already cancelled in Stripe is fine; anything else is not,
       // so refuse rather than delete an account that could still be billed.

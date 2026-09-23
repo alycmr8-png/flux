@@ -1,13 +1,8 @@
 import { Router } from "express";
 import { prisma } from "../lib/prisma";
+import { stripe, subscriptionPeriodEnd } from "../lib/stripe";
 
 const router = Router();
-
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-function stripe() {
-  const Stripe = require("stripe");
-  return new Stripe(process.env.STRIPE_SECRET_KEY!);
-}
 
 function planFromPriceId(priceId: string): string {
   if (priceId === process.env.STRIPE_STUDENT_PRICE_ID) return "student";
@@ -52,6 +47,7 @@ router.post("/", async (req, res) => {
 
         const s = stripe();
         const subscription = await s.subscriptions.retrieve(session.subscription);
+        const periodEnd = subscriptionPeriodEnd(subscription);
 
         await prisma.subscription.upsert({
           where: { userId },
@@ -61,14 +57,14 @@ router.post("/", async (req, res) => {
             stripeSubscriptionId: session.subscription,
             plan,
             status: subscription.status,
-            currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+            currentPeriodEnd: periodEnd,
           },
           update: {
             stripeCustomerId: session.customer,
             stripeSubscriptionId: session.subscription,
             plan,
             status: subscription.status,
-            currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+            currentPeriodEnd: periodEnd,
           },
         });
         break;
@@ -82,7 +78,7 @@ router.post("/", async (req, res) => {
           data: {
             plan: planFromPriceId(priceId),
             status: subscription.status,
-            currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+            currentPeriodEnd: subscriptionPeriodEnd(subscription),
           },
         });
         break;
