@@ -1,5 +1,9 @@
 import type { Metadata } from "next";
-import { LegalPage, Fill } from "@/components/LegalPage";
+import { LegalPage } from "@/components/LegalPage";
+import {
+  OPERATOR, LOCATION, CONTACT_EMAIL, MIN_AGE, DATA_REGION, HOSTING,
+  BILLING_RETENTION, BACKUP_RETENTION,
+} from "@/lib/legal";
 
 export const metadata: Metadata = {
   title: "Privacy Policy — Ucorns",
@@ -8,15 +12,15 @@ export const metadata: Metadata = {
 
 export default function PrivacyPage() {
   return (
-    <LegalPage title="Privacy Policy" updated="19 September 2026">
+    <LegalPage title="Privacy Policy" updated="24 September 2026">
       <p>
         Ucorns records university lectures and turns them into study material. That means we handle
         recordings of classrooms, the notes you write, and the questions you ask. This page explains
         exactly what we hold, who else processes it, and how to get rid of it.
       </p>
       <p>
-        Ucorns is operated by <Fill>[LEGAL ENTITY NAME]</Fill>, <Fill>[REGISTERED ADDRESS]</Fill>
-        {" "}("Ucorns", "we", "us"). Questions about this policy go to <Fill>[PRIVACY CONTACT EMAIL]</Fill>.
+        Ucorns is operated by {OPERATOR}, based in {LOCATION} ("Ucorns", "we", "us"). Questions about
+        this policy go to <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.
       </p>
 
       <h2>1. What we collect</h2>
@@ -24,7 +28,7 @@ export default function PrivacyPage() {
       <h3>Your account</h3>
       <p>
         Your email address and name, taken from the sign-in method you choose (email, or Google).
-        You may also pick an avatar emoji and colour, and an interface language. Authentication is
+        You may also pick an avatar and colour, and an interface language. Authentication is
         handled by Clerk — we never see or store your password.
       </p>
 
@@ -88,8 +92,8 @@ export default function PrivacyPage() {
       <p>
         We process a recording only to produce your study material. We do not identify speakers, build
         voice profiles, or match voices between recordings. If a lecturer or classmate asks us to
-        remove a recording of them, write to <Fill>[PRIVACY CONTACT EMAIL]</Fill> and we will work with
-        you to locate and delete it.
+        remove a recording of them, write to <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a> and
+        we will work with you to locate and delete it.
       </p>
 
       <h2>3. Why we use it</h2>
@@ -118,7 +122,7 @@ export default function PrivacyPage() {
           <tr><td>OpenAI</td><td>Transcription fallback, reading photographs, generating study material and answers, and creating embeddings</td></tr>
           <tr><td>Stripe</td><td>Payments and subscriptions</td></tr>
           <tr><td>Google</td><td>Calendar and Drive, only if you connect them</td></tr>
-          <tr><td><Fill>[HOSTING PROVIDER]</Fill></td><td>Servers and stored audio files</td></tr>
+          <tr><td>{HOSTING}</td><td>Servers, the website, and stored audio files</td></tr>
         </tbody>
       </table>
       <p>
@@ -134,7 +138,7 @@ export default function PrivacyPage() {
 
       <h2>5. Where your data is held</h2>
       <p>
-        Data is stored and processed in <Fill>[PRIMARY DATA REGION]</Fill>, and our providers may process
+        Data is stored and processed in {DATA_REGION}, and our providers may process
         it elsewhere, including the United States. Where the GDPR applies, those transfers rely on the
         European Commission's Standard Contractual Clauses.
       </p>
@@ -144,7 +148,7 @@ export default function PrivacyPage() {
         <li><strong>While your account is open</strong> — recordings, transcripts, notes and study material are kept until you delete them, because the point of the product is that they are still there at exam time.</li>
         <li><strong>Deleted recordings</strong> move to your archive first, and are removed permanently when you delete them from there.</li>
         <li><strong>When you delete your account</strong> — see below.</li>
-        <li><strong>Billing records</strong> are kept as long as tax and accounting law requires, typically <Fill>[RETENTION PERIOD]</Fill>.</li>
+        <li><strong>Billing records</strong> are kept as long as tax and accounting law requires, typically {BILLING_RETENTION}.</li>
       </ul>
 
       <h2>7. Deleting your account</h2>
@@ -161,7 +165,7 @@ export default function PrivacyPage() {
       </ul>
       <p>
         Any paid subscription is cancelled at the same time. Backups are overwritten on our ordinary
-        cycle, within <Fill>[BACKUP RETENTION]</Fill>. Messages you sent to another student may remain
+        cycle, within {BACKUP_RETENTION}. Messages you sent to another student may remain
         visible to that person.
       </p>
 
@@ -170,7 +174,7 @@ export default function PrivacyPage() {
         Depending on where you live, you may have the right to access, correct, export, restrict or
         delete your personal data, to object to certain processing, and to withdraw consent. Most of
         this you can do yourself in the app; for anything else write to{" "}
-        <Fill>[PRIVACY CONTACT EMAIL]</Fill> and we will respond within one month.
+        <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a> and we will respond within one month.
       </p>
       <p>
         If you are in the EU or UK and think we have handled your data badly, you may complain to your
@@ -183,10 +187,9 @@ export default function PrivacyPage() {
 
       <h2>9. Children</h2>
       <p>
-        Ucorns is for university and college students. It is not intended for children under{" "}
-        <Fill>[MINIMUM AGE — 13, or 16 in parts of the EU]</Fill>, and we do not knowingly collect their
-        data. If you believe a child has given us personal data, write to{" "}
-        <Fill>[PRIVACY CONTACT EMAIL]</Fill> and we will delete it.
+        Ucorns is for university and college students. It is not intended for anyone under {MIN_AGE},
+        and we do not knowingly collect their data. If you believe a child has given us personal data,
+        write to <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a> and we will delete it.
       </p>
 
       <h2>10. Security</h2>
@@ -205,11 +208,9 @@ export default function PrivacyPage() {
 
       <h2>12. Contact</h2>
       <p>
-        <Fill>[LEGAL ENTITY NAME]</Fill><br />
-        <Fill>[REGISTERED ADDRESS]</Fill><br />
-        <Fill>[PRIVACY CONTACT EMAIL]</Fill>
-        <br />
-        <Fill>[EU/UK REPRESENTATIVE, IF REQUIRED]</Fill>
+        {OPERATOR}<br />
+        {LOCATION}<br />
+        <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
       </p>
     </LegalPage>
   );

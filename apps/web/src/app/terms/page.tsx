@@ -1,5 +1,9 @@
 import type { Metadata } from "next";
-import { LegalPage, Fill } from "@/components/LegalPage";
+import { LegalPage } from "@/components/LegalPage";
+import {
+  OPERATOR, LOCATION, CONTACT_EMAIL, MIN_AGE, GOVERNING_LAW, COURTS,
+  REFUND_POLICY, PRICE_NOTICE, LIABILITY_FLOOR,
+} from "@/lib/legal";
 
 export const metadata: Metadata = {
   title: "Terms of Service — Ucorns",
@@ -8,16 +12,16 @@ export const metadata: Metadata = {
 
 export default function TermsPage() {
   return (
-    <LegalPage title="Terms of Service" updated="19 September 2026">
+    <LegalPage title="Terms of Service" updated="24 September 2026">
       <p>
-        These terms are the agreement between you and <Fill>[LEGAL ENTITY NAME]</Fill> ("Ucorns", "we",
-        "us") for use of the Ucorns website and apps. By creating an account you accept them. If you do
-        not accept them, do not use Ucorns.
+        These terms are the agreement between you and {OPERATOR} ("Ucorns", "we", "us") for use of the
+        Ucorns website and apps. By creating an account you accept them. If you do not accept them, do
+        not use Ucorns.
       </p>
 
       <h2>1. Who can use Ucorns</h2>
       <p>
-        You must be at least <Fill>[MINIMUM AGE]</Fill> years old and able to enter a contract. If you
+        You must be at least {MIN_AGE} years old and able to enter a contract. If you
         use Ucorns as part of study at an institution, you must also follow that institution's rules.
       </p>
 
@@ -51,7 +55,8 @@ export default function TermsPage() {
 
       <h2>3. Your account</h2>
       <p>
-        Keep your sign-in details to yourself and tell us promptly at <Fill>[SUPPORT EMAIL]</Fill> if
+        Keep your sign-in details to yourself and tell us promptly at{" "}
+        <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a> if
         someone else gets into your account. One account is for one person; do not share it.
       </p>
 
@@ -109,13 +114,13 @@ export default function TermsPage() {
       <ul>
         <li><strong>Renewal.</strong> Paid plans renew automatically at the end of each period until cancelled.</li>
         <li><strong>Cancelling.</strong> Cancel at any time; you keep access until the end of the period you have paid for.</li>
-        <li><strong>Refunds.</strong> <Fill>[REFUND POLICY — e.g. 14-day refund, or statutory rights only]</Fill></li>
-        <li><strong>Price changes.</strong> We will give at least <Fill>[NOTICE PERIOD]</Fill> notice before a price change affects you.</li>
+        <li><strong>Refunds.</strong> {REFUND_POLICY} If you are a consumer in the EU or UK, your statutory cancellation rights still apply.</li>
+        <li><strong>Price changes.</strong> We will give at least {PRICE_NOTICE} notice before a price change affects you.</li>
         <li><strong>Payment.</strong> Handled by Stripe, subject to their terms. We never see your card number.</li>
       </ul>
       <p>
         Deleting your account cancels any active subscription. We do not refund the unused part of a
-        period unless the law requires it or <Fill>[REFUND POLICY]</Fill> says otherwise.
+        period unless the law requires it.
       </p>
 
       <h2>8. Plan limits</h2>
@@ -154,7 +159,7 @@ export default function TermsPage() {
         Otherwise, and to the extent the law allows: Ucorns is provided "as is"; we are not liable for
         indirect or consequential loss, lost data, lost profits, missed deadlines, or exam or academic
         outcomes; and our total liability in any twelve-month period is limited to the greater of the
-        amount you paid us in that period and <Fill>[LIABILITY FLOOR — e.g. USD 100]</Fill>.
+        amount you paid us in that period and {LIABILITY_FLOOR}.
       </p>
       <p>
         If you are a consumer, you keep all rights the law of your country gives you, and nothing here
@@ -170,16 +175,16 @@ export default function TermsPage() {
 
       <h2>13. Governing law</h2>
       <p>
-        These terms are governed by the law of <Fill>[GOVERNING LAW / JURISDICTION]</Fill>, and disputes
-        will be heard by the courts of <Fill>[COURTS]</Fill>. If you are a consumer in the EU or UK, you
-        may instead bring proceedings in your country of residence.
+        These terms are governed by the law of {GOVERNING_LAW}, and disputes will be heard by{" "}
+        {COURTS}. If you are a consumer in the EU or UK, you may instead bring proceedings in your
+        country of residence.
       </p>
 
       <h2>14. Contact</h2>
       <p>
-        <Fill>[LEGAL ENTITY NAME]</Fill><br />
-        <Fill>[REGISTERED ADDRESS]</Fill><br />
-        <Fill>[SUPPORT EMAIL]</Fill>
+        {OPERATOR}<br />
+        {LOCATION}<br />
+        <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
       </p>
     </LegalPage>
   );
