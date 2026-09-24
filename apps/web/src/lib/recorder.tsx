@@ -68,6 +68,11 @@ function useRecorderEngine() {
   const outOfMinutes: boolean =
     !!usage?.minutes && usage.minutes.used >= usage.minutes.limit;
   const blocked = atLectureLimit || outOfMinutes;
+  /**
+   * Raised when someone out of lectures tries to record. Kept separate from
+   * micError: that renders as a red failure, and this is an offer, not a fault.
+   */
+  const [paywall, setPaywall] = useState<null | "lecture" | "minutes">(null);
 
   // The class this recording belongs to, and where it is: recording (or paused),
   // or stopped and waiting to be processed.
@@ -215,11 +220,7 @@ function useRecorderEngine() {
     if (phase === "saved") reset({ keepAudioUrl: true });
     // Stop at the paywall before the microphone opens, not after the lecture.
     if (blocked) {
-      setMicError(
-        usage?.plan === "free"
-          ? tr("That was your free lecture. Upgrade in Billing to record the rest of your semester.")
-          : tr("You've hit this month's recording limit. It resets at the start of next month."),
-      );
+      setPaywall(atLectureLimit ? "lecture" : "minutes");
       return;
     }
     // Browsers only expose the microphone over https or on localhost.
@@ -495,6 +496,7 @@ function useRecorderEngine() {
     live, maxRecSeconds,
     // So the Record button can show the wall instead of looking broken when tapped.
     atLectureLimit: blocked, plan: usage?.plan ?? null,
+    paywall, setPaywall, showPaywall: () => setPaywall(atLectureLimit ? "lecture" : "minutes"),
     course, phase, recording, paused, seconds,
     micError, setMicError,
     recTitle, setRecTitle, lectureTitle,

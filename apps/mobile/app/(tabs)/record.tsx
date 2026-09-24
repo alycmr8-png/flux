@@ -22,6 +22,7 @@ import { ClassPhotos } from "../../components/ClassPhotos";
 import { ProcessingCard } from "../../components/ProcessingCard";
 import { LectureAudioBar } from "../../components/LectureAudioBar";
 import { TypingDots } from "../../components/TypingDots";
+import Paywall from "../../components/Paywall";
 import { MathText, hasMathDelimiters } from "../../components/MathText";
 import { useLiveTranscription } from "../../lib/useLiveTranscription";
 import { toMathNotation, SCIENCE_STRUCTURES, SCIENCE_SYMBOLS, type LiveEntry, type MathTemplate } from "@sano/shared";
@@ -343,9 +344,10 @@ function ClassWorkspace({ insets, course, onBack, hidden = false }: { insets: an
   // Free is one lecture, so for most students who hit this, this is the paywall.
   // Both stay false while usage loads, so a slow request never blocks a paid user.
   const usage = usageData?.data;
+  const atLectureLimit: boolean = !!usage?.lecture && usage.lecture.used >= usage.lecture.limit;
   const blocked: boolean =
-    (!!usage?.lecture && usage.lecture.used >= usage.lecture.limit) ||
-    (!!usage?.minutes && usage.minutes.used >= usage.minutes.limit);
+    atLectureLimit || (!!usage?.minutes && usage.minutes.used >= usage.minutes.limit);
+  const [paywall, setPaywall] = useState<null | "lecture" | "minutes">(null);
   const limitHitRef = useRef(false);
   const [isSessionActive, setIsSessionActive] = useState(false);
   const [paused, setPaused] = useState(false);
@@ -473,12 +475,7 @@ function ClassWorkspace({ insets, course, onBack, hidden = false }: { insets: an
     // second lecture records the whole class and is refused at the end, with
     // nothing to show for it.
     if (blocked) {
-      Alert.alert(
-        usage?.plan === "free" ? tr("That was your free lecture") : tr("Monthly limit reached"),
-        usage?.plan === "free"
-          ? tr("Upgrade to record the rest of your semester.")
-          : tr("Your recording limit resets at the start of next month."),
-      );
+      setPaywall(atLectureLimit ? "lecture" : "minutes");
       return;
     }
     try {
@@ -653,12 +650,10 @@ function ClassWorkspace({ insets, course, onBack, hidden = false }: { insets: an
       setSavedUri(null);
     } catch (e: any) {
       // A raw "quota_exceeded" here reads as a crash, and this is the one error a
-      // student sees holding a lecture they just recorded — it has to say what to do.
+      // student sees holding a lecture they just recorded — so show the offer, not
+      // a failure. The take is kept, so it can still be processed after upgrading.
       if (e?.response?.status === 429) {
-        Alert.alert(
-          tr("That was your free lecture"),
-          tr("Upgrade to process this recording and the rest of your semester."),
-        );
+        setPaywall("lecture");
       } else {
         const msg = e?.response?.data?.message ?? e?.response?.data?.error ?? e?.message ?? tr("Unknown error");
         Alert.alert(tr("Upload failed"), msg);
@@ -799,12 +794,11 @@ function ClassWorkspace({ insets, course, onBack, hidden = false }: { insets: an
       setProcessingLectureId(l.id);
       mutateLectures();
     } catch (e: any) {
-      const status = e?.response?.status;
-      Alert.alert(
-        tr("Couldn't attach photos"),
-        status === 429 ? tr("You've used what the free lecture includes. Upgrade to keep going.")
-          : e?.response?.data?.error ?? tr("Try again in a moment."),
-      );
+      if (e?.response?.status === 429) {
+        setPaywall("lecture");
+      } else {
+        Alert.alert(tr("Couldn't attach photos"), e?.response?.data?.error ?? tr("Try again in a moment."));
+      }
     } finally {
       setAttachingId(null);
     }
@@ -1011,6 +1005,9 @@ function ClassWorkspace({ insets, course, onBack, hidden = false }: { insets: an
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       keyboardVerticalOffset={0}
     >
+    {/* Raised when a student out of lectures presses Record, or when the server
+        refuses an upload for the same reason. */}
+    <Paywall visible={!!paywall} reason={paywall ?? "lecture"} onClose={() => setPaywall(null)} />
     <ScrollView
       style={g.root}
       contentContainerStyle={[g.content, { paddingTop: insets.top + 16 }, kbOpen && { paddingBottom: 12 }]}

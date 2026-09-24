@@ -263,8 +263,15 @@ export const fr: Record<string, string> = {
   "Permanently delete": "Supprimer définitivement",
 
   // ── Billing ──
-  // The paywall. Free is a single lecture, so these are what most students see
-  // when they try to record a second one.
+  // The paywall itself — the screen a student sees when their free lecture is spent.
+  "Free lecture used": "Cours gratuit utilisé",
+  "Recording time used": "Temps d'enregistrement utilisé",
+  "Keep every lecture this semester": "Gardez tous vos cours ce semestre",
+  "You've used the free lecture. Upgrade to record every class, with notes, flashcards and quizzes for each one.": "Vous avez utilisé le cours gratuit. Passez à un forfait payant pour enregistrer tous vos cours, avec notes, cartes mémo et quiz pour chacun.",
+  "You've used the free recording time. Upgrade to record every class, with notes, flashcards and quizzes for each one.": "Vous avez utilisé le temps d'enregistrement gratuit. Passez à un forfait payant pour enregistrer tous vos cours, avec notes, cartes mémo et quiz pour chacun.",
+  // "Close" and "Couldn't start checkout — try again in a moment." are already
+  // defined above; the paywall reuses them.
+  // Kept for the messages that are still plain alerts elsewhere.
   "That was your free lecture. Upgrade in Billing to record the rest of your semester.": "C'était votre cours gratuit. Passez à un forfait payant dans Facturation pour enregistrer tout votre semestre.",
   "You've hit this month's recording limit. It resets at the start of next month.": "Vous avez atteint votre limite d'enregistrement du mois. Elle se réinitialise au début du mois prochain.",
   "That was your free lecture": "C'était votre cours gratuit",

@@ -16,6 +16,7 @@ import { TiptapNoteEditor } from "@/components/TiptapNoteEditor";
 import { MathText, FormulaText } from "@/components/MathText";
 import { recSafeClear } from "@/lib/recSafe";
 import { useRecorder, MAX_LECTURE_PHOTOS } from "@/lib/recorder";
+import Paywall from "@/components/Paywall";
 import { ensureFiniteDuration } from "@/lib/audioDuration";
 import { toMathNotation, mathToPlainText } from "@sano/shared";
 import { apiBase } from "@/lib/apiBase";
@@ -1309,6 +1310,9 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: {
     <div className="w-full min-h-full flex justify-center">
     <div className="w-full max-w-7xl px-3 py-5 md:px-8 md:py-8">
       <style>{WORKSPACE_KEYFRAMES}</style>
+      {/* Raised when a student out of lectures presses Record. Mounted at the root
+          so it overlays whichever tab of the workspace they were on. */}
+      {rec.paywall && <Paywall reason={rec.paywall} onClose={() => rec.setPaywall(null)} />}
       {/* Header */}
       <div className="mb-8">
         <div style={{ fontSize: 13.5, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "#6E7FF3", marginBottom: 14 }}>{tr("Workspace")}</div>
