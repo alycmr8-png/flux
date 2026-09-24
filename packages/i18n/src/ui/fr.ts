@@ -264,10 +264,10 @@ export const fr: Record<string, string> = {
 
   // ── Billing ──
   // The paywall itself — the screen a student sees when their free lecture is spent.
-  "Free lecture used": "Cours gratuit utilisé",
+  "Free lectures used": "Cours gratuits utilisés",
   "Recording time used": "Temps d'enregistrement utilisé",
   "Keep every lecture this semester": "Gardez tous vos cours ce semestre",
-  "You've used the free lecture. Upgrade to record every class, with notes, flashcards and quizzes for each one.": "Vous avez utilisé le cours gratuit. Passez à un forfait payant pour enregistrer tous vos cours, avec notes, cartes mémo et quiz pour chacun.",
+  "You've used your free lectures. Upgrade to record every class, with notes, flashcards and quizzes for each one.": "Vous avez utilisé vos cours gratuits. Passez à un forfait payant pour enregistrer tous vos cours, avec notes, cartes mémo et quiz pour chacun.",
   "You've used the free recording time. Upgrade to record every class, with notes, flashcards and quizzes for each one.": "Vous avez utilisé le temps d'enregistrement gratuit. Passez à un forfait payant pour enregistrer tous vos cours, avec notes, cartes mémo et quiz pour chacun.",
   // "Close" and "Couldn't start checkout — try again in a moment." are already
   // defined above; the paywall reuses them.
@@ -278,7 +278,7 @@ export const fr: Record<string, string> = {
   "Monthly limit reached": "Limite mensuelle atteinte",
   "Upgrade to record the rest of your semester.": "Passez à un forfait payant pour enregistrer tout votre semestre.",
   "Your recording limit resets at the start of next month.": "Votre limite d'enregistrement se réinitialise au début du mois prochain.",
-  "You've used what the free lecture includes. Upgrade to keep going.": "Vous avez utilisé tout ce qu'inclut le cours gratuit. Passez à un forfait payant pour continuer.",
+  "You've used what the free plan includes. Upgrade to keep going.": "Vous avez utilisé tout ce qu'inclut le forfait gratuit. Passez à un forfait payant pour continuer.",
   "Upgrade to process this recording and the rest of your semester.": "Passez à un forfait payant pour traiter cet enregistrement et tout votre semestre.",
   "Choose your plan": "Choisissez votre forfait",
   "Current plan": "Forfait actuel",
@@ -546,12 +546,12 @@ export const fr: Record<string, string> = {
   // ── Pricing ──
   "Your entire semester, remembered.": "Tout votre semestre, mémorisé.",
   "Start free. Every paid plan includes everything — they only differ on how you pay.": "Commencez gratuitement. Chaque forfait payant donne accès à tout — seule la formule de paiement change.",
-  "Your first lecture is free · Paid plans are billed today · Cancel anytime": "Votre premier cours est gratuit · Les forfaits payants sont débités aujourd'hui · Annulez à tout moment",
+  "Your first 2 lectures are free · Paid plans are billed today · Cancel anytime": "Vos 2 premiers cours sont gratuits · Les forfaits payants sont débités aujourd'hui · Annulez à tout moment",
   "Start free": "Commencer gratuitement",
-  "Record your first lecture free": "Enregistrez votre premier cours gratuitement",
-  "One lecture, start to finish.": "Un cours, du début à la fin.",
-  "1 lecture": "1 cours",
-  "10 questions": "10 questions",
+  "Record 2 lectures free": "Enregistrez 2 cours gratuitement",
+  "Two lectures, start to finish.": "Deux cours, du début à la fin.",
+  "2 lectures": "2 cours",
+  "20 questions": "20 questions",
   "Recordings up to 90 minutes": "Enregistrements jusqu'à 90 minutes",
   "Free": "Gratuit",
   "Semester": "Semestre",
@@ -598,10 +598,10 @@ export const fr: Record<string, string> = {
   "What if the professor writes on the board?": "Et si le professeur écrit au tableau ?",
   "Photograph it. Ucorns reads the photo — headings, diagrams and formulas — and folds what it finds into the same lecture, so the summary and quiz include what was written but never said out loud.": "Photographiez-le. Ucorns lit la photo — titres, schémas et formules — et intègre ce qu'il y trouve au même cours : le résumé et le quiz incluent donc ce qui a été écrit sans jamais être dit à voix haute.",
   "Is there a free trial?": "Existe-t-il un essai gratuit ?",
-  "Your first lecture is free, with no card: record up to 90 minutes and get the full notes, flashcards and questions from it. After that a paid plan is required, and it's billed the day you upgrade.": "Votre premier cours est gratuit, sans carte : enregistrez jusqu'à 90 minutes et obtenez les notes complètes, les cartes et les questions qui en découlent. Ensuite, un forfait payant est nécessaire, débité le jour où vous y passez.",
+  "Your first two lectures are free, with no card: record up to 90 minutes each and get the full notes, flashcards and questions from them. After that a paid plan is required, and it's billed the day you upgrade.": "Vos deux premiers cours sont gratuits, sans carte : enregistrez jusqu'à 90 minutes chacun et obtenez les notes complètes, les cartes et les questions qui en découlent. Ensuite, un forfait payant est nécessaire, débité le jour où vous y passez.",
   "How much does Ucorns cost?": "Combien coûte Ucorns ?",
   "How long can a recording be?": "Quelle peut être la durée d'un enregistrement ?",
-  "Up to 3 hours per recording on paid plans, and 90 minutes on your free lecture — enough for any class. When you reach the limit, Ucorns pauses and lets you process what you've recorded.": "Jusqu'à 3 heures par enregistrement avec les forfaits payants, et 90 minutes pour votre cours gratuit — de quoi couvrir n'importe quel cours. À la limite atteinte, Ucorns met en pause et vous laisse traiter ce que vous avez enregistré.",
+  "Up to 3 hours per recording on paid plans, and 90 minutes on a free lecture — enough for any class. When you reach the limit, Ucorns pauses and lets you process what you've recorded.": "Jusqu'à 3 heures par enregistrement avec les forfaits payants, et 90 minutes pour un cours gratuit — de quoi couvrir n'importe quel cours. À la limite atteinte, Ucorns met en pause et vous laisse traiter ce que vous avez enregistré.",
   "Does Ucorns work for any subject?": "Ucorns fonctionne-t-il pour toutes les matières ?",
   "Yes — biology, law, history, engineering, business and more. The scientific notation matters most in STEM, but the transcript, summary, flashcards and quizzes work for any lecture.": "Oui — biologie, droit, histoire, ingénierie, gestion et bien d'autres. La notation scientifique compte surtout dans les filières scientifiques, mais la transcription, le résumé, les cartes mémo et les quiz fonctionnent pour n'importe quel cours.",
   "Which devices does it work on?": "Sur quels appareils fonctionne-t-il ?",

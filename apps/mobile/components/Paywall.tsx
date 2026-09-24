@@ -81,12 +81,12 @@ export default function Paywall({
               <Ionicons name="close" size={18} color="#FFFFFF" />
             </TouchableOpacity>
             <Text style={s.eyebrow}>
-              {reason === "lecture" ? tr("Free lecture used") : tr("Recording time used")}
+              {reason === "lecture" ? tr("Free lectures used") : tr("Recording time used")}
             </Text>
             <Text style={s.title}>{tr("Keep every lecture this semester")}</Text>
             <Text style={s.sub}>
               {reason === "lecture"
-                ? tr("You've used the free lecture. Upgrade to record every class, with notes, flashcards and quizzes for each one.")
+                ? tr("You've used your free lectures. Upgrade to record every class, with notes, flashcards and quizzes for each one.")
                 : tr("You've used the free recording time. Upgrade to record every class, with notes, flashcards and quizzes for each one.")}
             </Text>
           </View>

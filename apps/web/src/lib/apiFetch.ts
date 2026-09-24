@@ -8,9 +8,10 @@ const BASE = apiBase();
 /**
  * Turns a 429 into a sentence that names what ran out and what to do about it.
  *
- * The free plan is a single lecture, so "this month's limit" would be wrong as well
- * as vague — nothing resets in a month for a student who has used their one lecture.
- * This message is the upgrade prompt, so it has to say which wall was hit.
+ * The free plan is a fixed number of lectures, not a monthly allowance, so "this
+ * month's limit" would be wrong as well as vague — nothing resets for a student who
+ * has used them. This message is the upgrade prompt, so it has to say which wall was
+ * hit. It deliberately never names the count, which lives in usage.ts.
  */
 function quotaMessage(body: string, fr: boolean): string {
   let kind = "";
@@ -24,20 +25,20 @@ function quotaMessage(body: string, fr: boolean): string {
   if (plan === "free") {
     const free: Record<string, [string, string]> = {
       lecture: [
-        "That was your free lecture. Upgrade to record the rest of your semester.",
-        "C'était ton cours gratuit. Passe à un forfait payant pour enregistrer tout ton semestre.",
+        "You've used your free lectures. Upgrade to record the rest of your semester.",
+        "Tu as utilisé tes cours gratuits. Passe à un forfait payant pour enregistrer tout ton semestre.",
       ],
       minutes: [
-        "Your free lecture has used up the free recording time. Upgrade to keep recording.",
-        "Ton cours gratuit a épuisé le temps d'enregistrement gratuit. Passe à un forfait payant pour continuer.",
+        "You've used the free recording time. Upgrade to keep recording.",
+        "Tu as utilisé le temps d'enregistrement gratuit. Passe à un forfait payant pour continuer.",
       ],
       ask: [
         "You've used your free questions. Upgrade to keep asking about your lectures.",
         "Tu as utilisé tes questions gratuites. Passe à un forfait payant pour continuer à poser des questions.",
       ],
       gen: [
-        "You've used what the free lecture includes. Upgrade for notes, flashcards and quizzes on every class.",
-        "Tu as utilisé tout ce qu'inclut le cours gratuit. Passe à un forfait payant pour les notes, cartes et quiz de chaque cours.",
+        "You've used what the free plan includes. Upgrade for notes, flashcards and quizzes on every class.",
+        "Tu as utilisé tout ce qu'inclut le forfait gratuit. Passe à un forfait payant pour les notes, cartes et quiz de chaque cours.",
       ],
     };
     const msg = free[kind];

@@ -6,18 +6,23 @@ import { prisma } from "../lib/prisma";
 export type UsageKind = "lecture" | "ask" | "gen" | "minutes";
 
 /**
- * Free is one lecture, not a monthly allowance.
+ * Free is a fixed taste of the product, not a monthly allowance.
  *
- * Five free lectures a month is most of a light user's semester, so there was no
- * point at which upgrading became necessary. One lecture is enough to see the notes
- * come out of a real class — which is what sells this — and the second lecture is
- * the wall. The ask and generation allowances are sized to that single lecture
- * rather than trimmed, because a student who never sees the notes has no reason to
- * pay for them.
+ * Five free lectures a month was most of a light user's semester, so there was no
+ * point at which upgrading became necessary. Two is enough to see notes come out of
+ * two real classes — including whether the second one builds on the first, which is
+ * the part that sells a course-memory product — and the third is the wall.
+ *
+ * The ask and generation allowances are sized to those lectures rather than trimmed,
+ * because a student who never sees the notes has no reason to pay for them. Changing
+ * FREE_LECTURES means changing the pricing copy in apps/web/src/lib/plans.ts too;
+ * the paywall wording deliberately doesn't name a number.
  */
+export const FREE_LECTURES = 2;
+
 const LIMITS: Record<"free" | "paid", Record<UsageKind, number>> = {
   // `minutes` is total audio recorded in a month — see MONTHLY_MINUTES below.
-  free: { lecture: 1, ask: 10, gen: 12, minutes: 90 },
+  free: { lecture: FREE_LECTURES, ask: 20, gen: 24, minutes: 180 },
   paid: { lecture: 30, ask: 150, gen: 300, minutes: 1200 },
 };
 
@@ -40,11 +45,11 @@ export const MONTHLY_MINUTES: Record<"free" | "paid", number> = {
  * Longest single recording per plan. Transcription is billed by the minute, so an
  * uncapped recording is the one thing that can sink a subscription's margin.
  *
- * Free sits at 90 rather than 60 because it now gets exactly one lecture: a real
- * class often runs 75–90 minutes, and cutting the student's only lecture off
+ * Free sits at 90 rather than 60 because it gets a fixed, small number of lectures:
+ * a real class often runs 75–90 minutes, and cutting a student's free lecture off
  * two-thirds of the way through demonstrates a broken product rather than a good
- * one. Total free exposure is bounded by the single-lecture cap either way, so the
- * longer ceiling costs at most one extra half-hour of transcription per signup.
+ * one. Total free exposure is bounded by the lecture count either way, so the longer
+ * ceiling costs at most an extra half-hour of transcription per free lecture.
  */
 export const MAX_RECORDING_MINUTES: Record<"free" | "paid", number> = {
   free: 90,

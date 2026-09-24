@@ -6,7 +6,7 @@ import { PLANS, PLAN_FEATURES, type PaidPlanId } from "@/lib/plans";
 import { useTr } from "@/lib/useTr";
 
 /**
- * What a student sees when their free lecture is spent.
+ * What a student sees when their free lectures are spent.
  *
  * This is the highest-intent moment in the product — they have just tried to record
  * a real class and want to — so it is deliberately not styled as an error. Upgrading
@@ -93,7 +93,7 @@ export default function Paywall({
             <X size={16} />
           </button>
           <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", opacity: 0.85, marginBottom: 8 }}>
-            {reason === "lecture" ? tr("Free lecture used") : tr("Recording time used")}
+            {reason === "lecture" ? tr("Free lectures used") : tr("Recording time used")}
           </div>
           <h2
             id="paywall-title"
@@ -103,7 +103,7 @@ export default function Paywall({
           </h2>
           <p style={{ fontSize: 15.5, opacity: 0.92, margin: "10px 0 0", maxWidth: "46ch" }}>
             {reason === "lecture"
-              ? tr("You've used the free lecture. Upgrade to record every class, with notes, flashcards and quizzes for each one.")
+              ? tr("You've used your free lectures. Upgrade to record every class, with notes, flashcards and quizzes for each one.")
               : tr("You've used the free recording time. Upgrade to record every class, with notes, flashcards and quizzes for each one.")}
           </p>
         </div>
