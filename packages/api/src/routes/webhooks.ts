@@ -21,14 +21,25 @@ webhookRouter.post("/", async (req, res) => {
     return res.status(400).json({ error: "Invalid signature" });
   }
 
-  if (event.type === "user.created") {
-    const { id, email_addresses, first_name, last_name } = event.data;
-    await prisma.user.create({
-      data: {
-        clerkId: id,
-        email: email_addresses[0].email_address,
-        name: `${first_name ?? ""} ${last_name ?? ""}`.trim(),
-      },
+  if (event.type === "user.created" || event.type === "user.updated") {
+    const { id, email_addresses, primary_email_address_id, first_name, last_name } = event.data;
+    // Upsert, not create. requireAuth creates the row the moment a new student
+    // makes their first API call, which usually beats this webhook — and a bare
+    // create then threw a unique-constraint error, so the real email was never
+    // written and every account kept its @clerk.local placeholder.
+    const primary =
+      email_addresses?.find((e: any) => e.id === primary_email_address_id) ??
+      email_addresses?.[0];
+    const email = primary?.email_address;
+    if (!email) {
+      console.error(`[clerk-webhook] ${event.type} for ${id} carried no email address`);
+      return res.json({ received: true });
+    }
+    const name = `${first_name ?? ""} ${last_name ?? ""}`.trim() || "Student";
+    await prisma.user.upsert({
+      where: { clerkId: id },
+      create: { clerkId: id, email, name },
+      update: { email, name },
     });
   }
 

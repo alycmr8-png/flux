@@ -1,15 +1,44 @@
 import { Router } from "express";
 import { prisma } from "../lib/prisma";
 import { stripe } from "../lib/stripe";
+import { fetchClerkIdentity, isPlaceholderEmail } from "../lib/clerk";
 
 const router = Router();
 
+/**
+ * The email on the Stripe customer is the only way Stripe can reach the student:
+ * receipts, the trial-ending notice, and the dunning emails when a renewal fails.
+ * A placeholder address there means a subscription can lapse in silence, so resolve
+ * the real one from Clerk before handing anything to Stripe.
+ */
+async function billingIdentity(user: any): Promise<{ email: string; name: string }> {
+  if (!isPlaceholderEmail(user.email)) return { email: user.email, name: user.name };
+  const identity = await fetchClerkIdentity(user.clerkId);
+  if (!identity) return { email: user.email, name: user.name };
+  await prisma.user.update({ where: { id: user.id }, data: identity });
+  return identity;
+}
+
 async function getOrCreateCustomer(s: any, user: any): Promise<string> {
   const sub = await prisma.subscription.findUnique({ where: { userId: user.id } });
-  if (sub?.stripeCustomerId) return sub.stripeCustomerId;
+  const { email, name } = await billingIdentity(user);
+
+  if (sub?.stripeCustomerId) {
+    // Customers created before the email was resolved still carry the placeholder,
+    // and Stripe never revisits it on its own. Checkout is rare enough that one
+    // extra call is cheaper than an undeliverable receipt.
+    try {
+      await s.customers.update(sub.stripeCustomerId, { email, name });
+    } catch (e: any) {
+      // A stale customer id must not block a student from paying.
+      console.error("[billing] could not refresh customer email:", e?.message);
+    }
+    return sub.stripeCustomerId;
+  }
+
   const customer = await s.customers.create({
-    email: user.email,
-    name: user.name,
+    email,
+    name,
     metadata: { clerkId: user.clerkId },
   });
   return customer.id;

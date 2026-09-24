@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import { verifyToken } from "@clerk/backend";
 import { prisma } from "../lib/prisma";
 import { verifyAudioSig, verifyPhotoSig } from "../lib/audioSign";
+import { fetchClerkIdentity, isPlaceholderEmail, placeholderEmailFor } from "../lib/clerk";
 
 async function dbWithRetry<T>(fn: () => Promise<T>, attempts = 4): Promise<T> {
   for (let i = 0; i < attempts; i++) {
@@ -56,11 +57,34 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
       prisma.user.findUnique({ where: { clerkId: clerkUserId } })
     );
     if (!user) {
+      // Ask Clerk for the real address rather than inventing one. This path runs
+      // when a student reaches the API before the user.created webhook lands, which
+      // in practice is every signup — so a placeholder here is not a rare edge
+      // case, it becomes the email Stripe tries to send receipts to.
+      const identity = await fetchClerkIdentity(clerkUserId);
       user = await dbWithRetry(() =>
         prisma.user.create({
-          data: { clerkId: clerkUserId, email: `${clerkUserId}@clerk.local`, name: "Student" },
+          data: {
+            clerkId: clerkUserId,
+            // Only if Clerk is unreachable — sign-in must not fail over this, and
+            // the repair below picks it up on a later request.
+            email: identity?.email ?? placeholderEmailFor(clerkUserId),
+            name: identity?.name ?? "Student",
+          },
         })
       );
+    } else if (isPlaceholderEmail(user.email)) {
+      // Repair a row that was created without a real address, so existing accounts
+      // heal themselves instead of needing a migration.
+      const identity = await fetchClerkIdentity(clerkUserId);
+      if (identity) {
+        user = await dbWithRetry(() =>
+          prisma.user.update({
+            where: { id: user!.id },
+            data: { email: identity.email, name: identity.name },
+          })
+        );
+      }
     }
     (req as any).user = user;
     next();
