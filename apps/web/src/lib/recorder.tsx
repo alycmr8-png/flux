@@ -52,6 +52,23 @@ function useRecorderEngine() {
   const { data: usageData } = useSWR(`${apiBase()}/api/usage`, fetcher);
   const maxRecSeconds = (usageData?.data?.maxRecordingMinutes ?? 180) * 60;
 
+  /**
+   * Whether this student has no lectures left. The free plan is a single lecture,
+   * so this is the paywall for almost everyone who hits it.
+   *
+   * It matters that the check happens here rather than at upload: the quota is
+   * enforced server-side when the audio arrives, which for a free student on their
+   * second lecture means sitting through a full class and *then* being refused,
+   * with the recording lost. Undefined while usage is still loading, so a slow
+   * request never blocks someone who is allowed to record.
+   */
+  const usage = usageData?.data;
+  const atLectureLimit: boolean =
+    !!usage?.lecture && usage.lecture.used >= usage.lecture.limit;
+  const outOfMinutes: boolean =
+    !!usage?.minutes && usage.minutes.used >= usage.minutes.limit;
+  const blocked = atLectureLimit || outOfMinutes;
+
   // The class this recording belongs to, and where it is: recording (or paused),
   // or stopped and waiting to be processed.
   const [course, setCourse] = useState<RecorderCourse | null>(null);
@@ -196,6 +213,15 @@ function useRecorderEngine() {
     if (phase === "recording" || (phase === "saved" && !uploaded)) return;
     // An uploaded take whose processing screen was left is done; clear it.
     if (phase === "saved") reset({ keepAudioUrl: true });
+    // Stop at the paywall before the microphone opens, not after the lecture.
+    if (blocked) {
+      setMicError(
+        usage?.plan === "free"
+          ? tr("That was your free lecture. Upgrade in Billing to record the rest of your semester.")
+          : tr("You've hit this month's recording limit. It resets at the start of next month."),
+      );
+      return;
+    }
     // Browsers only expose the microphone over https or on localhost.
     if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) {
       setMicError("Recording needs a secure connection. Open this page at http://localhost:3000 (or over https) to use the microphone.");
@@ -467,6 +493,8 @@ function useRecorderEngine() {
 
   return {
     live, maxRecSeconds,
+    // So the Record button can show the wall instead of looking broken when tapped.
+    atLectureLimit: blocked, plan: usage?.plan ?? null,
     course, phase, recording, paused, seconds,
     micError, setMicError,
     recTitle, setRecTitle, lectureTitle,

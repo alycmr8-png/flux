@@ -188,7 +188,7 @@ export default function BillingPage() {
                   style={featured ? { background: "#4B5FE8", color: "#FFFFFF" } : { border: "1px solid rgba(0,0,0,0.15)", color: "#0f1115" }}
                 >
                   <Zap size={13} />
-                  {loading === plan.id ? tr("Loading…") : "Start free trial"}
+                  {loading === plan.id ? tr("Loading…") : tr("Upgrade")}
                 </button>
               )}
             </div>
@@ -208,7 +208,7 @@ export default function BillingPage() {
         </div>
       </div>
 
-      <p className="text-[13.5px] text-gray-700 mt-6 text-center">{tr("Paid plans start with a 7-day free trial. Cancel anytime.")}</p>
+      <p className="text-[13.5px] text-gray-700 mt-6 text-center">{tr("Billed today. Cancel anytime.")}</p>
     </div>
   );
 }

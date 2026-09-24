@@ -68,7 +68,7 @@ export function ClassPhotos({ api, fetcher, course, color }: { api: any; fetcher
       const status = e?.response?.status;
       Alert.alert(
         tr("Couldn't add photos"),
-        status === 429 ? tr("You've hit this month's plan limit. Upgrade in Billing to keep going.")
+        status === 429 ? tr("You've used what the free lecture includes. Upgrade to keep going.")
           : status === 415 ? tr("Photos must be JPEG, PNG, WebP or GIF.")
           : tr("Try again in a moment."),
       );

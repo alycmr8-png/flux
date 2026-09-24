@@ -69,7 +69,9 @@ router.post("/checkout", async (req, res) => {
     // and letting Stripe decide also surfaces wallets and local methods we would
     // otherwise have to enumerate by hand.
     line_items: [{ price: priceId, quantity: 1 }],
-    subscription_data: { trial_period_days: 7 },
+    // No trial: the card is charged today. The free tier is the trial — one full
+    // lecture, no card — so a trial on top of it would be a second free period and
+    // would also hand out a paid plan before any money arrived.
     metadata: { userId: user.id, plan },
     success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/billing?success=1`,
     cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/pricing`,

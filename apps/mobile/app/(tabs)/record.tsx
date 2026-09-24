@@ -340,6 +340,12 @@ function ClassWorkspace({ insets, course, onBack, hidden = false }: { insets: an
   const live = useLiveTranscription();
   const { data: usageData } = useSWR("/api/usage", fetcher);
   const maxRecSeconds = (usageData?.data?.maxRecordingMinutes ?? 180) * 60;
+  // Free is one lecture, so for most students who hit this, this is the paywall.
+  // Both stay false while usage loads, so a slow request never blocks a paid user.
+  const usage = usageData?.data;
+  const blocked: boolean =
+    (!!usage?.lecture && usage.lecture.used >= usage.lecture.limit) ||
+    (!!usage?.minutes && usage.minutes.used >= usage.minutes.limit);
   const limitHitRef = useRef(false);
   const [isSessionActive, setIsSessionActive] = useState(false);
   const [paused, setPaused] = useState(false);
@@ -459,6 +465,19 @@ function ClassWorkspace({ insets, course, onBack, hidden = false }: { insets: an
         other.status === "saved" ? `Unprocessed recording in ${other.course.name}` : `Recording in ${other.course.name}`,
         tr("One recording at a time — finish or delete that one before starting here."),
         [{ text: tr("Cancel"), style: "cancel" }, { text: tr("Open it"), onPress: () => recordingSession.requestOpen(other.course.id) }],
+      );
+      return;
+    }
+    // The paywall has to land before the microphone opens. The server enforces the
+    // quota when the audio is uploaded, so without this a free student on their
+    // second lecture records the whole class and is refused at the end, with
+    // nothing to show for it.
+    if (blocked) {
+      Alert.alert(
+        usage?.plan === "free" ? tr("That was your free lecture") : tr("Monthly limit reached"),
+        usage?.plan === "free"
+          ? tr("Upgrade to record the rest of your semester.")
+          : tr("Your recording limit resets at the start of next month."),
       );
       return;
     }
@@ -633,8 +652,17 @@ function ClassWorkspace({ insets, course, onBack, hidden = false }: { insets: an
       setLectureTranscript(null);
       setSavedUri(null);
     } catch (e: any) {
-      const msg = e?.response?.data?.message ?? e?.response?.data?.error ?? e?.message ?? tr("Unknown error");
-      Alert.alert(tr("Upload failed"), msg);
+      // A raw "quota_exceeded" here reads as a crash, and this is the one error a
+      // student sees holding a lecture they just recorded — it has to say what to do.
+      if (e?.response?.status === 429) {
+        Alert.alert(
+          tr("That was your free lecture"),
+          tr("Upgrade to process this recording and the rest of your semester."),
+        );
+      } else {
+        const msg = e?.response?.data?.message ?? e?.response?.data?.error ?? e?.message ?? tr("Unknown error");
+        Alert.alert(tr("Upload failed"), msg);
+      }
     } finally {
       setUploading(false);
     }
@@ -774,7 +802,7 @@ function ClassWorkspace({ insets, course, onBack, hidden = false }: { insets: an
       const status = e?.response?.status;
       Alert.alert(
         tr("Couldn't attach photos"),
-        status === 429 ? tr("You've hit this month's plan limit. Upgrade in Billing to keep going.")
+        status === 429 ? tr("You've used what the free lecture includes. Upgrade to keep going.")
           : e?.response?.data?.error ?? tr("Try again in a moment."),
       );
     } finally {

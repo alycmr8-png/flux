@@ -5,9 +5,19 @@ import { prisma } from "../lib/prisma";
 // paid upfront, and the cheapest-per-month plan must not carry the highest caps.
 export type UsageKind = "lecture" | "ask" | "gen" | "minutes";
 
+/**
+ * Free is one lecture, not a monthly allowance.
+ *
+ * Five free lectures a month is most of a light user's semester, so there was no
+ * point at which upgrading became necessary. One lecture is enough to see the notes
+ * come out of a real class — which is what sells this — and the second lecture is
+ * the wall. The ask and generation allowances are sized to that single lecture
+ * rather than trimmed, because a student who never sees the notes has no reason to
+ * pay for them.
+ */
 const LIMITS: Record<"free" | "paid", Record<UsageKind, number>> = {
   // `minutes` is total audio recorded in a month — see MONTHLY_MINUTES below.
-  free: { lecture: 5, ask: 20, gen: 15, minutes: 120 },
+  free: { lecture: 1, ask: 10, gen: 12, minutes: 90 },
   paid: { lecture: 30, ask: 150, gen: 300, minutes: 1200 },
 };
 
@@ -26,10 +36,18 @@ export const MONTHLY_MINUTES: Record<"free" | "paid", number> = {
   paid: LIMITS.paid.minutes,
 };
 
-// Longest single recording per plan. Transcription is billed by the minute, so
-// an uncapped recording is the one thing that can sink a subscription's margin.
+/**
+ * Longest single recording per plan. Transcription is billed by the minute, so an
+ * uncapped recording is the one thing that can sink a subscription's margin.
+ *
+ * Free sits at 90 rather than 60 because it now gets exactly one lecture: a real
+ * class often runs 75–90 minutes, and cutting the student's only lecture off
+ * two-thirds of the way through demonstrates a broken product rather than a good
+ * one. Total free exposure is bounded by the single-lecture cap either way, so the
+ * longer ceiling costs at most one extra half-hour of transcription per signup.
+ */
 export const MAX_RECORDING_MINUTES: Record<"free" | "paid", number> = {
-  free: 60,
+  free: 90,
   paid: 180,
 };
 

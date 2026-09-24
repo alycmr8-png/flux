@@ -27,8 +27,8 @@ export const PLANS: Plan[] = [
     price: "$0",
     period: "",
     billing: "No card needed",
-    tagline: "Try it on your next lecture.",
-    limits: ["2 hours of recording a month", "20 questions a month", "Recordings up to 60 minutes"],
+    tagline: "One lecture, start to finish.",
+    limits: ["1 lecture", "10 questions", "Recordings up to 90 minutes"],
   },
   {
     id: "student",

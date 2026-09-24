@@ -92,7 +92,7 @@ export function PricingSection() {
                     border: plan.id === "free" ? "1px solid rgba(0,0,0,0.15)" : "none",
                   }}
                 >
-                  {plan.id === "free" ? tr("Start free") : tr("Start 7-day free trial")}
+                  {plan.id === "free" ? tr("Record your first lecture free") : tr("Upgrade")}
                 </Link>
               </div>
             );
@@ -116,7 +116,7 @@ export function PricingSection() {
         </div>
 
         <p className="text-center mt-8" style={{ fontSize: 15, color: "rgba(15,17,21,0.6)" }}>
-          {tr("Paid plans start with a 7-day free trial · Cancel anytime")}
+          {tr("Your first lecture is free · Paid plans are billed today · Cancel anytime")}
         </p>
       </div>
     </section>

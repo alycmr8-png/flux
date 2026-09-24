@@ -103,7 +103,8 @@ export default function TermsPage() {
       <h2>7. Plans, payment and cancellation</h2>
       <p>
         Ucorns has a free plan and paid plans. Prices and what each plan includes are shown on our{" "}
-        <a href="/pricing">pricing page</a>. Paid plans begin with a free trial where stated.
+        <a href="/pricing">pricing page</a>. Paid plans are charged in full when you upgrade; there
+        is no trial period.
       </p>
       <ul>
         <li><strong>Renewal.</strong> Paid plans renew automatically at the end of each period until cancelled.</li>
