@@ -5,6 +5,10 @@ import os from "os";
 import fs from "fs";
 import { prisma } from "../lib/prisma";
 import { describeLectureImage } from "../services/claude";
+import {
+  DOCUMENT_TYPES, isDocument, legacyOfficeName, extractDocumentText,
+  documentTitle, storedFilename, originalNameFromPath,
+} from "../services/documents";
 import { indexSource, deleteSource } from "../services/memory";
 import { consumeQuota, sendQuotaError } from "../services/usage";
 import { photoSig } from "../lib/audioSign";
@@ -16,18 +20,26 @@ export const photoRouter = Router();
 const uploadDir = ensureUploadDir();
 
 // The vision model reads these formats; HEIC has to be converted on the device first.
-const READABLE = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
+const IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
+// Slide decks and handouts carry their own text, so they skip the vision model
+// entirely — see services/documents.ts.
+const ACCEPTED = new Set([...IMAGE_TYPES, ...Object.keys(DOCUMENT_TYPES)]);
 const MAX_PHOTOS = 10;
 
 const upload = multer({
   storage: multer.diskStorage({
     destination: uploadDir,
     filename: (_req, file, cb) => {
+      // Documents keep the student's own filename in the stored path, because that
+      // name is what makes a citation recognisable later.
+      if (isDocument(file.mimetype)) return cb(null, storedFilename(file.originalname, file.mimetype));
       const ext = path.extname(file.originalname) || `.${file.mimetype.split("/")[1] ?? "jpg"}`;
       cb(null, `photo-${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`);
     },
   }),
-  limits: { fileSize: 15 * 1024 * 1024, files: MAX_PHOTOS },
+  // A slide deck runs larger than a phone photo, so the ceiling is higher than the
+  // 15 MB images needed.
+  limits: { fileSize: 30 * 1024 * 1024, files: MAX_PHOTOS },
 });
 
 function signedImageUrl(photoId: string, userId: string) {
@@ -35,13 +47,22 @@ function signedImageUrl(photoId: string, userId: string) {
   return `/api/photos/${photoId}/image?uid=${encodeURIComponent(userId)}&exp=${exp}&sig=${photoSig(photoId, userId, exp)}`;
 }
 
-function present(photo: { id: string; courseId: string; text: string; status: string; createdAt: Date }, userId: string) {
+function present(
+  photo: { id: string; courseId: string; text: string; status: string; createdAt: Date; mimeType: string; filePath: string },
+  userId: string,
+) {
+  const document = isDocument(photo.mimeType);
   return {
     id: photo.id,
     courseId: photo.courseId,
     text: photo.text,
     status: photo.status,
     createdAt: photo.createdAt,
+    mimeType: photo.mimeType,
+    // A document has no thumbnail to show, so the client needs to know which it is
+    // rather than putting a PDF in an <img> and rendering a blank box.
+    kind: document ? "document" : "image",
+    name: document ? originalNameFromPath(photo.filePath) : null,
     imageUrl: signedImageUrl(photo.id, userId),
   };
 }
@@ -58,8 +79,13 @@ async function readPhoto(photoId: string, userId: string) {
     const user = await prisma.user.findUnique({ where: { id: userId }, select: { language: true } });
     const stored = resolveStoredPath(photo.filePath);
     if (!stored) throw new Error(`image file is no longer on disk: ${photo.filePath}`);
-    const base64 = fs.readFileSync(stored).toString("base64");
-    const text = await describeLectureImage(base64, photo.mimeType, user?.language ?? "en");
+    let text: string;
+    if (isDocument(photo.mimeType)) {
+      text = await extractDocumentText(stored, photo.mimeType);
+    } else {
+      const base64 = fs.readFileSync(stored).toString("base64");
+      text = await describeLectureImage(base64, photo.mimeType, user?.language ?? "en");
+    }
     // An empty read means the model declined or found nothing legible. Marking it
     // "ready" would tell the student it worked while showing them nothing.
     const readable = !!text.trim();
@@ -74,13 +100,23 @@ async function readPhoto(photoId: string, userId: string) {
         courseId: photo.courseId,
         sourceType: "photo",
         sourceId: photo.id,
-        sourceTitle: photoTitle(photo.createdAt),
+        sourceTitle: isDocument(photo.mimeType)
+          ? documentTitle(originalNameFromPath(photo.filePath) ?? "", photo.createdAt)
+          : photoTitle(photo.createdAt),
         text,
       });
     }
   } catch (err: any) {
-    console.error(`[photos] could not read ${photoId}:`, err?.message);
-    await prisma.classPhoto.update({ where: { id: photoId }, data: { status: "error" } }).catch(() => {});
+    const message = String(err?.message ?? "");
+    console.error(`[photos] could not read ${photoId}:`, message);
+    // A scanned PDF is the student's most likely mistake and it has a fix, so carry
+    // that sentence through to the row instead of leaving only a red "error".
+    const explanation = message.startsWith("NO_TEXT_LAYER:")
+      ? message.slice("NO_TEXT_LAYER:".length).trim()
+      : "";
+    await prisma.classPhoto
+      .update({ where: { id: photoId }, data: { status: "error", text: explanation } })
+      .catch(() => {});
   }
 }
 
@@ -94,9 +130,17 @@ photoRouter.post("/", upload.array("photos", MAX_PHOTOS), async (req, res, next)
   const course = courseId ? await prisma.course.findFirst({ where: { id: courseId, userId: user.id } }) : null;
   if (!course) { discard(); return res.status(404).json({ error: "Class not found" }); }
   if (!files.length) return res.status(400).json({ error: "Add at least one photo." });
-  if (files.some(f => !READABLE.has(f.mimetype))) {
+  const rejected = files.find(f => !ACCEPTED.has(f.mimetype));
+  if (rejected) {
     discard();
-    return res.status(415).json({ error: "Photos must be JPEG, PNG, WebP or GIF." });
+    // The old Office formats are a common, specific mistake, and "unsupported file"
+    // leaves the student with nothing to do about it.
+    const legacy = legacyOfficeName(rejected.mimetype);
+    return res.status(415).json({
+      error: legacy
+        ? `${legacy} can't be read. Save it as PDF or .pptx and try again.`
+        : "Add an image (JPEG, PNG, WebP, GIF) or a document (PDF, .pptx, .docx, .txt, .md, .csv).",
+    });
   }
 
   try {

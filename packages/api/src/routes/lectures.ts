@@ -7,6 +7,10 @@ import os from "os";
 import fs from "fs";
 import { prisma } from "../lib/prisma";
 import { processLecture, MAX_LECTURE_PHOTOS } from "../services/lectureProcessor";
+import { DOCUMENT_TYPES, isDocument, legacyOfficeName, storedFilename } from "../services/documents";
+
+// Images the vision model reads, plus the documents that carry their own text.
+const ATTACHABLE = new Set(["image/jpeg", "image/png", "image/webp", "image/gif", ...Object.keys(DOCUMENT_TYPES)]);
 import { audioSig } from "../lib/audioSign";
 import { ensureUploadDir, resolveStoredPath } from "../lib/storage";
 
@@ -19,6 +23,9 @@ const resolveAudioPath = resolveStoredPath;
 const storage = multer.diskStorage({
   destination: uploadDir,
   filename: (_req, file, cb) => {
+    // Documents carry the student's own filename in the stored path — the processor
+    // reads it back to label the file in the transcript and in course memory.
+    if (isDocument(file.mimetype)) return cb(null, storedFilename(file.originalname, file.mimetype));
     const ext = path.extname(file.originalname) || (file.mimetype.includes("webm") ? ".webm" : ".m4a");
     cb(null, `${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`);
   },
@@ -83,9 +90,15 @@ lectureRouter.post("/:id/photos", acceptLecturePhotos, async (req, res) => {
     discard();
     return res.status(409).json({ error: "This recording is still being processed — try again when it's ready." });
   }
-  if (files.some(f => !["image/jpeg", "image/png", "image/webp", "image/gif"].includes(f.mimetype))) {
+  const rejected = files.find(f => !ATTACHABLE.has(f.mimetype));
+  if (rejected) {
     discard();
-    return res.status(415).json({ error: "Photos must be JPEG, PNG, WebP or GIF." });
+    const legacy = legacyOfficeName(rejected.mimetype);
+    return res.status(415).json({
+      error: legacy
+        ? `${legacy} can't be read. Save it as PDF or .pptx and try again.`
+        : "Attach an image (JPEG, PNG, WebP, GIF) or a document (PDF, .pptx, .docx, .txt, .md, .csv).",
+    });
   }
   const existing = (lecture.imageUrls ?? []).filter(p => fs.existsSync(p));
   if (existing.length + files.length > MAX_LECTURE_PHOTOS) {

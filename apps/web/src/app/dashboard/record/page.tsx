@@ -16,6 +16,8 @@ import { TiptapNoteEditor } from "@/components/TiptapNoteEditor";
 import { MathText, FormulaText } from "@/components/MathText";
 import { recSafeClear } from "@/lib/recSafe";
 import { useRecorder, MAX_LECTURE_PHOTOS } from "@/lib/recorder";
+import { ACCEPT_ATTR, isDocumentFile, fileKindLabel } from "@/lib/attachTypes";
+import { AttachmentThumb } from "@/components/AttachmentThumb";
 import Paywall from "@/components/Paywall";
 import { ensureFiniteDuration } from "@/lib/audioDuration";
 import { toMathNotation, mathToPlainText } from "@sano/shared";
@@ -1531,7 +1533,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: {
           <input
             ref={imageInputRef}
             type="file"
-            accept="image/*"
+            accept={ACCEPT_ATTR}
             multiple
             className="hidden"
             onChange={e => { addImages(e.target.files); e.target.value = ""; }}
@@ -1539,7 +1541,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: {
           <input
             ref={attachInputRef}
             type="file"
-            accept="image/jpeg,image/png,image/webp,image/gif"
+            accept={ACCEPT_ATTR}
             multiple
             className="hidden"
             onChange={e => attachPhotos(e.target.files)}
@@ -1743,8 +1745,13 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: {
                     <div className="flex gap-2 overflow-x-auto px-6 pb-4" style={{ borderTop: "1px solid rgba(0,0,0,0.06)", paddingTop: 16 }}>
                       {images.map((img, i) => (
                         <div key={img.url} className="relative shrink-0">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={img.url} alt={`Board photo ${i + 1}`} className="w-20 h-20 object-cover rounded-xl" style={{ border: "1px solid rgba(0,0,0,0.08)" }} />
+                          <AttachmentThumb
+                            imageUrl={img.url}
+                            name={img.file.name}
+                            isDocument={isDocumentFile(img.file)}
+                            size={80}
+                            alt={`Attachment ${i + 1}`}
+                          />
                           <button
                             onClick={() => removeImage(i)}
                             aria-label={tr("Remove photo")}
@@ -1881,8 +1888,13 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: {
                       <div className="flex flex-wrap gap-2">
                         {images.map((img, i) => (
                           <div key={img.url} className="relative">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={img.url} alt={`Board photo ${i + 1}`} className="w-24 h-24 object-cover rounded-xl" style={{ border: "1px solid rgba(0,0,0,0.08)" }} />
+                            <AttachmentThumb
+                              imageUrl={img.url}
+                              name={img.file.name}
+                              isDocument={isDocumentFile(img.file)}
+                              size={96}
+                              alt={`Attachment ${i + 1}`}
+                            />
                             <button
                               onClick={() => removeImage(i)}
                               aria-label={tr("Remove photo")}
@@ -2129,7 +2141,7 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: {
           <input
             ref={photoInputRef}
             type="file"
-            accept="image/jpeg,image/png,image/webp,image/gif"
+            accept={ACCEPT_ATTR}
             multiple
             className="hidden"
             onChange={e => uploadPhotos(e.target.files)}
@@ -2170,8 +2182,22 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: {
                   style={{ background: "#FFFFFF", borderColor: "rgba(0,0,0,0.08)" }}
                 >
                   <div className="relative" style={{ aspectRatio: "4 / 3", background: "rgba(0,0,0,0.04)" }}>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={`${BASE}${p.imageUrl}`} alt={tr("Class photo")} className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
+                    {p.kind === "document" ? (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 px-4" style={{ background: "rgba(75,95,232,0.06)" }}>
+                        <FileText size={30} style={{ color: "#4B5FE8" }} />
+                        <span className="text-[13px] font-bold tracking-wider" style={{ color: "#4B5FE8" }}>
+                          {p.name ? fileKindLabel(p.name) : "FILE"}
+                        </span>
+                        {p.name && (
+                          <span className="text-[13px] text-center line-clamp-2" style={{ color: "rgba(15,17,21,0.7)", wordBreak: "break-word" }}>
+                            {p.name}
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={`${BASE}${p.imageUrl}`} alt={tr("Class photo")} className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
+                    )}
                     {p.status === "reading" && (
                       <span className="absolute left-2 top-2 flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[13px] font-semibold text-white" style={{ background: "rgba(15,17,21,0.72)" }}>
                         <Loader2 size={12} className="animate-spin" />{tr("Reading…")}</span>
@@ -2183,9 +2209,11 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: {
                   </div>
                   <div className="p-3">
                     <p className="text-[15px] leading-snug line-clamp-2" style={{ color: p.text ? "rgba(15,17,21,0.85)" : "rgba(15,17,21,0.6)" }}>
-                      {p.status === "reading" ? tr("Ucorns is reading this photo…")
-                        : p.status === "error" ? tr("Tap to try again.")
-                        : p.text ? latexToReadablePreview(p.text) : tr("Nothing readable in this photo.")}
+                      {p.status === "reading"
+                        ? (p.kind === "document" ? tr("Ucorns is reading this file…") : tr("Ucorns is reading this photo…"))
+                        : p.status === "error"
+                          ? (p.text || tr("Tap to try again."))
+                          : p.text ? latexToReadablePreview(p.text) : tr("Nothing readable in this photo.")}
                     </p>
                     <p className="text-[13.5px] mt-1.5" style={{ color: "rgba(15,17,21,0.6)" }}>
                       {format(new Date(p.createdAt), "d MMM, h:mm a")}
@@ -2209,7 +2237,26 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: {
               >
                 <div className="md:flex-[3] min-h-0 flex items-center justify-center" style={{ background: "#0f1115" }}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={`${BASE}${openPhoto.imageUrl}`} alt={tr("Class photo")} className="max-h-[45vh] md:max-h-[90vh] w-full object-contain" />
+                  {openPhoto.kind === "document" ? (
+                    <div className="flex flex-col items-center justify-center gap-3 px-6 py-12">
+                      <FileText size={38} style={{ color: "#4B5FE8" }} />
+                      <span className="text-[16px] font-semibold text-center" style={{ color: "#0f1115", wordBreak: "break-word" }}>
+                        {openPhoto.name ?? tr("Attached file")}
+                      </span>
+                      <a
+                        href={`${BASE}${openPhoto.imageUrl}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-[15px] font-semibold rounded-full px-4 py-2"
+                        style={{ background: "#4B5FE8", color: "#FFFFFF" }}
+                      >
+                        {tr("Open file")}
+                      </a>
+                    </div>
+                  ) : (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={`${BASE}${openPhoto.imageUrl}`} alt={tr("Class photo")} className="max-h-[45vh] md:max-h-[90vh] w-full object-contain" />
+                  )}
                 </div>
                 <div className="md:flex-[2] min-h-0 flex flex-col">
                   <div className="flex items-center gap-2 px-5 py-4 border-b" style={{ borderColor: "rgba(0,0,0,0.08)" }}>
@@ -2222,10 +2269,15 @@ function ClassWorkspace({ course, allCourses, onSelect, onBack }: {
                   <div className="flex-1 min-h-0 overflow-y-auto px-5 py-4">
                     {openPhoto.status === "reading" ? (
                       <p className="flex items-center gap-2 text-[16px]" style={{ color: "rgba(15,17,21,0.75)" }}>
-                        <Loader2 size={16} className="animate-spin" />{tr("Reading this photo…")}</p>
+                        <Loader2 size={16} className="animate-spin" />
+                        {openPhoto.kind === "document" ? tr("Reading this file…") : tr("Reading this photo…")}</p>
                     ) : openPhoto.status === "error" ? (
                       <div className="space-y-3">
-                        <p className="text-[16px]" style={{ color: "rgba(15,17,21,0.8)" }}>{tr("Ucorns couldn't read this photo.")}</p>
+                        <p className="text-[16px]" style={{ color: "rgba(15,17,21,0.8)" }}>
+                          {openPhoto.text || (openPhoto.kind === "document"
+                            ? tr("Ucorns couldn't read this file.")
+                            : tr("Ucorns couldn't read this photo."))}
+                        </p>
                         <button onClick={() => retryPhoto(openPhoto.id)} className="flex items-center gap-2 rounded-xl px-4 py-2 text-[15px] font-semibold text-white" style={{ background: color }}>
                           <RotateCcw size={15} />{tr("Try again")}</button>
                       </div>

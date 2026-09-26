@@ -112,6 +112,12 @@ export const fr: Record<string, string> = {
   "Take or add photos": "Prendre ou ajouter des photos",
   "Adding…": "Ajout…",
   "What Ucorns read": "Ce que Ucorns a lu",
+  // Attached slide decks and handouts, read as text rather than looked at.
+  "Ucorns is reading this file…": "Ucorns lit ce fichier…",
+  "Reading this file…": "Lecture de ce fichier…",
+  "Ucorns couldn't read this file.": "Ucorns n'a pas pu lire ce fichier.",
+  "Attached file": "Fichier joint",
+  "Open file": "Ouvrir le fichier",
   "Reading this photo…": "Lecture de cette photo…",
   "Ucorns is reading this photo…": "Ucorns lit cette photo…",
   "Ucorns couldn't read this photo.": "Ucorns n'a pas pu lire cette photo.",

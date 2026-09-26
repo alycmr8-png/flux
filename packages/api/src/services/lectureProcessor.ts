@@ -7,6 +7,7 @@ import { scheduleSpacedRepetition } from "./spaced-repetition";
 import { indexSource } from "./memory";
 import { withCostScope, recordAudioMinutes } from "../lib/cost";
 import { resolveStoredPath } from "../lib/storage";
+import { extractDocumentText, documentMimeForPath, originalNameFromPath } from "./documents";
 
 // Re-encodes a recording to 48 kbps mono mp3 next to the original, deletes the
 // original, and returns the new path — or null when ffmpeg is unavailable.
@@ -143,27 +144,8 @@ async function processLectureInner(lectureId: string, userId: string, opts: { re
     let extractedSlideText = "";
     if (lecture.slidesUrl && fs.existsSync(lecture.slidesUrl)) {
       try {
-        const ext = require("path").extname(lecture.slidesUrl).toLowerCase();
-        let slideText = "";
-
-        if (ext === ".pptx") {
-          const AdmZip = require("adm-zip");
-          const zip = new AdmZip(lecture.slidesUrl);
-          const entries: any[] = zip.getEntries();
-          const slideEntries = entries
-            .filter((e: any) => /^ppt\/slides\/slide\d+\.xml$/.test(e.entryName))
-            .sort((a: any, b: any) => a.entryName.localeCompare(b.entryName));
-          slideText = slideEntries.map((e: any) => {
-            const xml: string = e.getData().toString("utf-8");
-            return [...xml.matchAll(/<a:t[^>]*>([^<]*)<\/a:t>/g)]
-              .map(m => m[1].trim()).filter(Boolean).join(" ");
-          }).filter(Boolean).join("\n");
-        } else if (ext === ".pdf") {
-          const pdfParse = require("pdf-parse/lib/pdf-parse.js");
-          const buf = fs.readFileSync(lecture.slidesUrl);
-          const parsed = await pdfParse(buf);
-          slideText = parsed.text ?? "";
-        }
+        const slidesMime = documentMimeForPath(lecture.slidesUrl);
+        const slideText = slidesMime ? await extractDocumentText(lecture.slidesUrl, slidesMime) : "";
 
         if (slideText.trim()) {
           extractedSlideText = slideText;
@@ -193,11 +175,21 @@ async function processLectureInner(lectureId: string, userId: string, opts: { re
       const parts: string[] = [];
       for (let i = 0; i < imagePaths.length; i++) {
         try {
+          // A slide deck or handout carries its own text. Sending one to the vision
+          // model gets it refused, and the refusal is non-fatal here, so the file
+          // would silently contribute nothing to the summary or the quiz.
+          const docMime = documentMimeForPath(imagePaths[i]);
+          if (docMime) {
+            const text = await extractDocumentText(imagePaths[i], docMime);
+            const name = originalNameFromPath(imagePaths[i]);
+            if (text.trim()) parts.push(`[${name ? `DOCUMENT: ${name}` : `DOCUMENT ${i + 1}`}]\n${text.trim()}`);
+            continue;
+          }
           const b64 = fs.readFileSync(imagePaths[i]).toString("base64");
           const text = await describeLectureImage(b64, mimeFor(imagePaths[i]), lang);
           if (text.trim()) parts.push(`[PHOTO ${i + 1}]\n${text.trim()}`);
         } catch (imgErr) {
-          console.error(`[processLecture] photo ${i + 1} unreadable (non-fatal):`, (imgErr as any)?.message);
+          console.error(`[processLecture] attachment ${i + 1} unreadable (non-fatal):`, (imgErr as any)?.message);
         }
       }
       if (parts.length < imagePaths.length || missingFiles) {
@@ -211,7 +203,7 @@ async function processLectureInner(lectureId: string, userId: string, opts: { re
         extractedImageText = parts.join("\n\n");
         // One lecture: what was said and what was written on the board go into the
         // same transcript, so everything generated treats them as one source.
-        transcript = `${transcript}\n\n[WRITTEN ON THE BOARD IN THIS LECTURE]\n${extractedImageText}`;
+        transcript = `${transcript}\n\n[WRITTEN ON THE BOARD, AND IN FILES ATTACHED TO THIS LECTURE]\n${extractedImageText}`;
         console.log(`[processLecture] appended ${parts.length} photo transcription(s)`);
       }
     }

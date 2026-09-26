@@ -37,7 +37,7 @@ export default function PrivacyPage() {
         <li><strong>Audio recordings</strong> of lectures you record, and their duration.</li>
         <li><strong>Transcripts</strong> of those recordings, including per-sentence timestamps.</li>
         <li><strong>Photographs</strong> you take of whiteboards, slides or handwritten pages, and the text read from them.</li>
-        <li><strong>Files</strong> you upload, such as slide decks and PDFs, and links you paste.</li>
+        <li><strong>Files</strong> you attach to a class or a recording — slide decks (PDF, .pptx), documents (.docx) and plain text — and the text read out of them.</li>
         <li><strong>Notes</strong> you write yourself.</li>
       </ul>
 
