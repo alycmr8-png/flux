@@ -24,6 +24,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   // Resolved here so every page — server-rendered or not — paints in the
   // visitor's language from the very first byte of HTML.
   const lang = await getLang();
+  const beaconToken = process.env.NEXT_PUBLIC_CF_BEACON_TOKEN;
   return (
     <ClerkProvider>
       <html lang={lang}>
@@ -35,7 +36,25 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             rel="stylesheet"
           />
         </head>
-        <body className="antialiased"><LangProvider lang={lang}><I18nProvider><FeedbackProvider>{children}</FeedbackProvider></I18nProvider></LangProvider></body>
+        <body className="antialiased"><LangProvider lang={lang}><I18nProvider><FeedbackProvider>{children}</FeedbackProvider></I18nProvider></LangProvider>
+          {/*
+            Cloudflare Web Analytics: visitor counts and referrers, so a campaign can
+            be told apart from nothing happening. Cookieless and storing no personal
+            data, which is why it needs no consent banner — a cookie-based tracker
+            would need one for French and other EU visitors, and a named processor in
+            the Privacy Policy.
+
+            Absent until NEXT_PUBLIC_CF_BEACON_TOKEN is set, so no build ships a
+            script tag pointing at nothing.
+          */}
+          {beaconToken && (
+            <script
+              defer
+              src="https://static.cloudflareinsights.com/beacon.min.js"
+              data-cf-beacon={JSON.stringify({ token: beaconToken })}
+            />
+          )}
+        </body>
       </html>
     </ClerkProvider>
   );
