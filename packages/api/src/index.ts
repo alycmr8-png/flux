@@ -34,7 +34,24 @@ import { waitlistRouter } from "./routes/waitlist";
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-app.use(cors({ origin: process.env.ALLOWED_ORIGINS?.split(",") || "*" }));
+/**
+ * Origins allowed to call the API, from a comma-separated ALLOWED_ORIGINS.
+ *
+ * Trimmed, and trailing slashes removed, because this value is typed by hand into a
+ * dashboard: "a.com, b.com" would otherwise register " b.com", and "a.com/" would
+ * register a string no browser ever sends as an Origin. Either way the request is
+ * refused with no clue as to why, and CORS failures surface in the browser rather
+ * than in any log you would think to check.
+ */
+const allowedOrigins = (process.env.ALLOWED_ORIGINS ?? "")
+  .split(",")
+  .map((o) => o.trim().replace(/\/+$/, ""))
+  .filter(Boolean);
+
+if (allowedOrigins.length) console.log(`[cors] allowing: ${allowedOrigins.join(" ")}`);
+else console.warn("[cors] ALLOWED_ORIGINS is not set — allowing every origin");
+
+app.use(cors({ origin: allowedOrigins.length ? allowedOrigins : "*" }));
 
 // app.use, not app.post: mounting a Router with app.post leaves the mount path on
 // req.url, so the routers' own `post("/")` never matches and every delivery 404s.
