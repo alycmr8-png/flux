@@ -62,17 +62,40 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
       // in practice is every signup — so a placeholder here is not a rare edge
       // case, it becomes the email Stripe tries to send receipts to.
       const identity = await fetchClerkIdentity(clerkUserId);
-      user = await dbWithRetry(() =>
-        prisma.user.create({
-          data: {
-            clerkId: clerkUserId,
-            // Only if Clerk is unreachable — sign-in must not fail over this, and
-            // the repair below picks it up on a later request.
-            email: identity?.email ?? placeholderEmailFor(clerkUserId),
-            name: identity?.name ?? "Student",
-          },
-        })
-      );
+      try {
+        user = await dbWithRetry(() =>
+          prisma.user.create({
+            data: {
+              clerkId: clerkUserId,
+              // Only if Clerk is unreachable — sign-in must not fail over this, and
+              // the repair below picks it up on a later request.
+              email: identity?.email ?? placeholderEmailFor(clerkUserId),
+              name: identity?.name ?? "Student",
+            },
+          })
+        );
+      } catch (err: any) {
+        // email is unique, so a row already holds this address under a different
+        // clerkId. That is the same person arriving with a new Clerk identity —
+        // which is exactly what moving from a development to a production instance
+        // does to every existing account. Adopt the row rather than refusing: their
+        // classes, lectures and notes hang off it, and a failed create here leaves
+        // them locked out of their own data with nothing they can do about it.
+        //
+        // Only ever on a verified address. An unverified one would let anyone who
+        // types someone else's email claim their account.
+        const emailTaken = err?.code === "P2002";
+        if (!emailTaken || !identity?.email || !identity.verified) throw err;
+        console.warn(
+          `[requireAuth] adopting existing account for ${identity.email} into clerkId ${clerkUserId}`,
+        );
+        user = await dbWithRetry(() =>
+          prisma.user.update({
+            where: { email: identity.email },
+            data: { clerkId: clerkUserId, name: identity.name },
+          })
+        );
+      }
     } else if (isPlaceholderEmail(user.email)) {
       // Repair a row that was created without a real address, so existing accounts
       // heal themselves instead of needing a migration.
@@ -89,7 +112,15 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
     (req as any).user = user;
     next();
   } catch (err: any) {
-    console.error("[requireAuth] DB error:", err?.message);
-    res.status(503).json({ error: "Database is starting up — please retry in a few seconds." });
+    // Only a genuinely unreachable database gets the "starting up, retry" message.
+    // Reporting every failure that way was actively misleading: a unique-constraint
+    // violation is permanent, and telling the student to wait a few seconds sends
+    // them to retry something that can never succeed.
+    const unreachable = err?.code === "P1001" || err?.code === "P1002";
+    console.error(`[requireAuth] ${err?.code ?? "error"}: ${err?.message}`);
+    if (unreachable) {
+      return res.status(503).json({ error: "Database is starting up — please retry in a few seconds." });
+    }
+    res.status(500).json({ error: "We couldn't load your account. Please try again, or contact support if it persists." });
   }
 }

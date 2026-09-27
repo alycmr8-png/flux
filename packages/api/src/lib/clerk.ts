@@ -39,7 +39,7 @@ export function placeholderEmailFor(clerkUserId: string): string {
  */
 export async function fetchClerkIdentity(
   clerkUserId: string,
-): Promise<{ email: string; name: string } | null> {
+): Promise<{ email: string; name: string; verified: boolean } | null> {
   try {
     const u = await clerk().users.getUser(clerkUserId);
     // Prefer the address Clerk treats as primary; fall back to the first verified
@@ -52,6 +52,9 @@ export async function fetchClerkIdentity(
     return {
       email: primary.emailAddress,
       name: [u.firstName, u.lastName].filter(Boolean).join(" ") || "Student",
+      // Whether Clerk has proved the student owns this address. Only a verified
+      // address may be used to adopt an existing account — see requireAuth.
+      verified: primary.verification?.status === "verified",
     };
   } catch (e: any) {
     console.error(`[clerk] could not fetch identity for ${clerkUserId}:`, e?.message);
