@@ -56,6 +56,36 @@ export const MAX_RECORDING_MINUTES: Record<"free" | "paid", number> = {
   paid: 180,
 };
 
+/**
+ * Whether quota enforcement is switched off for local development.
+ *
+ * DISABLE_QUOTAS exists so testing doesn't burn a real monthly allowance, and it is
+ * documented as never-in-production. That is not good enough: setting it in
+ * production turns every free signup into an unlimited paid account, the paywall
+ * never fires, and nothing looks broken — the product is simply given away, and the
+ * only symptom is revenue that never arrives.
+ *
+ * So production refuses to honour it at all. A deploy that carries the variable gets
+ * a loud line in the boot log and full enforcement anyway, which makes the mistake
+ * survivable rather than silent.
+ */
+const IS_PRODUCTION =
+  process.env.NODE_ENV === "production" || !!process.env.RAILWAY_ENVIRONMENT;
+
+const DISABLE_REQUESTED = process.env.DISABLE_QUOTAS === "true";
+
+export const quotasDisabled = DISABLE_REQUESTED && !IS_PRODUCTION;
+
+if (DISABLE_REQUESTED && IS_PRODUCTION) {
+  console.error(
+    "[usage] DISABLE_QUOTAS is set in production and is being IGNORED. " +
+      "Quotas are enforced. Remove the variable — with it honoured, every free " +
+      "account would have unlimited recording and the paywall would never appear.",
+  );
+} else if (quotasDisabled) {
+  console.warn("[usage] DISABLE_QUOTAS is on — quotas are not enforced (local only)");
+}
+
 export class QuotaError extends Error {
   kind: UsageKind;
   limit: number;
@@ -74,8 +104,8 @@ function currentMonth(): string {
 }
 
 export async function planFor(userId: string): Promise<"free" | "paid"> {
-  // Local testing treats everyone as paid so limits never get in the way. Never set in production.
-  if (process.env.DISABLE_QUOTAS === "true") return "paid";
+  // Local testing treats everyone as paid so limits never get in the way.
+  if (quotasDisabled) return "paid";
   const sub = await prisma.subscription.findUnique({ where: { userId } });
   const active = sub && ["active", "trialing"].includes(sub.status) && sub.currentPeriodEnd > new Date();
   return active ? "paid" : "free";
@@ -108,7 +138,7 @@ export async function recordedMinutesThisMonth(userId: string): Promise<number> 
  * incurred the moment we send the audio for transcription.
  */
 export async function assertMinutesAvailable(userId: string, incomingMinutes: number): Promise<void> {
-  if (process.env.DISABLE_QUOTAS === "true") return;
+  if (quotasDisabled) return;
   const plan = await planFor(userId);
   const limit = MONTHLY_MINUTES[plan];
   const used = await recordedMinutesThisMonth(userId);
@@ -120,9 +150,8 @@ export async function assertMinutesAvailable(userId: string, incomingMinutes: nu
 // Throws QuotaError when the user is at their monthly limit; otherwise counts
 // this use. Small races just overshoot by one — fine for cost control.
 export async function consumeQuota(userId: string, kind: Exclude<UsageKind, "minutes">): Promise<void> {
-  // Local development would otherwise burn the founder's own monthly allowance
-  // while testing. Never set this in production.
-  if (process.env.DISABLE_QUOTAS === "true") return;
+  // Local development would otherwise burn the founder's own monthly allowance.
+  if (quotasDisabled) return;
 
   const month = currentMonth();
   const plan = await planFor(userId);

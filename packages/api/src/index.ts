@@ -25,7 +25,7 @@ import { examPrepRouter } from "./routes/examprep";
 import { canvasRouter } from "./routes/canvas";
 import { photoRouter } from "./routes/photos";
 import { accountRouter } from "./routes/account";
-import { usageSummary } from "./services/usage";
+import { usageSummary, quotasDisabled } from "./services/usage";
 import { errorHandler } from "./middleware/errorHandler";
 import { attachLiveTranscribe } from "./lib/liveTranscribe";
 import { requireAuth } from "./middleware/requireAuth";
@@ -69,7 +69,15 @@ const COMMIT = (process.env.RAILWAY_GIT_COMMIT_SHA ?? process.env.COMMIT_SHA ?? 
 const BOOTED_AT = new Date().toISOString();
 
 app.get("/health", (_req, res) =>
-  res.json({ ok: true, commit: COMMIT || null, bootedAt: BOOTED_AT }),
+  // `quotas` is reported so enforcement can be confirmed from outside, without
+  // trusting a dashboard or a memory of what was set. In production it is always
+  // "enforced" — see quotasDisabled in services/usage.ts.
+  res.json({
+    ok: true,
+    commit: COMMIT || null,
+    bootedAt: BOOTED_AT,
+    quotas: quotasDisabled ? "DISABLED" : "enforced",
+  }),
 );
 
 app.use("/public/waitlist", waitlistRouter);
