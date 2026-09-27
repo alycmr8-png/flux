@@ -49,7 +49,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           */}
           {beaconToken && (
             <script
-              defer
+              // type="module" is what Cloudflare's own snippet ships; the file is an
+              // ES module, so loading it as a classic deferred script fails silently
+              // and no data is ever recorded. Modules defer by default.
+              type="module"
               src="https://static.cloudflareinsights.com/beacon.min.js"
               data-cf-beacon={JSON.stringify({ token: beaconToken })}
             />
