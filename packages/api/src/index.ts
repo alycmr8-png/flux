@@ -66,6 +66,14 @@ app.use(express.json());
 // just pushed is actually live — which is the only question anyone asks it.
 // Railway sets RAILWAY_GIT_COMMIT_SHA; empty elsewhere, and that's fine.
 const COMMIT = (process.env.RAILWAY_GIT_COMMIT_SHA ?? process.env.COMMIT_SHA ?? "").slice(0, 7);
+const CLERK_KEY = process.env.CLERK_SECRET_KEY ?? "";
+const CLERK_MODE = CLERK_KEY.startsWith("sk_live")
+  ? "live"
+  : CLERK_KEY.startsWith("sk_test")
+    ? "test"
+    : CLERK_KEY
+      ? "unrecognised"
+      : "unset";
 const BOOTED_AT = new Date().toISOString();
 
 app.get("/health", (_req, res) =>
@@ -77,6 +85,11 @@ app.get("/health", (_req, res) =>
     commit: COMMIT || null,
     bootedAt: BOOTED_AT,
     quotas: quotasDisabled ? "DISABLED" : "enforced",
+    // Which Clerk instance this server validates tokens against — the prefix only,
+    // never the key. A pk_live frontend against an sk_test backend lets sign-in
+    // succeed and then fails every authenticated request, which looks like a broken
+    // app rather than a mismatched pair of keys. One request now answers it.
+    clerk: CLERK_MODE,
   }),
 );
 
