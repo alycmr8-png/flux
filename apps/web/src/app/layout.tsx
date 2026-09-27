@@ -4,12 +4,39 @@ import { I18nProvider } from "@/components/I18nProvider";
 import { FeedbackProvider } from "@/components/Feedback";
 import { LangProvider } from "@/lib/useTr";
 import { getLang } from "@/lib/lang";
+import { SITE_URL } from "@/lib/site";
 import "katex/dist/katex.min.css";
 import "./globals.css";
 
+const DESCRIPTION =
+  "The AI that went to every one of your classes. Capture lectures, videos, files and notes — then ask your course anything, with sources.";
+
 export const metadata: Metadata = {
-  title: "Ucorns",
-  description: "The AI that went to every one of your classes. Capture lectures, videos, files and notes — then ask your course anything, with sources.",
+  // metadataBase makes every canonical and OpenGraph URL absolute. Without it Next
+  // emits relative ones, and a relative og:image does not render at all when
+  // Instagram, iMessage or Slack fetches the link.
+  metadataBase: new URL(SITE_URL),
+  title: { default: "Ucorns", template: "%s — Ucorns" },
+  description: DESCRIPTION,
+  applicationName: "Ucorns",
+  keywords: [
+    "lecture recording", "lecture notes", "study app", "AI notes",
+    "flashcards", "transcription", "university", "college",
+  ],
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    siteName: "Ucorns",
+    title: "Ucorns — the AI that went to every one of your classes",
+    description: DESCRIPTION,
+    url: SITE_URL,
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Ucorns — the AI that went to every one of your classes",
+    description: DESCRIPTION,
+  },
 };
 
 export const viewport: Viewport = {
